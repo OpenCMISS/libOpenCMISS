@@ -4386,7 +4386,7 @@ CONTAINS
       IF(factor<=ZERO_TOLERANCE_SP) CALL FlagError("Complex roots encountered.",err,error,*999)
       eigenvalues(1)=trace/2.0_SP+SQRT(factor)
       eigenvalues(2)=trace/2.0_SP-SQRT(factor)
-      IF(ABS(A(2,1)>ZERO_TOLERANCE_SP)) THEN
+      IF(ABS(A(2,1))>ZERO_TOLERANCE_SP) THEN
         eigenvectors(1,1)=eigenvalues(1)-A(2,2)
         eigenvectors(2,1)=A(2,1)
         eigenvectors(1,2)=eigenvalues(2)-A(2,2)
@@ -4464,7 +4464,7 @@ CONTAINS
       IF(factor<=ZERO_TOLERANCE) CALL FlagError("Complex roots encountered.",err,error,*999)
       eigenvalues(1)=trace/2.0_DP+SQRT(factor)
       eigenvalues(2)=trace/2.0_DP-SQRT(factor)
-      IF(ABS(A(2,1)>ZERO_TOLERANCE)) THEN
+      IF(ABS(A(2,1))>ZERO_TOLERANCE) THEN
         eigenvectors(1,1)=eigenvalues(1)-A(2,2)
         eigenvectors(2,1)=A(2,1)
         eigenvectors(1,2)=eigenvalues(2)-A(2,2)
