@@ -958,65 +958,60 @@ CONTAINS
 
     ENTERS("Fitting_EquationsSetSpecificationSet",err,error,*999)
 
-    IF(ASSOCIATED(equationsSet)) THEN
-      IF(SIZE(specification,1)/=4) THEN
-        CALL FlagError("Equations set specification must have four entries for a fitting class equations set.", &
-          & err,error,*999)
-      ENDIF
-      equationsSetType=specification(2)
-      SELECT CASE(equationsSetType)
-      CASE(EQUATIONS_SET_DATA_FITTING_EQUATION_TYPE)
-        equationsSetSubtype=specification(3)
-        SELECT CASE(equationsSetSubtype)
-        CASE(EQUATIONS_SET_GENERALISED_DATA_FITTING_SUBTYPE, &
-          & EQUATIONS_SET_DIFFUSION_TENSOR_FIBRE_DATA_FITTING_SUBTYPE)
-          !OK
-        CASE DEFAULT
-          localError="The third equations set specifiction of "//TRIM(NumberToVstring(equationsSetSubtype,"*",err,error))// &
-            & " is not valid for a data fitting equations set."
-          CALL FlagError(localError,err,error,*999)
-        END SELECT
-      CASE(EQUATIONS_SET_GAUSS_FITTING_EQUATION_TYPE)
-        equationsSetSubtype=specification(3)
-        SELECT CASE(equationsSetSubtype)
-        CASE(EQUATIONS_SET_GENERALISED_GAUSS_FITTING_SUBTYPE, &
-          & EQUATIONS_SET_MAT_PROPERTIES_GAUSS_FITTING_SUBTYPE, &
-          & EQUATIONS_SET_MAT_PROPERTIES_INRIA_GAUSS_FITTING_SUBTYPE, &
-          & EQUATIONS_SET_DIV_FREE_GAUSS_FITTING_SUBTYPE)
-          !OK
-        CASE DEFAULT
-          localError="The third equations set specifiction of "//TRIM(NumberToVstring(equationsSetSubtype,"*",err,error))// &
-            & " is not valid for a Gauss fitting equations set."
-          CALL FlagError(localError,err,error,*999)
-        END SELECT
+    IF(SIZE(specification,1)<4) THEN
+      CALL FlagError("Equations set specification must at least four entries for a fitting class equations set.", &
+        & err,error,*999)
+    ENDIF
+    
+    equationsSetType=specification(2)
+    
+    SELECT CASE(equationsSetType)
+    CASE(EQUATIONS_SET_DATA_FITTING_EQUATION_TYPE)
+      equationsSetSubtype=specification(3)
+      SELECT CASE(equationsSetSubtype)
+      CASE(EQUATIONS_SET_GENERALISED_DATA_FITTING_SUBTYPE, &
+        & EQUATIONS_SET_DIFFUSION_TENSOR_FIBRE_DATA_FITTING_SUBTYPE)
+        !OK
       CASE DEFAULT
-        localError="The second equations set specification of "//TRIM(NumberToVstring(equationsSetType,"*",err,error))// &
+        localError="The third equations set specifiction of "//TRIM(NumberToVstring(equationsSetSubtype,"*",err,error))// &
           & " is not valid for a data fitting equations set."
         CALL FlagError(localError,err,error,*999)
       END SELECT
-      equationsSetSmoothing=specification(4)
-      SELECT CASE(equationsSetSmoothing)
-      CASE(EQUATIONS_SET_FITTING_NO_SMOOTHING, &
-        & EQUATIONS_SET_FITTING_SOBOLEV_VALUE_SMOOTHING, &
-        & EQUATIONS_SET_FITTING_SOBOLEV_DIFFERENCE_SMOOTHING, &
-        & EQUATIONS_SET_FITTING_STRAIN_ENERGY_SMOOTHING)
-        !ok
+    CASE(EQUATIONS_SET_GAUSS_FITTING_EQUATION_TYPE)
+      equationsSetSubtype=specification(3)
+      SELECT CASE(equationsSetSubtype)
+      CASE(EQUATIONS_SET_GENERALISED_GAUSS_FITTING_SUBTYPE, &
+        & EQUATIONS_SET_MAT_PROPERTIES_GAUSS_FITTING_SUBTYPE, &
+        & EQUATIONS_SET_MAT_PROPERTIES_INRIA_GAUSS_FITTING_SUBTYPE, &
+        & EQUATIONS_SET_DIV_FREE_GAUSS_FITTING_SUBTYPE)
+        !OK
       CASE DEFAULT
-        localError="The fourth equations set specification of "//TRIM(NumberToVstring(equationsSetSmoothing,"*",err,error))// &
-          & " is not valid."
+        localError="The third equations set specifiction of "//TRIM(NumberToVstring(equationsSetSubtype,"*",err,error))// &
+          & " is not valid for a Gauss fitting equations set."
         CALL FlagError(localError,err,error,*999)
       END SELECT
-      !Set full specification
-      IF(ALLOCATED(equationsSet%specification)) THEN
-        CALL FlagError("Equations set specification is already allocated.",err,error,*999)
-      ELSE
-        ALLOCATE(equationsSet%specification(4),stat=err)
-        IF(err/=0) CALL FlagError("Could not allocate equations set specification.",err,error,*999)
-      END IF
-      equationsSet%specification(1:4)=[EQUATIONS_SET_FITTING_CLASS,equationsSetType,equationsSetSubtype,equationsSetSmoothing]
-    ELSE
-      CALL FlagError("Equations set is not associated.",err,error,*999)
-    END IF
+    CASE DEFAULT
+      localError="The second equations set specification of "//TRIM(NumberToVstring(equationsSetType,"*",err,error))// &
+        & " is not valid for a data fitting equations set."
+      CALL FlagError(localError,err,error,*999)
+    END SELECT
+    
+    equationsSetSmoothing=specification(4)
+    SELECT CASE(equationsSetSmoothing)
+    CASE(EQUATIONS_SET_FITTING_NO_SMOOTHING, &
+      & EQUATIONS_SET_FITTING_SOBOLEV_VALUE_SMOOTHING, &
+      & EQUATIONS_SET_FITTING_SOBOLEV_DIFFERENCE_SMOOTHING, &
+      & EQUATIONS_SET_FITTING_STRAIN_ENERGY_SMOOTHING)
+      !ok
+    CASE DEFAULT
+      localError="The fourth equations set specification of "//TRIM(NumberToVstring(equationsSetSmoothing,"*",err,error))// &
+        & " is not valid."
+      CALL FlagError(localError,err,error,*999)
+    END SELECT
+    
+    !Set full specification
+    CALL EquationsSet_SpecificationSet(equationsSet,4,[EQUATIONS_SET_FITTING_CLASS,equationsSetType, &
+      & equationsSetSubtype,equationsSetSmoothing],err,error,*999)
 
     EXITS("Fitting_EquationsSetSpecificationSet")
     RETURN
@@ -2877,8 +2872,6 @@ CONTAINS
 
     ENTERS("Fitting_ProblemSpecificationSet",err,error,*999)
 
-    IF(.NOT.ASSOCIATED(problem)) CALL FlagError("Problem is not associated.",err,error,*999)
-    IF(ALLOCATED(problem%specification)) CALL FlagError("Problem specification is already allocated.",err,error,*999)
     IF(SIZE(problemSpecification,1)<3) THEN
       localError="The size of the specified problem specification array of "// &
         & TRIM(NumberToVString(SIZE(problemSpecification,1),"*",err,error))// &
@@ -2888,6 +2881,7 @@ CONTAINS
     
     problemType=problemSpecification(2)
     problemSubtype=problemSpecification(3)
+    
     SELECT CASE(problemType)
     CASE(PROBLEM_FITTING_TYPE)
       SELECT CASE(problemSubtype)
@@ -2907,9 +2901,8 @@ CONTAINS
         & " is not valid for a data fitting problem."
       CALL FlagError(localError,err,error,*999)
     END SELECT
-    ALLOCATE(problem%specification(3),STAT=err)
-    IF(err/=0) CALL FlagError("Could not allocate problem specification.",err,error,*999)
-    problem%specification(1:3)=[PROBLEM_FITTING_CLASS,problemType,problemSubtype]
+    
+    CALL Problem_SpecificationSet(problem,3,[PROBLEM_FITTING_CLASS,problemType,problemSubtype],err,error,*999)
 
     EXITS("Fitting_ProblemSpecificationSet")
     RETURN

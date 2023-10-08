@@ -270,8 +270,6 @@ CONTAINS
 
     ENTERS("FiniteElasticityDarcy_ProblemSpecificationSet",err,error,*999)
 
-    IF(.NOT.ASSOCIATED(problem)) CALL FlagError("Problem is not associated.",err,error,*999)
-    IF(ALLOCATED(problem%specification)) CALL FlagError("Problem specification is already allocated.",err,error,*999)
     IF(SIZE(problemSpecification,1)<3) THEN
       localError="The size of the specified problem specification array of "// &
         & TRIM(NumberToVString(SIZE(problemSpecification,1),"*",err,error))// &
@@ -290,9 +288,9 @@ CONTAINS
         & " is not valid for a finite elasticity Darcy type of a multi physics problem."
       CALL FlagError(localError,err,error,*999)
     END SELECT
-    ALLOCATE(problem%specification(3),stat=err)
-    IF(err/=0) CALL FlagError("Could not allocate problem specification.",err,error,*999)
-    problem%specification(1:3)=[PROBLEM_MULTI_PHYSICS_CLASS,PROBLEM_FINITE_ELASTICITY_DARCY_TYPE,problemSubtype]
+    
+    CALL Problem_SpecificationSet(problem,3,[PROBLEM_MULTI_PHYSICS_CLASS,PROBLEM_FINITE_ELASTICITY_DARCY_TYPE,problemSubtype], &
+      & err,error,*999)
 
     EXITS("FiniteElasticityDarcy_ProblemSpecificationSet")
     RETURN

@@ -237,32 +237,26 @@ CONTAINS
 
     ENTERS("HelmholtzEquation_EquationsSetSpecificationSet",err,error,*999)
 
-    IF(ASSOCIATED(equationsSet)) THEN
-      IF(SIZE(specification,1)/=3) THEN
-        CALL FlagError("Equations set specification must have three entries for a Helmholtz type equations set.", &
-          & err,error,*999)
-      END IF
-      subtype=specification(3)
-      SELECT CASE(subtype)
-      CASE(EQUATIONS_SET_NO_SOURCE_HELMHOLTZ_SUBTYPE)
-        !ok
-      CASE DEFAULT
-        localError="The third equations set specification of "//TRIM(NumberToVstring(subtype,"*",err,error))// &
-          & " is not valid for a Helmholtz type of a classical field equations set."
-        CALL FlagError(localError,err,error,*999)
-      END SELECT
-      !Set full specification
-      IF(ALLOCATED(equationsSet%specification)) THEN
-        CALL FlagError("Equations set specification is already allocated.",err,error,*999)
-      ELSE
-        ALLOCATE(equationsSet%specification(3),stat=err)
-        IF(err/=0) CALL FlagError("Could not allocate equations set specification.",err,error,*999)
-      END IF
-      equationsSet%specification(1:3)=[EQUATIONS_SET_CLASSICAL_FIELD_CLASS,EQUATIONS_SET_HELMHOLTZ_EQUATION_TYPE,subtype]
-    ELSE
-      CALL FlagError("Equations set is not associated.",err,error,*999)
-    END IF
-
+    IF(SIZE(specification,1)<3) THEN
+      CALL FlagError("Equations set specification must have at least three entries for a Helmholtz type equations set.", &
+        & err,error,*999)
+    ENDIF
+    
+    subtype=specification(3)
+    
+    SELECT CASE(subtype)
+    CASE(EQUATIONS_SET_NO_SOURCE_HELMHOLTZ_SUBTYPE)
+      !ok
+    CASE DEFAULT
+      localError="The third equations set specification of "//TRIM(NumberToVstring(subtype,"*",err,error))// &
+        & " is not valid for a Helmholtz type of a classical field equations set."
+      CALL FlagError(localError,err,error,*999)
+    END SELECT
+    
+    !Set full specification
+    CALL EquationsSet_SpecificationSet(equationsSet,3,[EQUATIONS_SET_CLASSICAL_FIELD_CLASS, &
+      & EQUATIONS_SET_HELMHOLTZ_EQUATION_TYPE,subtype],err,error,*999)
+    
     EXITS("HelmholtzEquation_EquationsSetSpecificationSet")
     RETURN
 999 ERRORS("HelmholtzEquation_EquationsSetSpecificationSet",err,error)

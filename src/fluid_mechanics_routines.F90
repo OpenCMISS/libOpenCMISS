@@ -650,17 +650,14 @@ CONTAINS
     INTEGER(INTG), INTENT(OUT) :: err !<The error code
     TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
     !Local Variables
+    INTEGER(INTG) :: pSpecification(2)
     TYPE(VARYING_STRING) :: localError
     
     ENTERS("FluidMechanics_ProblemSetup",err,error,*999)
 
-    IF(.NOT.ASSOCIATED(problem)) CALL FlagError("Problem is not associated.",err,error,*999)
-    IF(.NOT.ALLOCATED(problem%specification)) &
-      & CALL FlagError("Problem specification is not allocated.",err,error,*999)
-    IF(SIZE(problem%specification,1)<2) &
-      & CALL FlagError("Problem specification must have at least two entries for a fluid mechanics problem.",err,error,*999)
-      
-    SELECT CASE(problem%specification(2))
+    CALL Problem_SpecificationGet(problem,2,pSpecification,err,error,*999)
+     
+    SELECT CASE(pSpecification(2))
     CASE(PROBLEM_STOKES_EQUATION_TYPE)
       CALL Stokes_ProblemSetup(problem,problemSetup,err,error,*999)
     CASE(PROBLEM_NAVIER_STOKES_EQUATION_TYPE)
@@ -672,7 +669,7 @@ CONTAINS
     CASE(PROBLEM_BURGERS_EQUATION_TYPE)
       CALL Burgers_ProblemSetup(problem,problemSetup,err,error,*999)
     CASE DEFAULT
-      localError="Problem type "//TRIM(NumberToVString(problem%specification(2),"*",err,error))// &
+      localError="Problem type "//TRIM(NumberToVString(pSpecification(2),"*",err,error))// &
         & " is not valid for a fluid mechanics problem class."
       CALL FlagError(localError,err,error,*999)
     END SELECT
@@ -696,6 +693,7 @@ CONTAINS
     INTEGER(INTG), INTENT(OUT) :: err !<The error code
     TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
     !Local Variables
+    INTEGER(INTG) :: pSpecification(2)
     TYPE(ControlLoopType), POINTER :: controlLoop
     TYPE(ProblemType), POINTER :: problem
     TYPE(VARYING_STRING) :: localError
@@ -706,13 +704,10 @@ CONTAINS
     NULLIFY(controlLoop)
     CALL Solver_ControlLoopGet(solver,controlLoop,err,error,*999)
     NULLIFY(problem)
-    CALL ControlLoop_ProblemGet(controlLoop,problem,err,error,*999)    
-    IF(.NOT.ALLOCATED(problem%specification)) &
-      & CALL FlagError("Problem specification is not allocated.",err,error,*999)
-    IF(SIZE(problem%specification,1)<2) &
-      & CALL FlagError("Problem specification must have at least two entries for a fluid mechanics problem.",err,error,*999)
+    CALL ControlLoop_ProblemGet(controlLoop,problem,err,error,*999)
+    CALL Problem_SpecificationGet(problem,2,pSpecification,err,error,*999)
       
-    SELECT CASE(problem%specification(2))
+    SELECT CASE(pSpecification(2))
     CASE(PROBLEM_STOKES_EQUATION_TYPE)
       CALL Stokes_PostSolve(solver,err,error,*999)
     CASE(PROBLEM_NAVIER_STOKES_EQUATION_TYPE)
@@ -724,7 +719,7 @@ CONTAINS
     CASE(PROBLEM_BURGERS_EQUATION_TYPE)
       CALL Burgers_PostSolve(solver,err,error,*999)
     CASE DEFAULT
-      localError="Problem type "//TRIM(NumberToVString(problem%specification(2),"*",err,error))// &
+      localError="Problem type "//TRIM(NumberToVString(pSpecification(2),"*",err,error))// &
         & " is not valid for a fluid mechanics problem class."
       CALL FlagError(localError,err,error,*999)
     END SELECT
@@ -748,6 +743,7 @@ CONTAINS
     INTEGER(INTG), INTENT(OUT) :: err !<The error code
     TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
     !Local Variables
+    INTEGER(INTG) :: pSpecification(2)
     TYPE(ControlLoopType), POINTER :: controlLoop
     TYPE(ProblemType), POINTER :: problem
     TYPE(VARYING_STRING) :: localError
@@ -758,13 +754,10 @@ CONTAINS
     NULLIFY(controlLoop)
     CALL Solver_ControlLoopGet(solver,controlLoop,err,error,*999)
     NULLIFY(problem)
-    CALL ControlLoop_ProblemGet(controlLoop,problem,err,error,*999)    
-    IF(.NOT.ALLOCATED(problem%specification)) &
-      & CALL FlagError("Problem specification is not allocated.",err,error,*999)
-    IF(SIZE(problem%specification,1)<2) &
-      & CALL FlagError("Problem specification must have at least two entries for a fluid mechanics problem.",err,error,*999)
+    CALL ControlLoop_ProblemGet(controlLoop,problem,err,error,*999)
+    CALL Problem_SpecificationGet(problem,2,pSpecification,err,error,*999)
     
-    SELECT CASE(problem%specification(2))
+    SELECT CASE(pSpecification(2))
     CASE(PROBLEM_STOKES_EQUATION_TYPE)
       CALL Stokes_PreSolve(solver,err,error,*999)
     CASE(PROBLEM_NAVIER_STOKES_EQUATION_TYPE)
@@ -776,7 +769,7 @@ CONTAINS
     CASE(PROBLEM_BURGERS_EQUATION_TYPE)
       CALL Burgers_PreSolve(SOLVER,err,error,*999)
     CASE DEFAULT
-      localError="Problem type "//TRIM(NumberToVString(problem%specification(2),"*",err,error))// &
+      localError="Problem type "//TRIM(NumberToVString(pSpecification(2),"*",err,error))// &
         & " is not valid for a fluid mechanics problem class."
       CALL FlagError(localError,err,error,*999)
     END SELECT
@@ -800,23 +793,21 @@ CONTAINS
     INTEGER(INTG), INTENT(OUT) :: err !<The error code
     TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
     !Local Variables
+    INTEGER(INTG) :: cLoopType,pSpecification(2)
     TYPE(ProblemType), POINTER :: problem
     TYPE(VARYING_STRING) :: localError
 
     ENTERS("FluidMechanics_PreLoop",err,error,*999)
 
-    IF(.NOT.ASSOCIATED(controlLoop)) CALL FlagError("ControlLoop is not associated.",err,error,*999)
-    NULLIFY(problem)
-    CALL ControlLoop_ProblemGet(controlLoop,problem,err,error,*999)
+    CALL ControlLoop_TypeGet(controlLoop,cLoopType,err,error,*999)
     
-    SELECT CASE(controlLoop%loopType)
+    SELECT CASE(cLoopType)
     CASE(CONTROL_TIME_LOOP_TYPE)
-      IF(.NOT.ALLOCATED(problem%specification)) &
-        & CALL FlagError("Problem specification is not allocated.",err,error,*999)
-      IF(SIZE(problem%specification,1)<2) &
-        & CALL FlagError("Problem specification must have at least two entries for a fluid mechanics problem.",err,error,*999)
+      NULLIFY(problem)
+      CALL ControlLoop_ProblemGet(controlLoop,problem,err,error,*999)
+      CALL Problem_SpecificationGet(problem,2,pSpecification,err,error,*999)
       
-      SELECT CASE(problem%specification(2))
+      SELECT CASE(pSpecification(2))
       CASE(PROBLEM_STOKES_EQUATION_TYPE)
         !do nothing
       CASE(PROBLEM_NAVIER_STOKES_EQUATION_TYPE)
@@ -828,7 +819,7 @@ CONTAINS
       CASE(PROBLEM_BURGERS_EQUATION_TYPE)
         !do nothing
       CASE DEFAULT
-        localError="Problem type "//TRIM(NumberToVString(problem%specification(2),"*",err,error))// &
+        localError="Problem type "//TRIM(NumberToVString(pSpecification(2),"*",err,error))// &
           & " is not valid for a fluid mechanics problem class."
         CALL FlagError(localError,err,error,*999)
       END SELECT
@@ -855,23 +846,21 @@ CONTAINS
     INTEGER(INTG), INTENT(OUT) :: err !<The error code
     TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
     !Local Variables
+    INTEGER(INTG) :: cLoopType,pSpecification(2)
     TYPE(ProblemType), POINTER :: problem
     TYPE(VARYING_STRING) :: localError
 
     ENTERS("FluidMechanics_PostLoop",err,error,*999)
 
-    IF(.NOT.ASSOCIATED(controlLoop)) CALL FlagError("ControlLoop is not associated.",err,error,*999)
-    NULLIFY(problem)
-    CALL ControlLoop_ProblemGet(controlLoop,problem,err,error,*999)
+    CALL ControlLoop_TypeGet(controlLoop,cLoopType,err,error,*999)
     
-    SELECT CASE(controlLoop%loopType)
+    SELECT CASE(cLoopType)
     CASE(CONTROL_TIME_LOOP_TYPE)
-      IF(.NOT.ALLOCATED(problem%specification)) &
-        & CALL FlagError("Problem specification is not allocated.",err,error,*999)
-      IF(SIZE(problem%specification,1)<2) &
-        & CALL FlagError("Problem specification must have at least two entries for a fluid mechanics problem.",err,error,*999)
+      NULLIFY(problem)
+      CALL ControlLoop_ProblemGet(controlLoop,problem,err,error,*999)
+      CALL Problem_SpecificationGet(problem,2,pSpecification,err,error,*999)
       
-      SELECT CASE(problem%specification(2))
+      SELECT CASE(pSpecification(2))
       CASE(PROBLEM_STOKES_EQUATION_TYPE)
         !do nothing
       CASE(PROBLEM_NAVIER_STOKES_EQUATION_TYPE)
@@ -884,7 +873,7 @@ CONTAINS
         !do nothing
       CASE DEFAULT
         localError="The second problem specification of "// &
-          & TRIM(NumberToVString(problem%specification(2),"*",err,error))// &
+          & TRIM(NumberToVString(pSpecification(2),"*",err,error))// &
           & " is not valid for a fluid mechanics problem."
         CALL FlagError(localError,err,error,*999)
       END SELECT

@@ -231,13 +231,12 @@ CONTAINS
 
     ENTERS("NavierStokes_EquationsSetSpecificationSet",err,error,*999)
 
-    IF(.NOT.ASSOCIATED(equationsSet)) CALL FlagError("Equations set is not associated.",err,error,*999)
-    IF(ALLOCATED(equationsSet%specification)) CALL FlagError("Equations set specification is already associated.",err,error,*999)
     IF(SIZE(specification,1)<3) &
       & CALL FlagError("Equations set specification must have three entries for a Navier-Stokes type equations set.", &
       & err,error,*999)
     
     subtype=specification(3)
+    
     SELECT CASE(subtype)
     CASE(EQUATIONS_SET_STATIC_NAVIER_STOKES_SUBTYPE, &
       & EQUATIONS_SET_STATIC_RBS_NAVIER_STOKES_SUBTYPE, &
@@ -263,9 +262,8 @@ CONTAINS
     END SELECT
     
     !Set full specification
-    ALLOCATE(equationsSet%specification(3),STAT=err)
-    IF(err/=0) CALL FlagError("Could not allocate equations set specification.",err,error,*999)
-    equationsSet%specification(1:3)=[EQUATIONS_SET_FLUID_MECHANICS_CLASS,EQUATIONS_SET_NAVIER_STOKES_EQUATION_TYPE,subtype]
+    CALL EquationsSet_SpecificationSet(equationsSet,3,[EQUATIONS_SET_FLUID_MECHANICS_CLASS, &
+      & EQUATIONS_SET_NAVIER_STOKES_EQUATION_TYPE,subtype],err,error,*999)
 
     EXITS("NavierStokes_EquationsSetSpecificationSet")
     RETURN
@@ -2750,12 +2748,11 @@ CONTAINS
 
     ENTERS("NavierStokes_ProblemSpecificationSet",err,error,*999)
 
-    IF(.NOT.ASSOCIATED(problem)) CALL FlagError("Problem is not associated.",err,error,*999)
-    IF(ALLOCATED(problem%specification)) CALL FlagError("Problem specification is already allocated.",err,error,*999)
-     IF(SIZE(problemSpecification,1)<3) &
+    IF(SIZE(problemSpecification,1)<3) &
       & CALL FlagError("Navier-Stokes problem specification must have three entries.",err,error,*999)
     
     problemSubtype=problemSpecification(3)
+    
     SELECT CASE(problemSubtype)
     CASE(PROBLEM_STATIC_NAVIER_STOKES_SUBTYPE, &
       & PROBLEM_LAPLACE_NAVIER_STOKES_SUBTYPE, &
@@ -2781,9 +2778,8 @@ CONTAINS
       CALL FlagError(localError,err,error,*999)
     END SELECT
     
-    ALLOCATE(problem%specification(3),STAT=err)
-    IF(err/=0) CALL FlagError("Could not allocate problem specification.",err,error,*999)
-    problem%specification(1:3)=[PROBLEM_FLUID_MECHANICS_CLASS,PROBLEM_NAVIER_STOKES_EQUATION_TYPE,problemSubtype]
+    CALL Problem_SpecificationSet(problem,3,[PROBLEM_FLUID_MECHANICS_CLASS,PROBLEM_NAVIER_STOKES_EQUATION_TYPE, &
+      & problemSubtype],err,error,*999)
 
     EXITS("NavierStokes_ProblemSpecificationSet")
     RETURN

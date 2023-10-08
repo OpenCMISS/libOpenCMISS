@@ -1407,8 +1407,6 @@ CONTAINS
 
     ENTERS("ReactionDiffusion_EquationsSetSpecificationSet",err,error,*999)
 
-    IF(.NOT.ASSOCIATED(equationsSet)) CALL FlagError("Equations set is not associated.",err,error,*999)
-    IF(ALLOCATED(equationsSet%specification)) CALL FlagError("Equations set specification is already allocated.",err,error,*999)    
     IF(SIZE(specification,1)<3) THEN
       localError="The size of the specified specification array of "// &
         & TRIM(NumberToVString(SIZE(specification,1),"*",err,error))//" is invalid. The size should be >= 3."
@@ -1416,6 +1414,7 @@ CONTAINS
     END IF
     
     subtype=specification(3)
+    
     SELECT CASE(subtype)
     CASE(EQUATIONS_SET_CELLML_SPLIT_GEN_REACT_DIFF_SUBTYPE, &
       & EQUATIONS_SET_CELLML_NOSPLIT_LINEAR_GEN_REACT_DIFF_SUBTYPE, &
@@ -1428,10 +1427,10 @@ CONTAINS
         & " is not valid for reaction diffusion equation type of a classical equations set class."
       CALL FlagError(localError,err,error,*999)
     END SELECT
+    
     !Set full specification
-    ALLOCATE(equationsSet%specification(3),stat=err)
-    IF(err/=0) CALL FlagError("Could not allocate equations set specification.",err,error,*999)
-    equationsSet%specification(1:3)=[EQUATIONS_SET_CLASSICAL_FIELD_CLASS,EQUATIONS_SET_REACTION_DIFFUSION_EQUATION_TYPE,subtype]
+    CALL EquationsSet_SpecificationSet(equationsSet,3,[EQUATIONS_SET_CLASSICAL_FIELD_CLASS, &
+      & EQUATIONS_SET_REACTION_DIFFUSION_EQUATION_TYPE,subtype],err,error,*999)
 
     EXITS("ReactionDiffusion_EquationsSetSpecificationSet")
     RETURN
@@ -2758,8 +2757,6 @@ CONTAINS
 
     ENTERS("ReactionDiffusion_ProblemSpecificationSet",err,error,*999)
 
-    IF(.NOT.ASSOCIATED(problem)) CALL FlagError("Problem is not associated.",err,error,*999)
-    IF(ALLOCATED(problem%specification)) CALL FlagError("Problem specification is already allocated.",err,error,*999)
     IF(SIZE(problemSpecification,1)<3) THEN
       localError="The size of the specified problem specification array of "// &
         & TRIM(NumberToVString(SIZE(problemSpecification,1),"*",err,error))// &
@@ -2768,6 +2765,7 @@ CONTAINS
     ENDIF
     
     problemSubtype=problemSpecification(3)
+    
     SELECT CASE(problemSubtype)
     CASE(PROBLEM_CELLML_GUDUNOV_SPLIT_REACT_DIFF_SUBTYPE, &
       & PROBLEM_CELLML_STRANG_SPLIT_REACT_DIFF_SUBTYPE, &
@@ -2783,9 +2781,9 @@ CONTAINS
         & " is not valid for a reaction-diffusion problem type of a classical problem class."
       CALL FlagError(localError,err,error,*999)
     END SELECT
-    ALLOCATE(problem%specification(3),stat=err)
-    IF(err/=0) CALL FlagError("Could not allocate problem specification.",err,error,*999)
-    problem%specification(1:3)=[PROBLEM_CLASSICAL_FIELD_CLASS,PROBLEM_REACTION_DIFFUSION_EQUATION_TYPE,problemSubtype]
+    
+    CALL Problem_SpecificationSet(problem,3,[PROBLEM_CLASSICAL_FIELD_CLASS,PROBLEM_REACTION_DIFFUSION_EQUATION_TYPE, &
+      & problemSubtype],err,error,*999)
  
     EXITS("ReactionDiffusion_ProblemSpecificationSet")
     RETURN

@@ -61,6 +61,9 @@ MODULE ProblemAccessRoutines
 
   !Module parameters
 
+  !Problem specification
+  INTEGER(INTG), PARAMETER :: PROBLEM_SPECIFICATION_NULL=(-HUGE(1_INTG))
+
   !Problem Classes
   INTEGER(INTG), PARAMETER :: PROBLEM_NO_CLASS=0  
   INTEGER(INTG), PARAMETER :: PROBLEM_ELASTICITY_CLASS=1
@@ -320,6 +323,13 @@ MODULE ProblemAccessRoutines
     MODULE PROCEDURE Problem_SolverEquationsGet1
   END INTERFACE Problem_SolverEquationsGet
 
+  INTERFACE Problem_SpecificationSet
+    MODULE PROCEDURE Problem_SpecificationSet0
+    MODULE PROCEDURE Problem_SpecificationSet1
+  END INTERFACE Problem_SpecificationSet
+
+  PUBLIC PROBLEM_SPECIFICATION_NULL
+  
   PUBLIC PROBLEM_NO_CLASS,PROBLEM_ELASTICITY_CLASS,PROBLEM_FLUID_MECHANICS_CLASS,PROBLEM_ELECTROMAGNETICS_CLASS, &
     & PROBLEM_CLASSICAL_FIELD_CLASS,PROBLEM_BIOELECTRICS_CLASS,PROBLEM_MODAL_CLASS,PROBLEM_FITTING_CLASS, &
     & PROBLEM_OPTIMISATION_CLASS,PROBLEM_MULTI_PHYSICS_CLASS
@@ -449,7 +459,7 @@ MODULE ProblemAccessRoutines
 
   PUBLIC Problem_SolverEquationsGet
 
-  PUBLIC Problem_SpecificationGet
+  PUBLIC Problem_SpecificationGet, Problem_SpecificationSet
 
   PUBLIC Problem_SpecificationSizeGet
 
@@ -1018,6 +1028,80 @@ CONTAINS
     RETURN 1
     
   END SUBROUTINE Problem_SpecificationGet
+
+  !
+  !================================================================================================================================
+  !
+
+  !>Sets the problem specification i.e., problem class, type and subtype for an problem.
+  SUBROUTINE Problem_SpecificationSet0(problem,specificationLength,problemSpecification,err,error,*)
+
+    !Argument variables
+    TYPE(ProblemType), POINTER :: problem !<A pointer to the problem to set the specification for
+    INTEGER(INTG), INTENT(IN) :: specificationLength !<The  number of problem specification identifiers to set. 
+    INTEGER(INTG), INTENT(IN) :: problemSpecification !<The problem specifcation to set. The problem specification parameter should have been already checked before entry.
+    INTEGER(INTG), INTENT(OUT) :: err !<The error code
+    TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
+    !Local Variables
+
+    ENTERS("Problem_SpecificationSet0",err,error,*999)
+
+    CALL Problem_SpecificationSet1(problem,1,[problemSpecification],err,error,*999)
+
+    EXITS("Problem_SpecificationSet0")
+    RETURN
+999 ERRORSEXITS("Problem_SpecificationSet0",err,error)
+    RETURN 1
+    
+  END SUBROUTINE Problem_SpecificationSet0
+
+  !
+  !================================================================================================================================
+  !
+
+  !>Sets the problem specification i.e., problem class, type and subtype for an problem.
+  SUBROUTINE Problem_SpecificationSet1(problem,specificationLength,problemSpecifications,err,error,*)
+
+    !Argument variables
+    TYPE(ProblemType), POINTER :: problem !<A pointer to the problem to set the specification for
+    INTEGER(INTG), INTENT(IN) :: specificationLength !<The  number of problem specification identifiers to set. 
+    INTEGER(INTG), INTENT(IN) :: problemSpecifications(:) !<problemSpecifications(specificationIdx). The problem specifcation array to set. Must be at least of size specificationLength. The problem specification parameters should have been already checked on entry.
+    INTEGER(INTG), INTENT(OUT) :: err !<The error code
+    TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
+    !Local Variables
+#ifdef WITH_PRECHECKS
+    TYPE(VARYING_STRING) :: localError
+#endif    
+
+    ENTERS("Problem_SpecificationSet1",err,error,*999)
+   
+#ifdef WITH_PRECHECKS    
+    IF(.NOT.ASSOCIATED(problem)) CALL FlagError("Problem is not associated.",err,error,*999)
+    IF(ALLOCATED(problem%specification)) CALL FlagError("Problem specification is already allocated.",err,error,*999)
+    IF(specificationLength<1) THEN
+      localError="The given specification length of "//TRIM(NumberToVString(specificationLength,"*",err,error))// &
+        & " is too small. The specification length should be >= 1."
+      CALL FlagError(localError,err,error,*999)
+    ENDIF
+    IF(SIZE(problemSpecifications,1)<specificationLength) THEN
+      localError="The size of the problem specifications array of "// &
+        & TRIM(NumberToVString(SIZE(problemSpecifications,1),"*",err,error))//" is too small. The given specification length is"// &
+        & TRIM(NumberToVString(specificationLength,"*",err,error))//"."
+       CALL FlagError(localError,err,error,*999)
+    ENDIF
+#endif
+    
+    ALLOCATE(problem%specification(specificationLength),STAT=err)
+    IF(err/=0) CALL FlagError("Could not allocate problem specification.",err,error,*999)
+    problem%specification=PROBLEM_SPECIFICATION_NULL
+    problem%specification(1:specificationLength)=problemSpecifications(1:specificationLength)
+
+    EXITS("Problem_SpecificationSet1")
+    RETURN
+999 ERRORSEXITS("Problem_SpecificationSet1",err,error)
+    RETURN 1
+    
+  END SUBROUTINE Problem_SpecificationSet1
 
   !
   !================================================================================================================================

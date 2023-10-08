@@ -26,7 +26,7 @@
 !> Auckland, the University of Oxford and King's College, London.
 !> All Rights Reserved.
 !>
-!> Contributor(s):
+!> Contributor(s): Chris Bradley
 !>
 !> Alternatively, the contents of this file may be used under the terms of
 !> either the GNU General Public License Version 2 or later (the "GPL"), or
@@ -58,6 +58,9 @@ MODULE EquationsSetAccessRoutines
   PRIVATE
 
   !Module parameters
+  
+  !Equations set specification
+  INTEGER(INTG), PARAMETER :: EQUATIONS_SET_SPECIFICATION_NULL=(-HUGE(1_INTG))
   
   !Equations set classes
   INTEGER(INTG), PARAMETER :: EQUATIONS_SET_NO_CLASS=0
@@ -578,6 +581,14 @@ MODULE EquationsSetAccessRoutines
     MODULE PROCEDURE EquationsSet_LabelSetVS
   END INTERFACE EquationsSet_LabelSet
 
+
+  INTERFACE EquationsSet_SpecificationSet
+    MODULE PROCEDURE EquationsSet_SpecificationSet0
+    MODULE PROCEDURE EquationsSet_SpecificationSet1
+  END INTERFACE EquationsSet_SpecificationSet
+
+  PUBLIC EQUATIONS_SET_SPECIFICATION_NULL
+
   PUBLIC EQUATIONS_SET_NO_CLASS
 
   PUBLIC EQUATIONS_SET_ELASTICITY_CLASS,EQUATIONS_SET_FLUID_MECHANICS_CLASS,EQUATIONS_SET_ELECTROMAGNETICS_CLASS, &
@@ -921,7 +932,7 @@ MODULE EquationsSetAccessRoutines
   
   PUBLIC EquationsSet_SourceFieldGet
 
-  PUBLIC EquationsSet_SpecificationGet
+  PUBLIC EquationsSet_SpecificationGet,EquationsSet_SpecificationSet
   
   PUBLIC EquationsSet_SpecificationSizeGet
 
@@ -3889,6 +3900,88 @@ END SUBROUTINE EquationsSet_GlobalNumberGet
     RETURN 1
     
   END SUBROUTINE EquationsSet_SpecificationGet
+
+  !
+  !================================================================================================================================
+  !
+
+  !>Sets the equations set specification i.e., equations set class, type and subtype for an equations set.
+  SUBROUTINE EquationsSet_SpecificationSet0(equationsSet,specificationLength,equationsSetSpecification,err,error,*)
+
+    !Argument variables
+    TYPE(EquationsSetType), POINTER :: equationsSet !<A pointer to the equations set to set the specification for
+    INTEGER(INTG), INTENT(IN) :: specificationLength !<The minimum number of equations set specification identifiers to set.
+    INTEGER(INTG), INTENT(IN) :: equationsSetSpecification !<The equations set specifcation to set. Must be at least of size specificationLength. The equations set specification parameters should have been already checked on entry.
+    INTEGER(INTG), INTENT(OUT) :: err !<The error code
+    TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
+    !Local Variables
+
+    ENTERS("EquationsSet_SpecificationSet0",err,error,*999)
+
+    CALL EquationsSet_SpecificationSet1(equationsSet,1,[equationsSetSpecification],err,error,*999)
+    
+    EXITS("EquationsSet_SpecificationSet0")
+    RETURN
+999 ERRORSEXITS("EquationsSet_SpecificationSet0",err,error)
+    RETURN 1
+    
+  END SUBROUTINE EquationsSet_SpecificationSet0
+
+  !
+  !================================================================================================================================
+  !
+
+  !>Sets the equations set specification i.e., equations set class, type and subtype for an equations set.
+  SUBROUTINE EquationsSet_SpecificationSet1(equationsSet,specificationLength,equationsSetSpecifications,err,error,*)
+
+    !Argument variables
+    TYPE(EquationsSetType), POINTER :: equationsSet !<A pointer to the equations set to set the specification for
+    INTEGER(INTG), INTENT(IN) :: specificationLength !<The minimum number of equations set specification identifiers to set.
+    INTEGER(INTG), INTENT(IN) :: equationsSetSpecifications(:) !<The equations set specifcation array to set. Must be at least of size specificationLength. The equations set specification parameters should have been already checked on entry.
+    INTEGER(INTG), INTENT(OUT) :: err !<The error code
+    TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
+    !Local Variables
+#ifdef WITH_PRECHECKS
+    TYPE(VARYING_STRING) :: localError
+#endif    
+
+    ENTERS("EquationsSet_SpecificationSet1",err,error,*999)
+   
+#ifdef WITH_PRECHECKS    
+    IF(.NOT.ASSOCIATED(equationsSet)) CALL FlagError("Equations set is not associated.",err,error,*999)
+    IF(ALLOCATED(equationsSet%specification)) THEN
+      localError="The specification array has already been allocated for equations set number "// &
+        & TRIM(NumberToVString(equationsSet%userNumber,"*",err,error))
+      IF(ASSOCIATED(equationsSet%region)) &
+        & localError=localError//" of region number "//TRIM(NumberToVString(equationsSet%region%userNumber,"*",err,error))
+      localError=localError//"."
+      CALL FlagError(localError,err,error,*999)
+    ENDIF
+    IF(specificationLength<1) THEN
+      localError="The given specification length of "//TRIM(NumberToVString(specificationLength,"*",err,error))// &
+        & " is too small. The specification length should be >= 1."
+      CALL FlagError(localError,err,error,*999)
+    ENDIF
+    IF(SIZE(equationsSetSpecifications,1)<specificationLength) THEN
+      localError="The size of the equations set specifications array of "// &
+        & TRIM(NumberToVString(SIZE(equationsSetSpecifications,1),"*",err,error))// &
+        & " is too small. The given specification length is"// &
+        & TRIM(NumberToVString(specificationLength,"*",err,error))//"."
+       CALL FlagError(localError,err,error,*999)
+    ENDIF
+#endif
+        
+    ALLOCATE(equationsSet%specification(specificationLength),STAT=err)
+    IF(err/=0) CALL FlagError("Could not allocate equations set specification.",err,error,*999)
+    equationsSet%specification=EQUATIONS_SET_SPECIFICATION_NULL
+    equationsSet%specification(1:specificationLength)=equationsSetSpecifications(1:specificationLength)
+
+    EXITS("EquationsSet_SpecificationSet1")
+    RETURN
+999 ERRORSEXITS("EquationsSet_SpecificationSet1",err,error)
+    RETURN 1
+    
+  END SUBROUTINE EquationsSet_SpecificationSet1
 
   !
   !================================================================================================================================

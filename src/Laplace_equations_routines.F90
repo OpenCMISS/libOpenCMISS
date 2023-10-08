@@ -1572,13 +1572,12 @@ CONTAINS
 
     ENTERS("Laplace_EquationsSetSpecificationSet",err,error,*999)
 
-    IF(.NOT.ASSOCIATED(equationsSet)) CALL FlagError("Equations set is not associated.",err,error,*999)
-    IF(ALLOCATED(equationsSet%specification)) CALL FlagError("Equations set specification is already allocated.",err,error,*999)
     IF(SIZE(specification,1)<3) &
       & CALL FlagError("Equations set specification must have at least three entries for a Laplace type equations set.", &
       & err,error,*999)
     
     subtype=specification(3)
+    
     SELECT CASE(subtype)
     CASE(EQUATIONS_SET_STANDARD_LAPLACE_SUBTYPE, &
       & EQUATIONS_SET_GENERALISED_LAPLACE_SUBTYPE, &
@@ -1591,9 +1590,8 @@ CONTAINS
     END SELECT
     
     !Set full specification
-    ALLOCATE(equationsSet%specification(3),stat=err)
-    IF(err/=0) CALL FlagError("Could not allocate equations set specification.",err,error,*999)
-    equationsSet%specification(1:3)=[EQUATIONS_SET_CLASSICAL_FIELD_CLASS,EQUATIONS_SET_LAPLACE_EQUATION_TYPE,subtype]
+    CALL EquationsSet_SpecificationSet(equationsSet,3,[EQUATIONS_SET_CLASSICAL_FIELD_CLASS, &
+      & EQUATIONS_SET_LAPLACE_EQUATION_TYPE,subtype],err,error,*999)
 
     EXITS("Laplace_EquationsSetSpecificationSet")
     RETURN
@@ -1780,8 +1778,6 @@ CONTAINS
 
     ENTERS("Laplace_ProblemSpecificationSet",err,error,*999)
 
-    IF(.NOT.ASSOCIATED(problem)) CALL FlagError("Problem is not associated.",err,error,*999)
-    IF(ALLOCATED(problem%specification)) CALL FlagError("Problem specification is already allocated.",err,error,*999)
     IF(SIZE(problemSpecification,1)<3) THEN
       localError="The size of the specified problem specification array of "// &
         & TRIM(NumberToVString(SIZE(problemSpecification,1),"*",err,error))// &
@@ -1790,6 +1786,7 @@ CONTAINS
     ENDIF
      
     problemSubtype=problemSpecification(3)
+    
     SELECT CASE(problemSubtype)
     CASE(PROBLEM_STANDARD_LAPLACE_SUBTYPE)
       !ok
@@ -1799,9 +1796,8 @@ CONTAINS
       CALL FlagError(localError,err,error,*999)
     END SELECT
     
-    ALLOCATE(problem%specification(3),stat=err)
-    IF(err/=0) CALL FlagError("Could not allocate problem specification.",err,error,*999)
-    problem%specification(1:3)=[PROBLEM_CLASSICAL_FIELD_CLASS,PROBLEM_LAPLACE_EQUATION_TYPE,PROBLEM_STANDARD_LAPLACE_SUBTYPE]
+    CALL Problem_SpecificationSet(problem,3,[PROBLEM_CLASSICAL_FIELD_CLASS,PROBLEM_LAPLACE_EQUATION_TYPE,problemSubType], &
+      & err,error,*999)
  
     EXITS("Laplace_ProblemSpecificationSet")
     RETURN

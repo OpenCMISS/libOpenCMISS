@@ -322,8 +322,6 @@ CONTAINS
 
     ENTERS("Poiseuille_EquationsSetSpecificationSet",err,error,*999)
 
-    IF(.NOT.ASSOCIATED(equationsSet)) CALL FlagError("Equations set is not associated.",err,error,*999)
-    IF(ALLOCATED(equationsSet%specification)) CALL FlagError("Equations set specification is already allocated.",err,error,*999)
     IF(SIZE(specification,1)<3) THEN
       localError="The size of the specified specification array of "// &
         & TRIM(NumberToVString(SIZE(specification,1),"*",err,error))//" is invalid. The size should be >= 3."
@@ -331,6 +329,7 @@ CONTAINS
     END IF
     
     subtype=specification(3)
+    
     SELECT CASE(subtype)
     CASE(EQUATIONS_SET_STATIC_POISEUILLE_SUBTYPE, &
       & EQUATIONS_SET_DYNAMIC_POISEUILLE_SUBTYPE)
@@ -340,10 +339,10 @@ CONTAINS
         & " is not valid for a Poiseuille equation type of a fluid mechanics equations set class."
       CALL FlagError(localError,err,error,*999)
     END SELECT
+    
     !Set full specification
-    ALLOCATE(equationsSet%specification(3),stat=err)
-    IF(err/=0) CALL FlagError("Could not allocate equations set specification.",err,error,*999)
-    equationsSet%specification(1:3)=[EQUATIONS_SET_FLUID_MECHANICS_CLASS,EQUATIONS_SET_POISEUILLE_EQUATION_TYPE,subtype]
+    CALL EquationsSet_SpecificationSet(equationsSet,3,[EQUATIONS_SET_FLUID_MECHANICS_CLASS, &
+      & EQUATIONS_SET_POISEUILLE_EQUATION_TYPE,subtype],err,error,*999)
 
     EXITS("Poiseuille_EquationsSetSpecificationSet")
     RETURN
@@ -874,31 +873,27 @@ CONTAINS
 
     ENTERS("Poiseuille_ProblemSpecificationSet",err,error,*999)
 
-    IF(ASSOCIATED(problem)) THEN
-      IF(SIZE(problemSpecification,1)==3) THEN
-        problemSubtype=problemSpecification(3)
-        SELECT CASE(problemSubtype)
-        CASE(PROBLEM_STATIC_POISEUILLE_SUBTYPE, &
-            & PROBLEM_DYNAMIC_POISEUILLE_SUBTYPE)
-          !ALl ok
-        CASE DEFAULT
-          localError="The third problem specification of "//TRIM(NumberToVstring(problemSubtype,"*",err,error))// &
-            & " is not valid for a Poiseuille fluid mechanics problem."
-          CALL FlagError(localError,err,error,*999)
-        END SELECT
-        IF(ALLOCATED(problem%specification)) THEN
-          CALL FlagError("Problem specification is already allocated.",err,error,*999)
-        ELSE
-          ALLOCATE(problem%specification(3),stat=err)
-          IF(err/=0) CALL FlagError("Could not allocate problem specification.",err,error,*999)
-        END IF
-        problem%specification(1:3)=[PROBLEM_FLUID_MECHANICS_CLASS,PROBLEM_POISEUILLE_EQUATION_TYPE,problemSubtype]
-      ELSE
-        CALL FlagError("Poiseuille problem specification must have three entries.",err,error,*999)
-      END IF
-    ELSE
-      CALL FlagError("Problem is not associated.",err,error,*999)
-    END IF
+    IF(SIZE(problemSpecification,1)<3) THEN
+      localError="The size of the specified problem specification array of "// &
+        & TRIM(NumberToVString(SIZE(problemSpecification,1),"*",err,error))// &
+        & " is invalid. The size should be >= 3."
+      CALL FlagError(localError,err,error,*999)
+    ENDIF
+    
+    problemSubtype=problemSpecification(3)
+    
+    SELECT CASE(problemSubtype)
+    CASE(PROBLEM_STATIC_POISEUILLE_SUBTYPE, &
+      & PROBLEM_DYNAMIC_POISEUILLE_SUBTYPE)
+      !ALl ok
+    CASE DEFAULT
+      localError="The third problem specification of "//TRIM(NumberToVstring(problemSubtype,"*",err,error))// &
+        & " is not valid for a Poiseuille fluid mechanics problem."
+      CALL FlagError(localError,err,error,*999)
+    END SELECT
+    
+    CALL Problem_SpecificationSet(problem,3,[PROBLEM_FLUID_MECHANICS_CLASS,PROBLEM_POISEUILLE_EQUATION_TYPE,problemSubtype], &
+      & err,error,*999)
 
     EXITS("Poiseuille_ProblemSpecificationSet")
     RETURN

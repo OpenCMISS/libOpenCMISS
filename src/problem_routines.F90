@@ -828,7 +828,7 @@ CONTAINS
     CALL ComputationEnvironment_WorldWorkGroupGet(computationEnvironment,worldWorkGroup,err,error,*999)
     newProblem%workGroup=>worldWorkGroup
     !Set problem specification
-    CALL Problem_SpecificationSet(newProblem,problemSpecification,err,error,*999)
+    CALL Problem_ProblemSpecificationSet(newProblem,problemSpecification,err,error,*999)
     !For compatibility with old code, set class, type and subtype
     newProblem%problemFinished=.FALSE.
     !Initialise the problem setup information
@@ -2730,8 +2730,8 @@ CONTAINS
 
   !>Solves a solver for a problem.
   SUBROUTINE Problem_SolverSolve(solver,err,error,*)
-
-   !Argument variables
+    
+    !Argument variables
     TYPE(SolverType), POINTER :: solver !<A pointer to the solver to solve
     INTEGER(INTG), INTENT(OUT) :: err !<The error code
     TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
@@ -3562,7 +3562,7 @@ CONTAINS
   !
 
   !>Sets the problem specification
-  SUBROUTINE Problem_SpecificationSet(problem,problemSpecification,err,error,*)
+  SUBROUTINE Problem_ProblemSpecificationSet(problem,problemSpecification,err,error,*)
 
     !Argument variables
     TYPE(ProblemType), POINTER :: problem !<A pointer to the problem to set the specification for.
@@ -3573,7 +3573,7 @@ CONTAINS
     INTEGER(INTG) :: problemClass,specificationIdx
     TYPE(VARYING_STRING) :: localError
 
-    ENTERS("Problem_SpecificationSet",err,error,*999)
+    ENTERS("Problem_ProblemSpecificationSet",err,error,*999)
 
     CALL Problem_AssertNotFinished(problem,err,error,*999)
     IF(SIZE(problemSpecification,1)<1) CALL FlagError("Problem specification array must have one or more entries.",err,error,*999)
@@ -3603,19 +3603,19 @@ CONTAINS
       CALL FlagError(localError,err,error,*999)
     END SELECT
     !Set the specification length
-    problem%specificationLength=0
+    problem%specificationLength=SIZE(problem%specification,1)
     DO specificationIdx=1,SIZE(problem%specification,1)
-      IF(problem%specification(specificationIdx)>0) THEN
-        problem%specificationLength=specificationIdx
+      IF(problem%specification(specificationIdx)==PROBLEM_SPECIFICATION_NULL) THEN
+        problem%specificationLength=specificationIdx-1
       ENDIF
     ENDDO !specificationIdx
 
-    EXITS("Problem_SpecificationSet")
+    EXITS("Problem_ProblemSpecificationSet")
     RETURN
-999 ERRORSEXITS("Problem_SpecificationSet",err,error)
+999 ERRORSEXITS("Problem_ProblemSpecificationSet",err,error)
     RETURN 1
     
-  END SUBROUTINE Problem_SpecificationSet
+  END SUBROUTINE Problem_ProblemSpecificationSet
 
   !
   !================================================================================================================================

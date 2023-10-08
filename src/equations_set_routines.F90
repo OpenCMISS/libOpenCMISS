@@ -2026,7 +2026,7 @@ CONTAINS
     CALL EquationsSet_FieldRegionSetupCheck(newEquationsSet,"equations set",equationsSetFieldUserNumber,equationsSetField, &
       & err,error,*999)
     !Set the equations set class, type and subtype
-    CALL EquationsSet_SpecificationSet(newEquationsSet,equationsSetSpecification,err,error,*999)
+    CALL EquationsSet_EquationsSetSpecificationSet(newEquationsSet,equationsSetSpecification,err,error,*999)
     newEquationsSet%equationsSetFinished=.FALSE.
     !Initialise the setup
     newEquationsSet%equationsField%equationsSetFieldAutoCreated=(.NOT.ASSOCIATED(equationsSetField))
@@ -5099,8 +5099,8 @@ CONTAINS
   !================================================================================================================================
   !
 
-  !>Sets/changes the equations set specification i.e., equations set class, type and subtype for an equations set. \see OpenCMISS::Iron::cmfe_EquationsSet_SpecificationSet
-  SUBROUTINE EquationsSet_SpecificationSet(equationsSet,specification,err,error,*)
+  !>Sets/changes the equations set specification i.e., equations set class, type and subtype for an equations set. 
+  SUBROUTINE EquationsSet_EquationsSetSpecificationSet(equationsSet,specification,err,error,*)
 
     !Argument variables
     TYPE(EquationsSetType), POINTER :: equationsSet !<A pointer to the equations set to set the specification for
@@ -5111,7 +5111,7 @@ CONTAINS
     INTEGER(INTG) :: specificationIdx
     TYPE(VARYING_STRING) :: localError
 
-    ENTERS("EquationsSet_SpecificationSet",err,error,*999)
+    ENTERS("EquationsSet_EquationsSetSpecificationSet",err,error,*999)
 
     CALL EquationsSet_AssertNotFinished(equationsSet,err,error,*999)
     IF(SIZE(specification,1)<1) CALL FlagError("Equations set specification must have at least one entry.",err,error,*999)
@@ -5149,20 +5149,20 @@ CONTAINS
       CALL FlagError(localError,err,error,*999)
     END SELECT
     !Set the specification length
-    equationsSet%specificationLength=0
+    equationsSet%specificationLength=SIZE(equationsSet%specification,1)
     DO specificationIdx=1,SIZE(equationsSet%specification,1)
-      IF(equationsSet%specification(specificationIdx)>0) THEN
-        equationsSet%specificationLength=specificationIdx
+      IF(equationsSet%specification(specificationIdx)==EQUATIONS_SET_SPECIFICATION_NULL) THEN
+        equationsSet%specificationLength=specificationIdx-1
       ENDIF
     ENDDO !specificationIdx
     
-    EXITS("EquationsSet_SpecificationSet")
+    EXITS("EquationsSet_EquationsSetSpecificationSet")
     RETURN
-999 ERRORS("EquationsSet_SpecificationSet",err,error)
-    EXITS("EquationsSet_SpecificationSet")
+999 ERRORS("EquationsSet_EquationsSetSpecificationSet",err,error)
+    EXITS("EquationsSet_EquationsSetSpecificationSet")
     RETURN 1
     
-  END SUBROUTINE EquationsSet_SpecificationSet
+  END SUBROUTINE EquationsSet_EquationsSetSpecificationSet
   
   !
   !================================================================================================================================

@@ -691,16 +691,14 @@ CONTAINS
     INTEGER(INTG), INTENT(OUT) :: err !<The error code
     TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
     !Local Variables
+    INTEGER(INTG) :: pSpecification(2)    
     TYPE(VARYING_STRING) :: localError
     
     ENTERS("ClassicalField_ProblemSetup",err,error,*999)
 
-    IF(.NOT.ASSOCIATED(problem)) CALL FlagError("Problem is not associated.",err,error,*999)
-    IF(.NOT.ALLOCATED(problem%SPECIFICATION)) CALL FlagError("Problem specification is not allocated.",err,error,*999)
-    IF(SIZE(problem%specification,1)<2) &
-      & CALL FlagError("Problem specification must have at least two entries for a classical field problem.",err,error,*999)
-    
-    SELECT CASE(problem%specification(2))
+    CALL Problem_SpecificationGet(problem,2,pSpecification,err,error,*999)
+   
+    SELECT CASE(pSpecification(2))
     CASE(PROBLEM_LAPLACE_EQUATION_TYPE)
       CALL Laplace_ProblemSetup(problem,problemSetup,err,error,*999)
     CASE(PROBLEM_POISSON_EQUATION_TYPE)
@@ -722,7 +720,7 @@ CONTAINS
     CASE(PROBLEM_HJ_EQUATION_TYPE)
       CALL HamiltonJacobi_ProblemSetup(problem,problemSetup,err,error,*999)
     CASE DEFAULT
-      localError="Problem type "//TRIM(NumberToVString(problem%specification(2),"*",err,error))// &
+      localError="Problem type "//TRIM(NumberToVString(pSpecification(2),"*",err,error))// &
         & " is not valid for a classical field problem class."
       CALL FlagError(localError,err,error,*999)
     END SELECT
