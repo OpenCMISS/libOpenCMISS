@@ -1187,7 +1187,8 @@ CONTAINS
   !
 
   !>Returns the adjacent element number for a mesh element identified by a global number. \see OpenCMISS::Iron::cmfe_MeshElements_AdjacentElementGet
-  SUBROUTINE MeshElements_ElementAdjacentElementGet(meshElements,globalElementNumber,adjacentElementXi,adjacentGlobalNumber,err,error,*)
+  SUBROUTINE MeshElements_ElementAdjacentElementGet(meshElements,globalElementNumber,adjacentElementXi, &
+    & adjacentGlobalNumber,err,error,*)
 
     !Argument variables
     TYPE(MeshElementsType), POINTER :: meshElements !<A pointer to the elements of a mesh component from which to get the adjacent element from.
