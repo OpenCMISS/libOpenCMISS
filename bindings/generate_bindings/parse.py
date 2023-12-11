@@ -511,7 +511,7 @@ class Subroutine(CodeObject):
             param_pattern = r"""
             # parameter type at start of line, followed by possible type
             # info, eg DP or SP in brackets
-                ^\s*([A-Z_]+\s*(\(([A-Z_=,\*0-9]+)\))?)
+                ^\s*([A-Z_]+\s*(\(([A-Z_=\s,\*0-9]+)\))?)
             # extra specifications such as intent or pointer
                 \s*([A-Z0-9\s_\(\):,\s]+)?\s*
                 ::
