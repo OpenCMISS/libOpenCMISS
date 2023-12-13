@@ -5559,7 +5559,7 @@ CONTAINS
             ENDDO !conditionIdx
           ELSE
             !Calculate the new load, keep the current load
-            DO conditionIdx=1,pressureIncrementedCount
+            DO pressureIncIdx=1,pressureIncrementedCount
               !This is global dof idx
               CALL BoundaryConditionsPressureInc_PressureIncDOFIndexGet(pressureIncrementedBoundaryConditions,pressureIncIdx, &
                 & globalPressureIncDOFIdx,err,error,*999)
@@ -5573,7 +5573,6 @@ CONTAINS
                   prevLoad=prevLoads(localPressureIncDOFIdx)
                   currentLoad=currentLoads(localPressureIncDOFIdx)
                   newLoad=currentLoad+(currentLoad-prevLoad)  !This may be subject to numerical errors...
-                  !if (conditionIdx==1) write(*,*) "new load=",new_load
                   !Update current and previous loads
                   CALL FieldVariable_ParameterSetUpdateLocalDOF(dependentVariable,FIELD_PRESSURE_VALUES_SET_TYPE, &
                     & localPressureIncDOFIdx,newLoad,err,error,*999)
@@ -5587,7 +5586,7 @@ CONTAINS
                   ENDIF
                 ENDIF !Non-ghost dof
               ENDIF !Current domain
-            ENDDO !conditionIdx
+            ENDDO !presureIncIdx
           ENDIF
           !Start transfer of dofs to neighbouring domains
           CALL FieldVariable_ParameterSetUpdateStart(dependentVariable,FIELD_PREVIOUS_PRESSURE_SET_TYPE,err,error,*999)
