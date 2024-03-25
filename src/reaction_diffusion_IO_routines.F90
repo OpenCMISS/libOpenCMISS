@@ -106,6 +106,7 @@ CONTAINS
     REAL(DP), POINTER :: dependentParameterData(:),geometricParameterData(:),sourceParameterData(:)
     LOGICAL :: outputSource
     CHARACTER(50) :: intgString,intgString2
+    CHARACTER(MAXSTRLEN) :: fmtString
     TYPE(BasisType), POINTER :: elementBasis
     TYPE(ComputationEnvironmentType), POINTER :: computationEnvironment
     TYPE(ContextType), POINTER :: context
@@ -200,14 +201,13 @@ CONTAINS
 
       OPEN(UNIT=myWorldComputationNodeNumber, FILE=CHAR(filename),STATUS='unknown')
       !Write header information
-      WRITE(myWorldComputationNodeNumber,*) 'Group name: Cell'
-      WRITE(intgString,'(I0)') numberOfOutputFields
-      WRITE(myWorldComputationNodeNumber,*) '#Fields=',TRIM(intgString)
+      fmtString='("Group name: '//TRIM(region%label)//'")'
+      WRITE(myWorldComputationNodeNumber,fmtString)
+      WRITE(myWorldComputationNodeNumber,'("#Fields=",I0)') numberOfOutputFields
 
       valueIndex=1
-      WRITE(intgString,'(I0)') numberOfDimensions
-      WRITE(myWorldComputationNodeNumber,*) &
-        & ' 1) coordinates,  coordinate, rectangular cartesian, #Components=',TRIM(intgString)
+      fmtString='(" 1) Coordinates, coordinate, rectangular cartesian, #Components=",I0)'
+      WRITE(myWorldComputationNodeNumber,fmtString) numberOfDimensions
       DO dimensionIdx=1,numberOfDimensions
         IF(dimensionIdx==1) THEN
           WRITE(intgString,'(I0)') valueIndex
@@ -222,10 +222,8 @@ CONTAINS
         valueIndex=valueIndex+1
       ENDDO !dimensionsIdx
 
-      WRITE(intgString,'(I0)') numberOfVariableComponents
-      WRITE(myWorldComputationNodeNumber,*) ' 2) dependent, field, rectangular cartesian, #Components=', &
-        & TRIM(intgString)
-
+      fmtString='(" 2) '//TRIM(depdendentVariable%variableLabel)//', field, rectangular cartesian, #Components=",I0)'
+      WRITE(myWorldComputationNodeNumber,fmtString) numberOfVariableComponents
       DO componentIdx=1,numberOfVariableComponents
         WRITE(intgString,'(I0)') valueIndex
         WRITE(intgString2,'(I0)') componentIdx
@@ -235,9 +233,8 @@ CONTAINS
       ENDDO !componentIdx
 
       IF(outputSource) THEN !Watch out that no numbering conflict occurs with Analytic: 4.)
-        WRITE(intgString,'(I0)') numberOfSourceComponents
-        WRITE(myWorldComputationNodeNumber,*) ' 3) source, field, rectangular cartesian, #Components=', &
-          & TRIM(intgString)
+        fmtString='(" 3) '//TRIM(sourceVariable%variableLabel)//', field, rectangular cartesian, #Components=",I0)'
+        WRITE(myWorldComputationNodeNumber,fmtString) numberOfSourceComponents
         DO componentIdx=1,numberOfSourceComponents
           WRITE(intgString,'(I0)') valueIndex
           WRITE(intgString2,'(I0)') componentIdx
@@ -295,7 +292,8 @@ CONTAINS
         CALL WriteString(GENERAL_OUTPUT_TYPE,"Writing Elements...",err,error,*999)
         filename="./output/"//TRIM(name)//".exelem"
         OPEN(UNIT=myWorldComputationNodeNumber, FILE=CHAR(filename),STATUS='unknown')
-        WRITE(myWorldComputationNodeNumber,*) 'World name: Cell'
+        fmtString='("Group name: '//TRIM(region%label)//'")'
+        WRITE(myWorldComputationNodeNumber,fmtString)
         IF (basisShapeType==BASIS_LAGRANGE_HERMITE_TP_TYPE) THEN !lagrange basis in 1 and 2D
           WRITE(intgString,'(I0)') numberOfDimensions
           WRITE(myWorldComputationNodeNumber,*) 'Shape.  Dimension= ',TRIM(intgString)
@@ -387,17 +385,14 @@ CONTAINS
         numberOfFieldComponents(3) = numberOfSourceComponents
         DO fieldIdx=1,numberOfOutputFields
           IF(fieldIdx==1)THEN
-            WRITE(intgString,'(I0)') numberOfDimensions
-            WRITE(myWorldComputationNodeNumber,*) &
-              & ' 1) coordinates,  coordinate, rectangular cartesian, #Components= ',TRIM(intgString)
+            fmtString='(" 1) Coordinates, coordinate, rectangular cartesian, #Components=",I0)'
+            WRITE(myWorldComputationNodeNumber,fmtString) numberOfDimensions
           ELSE IF(fieldIdx==2) THEN
-            WRITE(intgString,'(I0)') numberOfVariableComponents
-            WRITE(myWorldComputationNodeNumber,*) &
-              & ' 2) dependent,  field,  rectangular cartesian, #Components= ',TRIM(intgString)
+            fmtString='(" 2) '//TRIM(depdendentVariable%variableLabel)//', field, rectangular cartesian, #Components=",I0)'
+            WRITE(myWorldComputationNodeNumber,fmtString) numberOfVariableComponents
           ELSE IF(fieldIdx==3) THEN
-            WRITE(intgString,'(I0)') numberOfSourceComponents
-            WRITE(myWorldComputationNodeNumber,*) &
-              & ' 3) source,  field,  rectangular cartesian, #Components= ',TRIM(intgString)
+            fmtString='(" 3) '//TRIM(sourceVariable%variableLabel)//', field, rectangular cartesian, #Components=",I0)'
+            WRITE(myWorldComputationNodeNumber,fmtString) numberOfSourceComponents
           ENDIF
 
           DO componentIdx=1,numberOfFieldComponents(fieldIdx)
