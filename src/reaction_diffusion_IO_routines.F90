@@ -51,6 +51,7 @@ MODULE ReactionDiffusionIORoutines
  USE ComputationRoutines
  USE ComputationAccessRoutines
  USE ContextAccessRoutines
+ USE Constants
  USE DecompositionAccessRoutines
  USE DomainMappings
  USE EquationsSetAccessRoutines
@@ -106,7 +107,7 @@ CONTAINS
     REAL(DP), POINTER :: dependentParameterData(:),geometricParameterData(:),sourceParameterData(:)
     LOGICAL :: outputSource
     CHARACTER(50) :: intgString,intgString2
-    CHARACTER(MAXSTRLEN) :: fmtString
+    CHARACTER(LEN=MAXSTRLEN) :: fmtString
     TYPE(BasisType), POINTER :: elementBasis
     TYPE(ComputationEnvironmentType), POINTER :: computationEnvironment
     TYPE(ContextType), POINTER :: context
@@ -222,7 +223,7 @@ CONTAINS
         valueIndex=valueIndex+1
       ENDDO !dimensionsIdx
 
-      fmtString='(" 2) '//TRIM(depdendentVariable%variableLabel)//', field, rectangular cartesian, #Components=",I0)'
+      fmtString='(" 2) '//TRIM(dependentVariable%variableLabel)//', field, rectangular cartesian, #Components=",I0)'
       WRITE(myWorldComputationNodeNumber,fmtString) numberOfVariableComponents
       DO componentIdx=1,numberOfVariableComponents
         WRITE(intgString,'(I0)') valueIndex
@@ -388,7 +389,7 @@ CONTAINS
             fmtString='(" 1) Coordinates, coordinate, rectangular cartesian, #Components=",I0)'
             WRITE(myWorldComputationNodeNumber,fmtString) numberOfDimensions
           ELSE IF(fieldIdx==2) THEN
-            fmtString='(" 2) '//TRIM(depdendentVariable%variableLabel)//', field, rectangular cartesian, #Components=",I0)'
+            fmtString='(" 2) '//TRIM(dependentVariable%variableLabel)//', field, rectangular cartesian, #Components=",I0)'
             WRITE(myWorldComputationNodeNumber,fmtString) numberOfVariableComponents
           ELSE IF(fieldIdx==3) THEN
             fmtString='(" 3) '//TRIM(sourceVariable%variableLabel)//', field, rectangular cartesian, #Components=",I0)'
