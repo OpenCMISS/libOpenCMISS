@@ -13557,16 +13557,21 @@ CONTAINS
     INTEGER(INTG), INTENT(OUT) :: err !<The error code
     TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
     !Local Variables
-    INTEGER(INTG) :: basisFamilyType,componentIdx,derivativeIdx,element,elementIdx,index,indexMatch,interpolationType, &
-      & localElementNumber,localNode,localNodeIdx,nodePositionIdx,numberOfAdjacentElements,numberOfDimensions, &
-      & numberOfElements,numberOfNodesXiC(4),numberOfSurroundingElements,numberOfXi,numberOfXiCoordinates,tangentIdx, &
-      & tangentXiIdx,xiCoordIdx,xiIdx
+    INTEGER(INTG) :: basisFamilyType,componentIdx,derivativeIdx,element,elementIdx,faceIdx,faceNode,index,indexMatch, &
+      & interpolationType,lineIdx,lineNode,localElementNumber,localNode,localNodeIdx,nodeFaceNumber,nodeLineNumber, &
+      & nodePositionIdx,numberOfAdjacentElements,numberOfDimensions,numberOfDomainDimensions,numberOfElements,numberOfNodeFaces, &
+      & numberOfNodeLines,numberOfNodesXiC(4),numberOfNormals,numberOfSurroundingElements,numberOfTangents,numberOfXi, &
+      & numberOfXiCoordinates,tangentIdx,tangentXiIdx,xiCoordIdx,xiIdx
     REAL(DP) :: dXdXi(3,3),vector1(3),vector2(3),xi(3)
-    LOGICAL :: boundaryNode
+    LOGICAL :: boundaryFace,boundaryLine,boundaryNode
     TYPE(BasisType), POINTER :: basis
     TYPE(DomainType), POINTER :: domain
     TYPE(DomainElementType), POINTER :: domainElement
     TYPE(DomainElementsType), POINTER :: domainElements
+    TYPE(DomainFacesType), POINTER :: domainFaces
+    TYPE(DomainLineType), POINTER :: domainLine
+    TYPE(DomainLinesType), POINTER :: domainLines
+    TYPE(DomainFaceType), POINTER :: domainFace
     TYPE(DomainNodeType), POINTER :: domainNode
     TYPE(DomainNodesType), POINTER :: domainNodes
     TYPE(DomainTopologyType), POINTER :: domainTopology
@@ -13582,7 +13587,7 @@ CONTAINS
 
     ENTERS("Field_PositionNormalTangentsCalculateNode",err,error,*999)
 
-   CALL Field_AssertIsFinished(field,err,error,*999)
+    CALL Field_AssertIsFinished(field,err,error,*999)
     
     NULLIFY(geometricField)
     CALL Field_GeometricFieldGet(field,geometricField,err,error,*999)
@@ -13612,6 +13617,7 @@ CONTAINS
     ENDIF       
     NULLIFY(domain)
     CALL FieldVariable_ComponentDomainGet(fieldVariable,componentNumber,domain,err,error,*999)
+    CALL Domain_NumberOfDimensionsGet(domain,numberOfDomainDimensions,err,error,*999)
     NULLIFY(domainTopology)
     CALL Domain_DomainTopologyGet(domain,domainTopology,err,error,*999)
     NULLIFY(decomposition)
@@ -13662,134 +13668,315 @@ CONTAINS
       NULLIFY(interpolatedPoint)
       CALL Field_InterpolatedPointInitialise(interpolationParameters,interpolatedPoint,err,error,*999)
       CALL DomainNode_BoundaryNodeGet(domainNode,boundaryNode,err,error,*999)
-      CALL DomainNode_NumberOfSurroundingElementsGet(domainNode,numberOfSurroundingElements,err,error,*999)
-      numberOfElements=0
-      DO elementIdx=1,numberOfSurroundingElements
-        CALL DomainNode_SurroundingElementGet(domainNode,elementIdx,localElementNumber,err,error,*999)
-        NULLIFY(domainElement)
-        CALL DomainElements_ElementGet(domainElements,localElementNumber,domainElement,err,error,*999)
-        NULLIFY(decompositionElement)
-        CALL DecompositionElements_ElementGet(decompositionElements,localElementNumber,decompositionElement,err,error,*999)
-        NULLIFY(basis)
-        CALL DomainElement_BasisGet(domainElement,basis,err,error,*999)
-        CALL Basis_NumberOfXiGet(basis,numberOfXi,err,error,*999)
-        CALL Basis_NumberOfXiCoordinatesGet(basis,numberOfXiCoordinates,err,error,*999)
-        CALL Basis_TypeGet(basis,basisFamilyType,err,error,*999)
-        !Find local node number in the basis
-        CALL DomainElement_NodeLocalNodeGet(domainElement,localNodeNumber,localNode,err,error,*999)
-        !Find the xi position of the node in the element. In most cases this will be 0,1.0 etc
-        ! but in some cases the geometric field may not contain this node in which case xi can be
-        ! arbitrary
-        CALL Basis_LocalNodeXiCalculate(basis,localNode,xi,err,error,*999)
-        !Interpolate the geometric field at the xi position.
-        CALL Field_InterpolationParametersElementGet(FIELD_VALUES_SET_TYPE,localElementNumber,interpolationParameters, &
-          & err,error,*999)
-        CALL Field_InterpolateXi(FIRST_PART_DERIV,xi(1:numberOfXi),interpolatedPoint,err,error,*999)
-        !Grab the position. This shouldn't vary between elements so do it once only
-        IF(elementIdx==1) position(1:numberOfDimensions)=interpolatedPoint%values(1:numberOfDimensions,NO_PART_DERIV)
-        !Get dXdXi
-        !\todo: What if the surrounding elements have different number of xi? then dXdXi will be different in size.
-        !       Which one do we return in that case?
-        DO componentIdx=1,numberOfDimensions
-          DO xiIdx=1,numberOfXi
-            derivativeIdx=PARTIAL_DERIVATIVE_FIRST_DERIVATIVE_MAP(xiIdx) !2,4,7
-            dXdXi(componentIdx,xiIdx)=interpolatedPoint%values(componentIdx,derivativeIdx) !dx/dxi
-          ENDDO !xiIdx
-        ENDDO !componentIdx
-        !Calculate the tangents and normal vectors
-        IF(boundaryNode) THEN
-          SELECT CASE(basisFamilyType)
-          CASE(BASIS_LAGRANGE_HERMITE_TP_TYPE)            
-            !Calculate tangents from dXdXi: which xi corresponds to normal direction?
-            CALL Basis_NumberOfNodesXiCGet(basis,numberOfNodesXiC,err,error,*999)
-            DO xiCoordIdx=-numberOfXiCoordinates,numberOfXiCoordinates
-              CALL DecompositionElement_NumberAdjacentGet(decompositionElement,ABS(xiCoordIdx),numberOfAdjacentElements, &
-                & err,error,*999)
-              IF(numberOfAdjacentElements==0) THEN
-                IF(xiCoordIdx>0) THEN
-                  indexMatch=numberOfNodesXiC(ABS(xiCoordIdx))
-                ELSE IF(xiCoordIdx<0) THEN
-                  indexMatch=1
-                ENDIF
-                CALL Basis_NodePositionIndexGet(basis,localNode,ABS(xiCoordIdx),nodePositionIdx,err,error,*999)
-                IF(nodePositionIdx==indexMatch) THEN
-                  !1D/2D/3D: tangents and normal
-                  SELECT CASE(numberOfXi)
-                  CASE(1)
-                    !There are no tangents.
-                    vector1(1:numberOfDimensions)=dXdXi(1:numberOfDimensions,1)
-                    CALL Normalise(vector1(1:numberOfDimensions),vector1(1:numberOfDimensions),err,error,*999)
-                    normal(1:numberOfDimensions)=normal(1:numberOfDimensions)+vector1(1:numberOfDimensions)
-                  CASE(2)
-                    !One tangent vector, one normal vector
-                    tangentXiIdx=OTHER_XI_DIRECTIONS2(ABS(xiCoordIdx))
-                    vector1(1:numberOfDimensions)=dXdXi(1:numberOfDimensions,tangentXiIdx)
-                    CALL Normalise(vector1(1:numberOfDimensions),vector1(1:numberOfDimensions),err,error,*999)
-                    tangents(1:numberOfDimensions,1)=tangents(1:numberOfDimensions,1)+vector1(1:numberOfDimensions)
-                    !Normal is the other component in dXdXi (correct?) Ensure the direction is outward
-                    vector1(1:numberOfDimensions)=dXdXi(1:numberOfDimensions,ABS(xiCoordIdx))
-                    IF(xiCoordIdx<0) vector1=-vector1
-                    CALL Normalise(vector1(1:numberOfDimensions),vector1(1:numberOfDimensions),err,error,*999)
-                    normal(1:numberOfDimensions)=normal(1:numberOfDimensions)+vector1(1:numberOfDimensions)
-                  CASE(3)
-                    !Two tangent vectors, one normal vector
-                    tangents=0.0_DP
-                    tangentXiIdx=OTHER_XI_DIRECTIONS3(ABS(xiCoordIdx),2,1)
-                    vector1(1:numberOfDimensions)=dXdXi(1:numberOfDimensions,1)
-                    CALL Normalise(vector1(1:numberOfDimensions),vector1(1:numberOfDimensions),err,error,*999)
-                    tangents(1:numberOfDimensions,1)=tangents(1:numberOfDimensions,1)+vector1(1:numberOfDimensions)
-                    tangentXiIdx=OTHER_XI_DIRECTIONS3(ABS(xiCoordIdx),3,1)
-                    vector2(1:numberOfDimensions)=dXdXi(1:numberOfDimensions,tangentXiIdx)
-                    CALL Normalise(vector2(1:numberOfDimensions),vector2(1:numberOfDimensions),err,error,*999)
-                    tangents(1:numberOfDimensions,2)=tangents(1:numberOfDimensions,2)+vector2(1:numberOfDimensions)
-                    !Calculate the normal vector
-                    CALL CrossProduct(vector1(1:numberOfDimensions),vector2(1:numberOfDimensions), &
-                      & vector1(1:numberOfDimensions),err,error,*999)
-                    !Yes below is compicated, but that's what it takes to get the normals pointing outwards
-                    IF(xiCoordIdx<0) vector1=-vector1
-                    IF(ABS(xiCoordIdx)==2) vector1=-vector1
-                    normal(1:numberOfDimensions)=normal(1:numberOfDimensions)+vector1(1:numberOfDimensions)
-                  CASE DEFAULT
-                    !Should never happen anyway
-                  END SELECT
-                  numberOfElements=numberOfElements+1
-                ENDIF
+      IF(boundaryNode) THEN
+        numberOftangents=0
+        numberOfNormals=0
+        SELECT CASE(numberOfDomainDimensions)
+        CASE(1)
+          !1D domain, no tangents, just a position
+          CALL DomainNode_NumberOfSurroundingElementsGet(domainNode,numberOfSurroundingElements,err,error,*999)
+          DO elementIdx=1,numberOfSurroundingElements
+            CALL DomainNode_SurroundingElementGet(domainNode,elementIdx,localElementNumber,err,error,*999)
+            NULLIFY(domainElement)
+            CALL DomainElements_ElementGet(domainElements,localElementNumber,domainElement,err,error,*999)
+            NULLIFY(decompositionElement)
+            CALL DecompositionElements_ElementGet(decompositionElements,localElementNumber,decompositionElement,err,error,*999)
+            NULLIFY(basis)
+            CALL DomainElement_BasisGet(domainElement,basis,err,error,*999)
+            CALL Basis_NumberOfXiGet(basis,numberOfXi,err,error,*999)
+            CALL Basis_NumberOfXiCoordinatesGet(basis,numberOfXiCoordinates,err,error,*999)
+            !Find local node number in the basis
+            CALL DomainElement_NodeLocalNodeGet(domainElement,localNodeNumber,localNode,err,error,*999)
+            !Find the xi position of the node in the element. In most cases this will be 0,1.0 etc
+            !but in some cases the geometric field may not contain this node in which case xi can be
+            !arbitrary
+            CALL Basis_LocalNodeXiCalculate(basis,localNode,xi,err,error,*999)
+            !Interpolate the geometric field at the xi position.
+            CALL Field_InterpolationParametersElementGet(FIELD_VALUES_SET_TYPE,localElementNumber,interpolationParameters, &
+              & err,error,*999)
+            CALL Field_InterpolateXi(FIRST_PART_DERIV,xi(1:numberOfXi),interpolatedPoint,err,error,*999)
+            !Grab the position. This shouldn't vary between elements so do it once only
+            IF(elementIdx==1) position(1:numberOfDimensions)=interpolatedPoint%values(1:numberOfDimensions,NO_PART_DERIV)
+          ENDDO !ElementIdx
+        CASE(2)
+          !2D domain, one tangent and one normal
+          NULLIFY(domainLines)
+          CALL DomainTopology_DomainLinesGet(domainTopology,domainLines,err,error,*999)
+          !Loop over the lines around this node.
+          CALL DomainNode_NumberOfNodeLinesGet(domainNode,numberOfNodeLines,err,error,*999)
+          DO lineIdx=1,numberOfNodeLines
+            CALL DomainNode_NodeLineGet(domainNode,lineIdx,nodeLineNumber,err,error,*999)
+            NULLIFY(domainLine)
+            CALL DomainLines_LineGet(domainLines,nodeLineNumber,domainLine,err,error,*999)
+            !See if it is a boundary line
+            CALL DomainLine_BoundaryLineGet(domainLine,boundaryLine,err,error,*999)
+            IF(boundaryLine) THEN
+              !The line through the node is on the boundary so compute tangent and normal. The tangent is in the direction of dXdXi
+              !and the normal is, by definition, a clockwise 90 degree rotation of the tangent.
+              NULLIFY(basis)
+              CALL DomainLine_BasisGet(domainLine,basis,err,error,*999)
+              !Find the local node position in the line
+              CALL DomainLine_NodeLocalNodeGet(domainLine,localNodeNumber,lineNode,err,error,*999)
+              IF(lineNode==0) THEN
+                localError="Could not find the node number "//TRIM(NumberToVString(localNodeNumber,"*",err,error))// &
+                  & " in line number "//TRIM(NumberToVString(nodeLineNumber,"*",err,error))// &
+                  & " in the field with component number "//TRIM(NumberToVString(componentNumber,"*",err,error))// &
+                  & " of variable type "//TRIM(NumberToVString(variableType,"*",err,error))//" of field number "// &
+                  & TRIM(NumberToVString(field%userNumber,"*",err,error))//"."
+                CALL FlagError(localError,err,error,*999)
               ENDIF
-            ENDDO !xiCoordIdx
-          CASE(BASIS_SIMPLEX_TYPE)
-            CALL FlagError("Not implemented.",err,error,*999)
-          CASE(BASIS_SERENDIPITY_TYPE)
-            CALL FlagError("Not implemented.",err,error,*999)
-          CASE(BASIS_AUXILLIARY_TYPE)
-            CALL FlagError("Not implemented.",err,error,*999)
-          CASE(BASIS_B_SPLINE_TP_TYPE)
-            CALL FlagError("Not implemented.",err,error,*999)
-          CASE(BASIS_FOURIER_LAGRANGE_HERMITE_TP_TYPE)
-            CALL FlagError("Not implemented.",err,error,*999)
-          CASE(BASIS_EXTENDED_LAGRANGE_TP_TYPE)
-            CALL FlagError("Not implemented.",err,error,*999)
-          CASE DEFAULT
-            localError="The basis type of "//TRIM(NumberToVString(basis%type,"*",err,error))//" is invalid."
-            CALL FlagError(localError,err,error,*999)
-          END SELECT
-        ELSE
-          !Node is internal to the mesh. Assign zero normal and compute tangents only
-          DO tangentIdx=1,numberOfXi
-            vector1(1:numberOfDimensions)=dXdXi(1:numberOfDimensions,tangentIdx)
-            CALL Normalise(vector1(1:numberOfDimensions),vector1(1:numberOfDimensions),err,error,*999)
-            tangents(1:numberOfDimensions,tangentIdx)=tangents(1:numberOfDimensions,tangentIdx)+vector1(1:numberOfDimensions)
-          ENDDO !tangentIdx
-          numberOfElements=numberOfElements+1
-        ENDIF
-      ENDDO !elementIdx
+              !Find the xi position of the node in the element. In most cases this will be 0,1.0 etc
+              ! but in some cases the geometric field may not contain this node in which case xi can be
+              ! arbitrary
+              CALL Basis_LocalNodeXiCalculate(basis,lineNode,xi,err,error,*999)
+              !Interpolate the geometric field at the xi position.
+              CALL Field_InterpolationParametersLineGet(FIELD_VALUES_SET_TYPE,nodeLineNumber,interpolationParameters, &
+                & err,error,*999)
+              CALL Field_InterpolateXi(FIRST_PART_DERIV,xi(1:1),interpolatedPoint,err,error,*999)
+              !Grab the position. This shouldn't vary between lines
+              position(1:numberOfDimensions)=interpolatedPoint%values(1:numberOfDimensions,NO_PART_DERIV)
+              vector1(1:numberOfDimensions)=interpolatedPoint%values(1:numberOfDimensions,FIRST_PART_DERIV)
+              CALL Normalise(vector1(1:numberOfDimensions),vector1(1:numberOfDimensions),err,error,*999)
+              tangents(1:numberOfDimensions,1)=tangents(1:numberOfDimensions,1)+vector1(1:numberOfDimensions)
+              numberOfTangents=numberOfTangents+1
+              !Rotate vector 90 degrees clockward. Just take first two components for now.
+              vector1(numberOfDimensions)=interpolatedPoint%values(numberOfDimensions,FIRST_PART_DERIV)
+              vector1(1)=interpolatedPoint%values(2,FIRST_PART_DERIV)
+              vector1(2)=-1.0_DP*interpolatedPoint%values(1,FIRST_PART_DERIV)
+              CALL Normalise(vector1(1:2),vector1(1:2),err,error,*999)
+              normal(1:numberOfDimensions)=normal(1:numberOfDimensions)+vector1(1:numberOfDimensions)
+              numberOfNormals=numberOfNormals+1           
+            ENDIF
+          ENDDO !lineIdx
+        CASE(3)
+          !3D domain, two tangents and one normal
+          NULLIFY(domainFaces)
+          CALL DomainTopology_DomainFacesGet(domainTopology,domainFaces,err,error,*999)
+          !Loop over the faces around this node.
+          CALL DomainNode_NumberOfNodeFacesGet(domainNode,numberOfNodeFaces,err,error,*999)
+          DO faceIdx=1,numberOfNodeFaces
+            CALL DomainNode_NodeFaceGet(domainNode,faceIdx,nodeFaceNumber,err,error,*999)
+            NULLIFY(domainFace)
+            CALL DomainFaces_FaceGet(domainFaces,nodeFaceNumber,domainFace,err,error,*999)
+            !See if it is a boundary face
+            CALL DomainFace_BoundaryFaceGet(domainFace,boundaryFace,err,error,*999)
+            IF(boundaryFace) THEN
+              !The face through the node is on the boundary so compute
+              !tangents and normal. The tangents are given by dxdxi
+              !and the normal is the cross product of these two.
+              NULLIFY(basis)
+              CALL DomainFace_BasisGet(domainFace,basis,err,error,*999)
+              !Find the local node position in the line
+              CALL DomainFace_NodeLocalNodeGet(domainFace,localNodeNumber,faceNode,err,error,*999)
+              IF(faceNode==0) THEN
+                localError="Could not find the node number "//TRIM(NumberToVString(localNodeNumber,"*",err,error))// &
+                  & " in face number "//TRIM(NumberToVString(nodeFaceNumber,"*",err,error))// &
+                  & " in the field with component number "//TRIM(NumberToVString(componentNumber,"*",err,error))// &
+                  & " of variable type "//TRIM(NumberToVString(variableType,"*",err,error))//" of field number "// &
+                  & TRIM(NumberToVString(field%userNumber,"*",err,error))//"."
+                CALL FlagError(localError,err,error,*999)
+              ENDIF
+              !Find the xi position of the node in the element. In most cases this will be 0,1.0 etc
+              !but in some cases the geometric field may not contain this node in which case xi can be
+              !arbitrary
+              CALL Basis_LocalNodeXiCalculate(basis,faceNode,xi,err,error,*999)
+              !Interpolate the geometric field at the xi position.
+              CALL Field_InterpolationParametersFaceGet(FIELD_VALUES_SET_TYPE,nodeFaceNumber,interpolationParameters, &
+                & err,error,*999)
+              CALL Field_InterpolateXi(FIRST_PART_DERIV,xi(1:2),interpolatedPoint,err,error,*999)
+              !Grab the position. This shouldn't vary between lines
+              position(1:numberOfDimensions)=interpolatedPoint%values(1:numberOfDimensions,NO_PART_DERIV)
+              vector1(1:numberOfDimensions)=interpolatedPoint%values(1:numberOfDimensions,PART_DERIV_S1)
+              CALL Normalise(vector1(1:numberOfDimensions),vector1(1:numberOfDimensions),err,error,*999)
+              tangents(1:numberOfDimensions,1)=tangents(1:numberOfDimensions,1)+vector1(1:numberOfDimensions)
+              vector2(1:numberOfDimensions)=interpolatedPoint%values(1:numberOfDimensions,PART_DERIV_S2)
+              CALL Normalise(vector2(1:numberOfDimensions),vector2(1:numberOfDimensions),err,error,*999)
+              tangents(1:numberOfDimensions,2)=tangents(1:numberOfDimensions,2)+vector2(1:numberOfDimensions)
+              numberOfTangents=numberOfTangents+1
+              !Compute normal from the cross product
+              CALL CrossProduct(vector1(1:numberOfDimensions),vector2(1:numberOfDimensions), &
+                & vector1(1:numberOfDimensions),err,error,*999)
+              CALL Normalise(vector1(1:2),vector1(1:2),err,error,*999)
+              normal(1:numberOfDimensions)=normal(1:numberOfDimensions)+vector1(1:numberOfDimensions)
+              numberOfNormals=numberOfNormals+1           
+            ENDIF
+          ENDDO !faceIdx
+        CASE DEFAULT
+          localError="The number of domain dimensions of "//TRIM(NumberToVString(numberOfDomainDimensions,"*",err,error))// &
+            & " is invalid for component number "//TRIM(NumberToVString(componentNumber,"*",err,error))//" of variable type "// &
+            & TRIM(NumberToVString(variableType,"*",err,error))//" of field number "// &
+            & TRIM(NumberToVString(field%userNumber,"*",err,error))//". The local node number must be >= 1 and <= 3."
+          CALL FlagError(localError,err,error,*999) 
+        END SELECT
+      ELSE
+        CALL DomainNode_NumberOfSurroundingElementsGet(domainNode,numberOfSurroundingElements,err,error,*999)
+        DO elementIdx=1,numberOfSurroundingElements
+          CALL DomainNode_SurroundingElementGet(domainNode,elementIdx,localElementNumber,err,error,*999)
+          NULLIFY(domainElement)
+          CALL DomainElements_ElementGet(domainElements,localElementNumber,domainElement,err,error,*999)
+          NULLIFY(decompositionElement)
+          CALL DecompositionElements_ElementGet(decompositionElements,localElementNumber,decompositionElement,err,error,*999)
+          NULLIFY(basis)
+          CALL DomainElement_BasisGet(domainElement,basis,err,error,*999)
+          CALL Basis_NumberOfXiGet(basis,numberOfXi,err,error,*999)
+          CALL Basis_NumberOfXiCoordinatesGet(basis,numberOfXiCoordinates,err,error,*999)
+          CALL Basis_TypeGet(basis,basisFamilyType,err,error,*999)
+          !Find local node number in the basis
+          CALL DomainElement_NodeLocalNodeGet(domainElement,localNodeNumber,localNode,err,error,*999)
+          !Find the xi position of the node in the element. In most cases this will be 0,1.0 etc
+          ! but in some cases the geometric field may not contain this node in which case xi can be
+          ! arbitrary
+          CALL Basis_LocalNodeXiCalculate(basis,localNode,xi,err,error,*999)
+          !Interpolate the geometric field at the xi position.
+          CALL Field_InterpolationParametersElementGet(FIELD_VALUES_SET_TYPE,localElementNumber,interpolationParameters, &
+            & err,error,*999)
+          CALL Field_InterpolateXi(FIRST_PART_DERIV,xi(1:numberOfXi),interpolatedPoint,err,error,*999)
+          !Grab the position. This shouldn't vary between elements so do it once only
+          IF(elementIdx==1) position(1:numberOfDimensions)=interpolatedPoint%values(1:numberOfDimensions,NO_PART_DERIV)
+        ENDDO !ElementIdx
+      ENDIF
+      ! CALL DomainNode_NumberOfSurroundingElementsGet(domainNode,numberOfSurroundingElements,err,error,*999)
+      ! numberOfElements=0
+      ! DO elementIdx=1,numberOfSurroundingElements
+      !   CALL DomainNode_SurroundingElementGet(domainNode,elementIdx,localElementNumber,err,error,*999)
+      !   NULLIFY(domainElement)
+      !   CALL DomainElements_ElementGet(domainElements,localElementNumber,domainElement,err,error,*999)
+      !   NULLIFY(decompositionElement)
+      !   CALL DecompositionElements_ElementGet(decompositionElements,localElementNumber,decompositionElement,err,error,*999)
+      !   NULLIFY(basis)
+      !   CALL DomainElement_BasisGet(domainElement,basis,err,error,*999)
+      !   CALL Basis_NumberOfXiGet(basis,numberOfXi,err,error,*999)
+      !   CALL Basis_NumberOfXiCoordinatesGet(basis,numberOfXiCoordinates,err,error,*999)
+      !   CALL Basis_TypeGet(basis,basisFamilyType,err,error,*999)
+      !   !Find local node number in the basis
+      !   CALL DomainElement_NodeLocalNodeGet(domainElement,localNodeNumber,localNode,err,error,*999)
+      !   !Find the xi position of the node in the element. In most cases this will be 0,1.0 etc
+      !   ! but in some cases the geometric field may not contain this node in which case xi can be
+      !   ! arbitrary
+      !   CALL Basis_LocalNodeXiCalculate(basis,localNode,xi,err,error,*999)
+      !   !Interpolate the geometric field at the xi position.
+      !   CALL Field_InterpolationParametersElementGet(FIELD_VALUES_SET_TYPE,localElementNumber,interpolationParameters, &
+      !     & err,error,*999)
+      !   CALL Field_InterpolateXi(FIRST_PART_DERIV,xi(1:numberOfXi),interpolatedPoint,err,error,*999)
+      !   !Grab the position. This shouldn't vary between elements so do it once only
+      !   IF(elementIdx==1) position(1:numberOfDimensions)=interpolatedPoint%values(1:numberOfDimensions,NO_PART_DERIV)
+      !   !Get dXdXi
+      !   !\todo: What if the surrounding elements have different number of xi? then dXdXi will be different in size.
+      !   !       Which one do we return in that case?
+      !   DO componentIdx=1,numberOfDimensions
+      !     DO xiIdx=1,numberOfXi
+      !       derivativeIdx=PARTIAL_DERIVATIVE_FIRST_DERIVATIVE_MAP(xiIdx) !2,4,7
+      !       dXdXi(componentIdx,xiIdx)=interpolatedPoint%values(componentIdx,derivativeIdx) !dx/dxi
+      !     ENDDO !xiIdx
+      !   ENDDO !componentIdx
+      !   !Calculate the tangents and normal vectors
+      !   IF(boundaryNode) THEN
+      !     SELECT CASE(basisFamilyType)
+      !     CASE(BASIS_LAGRANGE_HERMITE_TP_TYPE)            
+      !       !Calculate tangents from dXdXi: which xi corresponds to normal direction?
+      !       CALL Basis_NumberOfNodesXiCGet(basis,numberOfNodesXiC,err,error,*999)
+      !       DO xiCoordIdx=-numberOfXiCoordinates,numberOfXiCoordinates
+      !         CALL DecompositionElement_NumberAdjacentGet(decompositionElement,ABS(xiCoordIdx),numberOfAdjacentElements, &
+      !           & err,error,*999)
+      !         IF(numberOfAdjacentElements==0) THEN
+      !           IF(xiCoordIdx>0) THEN
+      !             indexMatch=numberOfNodesXiC(ABS(xiCoordIdx))
+      !           ELSE IF(xiCoordIdx<0) THEN
+      !             indexMatch=1
+      !           ENDIF
+      !           CALL Basis_NodePositionIndexGet(basis,localNode,ABS(xiCoordIdx),nodePositionIdx,err,error,*999)
+      !           IF(nodePositionIdx==indexMatch) THEN
+      !             !1D/2D/3D: tangents and normal
+      !             SELECT CASE(numberOfXi)
+      !             CASE(1)
+      !               !There are no tangents.
+      !               vector1(1:numberOfDimensions)=dXdXi(1:numberOfDimensions,1)
+      !               CALL Normalise(vector1(1:numberOfDimensions),vector1(1:numberOfDimensions),err,error,*999)
+      !               normal(1:numberOfDimensions)=normal(1:numberOfDimensions)+vector1(1:numberOfDimensions)
+      !             CASE(2)
+      !               !One tangent vector, one normal vector
+      !               tangentXiIdx=OTHER_XI_DIRECTIONS2(ABS(xiCoordIdx))
+      !               vector1(1:numberOfDimensions)=dXdXi(1:numberOfDimensions,tangentXiIdx)
+      !               CALL Normalise(vector1(1:numberOfDimensions),vector1(1:numberOfDimensions),err,error,*999)
+      !               tangents(1:numberOfDimensions,1)=tangents(1:numberOfDimensions,1)+vector1(1:numberOfDimensions)
+      !               !Normal is the other component in dXdXi (correct?) Ensure the direction is outward
+      !               vector1(1:numberOfDimensions)=dXdXi(1:numberOfDimensions,ABS(xiCoordIdx))
+      !               IF(xiCoordIdx<0) vector1=-vector1
+      !               CALL Normalise(vector1(1:numberOfDimensions),vector1(1:numberOfDimensions),err,error,*999)
+      !               normal(1:numberOfDimensions)=normal(1:numberOfDimensions)+vector1(1:numberOfDimensions)
+      !             CASE(3)
+      !               !Two tangent vectors, one normal vector
+      !               tangents=0.0_DP
+      !               tangentXiIdx=OTHER_XI_DIRECTIONS3(ABS(xiCoordIdx),2,1)
+      !               vector1(1:numberOfDimensions)=dXdXi(1:numberOfDimensions,1)
+      !               CALL Normalise(vector1(1:numberOfDimensions),vector1(1:numberOfDimensions),err,error,*999)
+      !               tangents(1:numberOfDimensions,1)=tangents(1:numberOfDimensions,1)+vector1(1:numberOfDimensions)
+      !               tangentXiIdx=OTHER_XI_DIRECTIONS3(ABS(xiCoordIdx),3,1)
+      !               vector2(1:numberOfDimensions)=dXdXi(1:numberOfDimensions,tangentXiIdx)
+      !               CALL Normalise(vector2(1:numberOfDimensions),vector2(1:numberOfDimensions),err,error,*999)
+      !               tangents(1:numberOfDimensions,2)=tangents(1:numberOfDimensions,2)+vector2(1:numberOfDimensions)
+      !               !Calculate the normal vector
+      !               CALL CrossProduct(vector1(1:numberOfDimensions),vector2(1:numberOfDimensions), &
+      !                 & vector1(1:numberOfDimensions),err,error,*999)
+      !               !Yes below is compicated, but that's what it takes to get the normals pointing outwards
+      !               IF(xiCoordIdx<0) vector1=-vector1
+      !               IF(ABS(xiCoordIdx)==2) vector1=-vector1
+      !               normal(1:numberOfDimensions)=normal(1:numberOfDimensions)+vector1(1:numberOfDimensions)
+      !             CASE DEFAULT
+      !               !Should never happen anyway
+      !             END SELECT
+      !             numberOfElements=numberOfElements+1
+      !           ENDIF
+      !         ENDIF
+      !       ENDDO !xiCoordIdx
+      !     CASE(BASIS_SIMPLEX_TYPE)
+      !       CALL FlagError("Not implemented.",err,error,*999)
+      !       !Loop over the lines, faces that have this local node. If it is a boundary face calculate normal and tangents
+      !       SELECT CASE(numberOfXi)
+      !       CASE(1)
+      !         !There are no tangents.
+      !         vector1(1:numberOfDimensions)=dXdXi(1:numberOfDimensions,1)
+      !         CALL Normalise(vector1(1:numberOfDimensions),vector1(1:numberOfDimensions),err,error,*999)
+      !         normal(1:numberOfDimensions)=normal(1:numberOfDimensions)+vector1(1:numberOfDimensions)
+      !       CASE(2)
+      !         !Loop over the lines
+              
+      !         DO localLineIdx=1,
+      !       CASE(3)
+      !       CASE DEFAULT
+      !       END SELECT
+      !     CASE(BASIS_SERENDIPITY_TYPE)
+      !       CALL FlagError("Not implemented.",err,error,*999)
+      !     CASE(BASIS_AUXILLIARY_TYPE)
+      !       CALL FlagError("Not implemented.",err,error,*999)
+      !     CASE(BASIS_B_SPLINE_TP_TYPE)
+      !       CALL FlagError("Not implemented.",err,error,*999)
+      !     CASE(BASIS_FOURIER_LAGRANGE_HERMITE_TP_TYPE)
+      !       CALL FlagError("Not implemented.",err,error,*999)
+      !     CASE(BASIS_EXTENDED_LAGRANGE_TP_TYPE)
+      !       CALL FlagError("Not implemented.",err,error,*999)
+      !     CASE DEFAULT
+      !       localError="The basis type of "//TRIM(NumberToVString(basis%type,"*",err,error))//" is invalid."
+      !       CALL FlagError(localError,err,error,*999)
+      !     END SELECT
+      !   ELSE
+      !     !Node is internal to the mesh. Assign zero normal and compute tangents only
+      !     DO tangentIdx=1,numberOfXi
+      !       vector1(1:numberOfDimensions)=dXdXi(1:numberOfDimensions,tangentIdx)
+      !       CALL Normalise(vector1(1:numberOfDimensions),vector1(1:numberOfDimensions),err,error,*999)
+      !       tangents(1:numberOfDimensions,tangentIdx)=tangents(1:numberOfDimensions,tangentIdx)+vector1(1:numberOfDimensions)
+      !     ENDDO !tangentIdx
+      !     numberOfElements=numberOfElements+1
+      !   ENDIF
+      ! ENDDO !elementIdx
       
       !Normalise the normal vector
-      IF(numberOfElements>0) normal(1:numberOfDimensions)=normal(1:numberOfDimensions)/REAL(numberOfElements,DP)
+      IF(numberOfNormals>0) normal(1:numberOfDimensions)=normal(1:numberOfDimensions)/REAL(numberOfNormals,DP)
       CALL Normalise(normal(1:numberOfDimensions),normal(1:numberOfDimensions),err,error,*999)
       !Normalise the tangent vectors
-      DO tangentIdx=1,numberOfXi-1
-        IF(numberOfElements>0) &
-          & tangents(1:numberOfDimensions,tangentIdx)=tangents(1:numberOfDimensions,tangentIdx)/REAL(numberOfElements,DP)
+      DO tangentIdx=1,numberOfDomainDimensions-1
+        IF(numberOfTangents>0) &
+          & tangents(1:numberOfDimensions,tangentIdx)=tangents(1:numberOfDimensions,tangentIdx)/REAL(numberOfTangents,DP)
         CALL Normalise(tangents(1:numberOfDimensions,tangentIdx),tangents(1:numberOfDimensions,tangentIdx),err,error,*999)
       ENDDO !tangentIdx
       

@@ -317,15 +317,15 @@ CONTAINS
         !Loop over the local nodes excluding the ghosts.
         DO nodeIdx=1,numberOfNodes
           CALL DomainNodes_NodeBoundaryNodeGet(domainNodes,nodeIdx,boundaryNode,err,error,*999)
-          IF((.NOT.boundaryOnly).OR.(boundaryOnly.AND.boundaryNode)) THEN
-            CALL Field_PositionNormalTangentsCalculateNode(dependentField,FIELD_U_VARIABLE_TYPE,componentIdx,nodeIdx, &
-              & position,normal,tangents,err,error,*999)
-            CALL Laplace_AnalyticFunctionsEvaluate(equationsSet,analyticFunctionType,position,time,componentIdx, &
-              & analyticParameters,analyticValue,gradientAnalyticValue,hessianAnalyticValue,err,error,*999)
-            CALL BoundaryConditions_SetAnalyticBoundaryNode(boundaryConditions,numberOfDimensions,dependentVariable,componentIdx, &
-              & domainNodes,nodeIdx,boundaryNode,tangents,normal,analyticValue,gradientAnalyticValue,hessianAnalyticValue, &
-              & .FALSE.,0.0_DP,.FALSE.,0.0_DP,err,error,*999)
-          ENDIF !boundary only test
+          !IF((.NOT.boundaryOnly).OR.(boundaryOnly.AND.boundaryNode)) THEN
+          CALL Field_PositionNormalTangentsCalculateNode(dependentField,FIELD_U_VARIABLE_TYPE,componentIdx,nodeIdx, &
+            & position,normal,tangents,err,error,*999)
+          CALL Laplace_AnalyticFunctionsEvaluate(equationsSet,analyticFunctionType,position,time,componentIdx, &
+            & analyticParameters,analyticValue,gradientAnalyticValue,hessianAnalyticValue,err,error,*999)
+          CALL BoundaryConditions_SetAnalyticBoundaryNode(boundaryConditions,numberOfDimensions,dependentVariable,componentIdx, &
+            & domainNodes,nodeIdx,boundaryNode,tangents,normal,analyticValue,gradientAnalyticValue,hessianAnalyticValue, &
+            & .FALSE.,0.0_DP,.FALSE.,0.0_DP,err,error,*999)
+          !ENDIF !boundary only test
         ENDDO !nodeIdx
       ENDDO !componentIdx
       CALL FieldVariable_ParameterSetUpdateStart(dependentVariable,FIELD_ANALYTIC_VALUES_SET_TYPE,err,error,*999)

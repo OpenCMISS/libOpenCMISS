@@ -586,11 +586,11 @@ CONTAINS
     
     SELECT CASE(esSpecification(2))
     CASE(EQUATIONS_SET_LAPLACE_EQUATION_TYPE)
-      CALL Laplace_BoundaryConditionsAnalyticCalculate(equationsSet,boundaryConditions,.FALSE.,err,error,*999)
+      CALL Laplace_BoundaryConditionsAnalyticCalculate(equationsSet,boundaryConditions,.TRUE.,err,error,*999)
     CASE(EQUATIONS_SET_HJ_EQUATION_TYPE)
       CALL HamiltonJacobi_BoundaryConditionsAnalyticCalculate(equationsSet,boundaryConditions,err,error,*999)
     CASE(EQUATIONS_SET_POISSON_EQUATION_TYPE)
-      CALL Poisson_BoundaryConditionsAnalyticCalculate(equationsSet,boundaryConditions,.FALSE.,err,error,*999)
+      CALL Poisson_BoundaryConditionsAnalyticCalculate(equationsSet,boundaryConditions,.TRUE.,err,error,*999)
     CASE(EQUATIONS_SET_HELMHOLTZ_EQUATION_TYPE)
       CALL Helmholtz_BoundaryConditionsAnalyticCalculate(equationsSet,boundaryConditions,err,error,*999)
     CASE(EQUATIONS_SET_WAVE_EQUATION_TYPE)

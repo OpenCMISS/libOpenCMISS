@@ -227,7 +227,7 @@ CONTAINS
 !      MaterialParameters = [HEIGHT,10.0E3_CMISSRP,0.3_CMISSRP,0.0_CMISSRP,0.0_CMISSRP,0.0_CMISSRP]
 !    ELSE
       NumberOfXi = 3
-      EquationSetSubtype = CMFE_EQUATIONS_SET_THREE_DIMENSIONAL_SUBTYPE
+      EquationSetSubtype = CMFE_EQUATIONS_SET_THREE_DIMENSIONAL_ORTHOTROPIC_SUBTYPE
       AnalyticFunction=CMFE_EQUATIONS_SET_LINEAR_ELASTICITY_THREE_DIM_2
       !Prescribe material properties E1,E2,E3 & v13,v23,v12
       FieldMaterialNumberOfComponents = 6 !Young's Modulus & Poisson's Ratio

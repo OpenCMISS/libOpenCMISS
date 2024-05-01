@@ -197,10 +197,10 @@ MODULE Constants
   INTEGER(INTG), PARAMETER :: PART_DERIV_S1_S2_S4=17 !<Cross derivative in the s1, s2 and s4 direction i.e., d^3u/ds1ds2ds4 \see Constants_PartialDerivativeConstants,Constants
   INTEGER(INTG), PARAMETER :: PART_DERIV_S1_S3_S4=18 !<Cross derivative in the s1, s3 and s4 direction i.e., d^3u/ds1ds3ds4 \see Constants_PartialDerivativeConstants,Constants
   INTEGER(INTG), PARAMETER :: PART_DERIV_S2_S3_S4=19 !<Cross derivative in the s2, s3 and s4 direction i.e., d^3u/ds2ds3ds4 \see Constants_PartialDerivativeConstants,Constants
-  INTEGER(INTG), PARAMETER :: PART_DERIV_S1_S4_S4=20 !<Cross derivative in the s2, s4 and s4 direction i.e., d^3u/ds1ds4^2 \see Constants_PartialDerivativeConstants,Constants  
-  INTEGER(INTG), PARAMETER :: PART_DERIV_S2_S4_S4=21 !<Cross derivative in the s2, s4 and s4 direction i.e., d^3u/ds2ds4^2 \see Constants_PartialDerivativeConstants,Constants  
-  INTEGER(INTG), PARAMETER :: PART_DERIV_S3_S4_S4=22 !<Cross derivative in the s3, s4 and s4 direction i.e., d^3u/ds3ds4^2 \see Constants_PartialDerivativeConstants,Constants  
-  INTEGER(INTG), PARAMETER :: PART_DERIV_S4_S4_S4=23 !<Third partial derivative in the s4 direction i.e., d^3u/ds4^3 \see Constants_PartialDerivativeConstants,Constants
+  INTEGER(INTG), PARAMETER :: PART_DERIV_S1_S1_S2=20 !<Cross derivative in the s1, s1 and s2 direction i.e., d^3u/ds1^2ds2 \see Constants_PartialDerivativeConstants,Constants  
+  INTEGER(INTG), PARAMETER :: PART_DERIV_S1_S1_S3=21 !<Cross derivative in the s1, s1 and s3 direction i.e., d^3u/ds1^2ds3 \see Constants_PartialDerivativeConstants,Constants  
+  INTEGER(INTG), PARAMETER :: PART_DERIV_S1_S1_S4=22 !<Cross derivative in the s1, s1 and s4 direction i.e., d^3u/ds1^2ds4 \see Constants_PartialDerivativeConstants,Constants  
+  INTEGER(INTG), PARAMETER :: PART_DERIV_S1_S1_S1=23 !<Third partial derivative in the s1 direction i.e., d^3u/ds1^3 \see Constants_PartialDerivativeConstants,Constants
   !>@}
   
   !> \addtogroup Constants_GlobalDerivativeConstants OpenCMISS::Iron::Constants::GlobalDerivativeConstants
@@ -231,23 +231,23 @@ MODULE Constants
     & [ NO_PART_DERIV,FIRST_PART_DERIV,SECOND_PART_DERIV,NO_PART_DERIV,NO_PART_DERIV, &
     &    FIRST_PART_DERIV,NO_PART_DERIV,NO_PART_DERIV,FIRST_PART_DERIV,NO_PART_DERIV, &
     &    FIRST_PART_DERIV,NO_PART_DERIV,NO_PART_DERIV,FIRST_PART_DERIV,NO_PART_DERIV, &
-    &    NO_PART_DERIV,FIRST_PART_DERIV,FIRST_PART_DERIV,NO_PART_DERIV,FIRST_PART_DERIV, &
-    &    NO_PART_DERIV,NO_PART_DERIV,NO_PART_DERIV, &
+    &    NO_PART_DERIV,FIRST_PART_DERIV,FIRST_PART_DERIV,NO_PART_DERIV,SECOND_PART_DERIV, &
+    &    SECOND_PART_DERIV,SECOND_PART_DERIV,THIRD_PART_DERIV, &
     &    NO_PART_DERIV,NO_PART_DERIV,NO_PART_DERIV,FIRST_PART_DERIV,SECOND_PART_DERIV, &
     &    FIRST_PART_DERIV,NO_PART_DERIV,NO_PART_DERIV,NO_PART_DERIV,FIRST_PART_DERIV, &
     &    FIRST_PART_DERIV,NO_PART_DERIV,NO_PART_DERIV,NO_PART_DERIV,FIRST_PART_DERIV, &
-    &    NO_PART_DERIV,FIRST_PART_DERIV,NO_PART_DERIV,FIRST_PART_DERIV,NO_PART_DERIV, &
-    &    FIRST_PART_DERIV,NO_PART_DERIV,NO_PART_DERIV, &
+    &    NO_PART_DERIV,FIRST_PART_DERIV,NO_PART_DERIV,FIRST_PART_DERIV,FIRST_PART_DERIV, &
+    &    NO_PART_DERIV,NO_PART_DERIV,NO_PART_DERIV, &
     &    NO_PART_DERIV,NO_PART_DERIV,NO_PART_DERIV,NO_PART_DERIV,NO_PART_DERIV, &
     &    NO_PART_DERIV,FIRST_PART_DERIV,SECOND_PART_DERIV,FIRST_PART_DERIV,FIRST_PART_DERIV, &
     &    FIRST_PART_DERIV,NO_PART_DERIV,NO_PART_DERIV,NO_PART_DERIV,NO_PART_DERIV, &
     &    FIRST_PART_DERIV,NO_PART_DERIV,FIRST_PART_DERIV,FIRST_PART_DERIV,NO_PART_DERIV, &
-    &    NO_PART_DERIV,FIRST_PART_DERIV,NO_PART_DERIV, &
+    &    FIRST_PART_DERIV,NO_PART_DERIV,NO_PART_DERIV, &
     &    NO_PART_DERIV,NO_PART_DERIV,NO_PART_DERIV,NO_PART_DERIV,NO_PART_DERIV, &
     &    NO_PART_DERIV,NO_PART_DERIV,NO_PART_DERIV,NO_PART_DERIV,NO_PART_DERIV, &
     &    NO_PART_DERIV,FIRST_PART_DERIV,SECOND_PART_DERIV,FIRST_PART_DERIV,FIRST_PART_DERIV, &
-    &    FIRST_PART_DERIV,FIRST_PART_DERIV,FIRST_PART_DERIV,FIRST_PART_DERIV,SECOND_PART_DERIV, &
-    &    SECOND_PART_DERIV,SECOND_PART_DERIV,THIRD_PART_DERIV ], [23,4]) !<Partial derivative index map. PARTIAL_DERIVATIVE_INDEX(idx,nic) gives the order of the partial derivative in the ni(c)'th direction for the idx'th partial derivative value.
+    &    FIRST_PART_DERIV,FIRST_PART_DERIV,FIRST_PART_DERIV,FIRST_PART_DERIV,NO_PART_DERIV, &
+    &    NO_PART_DERIV,FIRST_PART_DERIV,NO_PART_DERIV ], [23,4]) !<Partial derivative index map. PARTIAL_DERIVATIVE_INDEX(idx,nic) gives the order of the partial derivative in the ni(c)'th direction for the idx'th partial derivative value.
 
   INTEGER(INTG) :: PARTIAL_DERIVATIVE_FIRST_DERIVATIVE_MAP(4) = [ PART_DERIV_S1,PART_DERIV_S2,PART_DERIV_S3,PART_DERIV_S4 ] !<PARTIAL_DERIVATIVE_FIRST_DERIVATIVE_MAP(nic) gives the partial derivative index for the first derivative in the ni(c)'th direction
   
@@ -261,7 +261,7 @@ MODULE Constants
     & PART_DERIV_S1_S4, PART_DERIV_S2_S4, PART_DERIV_S3_S4, PART_DERIV_S4_S4], [4,4]) !<PARTIAL_DERIVATIVE_SECOND_DERIVATIVES_MAP(nic1,nic2) gives the partial derivative index for the second derivative in the ni(c)1'th and ni(c)2'th direction.
 
   INTEGER(INTG) :: PARTIAL_DERIVATIVE_MAXIMUM_MAP(4) = [ PART_DERIV_S1_S1,PART_DERIV_S1_S2,PART_DERIV_S1_S2_S3, &
-    & PART_DERIV_S4_S4_S4 ] !<PARTIAL_DERIVATIVE_MAXIMUM_MAP(nic) gives the maximum of partial derivative index for the the ni(c)'th direction
+    & PART_DERIV_S1_S1_S1 ] !<PARTIAL_DERIVATIVE_MAXIMUM_MAP(nic) gives the maximum of partial derivative index for the the ni(c)'th direction
 
   INTEGER(INTG) :: PARTIAL_DERIVATIVE_GLOBAL_DERIVATIVE_MAP(20) = [ NO_GLOBAL_DERIV,GLOBAL_DERIV_S1,0,GLOBAL_DERIV_S2,0, &
     & GLOBAL_DERIV_S1_S2,GLOBAL_DERIV_S3,0,GLOBAL_DERIV_S1_S3,GLOBAL_DERIV_S2_S3,GLOBAL_DERIV_S1_S2_S3,0,0,0,0,0,0,0,0,0 ] !<PARTIAL_DERIVATIVE_GLOBAL_DERIVATIVE_MAP(nu) gives the global derivative index for the the nu'th partial derivative. If no global derivative exists the map is zero

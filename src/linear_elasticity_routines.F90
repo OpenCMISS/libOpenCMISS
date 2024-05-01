@@ -1056,8 +1056,8 @@ CONTAINS
       & rowElementDOFIdx,rowXiIdx,rowsVariableType,scalingType,totalNumberDependentElementParameters,xiIdx
     INTEGER(INTG) :: offDiagonalComponents(3),offDiagonalDependentVariable(2,2,3),diagonalSubMatrixLocation(3), &
       & offDiagonalSubMatLocation(2,3)
-    REAL(DP) :: colsdPhidXi,gaussWeight,jacobian,jacobianGaussWeight,C(6,6),jacobianGaussWeightDiagC(3,3), &
-      & jacobianGaussWeightOffDiagC(2,3),sf(64*3),sourceParam
+    REAL(DP) :: colsdPhidXi,colsSF(64*3),gaussWeight,jacobian,jacobianGaussWeight,C(6,6),jacobianGaussWeightDiagC(3,3), &
+      & jacobianGaussWeightOffDiagC(2,3),rowsSF(64*3),sourceParam
     LOGICAL :: update,updateMatrix,updateRHS,updateSource
     TYPE(BasisType), POINTER :: columnBasis,dependentBasis,geometricBasis,rowBasis
     TYPE(BasisPtrType) :: dependentBases(3)
@@ -1082,7 +1082,7 @@ CONTAINS
     TYPE(EquationsVectorType), POINTER :: vectorEquations
     TYPE(FieldType), POINTER :: dependentField,fibreField,geometricField,materialsField,sourceField
     TYPE(FieldInterpolationParametersType), POINTER :: colsInterpParameters,fibreInterpParameters,geometricInterpParameters, &
-      & materialsInterpParameters,sourceInterpParameters
+      & materialsInterpParameters,rowsInterpParameters,sourceInterpParameters
     TYPE(FieldInterpolatedPointType), POINTER :: geometricInterpPoint,fibreInterpPoint,materialsInterpPoint,sourceInterpPoint
     TYPE(FieldInterpolatedPointMetricsType), POINTER :: geometricInterpPointMetrics
     TYPE(FieldVariableType), POINTER :: colsVariable,geometricVariable,rowsVariable
@@ -1110,7 +1110,8 @@ CONTAINS
     CASE(EQUATIONS_SET_ONE_DIMENSIONAL_SUBTYPE, &
       & EQUATIONS_SET_TWO_DIMENSIONAL_PLANE_STRESS_SUBTYPE, &
       & EQUATIONS_SET_TWO_DIMENSIONAL_PLANE_STRAIN_SUBTYPE, &
-      & EQUATIONS_SET_THREE_DIMENSIONAL_SUBTYPE)
+      & EQUATIONS_SET_THREE_DIMENSIONAL_ISOTROPIC_SUBTYPE, &
+      & EQUATIONS_SET_THREE_DIMENSIONAL_ORTHOTROPIC_SUBTYPE)
       !OK
     CASE(EQUATIONS_SET_PLATE_SUBTYPE)
       CALL FlagError("Not implemented.",err,error,*999)
@@ -1172,6 +1173,7 @@ CONTAINS
       
       NULLIFY(geometricField)
       CALL EquationsSet_GeometricFieldGet(equationsSet,geometricField,err,error,*999)
+      NULLIFY(geometricVariable)
       CALL Field_VariableGet(geometricField,FIELD_U_VARIABLE_TYPE,geometricVariable,err,error,*999)
       CALL FieldVariable_NumberOfComponentsGet(geometricVariable,numberOfDimensions,err,error,*999)
       NULLIFY(geometricDecomposition)
@@ -1208,7 +1210,8 @@ CONTAINS
         CALL EquationsInterpolation_FibrePointGet(equationsInterpolation,FIELD_U_VARIABLE_TYPE, &
           & fibreInterpPoint,err,error,*999)
       ENDIF
-      
+
+      NULLIFY(dependentField)
       CALL EquationsSet_DependentFieldGet(equationsSet,dependentField,err,error,*999)
       NULLIFY(dependentDecomposition)
       CALL Field_DecompositionGet(dependentField,dependentDecomposition,err,error,*999)
@@ -1278,7 +1281,8 @@ CONTAINS
       CASE(EQUATIONS_SET_ONE_DIMENSIONAL_SUBTYPE, &
         & EQUATIONS_SET_TWO_DIMENSIONAL_PLANE_STRESS_SUBTYPE, &
         & EQUATIONS_SET_TWO_DIMENSIONAL_PLANE_STRAIN_SUBTYPE, &
-        & EQUATIONS_SET_THREE_DIMENSIONAL_SUBTYPE)
+        & EQUATIONS_SET_THREE_DIMENSIONAL_ISOTROPIC_SUBTYPE, &
+        & EQUATIONS_SET_THREE_DIMENSIONAL_ORTHOTROPIC_SUBTYPE)
         !
         !ONE, TWO & THREE DIMENSIONAL LINEAR ELASTICITY
         !
@@ -1330,7 +1334,7 @@ CONTAINS
                 DO rowXiIdx=1,numberOfXi
                   !!TODO: second index in dXidX should be component not xi?
                   dPhidXComponent(colsComponentIdx)%dPhidX(columnElementParameterIdx,rowXiIdx) = &
-                    & dPhidXComponent(xiIdx)%dPhidX(columnElementParameterIdx,rowXiIdx)+ &
+                    & dPhidXComponent(columnXiIdx)%dPhidX(columnElementParameterIdx,rowXiIdx)+ &
                     & geometricInterpPointMetrics%dXidX(rowXiIdx,columnXiIdx)*colsdPhidXi
                 ENDDO !rowXiIdx
               ENDDO !columnXiIdx
@@ -1338,7 +1342,7 @@ CONTAINS
           ENDDO !xiIdx
           !TODO:: what about fibres?
           !Create Linear Elasticity Tensor C
-          CALL LinearElasticity_ElasticityTensor(esSpecification(3),materialsInterpPoint,C,err,error,*999)
+          CALL LinearElasticity_ElasticityTensor(esSpecification(3),numberOfDimensions,materialsInterpPoint,C,err,error,*999)
           !Store Elasticity Tensor diagonal & off diagonal stress coefficients
           jacobianGaussWeightDiagC(3,:) = [jacobianGaussWeight*C(4,4),jacobianGaussWeight*C(5,5),jacobianGaussWeight*C(3,3)]
           jacobianGaussWeightDiagC(2,:) = [jacobianGaussWeight*C(6,6),jacobianGaussWeight*C(2,2),jacobianGaussWeightDiagC(3,2)]
@@ -1445,21 +1449,21 @@ CONTAINS
           
         ENDDO !gaussPointIdx
         
-        !If Plane Stress/Strain problem multiply equation matrix by thickness
-        IF(esSpecification(3) == EQUATIONS_SET_TWO_DIMENSIONAL_PLANE_STRESS_SUBTYPE .OR. &
-          & esSpecification(3) == EQUATIONS_SET_TWO_DIMENSIONAL_PLANE_STRAIN_SUBTYPE .OR. & 
-          & esSpecification(3) == EQUATIONS_SET_ONE_DIMENSIONAL_SUBTYPE) THEN
-          DO rowElementDOFIdx=1,totalNumberDependentElementParameters
-            DO columnElementDOFIdx=rowElementDOFIdx,totalNumberDependentElementParameters
+        !!If Plane Stress/Strain problem multiply equation matrix by thickness
+        !IF(esSpecification(3) == EQUATIONS_SET_TWO_DIMENSIONAL_PLANE_STRESS_SUBTYPE .OR. &
+        !  & esSpecification(3) == EQUATIONS_SET_TWO_DIMENSIONAL_PLANE_STRAIN_SUBTYPE .OR. & 
+        !  & esSpecification(3) == EQUATIONS_SET_ONE_DIMENSIONAL_SUBTYPE) THEN
+        !  DO rowElementDOFIdx=1,totalNumberDependentElementParameters
+        !    DO columnElementDOFIdx=rowElementDOFIdx,totalNumberDependentElementParameters
 !!TODO::Bring 2D plane stress/strain element thickness in through a field - element constant when it can be exported by field i/o.
 !!      Currently brought in through material field (Temporary)
               
-              equationsMatrix%elementMatrix%matrix(rowElementDOFIdx,columnElementDOFIdx)= &
-                & equationsMatrix%elementMatrix%matrix(rowElementDOFIdx,columnElementDOFIdx)* &
-                & materialsInterpPoint%values(1,NO_PART_DERIV)
-            ENDDO !columnElementDOFIdx
-          ENDDO !rowElementDOFIdx
-        ENDIF
+        !      equationsMatrix%elementMatrix%matrix(rowElementDOFIdx,columnElementDOFIdx)= &
+        !        & equationsMatrix%elementMatrix%matrix(rowElementDOFIdx,columnElementDOFIdx)* &
+        !        & materialsInterpPoint%values(1,NO_PART_DERIV)
+        !    ENDDO !columnElementDOFIdx
+        !  ENDDO !rowElementDOFIdx
+        !ENDIF
       
 !!TODO:: Is this RHS Vector update required? find out/check - RHS not used - BC are prescribed during assembling
 !!       eg update RHS only when BC change - stiffness matrix should be the same
@@ -1470,11 +1474,18 @@ CONTAINS
         !Scale factor adjustment, Application of scale factors is symmetric
         CALL Field_ScalingTypeGet(dependentField,scalingType,err,error,*999)
         IF(scalingType/=FIELD_NO_SCALING) THEN
+          NULLIFY(rowsInterpParameters)
+          CALL EquationsInterpolation_DependentParametersGet(equationsInterpolation,rowsVariableType,rowsInterpParameters, &
+          & err,error,*999)
           NULLIFY(colsInterpParameters)
           CALL EquationsInterpolation_DependentParametersGet(equationsInterpolation,colsVariableType,colsInterpParameters, &
             & err,error,*999)
+          CALL Field_InterpolationParametersScaleFactorsElementGet(elementNumber,rowsInterpParameters,err,error,*999)
+          CALL Field_InterpolationParametersScaleFactorsElementGet(elementNumber,colsInterpParameters,err,error,*999)
           DO xiIdx=1,numberOfXi
-            sf(diagonalSubMatrixLocation(xiIdx)+1:SUM(numberDependentElementParameters(1:xiIdx)))= &
+            rowsSF(diagonalSubMatrixLocation(xiIdx)+1:SUM(numberDependentElementParameters(1:xiIdx)))= &
+              & rowsInterpParameters%scaleFactors(:,xiIdx)
+            colsSF(diagonalSubMatrixLocation(xiIdx)+1:SUM(numberDependentElementParameters(1:xiIdx)))= &
               & colsInterpParameters%scaleFactors(:,xiIdx)
           ENDDO !xiIdx
           DO rowElementDOFIdx=1,totalNumberDependentElementParameters
@@ -1482,13 +1493,13 @@ CONTAINS
               DO columnElementDOFIdx=rowElementDOFIdx,totalNumberDependentElementParameters
                 equationsMatrix%elementMatrix%matrix(rowElementDOFIdx,columnElementDOFIdx)= &
                 & equationsMatrix%elementMatrix%matrix(rowElementDOFIdx,columnElementDOFIdx)* &
-                & SF(rowElementDOFIdx)*SF(columnElementDOFIdx)
+                & rowsSF(rowElementDOFIdx)*colsSF(columnElementDOFIdx)
               ENDDO !columnElementDOFIdx
             ENDIF
 !!TODO:: Check if RHS update required for Linear Elasticity ie is the RHS the force terms but they are set during assembling and not here?
             IF(updateRHS) THEN
               rhsVector%elementVector%vector(rowElementDOFIdx)= &
-                & rhsVector%elementVector%vector(rowElementDOFIdx)*SF(rowElementDOFIdx)
+                & rhsVector%elementVector%vector(rowElementDOFIdx)*rowsSF(rowElementDOFIdx)
             ENDIF
           ENDDO !rowElementDOFIdx
           
@@ -1532,101 +1543,112 @@ CONTAINS
   !
 
   !>Evaluates the linear elasticity tensor
-  SUBROUTINE LinearElasticity_ElasticityTensor(equationsSetSubtype,materialsInterpolatedPoint,elasticityTensor,err,error,*)
+  SUBROUTINE LinearElasticity_ElasticityTensor(equationsSetSubtype,numberOfDimensions,materialsInterpolatedPoint, &
+    & elasticityTensor,err,error,*)
 
     !Argument variables    
     INTEGER(INTG), INTENT(IN) :: equationsSetSubtype !<The subtype of the particular equation set being used
+    INTEGER(INTG), INTENT(IN) :: numberOfDimensions !<The number of dimensions for the equations set
     TYPE(FieldInterpolatedPointType), POINTER :: materialsInterpolatedPoint
     REAL(DP), INTENT(OUT) :: elasticityTensor(:,:) !<The Linear Elasticity Tensor C
     INTEGER(INTG), INTENT(OUT) :: err !<The error code
     TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
-
     !Local Variables
-    REAL(DP) :: E1,E2,E3,v13,v23,v12,v31,v32,v21,gama
-    REAL(DP) :: C11,C22,C33,C12,C13,C23,C21,C31,C32,C44,C55,C66
+    REAL(DP) :: delta,E,E1,E2,E3,v,v13,v23,v12,v31,v32,v21
+    REAL(DP) :: C11,C22,C33,C12,C13,C23,C21,C31,C32,C44,C55,C66,G12,G13,G23
     TYPE(VARYING_STRING) :: localError
 
     ENTERS("LinearElasticity_ElasticityTensor",err,error,*999)
-    elasticityTensor=0.0_DP
+    
+    elasticityTensor(1:NUMBER_OF_VOIGT(numberOfDimensions),1:NUMBER_OF_VOIGT(numberOfDimensions))=0.0_DP
     SELECT CASE(equationsSetSubtype)
     !Note: Fortran uses column major format for arrays.
-    CASE(EQUATIONS_SET_THREE_DIMENSIONAL_SUBTYPE)
-      !General Orthotropic 3D Linear Elasticity Tensor
+    CASE(EQUATIONS_SET_THREE_DIMENSIONAL_ISOTROPIC_SUBTYPE)
+      !Isotropic 3D linear elasticity tensor, 2 independent elastic constants
+      E = materialsInterpolatedPoint%values(1,1)
+      v = materialsInterpolatedPoint%values(2,1)
+      delta = E/((1.0_DP+v)*(1.0_DP-2.0_DP*v))
+      elasticityTensor(TENSOR_TO_VOIGT3(1,1),TENSOR_TO_VOIGT3(1,1)) = (1.0_DP-v)*delta
+      elasticityTensor(TENSOR_TO_VOIGT3(1,1),TENSOR_TO_VOIGT3(2,2)) = v*delta
+      elasticityTensor(TENSOR_TO_VOIGT3(1,1),TENSOR_TO_VOIGT3(3,3)) = v*delta 
+      elasticityTensor(TENSOR_TO_VOIGT3(2,2),TENSOR_TO_VOIGT3(1,1)) = v*delta
+      elasticityTensor(TENSOR_TO_VOIGT3(2,2),TENSOR_TO_VOIGT3(2,2)) = (1.0_DP-v)*delta
+      elasticityTensor(TENSOR_TO_VOIGT3(2,2),TENSOR_TO_VOIGT3(3,3)) = v*delta
+      elasticityTensor(TENSOR_TO_VOIGT3(3,3),TENSOR_TO_VOIGT3(1,1)) = v*delta
+      elasticityTensor(TENSOR_TO_VOIGT3(3,3),TENSOR_TO_VOIGT3(2,2)) = v*delta
+      elasticityTensor(TENSOR_TO_VOIGT3(3,3),TENSOR_TO_VOIGT3(3,3)) = (1.0_DP-v)*delta
+      elasticityTensor(TENSOR_TO_VOIGT3(2,3),TENSOR_TO_VOIGT3(2,3)) = (1.0_DP-2.0_DP*v)*delta/2.0_DP
+      elasticityTensor(TENSOR_TO_VOIGT3(1,3),TENSOR_TO_VOIGT3(1,3)) = (1.0_DP-2.0_DP*v)*delta/2.0_DP
+      elasticityTensor(TENSOR_TO_VOIGT3(1,2),TENSOR_TO_VOIGT3(1,2)) = (1.0_DP-2.0_DP*v)*delta/2.0_DP
+    CASE(EQUATIONS_SET_THREE_DIMENSIONAL_ORTHOTROPIC_SUBTYPE)
+      !General orthotropic 3D linear elasticity tensor, 9 independent elastic constants
       E1 = materialsInterpolatedPoint%values(1,1)
       E2 = materialsInterpolatedPoint%values(2,1)
       E3 = materialsInterpolatedPoint%values(3,1)
-      v13 = materialsInterpolatedPoint%values(4,1)
-      v23 = materialsInterpolatedPoint%values(5,1)
+      v23 = materialsInterpolatedPoint%values(4,1)
+      v13 = materialsInterpolatedPoint%values(5,1)
       v12 = materialsInterpolatedPoint%values(6,1)
-      v31 = v13
-      v32 = v23
-      v21 = v12
-      gama = 1.0_DP/(1.0_DP-v12*v21-v23*v32-v31*v13-2.0_DP*v21*v32*v13)
-      C11 = E1*(1.0_DP-v23*v32)*gama
-      C22 = E2*(1.0_DP-v13*v31)*gama
-      C33 = E3*(1.0_DP-v12*v21)*gama
-      C12 = E1*(v21+v31*v23)*gama ! = E2*(v12+v32*v13)*gama
-      C13 = E1*(v31+v21*v32)*gama ! = E3*(v13+v12*v23)*gama
-      C23 = E2*(v32+v12*v31)*gama ! = E3*(v23+v21*v13)*gama
-      C21 = C12
-      C31 = C13
-      C32 = C23
-      C44 = E2/(2.0_DP*(1.0_DP+v23)) != G23
-      C55 = E1/(2.0_DP*(1.0_DP+v13)) != G13
-      C66 = E3/(2.0_DP*(1.0_DP+v12)) != G12
-      elasticityTensor(1:6,1)=[C11,C21,C31,0.0_DP,0.0_DP,0.0_DP]
-      elasticityTensor(1:6,2)=[C12,C22,C32,0.0_DP,0.0_DP,0.0_DP]
-      elasticityTensor(1:6,3)=[C13,C23,C33,0.0_DP,0.0_DP,0.0_DP]
-      elasticityTensor(4,4)=C44
-      elasticityTensor(5,5)=C55
-      elasticityTensor(6,6)=C66
+      G23 = materialsInterpolatedPoint%values(7,1)
+      G13 = materialsInterpolatedPoint%values(8,1)
+      G12 = materialsInterpolatedPoint%values(9,1)
+      v32 = v23*E3/E2
+      v31 = v13*E3/E1
+      v21 = v12*E2/E1
+      delta = 1.0_DP-v12*v21-v23*v32-v13*v31-v12*v23*v31-v21*v32*v13
+      elasticityTensor(TENSOR_TO_VOIGT3(1,1),TENSOR_TO_VOIGT3(1,1)) = E1*(1.0_DP-v23*v32)/delta
+      elasticityTensor(TENSOR_TO_VOIGT3(1,1),TENSOR_TO_VOIGT3(2,2)) = E1*(v21+v23*v31)/delta
+      elasticityTensor(TENSOR_TO_VOIGT3(1,1),TENSOR_TO_VOIGT3(3,3)) = E1*(v31+v21*v32)/delta 
+      elasticityTensor(TENSOR_TO_VOIGT3(2,2),TENSOR_TO_VOIGT3(1,1)) = E2*(v12+v13*v32)/delta
+      elasticityTensor(TENSOR_TO_VOIGT3(2,2),TENSOR_TO_VOIGT3(2,2)) = E2*(1.0_DP-v13*v31)/delta
+      elasticityTensor(TENSOR_TO_VOIGT3(2,2),TENSOR_TO_VOIGT3(3,3)) = E2*(v32+v12*v31)/delta
+      elasticityTensor(TENSOR_TO_VOIGT3(3,3),TENSOR_TO_VOIGT3(1,1)) = E3*(v13+v12*v23)/delta
+      elasticityTensor(TENSOR_TO_VOIGT3(3,3),TENSOR_TO_VOIGT3(2,2)) = E3*(v23+v13*v21)/delta
+      elasticityTensor(TENSOR_TO_VOIGT3(3,3),TENSOR_TO_VOIGT3(3,3)) = E3*(1.0_DP-v12*v21)/delta
+      elasticityTensor(TENSOR_TO_VOIGT3(2,3),TENSOR_TO_VOIGT3(2,3)) = G23
+      elasticityTensor(TENSOR_TO_VOIGT3(1,3),TENSOR_TO_VOIGT3(1,3)) = G13 
+      elasticityTensor(TENSOR_TO_VOIGT3(1,2),TENSOR_TO_VOIGT3(1,2)) = G12
     CASE(EQUATIONS_SET_TWO_DIMENSIONAL_PLANE_STRESS_SUBTYPE)
-      !Plane Stress Isotropic Elasticity Tensor
-      E1 = materialsInterpolatedPoint%values(2,1)
-      v12 = materialsInterpolatedPoint%values(3,1)
-      v21 = v12
-      gama = 1.0_DP/(1.0_DP-v12*v21)
-      C11 = E1*gama
-      C22 = C11
-      C12 = C11*v21
-      C21 = C12
-      C66 = E1/(2.0_DP*(1.0_DP+v12)) != G12
-      elasticityTensor(1,1)=C11
-      elasticityTensor(1,2)=C21
-      elasticityTensor(2,1)=C21
-      elasticityTensor(2,2)=C22
-      elasticityTensor(6,6)=C66
+      !Plane stress 2D isotropic elasticity tensor, 2 independent elastic constants
+      E = materialsInterpolatedPoint%values(1,1)
+      v = materialsInterpolatedPoint%values(2,1)
+      delta = E/(1.0_DP-v*v)
+      elasticityTensor(TENSOR_TO_VOIGT2(1,1),TENSOR_TO_VOIGT2(1,1)) = delta
+      elasticityTensor(TENSOR_TO_VOIGT2(1,1),TENSOR_TO_VOIGT2(2,2)) = v*delta
+      elasticityTensor(TENSOR_TO_VOIGT2(2,2),TENSOR_TO_VOIGT2(1,1)) = v*delta
+      elasticityTensor(TENSOR_TO_VOIGT2(2,2),TENSOR_TO_VOIGT2(1,2)) = delta
+      elasticityTensor(TENSOR_TO_VOIGT2(1,2),TENSOR_TO_VOIGT2(1,2)) = (1.0_DP-v)*delta/2.0_DP
     CASE(EQUATIONS_SET_TWO_DIMENSIONAL_PLANE_STRAIN_SUBTYPE)
-      !Plane Strain Isotropic Linear Elasticity Tensor
-      E1 = materialsInterpolatedPoint%values(2,1)
-      E2 = E1
-      v12 = materialsInterpolatedPoint%values(3,1)
-      v21 = v12
-      gama = 1.0_DP/(1.0_DP-v12-v21)
-      C11 = E1*gama*(1.0_DP-v12)/(1.0_DP+v12)
-      C22 = E2*gama*(1.0_DP-v21)/(1.0_DP+v21)
-      C12 = C22*v12
-      C21 = C12
-      C66 = E1/(2.0_DP*(1.0_DP+v12)) != G12
-      elasticityTensor(1,1)=C11
-      elasticityTensor(1,2)=C21
-      elasticityTensor(2,1)=C21
-      elasticityTensor(2,2)=C22
-      elasticityTensor(6,6)=C66
+      !Plane strain 2D isotropic linear elasticity tensor, 2 independent elastic constants
+      E = materialsInterpolatedPoint%values(1,1)
+      v = materialsInterpolatedPoint%values(2,1)
+      delta = E/((1.0_DP+v)*(1.0_DP-2.0_DP*v))
+      elasticityTensor(TENSOR_TO_VOIGT2(1,1),TENSOR_TO_VOIGT2(1,1)) = (1.0_DP-v)*delta
+      elasticityTensor(TENSOR_TO_VOIGT2(1,1),TENSOR_TO_VOIGT2(2,2)) = v*delta
+      elasticityTensor(TENSOR_TO_VOIGT2(2,2),TENSOR_TO_VOIGT2(1,1)) = v*delta
+      elasticityTensor(TENSOR_TO_VOIGT2(2,2),TENSOR_TO_VOIGT2(1,2)) = (1.0_DP-v)*delta
+      elasticityTensor(TENSOR_TO_VOIGT2(1,2),TENSOR_TO_VOIGT2(1,2)) = (1.0_DP-2.0_DP*v)*delta/2.0_DP
     CASE(EQUATIONS_SET_ONE_DIMENSIONAL_SUBTYPE)
-      !Plane Strain Isotropic Linear Elasticity Tensor
-      E1 = materialsInterpolatedPoint%values(2,1)
-      C11 = E1
-      elasticityTensor(1,1)=C11
+      !1D linear elasticity tensor
+      E = materialsInterpolatedPoint%values(2,1)
+      elasticityTensor(TENSOR_TO_VOIGT1(1,1),TENSOR_TO_VOIGT1(1,1)) = E
     CASE(EQUATIONS_SET_PLATE_SUBTYPE)
       CALL FlagError("Not implemented.",err,error,*999)
     CASE(EQUATIONS_SET_SHELL_SUBTYPE)
       CALL FlagError("Not implemented.",err,error,*999)
     CASE DEFAULT
       localError="Equations set subtype "//TRIM(NumberToVString(equationsSetSubtype,"*",err,error))// &
-            & " is not valid for a Linear Elasticity equation type of a Elasticty equations set class."
+            & " is not valid for a linear elasticity equation type of a elasticty equations set class."
       CALL FlagError(localError,err,error,*999)
     END SELECT
+
+    IF(diagnostics1) THEN
+      CALL WriteString(DIAGNOSTIC_OUTPUT_TYPE,"",err,error,*999)
+      CALL WriteString(DIAGNOSTIC_OUTPUT_TYPE,"Elasticity tensor:",err,error,*999)
+      CALL WriteStringMatrix(DIAGNOSTIC_OUTPUT_TYPE,1,1,NUMBER_OF_VOIGT(numberOfDimensions),1,1, &
+        & NUMBER_OF_VOIGT(numberOfDimensions),8,8,elasticityTensor(1:NUMBER_OF_VOIGT(numberOfDimensions), &
+        & 1:NUMBER_OF_VOIGT(numberOfDimensions)),WRITE_STRING_MATRIX_NAME_AND_INDICES, &
+        & '("  C','(",I1,",:)',':",8(X,E13.6))','9X,8(X,E13.6))',err,error,*999)
+    ENDIF
 
     EXITS("LinearElasticity_ElasticityTensor")
     RETURN
@@ -1669,7 +1691,8 @@ CONTAINS
     CASE(EQUATIONS_SET_ONE_DIMENSIONAL_SUBTYPE, &
       & EQUATIONS_SET_TWO_DIMENSIONAL_PLANE_STRESS_SUBTYPE, &
       & EQUATIONS_SET_TWO_DIMENSIONAL_PLANE_STRAIN_SUBTYPE, &
-      & EQUATIONS_SET_THREE_DIMENSIONAL_SUBTYPE)
+      & EQUATIONS_SET_THREE_DIMENSIONAL_ISOTROPIC_SUBTYPE, &
+      & EQUATIONS_SET_THREE_DIMENSIONAL_ORTHOTROPIC_SUBTYPE)
       !OK
     CASE(EQUATIONS_SET_PLATE_SUBTYPE)
       CALL FlagError("Not implemented.",err,error,*999)
@@ -1706,6 +1729,7 @@ CONTAINS
       ! G e o m e t r i c   f i e l d
       !-----------------------------------------------------------------
       !Do nothing???
+!!TODO: Check 1, 2, 3 D for the various subtypes
     CASE(EQUATIONS_SET_SETUP_DEPENDENT_TYPE)
       !-----------------------------------------------------------------
       ! D e p e n d e n t   f i e l d
@@ -1720,6 +1744,7 @@ CONTAINS
           CALL Field_CreateStart(equationsSetSetup%fieldUserNumber,region,equationsSet%dependent%dependentField,err,error,*999)
           CALL Field_TypeSetAndLock(equationsSet%dependent%dependentField,FIELD_GENERAL_TYPE,err,error,*999)
           CALL Field_DependentTypeSetAndLock(equationsSet%dependent%dependentField,FIELD_DEPENDENT_TYPE,err,error,*999)
+          NULLIFY(geometricDecomposition)
           CALL Field_DecompositionGet(geometricField,geometricDecomposition,err,error,*999)
           CALL Field_DecompositionSetAndLock(equationsSet%dependent%dependentField,geometricDecomposition,err,error,*999)
           CALL Field_GeometricFieldSetAndLock(equationsSet%dependent%dependentField,geometricField,err,error,*999)
@@ -1834,11 +1859,13 @@ CONTAINS
       CALL EquationsSet_GeometricFieldGet(equationsSet,geometricField,err,error,*999)
       SELECT CASE(esSpecification(3))
       CASE(EQUATIONS_SET_ONE_DIMENSIONAL_SUBTYPE)
+        numberOfComponents=1
+      CASE(EQUATIONS_SET_TWO_DIMENSIONAL_PLANE_STRESS_SUBTYPE, &
+        & EQUATIONS_SET_TWO_DIMENSIONAL_PLANE_STRAIN_SUBTYPE, &
+        & EQUATIONS_SET_THREE_DIMENSIONAL_ISOTROPIC_SUBTYPE)
         numberOfComponents=2
-      CASE(EQUATIONS_SET_TWO_DIMENSIONAL_PLANE_STRESS_SUBTYPE,EQUATIONS_SET_TWO_DIMENSIONAL_PLANE_STRAIN_SUBTYPE)
-        numberOfComponents=3
-      CASE(EQUATIONS_SET_THREE_DIMENSIONAL_SUBTYPE)
-        numberOfComponents=6
+      CASE(EQUATIONS_SET_THREE_DIMENSIONAL_ORTHOTROPIC_SUBTYPE)
+        numberOfComponents=9
       CASE DEFAULT
         localError="Equations set subtype "//TRIM(NumberToVString(esSpecification(3),"*",err,error))// &
           & " is not valid for a linear elasticity equation type of an elasticity equation set class."
@@ -1847,11 +1874,11 @@ CONTAINS
       SELECT CASE(equationsSetSetup%actionType)
       CASE(EQUATIONS_SET_SETUP_START_ACTION)
         IF(equationsMaterials%materialsFieldAutoCreated) THEN
-          !Default to the general 3D orthotropic material
           !Create the auto created materials field
           CALL Field_CreateStart(equationsSetSetup%fieldUserNumber,region,equationsMaterials%materialsField,err,error,*999)
           CALL Field_TypeSetAndLock(equationsMaterials%materialsField,FIELD_MATERIAL_TYPE,err,error,*999)
           CALL Field_DependentTypeSetAndLock(equationsMaterials%materialsField,FIELD_INDEPENDENT_TYPE,err,error,*999)
+          NULLIFY(geometricDecomposition)
           CALL Field_DecompositionGet(geometricField,geometricDecomposition,err,error,*999)
           CALL Field_DecompositionSetAndLock(equationsMaterials%materialsField,geometricDecomposition,err,error,*999)
           CALL Field_GeometricFieldSetAndLock(equationsMaterials%materialsField,geometricField,err,error,*999)
@@ -1887,31 +1914,33 @@ CONTAINS
         IF(equationsMaterials%materialsFieldAutoCreated) THEN
           !Finish creating the materials field
           CALL Field_CreateFinish(equationsMaterials%materialsField,err,error,*999)
+          !Set the default values for the materials field
           SELECT CASE(esSpecification(3))
           CASE(EQUATIONS_SET_ONE_DIMENSIONAL_SUBTYPE)
-            !Set the default values for the materials field
+            !1 independent elastic constant
+            CALL Field_ComponentValuesInitialise(equationsMaterials%materialsField,FIELD_U_VARIABLE_TYPE, &
+              & FIELD_VALUES_SET_TYPE,1,30.0E6_DP,err,error,*999) !Young's Modulus
+          CASE(EQUATIONS_SET_TWO_DIMENSIONAL_PLANE_STRESS_SUBTYPE, &
+            & EQUATIONS_SET_TWO_DIMENSIONAL_PLANE_STRAIN_SUBTYPE, &
+            & EQUATIONS_SET_THREE_DIMENSIONAL_ISOTROPIC_SUBTYPE)
+            !2 independent elastic constants
             CALL Field_ComponentValuesInitialise(equationsMaterials%materialsField,FIELD_U_VARIABLE_TYPE, &
               & FIELD_VALUES_SET_TYPE,1,30.0E6_DP,err,error,*999) !Young's Modulus
             CALL Field_ComponentValuesInitialise(equationsMaterials%materialsField,FIELD_U_VARIABLE_TYPE, &
               & FIELD_VALUES_SET_TYPE,2,0.25_DP,err,error,*999) !Poisson's Ratio
-          CASE(EQUATIONS_SET_TWO_DIMENSIONAL_PLANE_STRESS_SUBTYPE,EQUATIONS_SET_TWO_DIMENSIONAL_PLANE_STRAIN_SUBTYPE)
-            !2 Components for 2D Isotropic Linear Elasticity
-            !TODO:: Temporarily set to 3 to allow thickness to passed in.
-            !Remove once a thickness, element constant field is defined and can be exported/viewed by cmgui
-            !Set the default values for the materials field
-            CALL Field_ComponentValuesInitialise(equationsMaterials%materialsField,FIELD_U_VARIABLE_TYPE, &
-              & FIELD_VALUES_SET_TYPE,1,30.0E6_DP,err,error,*999) !Young's Modulus
-            CALL Field_ComponentValuesInitialise(equationsMaterials%materialsField,FIELD_U_VARIABLE_TYPE, &
-              & FIELD_VALUES_SET_TYPE,2,0.25_DP,err,error,*999) !Poisson's Ratio
-          CASE(EQUATIONS_SET_THREE_DIMENSIONAL_SUBTYPE)
-            !Set the default values for the materials field
+          CASE(EQUATIONS_SET_THREE_DIMENSIONAL_ORTHOTROPIC_SUBTYPE)
+            !9 independent elastic constants
             DO componentIdx=1,3
               CALL Field_ComponentValuesInitialise(equationsMaterials%materialsField,FIELD_U_VARIABLE_TYPE,FIELD_VALUES_SET_TYPE, &
-                & componentIdx,30.0E6_DP,err,error,*999)
+                & componentIdx,30.0E6_DP,err,error,*999) !Youngs's modulus
             ENDDO !componentIdx
             DO componentIdx=4,6
               CALL Field_ComponentValuesInitialise(equationsMaterials%materialsField,FIELD_U_VARIABLE_TYPE,FIELD_VALUES_SET_TYPE, &
-                & componentIdx,0.25_DP,err,error,*999)
+                & componentIdx,0.25_DP,err,error,*999) !Poisson's ratio
+            ENDDO !componentIdx
+            DO componentIdx=7,9
+              CALL Field_ComponentValuesInitialise(equationsMaterials%materialsField,FIELD_U_VARIABLE_TYPE,FIELD_VALUES_SET_TYPE, &
+                & componentIdx,30.0E6_DP,err,error,*999) !Shear modulus
             ENDDO !componentIdx
           CASE DEFAULT
             localError="Equations set subtype "//TRIM(NumberToVString(esSpecification(3),"*",err,error))// &
@@ -2129,7 +2158,8 @@ CONTAINS
     CASE(EQUATIONS_SET_ONE_DIMENSIONAL_SUBTYPE, &
       & EQUATIONS_SET_TWO_DIMENSIONAL_PLANE_STRESS_SUBTYPE, &
       & EQUATIONS_SET_TWO_DIMENSIONAL_PLANE_STRAIN_SUBTYPE, &
-      & EQUATIONS_SET_THREE_DIMENSIONAL_SUBTYPE)
+      & EQUATIONS_SET_THREE_DIMENSIONAL_ISOTROPIC_SUBTYPE, & 
+      & EQUATIONS_SET_THREE_DIMENSIONAL_ORTHOTROPIC_SUBTYPE)
       SELECT CASE(solutionMethod)
       CASE(EQUATIONS_SET_FEM_SOLUTION_METHOD)
         equationsSet%solutionMethod=EQUATIONS_SET_FEM_SOLUTION_METHOD
@@ -2189,7 +2219,8 @@ CONTAINS
     END IF
     
     SELECT CASE(specification(3))
-    CASE(EQUATIONS_SET_THREE_DIMENSIONAL_SUBTYPE, &
+    CASE(EQUATIONS_SET_THREE_DIMENSIONAL_ISOTROPIC_SUBTYPE, &
+      & EQUATIONS_SET_THREE_DIMENSIONAL_ORTHOTROPIC_SUBTYPE, & 
       & EQUATIONS_SET_TWO_DIMENSIONAL_PLANE_STRESS_SUBTYPE, &
       & EQUATIONS_SET_TWO_DIMENSIONAL_PLANE_STRAIN_SUBTYPE, &
       & EQUATIONS_SET_ONE_DIMENSIONAL_SUBTYPE)

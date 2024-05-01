@@ -1223,10 +1223,10 @@ CONTAINS
                           !cube in order to allow for the middle node in quadratics to be included). The 6 tetrahedra are
                           !Element 1: vertices {(0,0,0);(1,0,0);(1,1,0);(1,1,1)}
                           !Element 2: vertices {(0,0,0);(1,1,0);(0,1,0);(1,1,1)}
-                          !Element 3: vertices {(0,0,0);(1,0,1);(1,0,0);(1,1,1)}
-                          !Element 4: vertices {(0,0,0);(0,0,1);(1,0,1);(1,1,1)}
-                          !Element 5: vertices {(0,0,0);(0,1,0);(0,1,1);(1,1,1)}
-                          !Element 6: vertices {(0,0,0);(0,1,1);(0,0,1);(1,1,1)}
+                          !Element 3: vertices {(0,0,0);(1,0,0);(1,1,1);(1,0,1)} 
+                          !Element 4: vertices {(0,0,0);(1,0,1);(1,1,1);(0,0,1)} 
+                          !Element 5: vertices {(0,0,0);(1,1,1);(0,1,0);(0,1,1)} 
+                          !Element 6: vertices {(0,0,0);(1,1,1);(0,1,1);(0,0,1)} 
                           SELECT CASE(basis%interpolationOrder(1))
                           CASE(BASIS_LINEAR_INTERPOLATION_ORDER)
                             !First sub-element
@@ -1251,36 +1251,36 @@ CONTAINS
                             !Third sub-element
                             elementNumber=(gridElementNumber-1)*elementFactor+3
                             elementNodes(1)=nodeNumber
-                            elementNodes(2)=nodeNumber+1+totalNumberOfNodesXi(1)*totalNumberOfNodesXi(2)
-                            elementNodes(3)=nodeNumber+1
-                            elementNodes(4)=nodeNumber+1+totalNumberOfNodesXi(1)+totalNumberOfNodesXi(1)*totalNumberOfNodesXi(2)
+                            elementNodes(2)=nodeNumber+1
+                            elementNodes(3)=nodeNumber+1+totalNumberOfNodesXi(1)+totalNumberOfNodesXi(1)*totalNumberOfNodesXi(2)
+                            elementNodes(4)=nodeNumber+1+totalNumberOfNodesXi(1)*totalNumberOfNodesXi(2)
                             CALL GeneratedMeh_ComponentNodesToUserNumbers(regularMesh%generatedMesh,basisIdx,elementNodes, &
                               & elementNodesUserNumbers,err,error,*999)
                             CALL MeshElements_ElementNodesSet(meshElements,elementNumber,elementNodesUserNumbers,err,error,*999)
                             !Fourth sub-element
                             elementNumber=(gridElementNumber-1)*elementFactor+4
                             elementNodes(1)=nodeNumber
-                            elementNodes(2)=nodeNumber+totalNumberOfNodesXi(1)*totalNumberOfNodesXi(2)
-                            elementNodes(3)=nodeNumber+1+totalNumberOfNodesXi(1)*totalNumberOfNodesXi(2)
-                            elementNodes(4)=nodeNumber+1+totalNumberOfNodesXi(1)+totalNumberOfNodesXi(1)*totalNumberOfNodesXi(2)
+                            elementNodes(2)=nodeNumber+1+totalNumberOfNodesXi(1)*totalNumberOfNodesXi(2)
+                            elementNodes(3)=nodeNumber+1+totalNumberOfNodesXi(1)+totalNumberOfNodesXi(1)*totalNumberOfNodesXi(2)
+                            elementNodes(4)=nodeNumber+totalNumberOfNodesXi(1)*totalNumberOfNodesXi(2)
                             CALL GeneratedMeh_ComponentNodesToUserNumbers(regularMesh%generatedMesh,basisIdx,elementNodes, &
                               & elementNodesUserNumbers,err,error,*999)
                             CALL MeshElements_ElementNodesSet(meshElements,elementNumber,elementNodesUserNumbers,err,error,*999)
                             !Fifth sub-element
                             elementNumber=(gridElementNumber-1)*elementFactor+5
                             elementNodes(1)=nodeNumber
-                            elementNodes(2)=nodeNumber+totalNumberOfNodesXi(1)
-                            elementNodes(3)=nodeNumber+totalNumberOfNodesXi(1)+totalNumberOfNodesXi(1)*totalNumberOfNodesXi(2)
-                            elementNodes(4)=nodeNumber+1+totalNumberOfNodesXi(1)+totalNumberOfNodesXi(1)*totalNumberOfNodesXi(2)
+                            elementNodes(2)=nodeNumber+1+totalNumberOfNodesXi(1)+totalNumberOfNodesXi(1)*totalNumberOfNodesXi(2)
+                            elementNodes(3)=nodeNumber+totalNumberOfNodesXi(1)
+                            elementNodes(4)=nodeNumber+totalNumberOfNodesXi(1)+totalNumberOfNodesXi(1)*totalNumberOfNodesXi(2)
                             CALL GeneratedMeh_ComponentNodesToUserNumbers(regularMesh%generatedMesh,basisIdx,elementNodes, &
                               & elementNodesUserNumbers,err,error,*999)
                             CALL MeshElements_ElementNodesSet(meshElements,elementNumber,elementNodesUserNumbers,err,error,*999)
                             !Sixth sub-element
                             elementNumber=(gridElementNumber-1)*elementFactor+6
                             elementNodes(1)=nodeNumber
-                            elementNodes(2)=nodeNumber+totalNumberOfNodesXi(1)+totalNumberOfNodesXi(1)*totalNumberOfNodesXi(2)
-                            elementNodes(3)=nodeNumber+totalNumberOfNodesXi(1)*totalNumberOfNodesXi(2)
-                            elementNodes(4)=nodeNumber+1+totalNumberOfNodesXi(1)+totalNumberOfNodesXi(1)*totalNumberOfNodesXi(2)
+                            elementNodes(2)=nodeNumber+1+totalNumberOfNodesXi(1)+totalNumberOfNodesXi(1)*totalNumberOfNodesXi(2)
+                            elementNodes(3)=nodeNumber+totalNumberOfNodesXi(1)+totalNumberOfNodesXi(1)*totalNumberOfNodesXi(2)
+                            elementNodes(4)=nodeNumber+totalNumberOfNodesXi(1)*totalNumberOfNodesXi(2)
                             CALL GeneratedMeh_ComponentNodesToUserNumbers(regularMesh%generatedMesh,basisIdx,elementNodes, &
                               & elementNodesUserNumbers,err,error,*999)
                             CALL MeshElements_ElementNodesSet(meshElements,elementNumber,elementNodesUserNumbers,err,error,*999)
@@ -1318,61 +1318,60 @@ CONTAINS
                             !Third sub-element
                             elementNumber=(gridElementNumber-1)*elementFactor+3
                             elementNodes(1)=nodeNumber
-                            elementNodes(2)=nodeNumber+2+2*totalNumberOfNodesXi(1)*totalNumberOfNodesXi(2)
-                            elementNodes(3)=nodeNumber+2
-                            elementNodes(4)=nodeNumber+2+2*totalNumberOfNodesXi(1)+2*totalNumberOfNodesXi(1)*totalNumberOfNodesXi(2)
-                            elementNodes(5)=nodeNumber+1+totalNumberOfNodesXi(1)*totalNumberOfNodesXi(2)
-                            elementNodes(6)=nodeNumber+1
-                            elementNodes(7)=nodeNumber+1+totalNumberOfNodesXi(1)+totalNumberOfNodesXi(1)*totalNumberOfNodesXi(2)
-                            elementNodes(8)=nodeNumber+2+totalNumberOfNodesXi(1)*totalNumberOfNodesXi(2)
-                            elementNodes(9)=nodeNumber+2+totalNumberOfNodesXi(1)+totalNumberOfNodesXi(1)*totalNumberOfNodesXi(2)
-                            elementNodes(10)=nodeNumber+2+totalNumberOfNodesXi(1)+2*totalNumberOfNodesXi(1)*totalNumberOfNodesXi(2)
+                            elementNodes(2)=nodeNumber+2
+                            elementNodes(3)=nodeNumber+2+2*totalNumberOfNodesXi(1)+2*totalNumberOfNodesXi(1)*totalNumberOfNodesXi(2)
+                            elementNodes(4)=nodeNumber+2+2*totalNumberOfNodesXi(1)*totalNumberOfNodesXi(2)
+                            elementNodes(5)=nodeNumber+1
+                            elementNodes(6)=nodeNumber+1+totalNumberOfNodesXi(1)+totalNumberOfNodesXi(1)*totalNumberOfNodesXi(2)
+                            elementNodes(7)=nodeNumber+1+totalNumberOfNodesXi(1)*totalNumberOfNodesXi(2)
+                            elementNodes(8)=nodeNumber+2+totalNumberOfNodesXi(1)+totalNumberOfNodesXi(1)*totalNumberOfNodesXi(2)
+                            elementNodes(9)=nodeNumber+2+totalNumberOfNodesXi(1)+2*totalNumberOfNodesXi(1)*totalNumberOfNodesXi(2)
+                            elementNodes(10)=nodeNumber+2+totalNumberOfNodesXi(1)*totalNumberOfNodesXi(2)
                             CALL GeneratedMeh_ComponentNodesToUserNumbers(regularMesh%generatedMesh,basisIdx,elementNodes, &
                               & elementNodesUserNumbers,err,error,*999)
                             CALL MeshElements_ElementNodesSet(meshElements,elementNumber,elementNodesUserNumbers,err,error,*999)
                             !Fourth sub-element
                             elementNumber=(gridElementNumber-1)*elementFactor+4
                             elementNodes(1)=nodeNumber
-                            elementNodes(2)=nodeNumber+2*totalNumberOfNodesXi(1)*totalNumberOfNodesXi(2)
-                            elementNodes(3)=nodeNumber+2+2*totalNumberOfNodesXi(1)*totalNumberOfNodesXi(2)
-                            elementNodes(4)=nodeNumber+2+2*totalNumberOfNodesXi(1)+2*totalNumberOfNodesXi(1)*totalNumberOfNodesXi(2)
-                            elementNodes(5)=nodeNumber+totalNumberOfNodesXi(1)*totalNumberOfNodesXi(2)
-                            elementNodes(6)=nodeNumber+1+totalNumberOfNodesXi(1)*totalNumberOfNodesXi(2)
-                            elementNodes(7)=nodeNumber+1+totalNumberOfNodesXi(1)+totalNumberOfNodesXi(1)*totalNumberOfNodesXi(2)
-                            elementNodes(8)=nodeNumber+1+2*totalNumberOfNodesXi(1)*totalNumberOfNodesXi(2)
-                            elementNodes(9)=nodeNumber+2+totalNumberOfNodesXi(1)+2*totalNumberOfNodesXi(1)*totalNumberOfNodesXi(2)
-                            elementNodes(10)=nodeNumber+1+totalNumberOfNodesXi(1)+2*totalNumberOfNodesXi(1)*totalNumberOfNodesXi(2)
+                            elementNodes(2)=nodeNumber+2+2*totalNumberOfNodesXi(1)*totalNumberOfNodesXi(2)
+                            elementNodes(3)=nodeNumber+2+2*totalNumberOfNodesXi(1)+2*totalNumberOfNodesXi(1)*totalNumberOfNodesXi(2)
+                            elementNodes(4)=nodeNumber+2*totalNumberOfNodesXi(1)*totalNumberOfNodesXi(2)
+                            elementNodes(5)=nodeNumber+1+totalNumberOfNodesXi(1)*totalNumberOfNodesXi(2)
+                            elementNodes(6)=nodeNumber+1+totalNumberOfNodesXi(1)+totalNumberOfNodesXi(1)*totalNumberOfNodesXi(2)
+                            elementNodes(7)=nodeNumber+totalNumberOfNodesXi(1)*totalNumberOfNodesXi(2)
+                            elementNodes(8)=nodeNumber+2+totalNumberOfNodesXi(1)+2*totalNumberOfNodesXi(1)*totalNumberOfNodesXi(2)
+                            elementNodes(9)=nodeNumber+1+totalNumberOfNodesXi(1)+2*totalNumberOfNodesXi(1)*totalNumberOfNodesXi(2)
+                            elementNodes(10)=nodeNumber+1+2*totalNumberOfNodesXi(1)*totalNumberOfNodesXi(2)
                             CALL GeneratedMeh_ComponentNodesToUserNumbers(regularMesh%generatedMesh,basisIdx,elementNodes, &
                               & elementNodesUserNumbers,err,error,*999)
                             CALL MeshElements_ElementNodesSet(meshElements,elementNumber,elementNodesUserNumbers,err,error,*999)
                             !Fifth sub-element
                             elementNumber=(gridElementNumber-1)*elementFactor+5
                             elementNodes(1)=nodeNumber
-                            elementNodes(2)=nodeNumber+2*totalNumberOfNodesXi(1)
-                            elementNodes(3)=nodeNumber+2*totalNumberOfNodesXi(1)+2*totalNumberOfNodesXi(1)*totalNumberOfNodesXi(2)
-                            elementNodes(4)=nodeNumber+2+2*totalNumberOfNodesXi(1)+2*totalNumberOfNodesXi(1)*totalNumberOfNodesXi(2)
-                            elementNodes(5)=nodeNumber+totalNumberOfNodesXi(1)
-                            elementNodes(6)=nodeNumber+totalNumberOfNodesXi(1)+totalNumberOfNodesXi(1)*totalNumberOfNodesXi(2)
+                            elementNodes(2)=nodeNumber+2+2*totalNumberOfNodesXi(1)+2*totalNumberOfNodesXi(1)*totalNumberOfNodesXi(2)
+                            elementNodes(3)=nodeNumber+2*totalNumberOfNodesXi(1)
+                            elementNodes(4)=nodeNumber+2*totalNumberOfNodesXi(1)+2*totalNumberOfNodesXi(1)*totalNumberOfNodesXi(2)
+                            elementNodes(5)=nodeNumber+1+totalNumberOfNodesXi(1)+totalNumberOfNodesXi(1)*totalNumberOfNodesXi(2)
+                            elementNodes(6)=nodeNumber+2*totalNumberOfNodesXi(1)
                             elementNodes(7)=nodeNumber+1+totalNumberOfNodesXi(1)+totalNumberOfNodesXi(1)*totalNumberOfNodesXi(2)
-                            elementNodes(8)=nodeNumber+2*totalNumberOfNodesXi(1)+totalNumberOfNodesXi(1)*totalNumberOfNodesXi(2)
-                            elementNodes(9)=nodeNumber+1+2*totalNumberOfNodesXi(1)+2*totalNumberOfNodesXi(1)*totalNumberOfNodesXi(2)
-                            elementNodes(10)=nodeNumber+1+2*totalNumberOfNodesXi(1)+totalNumberOfNodesXi(1)*totalNumberOfNodesXi(2)
+                            elementNodes(8)=nodeNumber+totalNumberOfNodesXi(1)+totalNumberOfNodesXi(1)*totalNumberOfNodesXi(2)
+                            elementNodes(9)=nodeNumber+2*totalNumberOfNodesXi(1)+totalNumberOfNodesXi(1)*totalNumberOfNodesXi(2)
+                            elementNodes(10)=nodeNumber+1+2*totalNumberOfNodesXi(1)+2*totalNumberOfNodesXi(1)*totalNumberOfNodesXi(2)
                             CALL GeneratedMeh_ComponentNodesToUserNumbers(regularMesh%generatedMesh,basisIdx,elementNodes, &
                               & elementNodesUserNumbers,err,error,*999)
                             CALL MeshElements_ElementNodesSet(meshElements,elementNumber,elementNodesUserNumbers,err,error,*999)
                             !Sixth sub-element
                             elementNumber=(gridElementNumber-1)*elementFactor+6
                             elementNodes(1)=nodeNumber
-                            elementNodes(2)=nodeNumber+2*totalNumberOfNodesXi(1)+2*totalNumberOfNodesXi(1)*totalNumberOfNodesXi(2)
-                            elementNodes(3)=nodeNumber+2*totalNumberOfNodesXi(1)*totalNumberOfNodesXi(2)
-                            elementNodes(4)=nodeNumber+2+2*totalNumberOfNodesXi(1)+2*totalNumberOfNodesXi(1)*totalNumberOfNodesXi(2)
-                            elementNodes(5)=nodeNumber+totalNumberOfNodesXi(1)+totalNumberOfNodesXi(1)*totalNumberOfNodesXi(2)
-                            elementNodes(6)=nodeNumber+totalNumberOfNodesXi(1)*totalNumberOfNodesXi(2)
-                            elementNodes(7)=nodeNumber+1+totalNumberOfNodesXi(1)+totalNumberOfNodesXi(1)*totalNumberOfNodesXi(2)
-                            elementNodes(8)=nodeNumber+totalNumberOfNodesXi(1)+2*totalNumberOfNodesXi(1)*totalNumberOfNodesXi(2)
-                            elementNodes(9)=nodeNumber+1+totalNumberOfNodesXi(1)+2*totalNumberOfNodesXi(1)*totalNumberOfNodesXi(2)
-                            elementNodes(10)=nodeNumber+1+2*totalNumberOfNodesXi(1)+2*totalNumberOfNodesXi(1)* &
-                              & totalNumberOfNodesXi(2)
+                            elementNodes(2)=nodeNumber+2+2*totalNumberOfNodesXi(1)+2*totalNumberOfNodesXi(1)*totalNumberOfNodesXi(2)
+                            elementNodes(3)=nodeNumber+2*totalNumberOfNodesXi(1)+2*totalNumberOfNodesXi(1)*totalNumberOfNodesXi(2)
+                            elementNodes(4)=nodeNumber+2*totalNumberOfNodesXi(1)*totalNumberOfNodesXi(2)
+                            elementNodes(5)=nodeNumber+1+totalNumberOfNodesXi(1)+totalNumberOfNodesXi(1)*totalNumberOfNodesXi(2)
+                            elementNodes(6)=nodeNumber+totalNumberOfNodesXi(1)+totalNumberOfNodesXi(1)*totalNumberOfNodesXi(2)
+                            elementNodes(7)=nodeNumber+totalNumberOfNodesXi(1)*totalNumberOfNodesXi(2)
+                            elementNodes(8)=nodeNumber+1+2*totalNumberOfNodesXi(1)+2*totalNumberOfNodesXi(1)*totalNumberOfNodesXi(2)
+                            elementNodes(9)=nodeNumber+totalNumberOfNodesXi(1)+2*totalNumberOfNodesXi(1)*totalNumberOfNodesXi(2)
+                            elementNodes(10)=nodeNumber+1+totalNumberOfNodesXi(1)+2*totalNumberOfNodesXi(1)*totalNumberOfNodesXi(2)
                             CALL GeneratedMeh_ComponentNodesToUserNumbers(regularMesh%generatedMesh,basisIdx,elementNodes, &
                               & elementNodesUserNumbers,err,error,*999)
                             CALL MeshElements_ElementNodesSet(meshElements,elementNumber,elementNodesUserNumbers,err,error,*999)
@@ -1436,28 +1435,24 @@ CONTAINS
                             !Third sub-element
                             elementNumber=(gridElementNumber-1)*elementFactor+3
                             elementNodes(1)=nodeNumber
-                            elementNodes(2)=nodeNumber+3+3*totalNumberOfNodesXi(1)*totalNumberOfNodesXi(2)
-                            elementNodes(3)=nodeNumber+3
-                            elementNodes(4)=nodeNumber+3+3*totalNumberOfNodesXi(1)+3*totalNumberOfNodesXi(1)*totalNumberOfNodesXi(2)
-                            elementNodes(5)=nodeNumber+1+totalNumberOfNodesXi(1)*totalNumberOfNodesXi(2)
-                            elementNodes(6)=nodeNumber+2+2*totalNumberOfNodesXi(1)*totalNumberOfNodesXi(2)
-                            elementNodes(7)=nodeNumber+1
-                            elementNodes(8)=nodeNumber+2
-                            elementNodes(9)=nodeNumber+1+totalNumberOfNodesXi(1)+totalNumberOfNodesXi(1)*totalNumberOfNodesXi(2)
-                            elementNodes(10)=nodeNumber+2+2*totalNumberOfNodesXi(1)+2*totalNumberOfNodesXi(1)* &
-                              & totalNumberOfNodesXi(2)
-                            elementNodes(11)=nodeNumber+3+2*totalNumberOfNodesXi(1)*totalNumberOfNodesXi(2)
-                            elementNodes(12)=nodeNumber+3+totalNumberOfNodesXi(1)*totalNumberOfNodesXi(2)
-                            elementNodes(13)=nodeNumber+3+totalNumberOfNodesXi(1)+totalNumberOfNodesXi(1)*totalNumberOfNodesXi(2)
-                            elementNodes(14)=nodeNumber+3+2*totalNumberOfNodesXi(1)+2*totalNumberOfNodesXi(1)* &
-                              & totalNumberOfNodesXi(2)
-                            elementNodes(15)=nodeNumber+3+totalNumberOfNodesXi(1)+3*totalNumberOfNodesXi(1)*totalNumberOfNodesXi(2)
-                            elementNodes(16)=nodeNumber+3+2*totalNumberOfNodesXi(1)+3*totalNumberOfNodesXi(1)* &
-                              & totalNumberOfNodesXi(2)
-                            elementNodes(17)=nodeNumber+2+2*totalNumberOfNodesXi(1)+3*totalNumberOfNodesXi(1)* &
-                              & totalNumberOfNodesXi(2)
-                            elementNodes(18)=nodeNumber+2+totalNumberOfNodesXi(1)+2*totalNumberOfNodesXi(1)*totalNumberOfNodesXi(2)
-                            elementNodes(19)=nodeNumber+2+totalNumberOfNodesXi(1)+totalNumberOfNodesXi(1)*totalNumberOfNodesXi(2)
+                            elementNodes(2)=nodeNumber+3
+                            elementNodes(3)=nodeNumber+3+3*totalNumberOfNodesXi(1)+3*totalNumberOfNodesXi(1)*totalNumberOfNodesXi(2)
+                            elementNodes(4)=nodeNumber+3+3*totalNumberOfNodesXi(1)*totalNumberOfNodesXi(2)
+                            elementNodes(5)=nodeNumber+1
+                            elementNodes(6)=nodeNumber+2
+                            elementNodes(7)=nodeNumber+1+totalNumberOfNodesXi(1)+totalNumberOfNodesXi(1)*totalNumberOfNodesXi(2)
+                            elementNodes(8)=nodeNumber+2+2*totalNumberOfNodesXi(1)+2*totalNumberOfNodesXi(1)*totalNumberOfNodesXi(2)
+                            elementNodes(9)=nodeNumber+1+totalNumberOfNodesXi(1)*totalNumberOfNodesXi(2)
+                            elementNodes(10)=nodeNumber+2++2*totalNumberOfNodesXi(1)*totalNumberOfNodesXi(2)
+                            elementNodes(11)=nodeNumber+3+totalNumberOfNodesXi(1)+totalNumberOfNodesXi(1)*totalNumberOfNodesXi(2)
+                            elementNodes(12)=nodeNumber+3+2*totalNumberOfNodesXi(1)+2*totalNumberOfNodesXi(1)*totalNumberOfNodesXi(2)
+                            elementNodes(13)=nodeNumber+3+2*totalNumberOfNodesXi(1)+2*totalNumberOfNodesXi(1)*totalNumberOfNodesXi(2)
+                            elementNodes(14)=nodeNumber+3+totalNumberOfNodesXi(1)+3*totalNumberOfNodesXi(1)*totalNumberOfNodesXi(2)
+                            elementNodes(15)=nodeNumber+3+totalNumberOfNodesXi(1)*totalNumberOfNodesXi(2)
+                            elementNodes(16)=nodeNumber+3+2*totalNumberOfNodesXi(1)*totalNumberOfNodesXi(2)
+                            elementNodes(17)=nodeNumber+2+totalNumberOfNodesXi(1)+totalNumberOfNodesXi(1)*totalNumberOfNodesXi(2)
+                            elementNodes(18)=nodeNumber+2+totalNumberOfNodesXi(1)*totalNumberOfNodesXi(2)
+                            elementNodes(19)=nodeNumber+2+totalNumberOfNodesXi(1)+2*totalNumberOfNodesXi(1)*totalNumberOfNodesXi(2)
                             elementNodes(20)=nodeNumber+3+totalNumberOfNodesXi(1)+2*totalNumberOfNodesXi(1)*totalNumberOfNodesXi(2)
                             CALL GeneratedMeh_ComponentNodesToUserNumbers(regularMesh%generatedMesh,basisIdx,elementNodes, &
                               & elementNodesUserNumbers,err,error,*999)
@@ -1465,27 +1460,24 @@ CONTAINS
                             !Fourth sub-element
                             elementNumber=(gridElementNumber-1)*elementFactor+4
                             elementNodes(1)=nodeNumber
-                            elementNodes(2)=nodeNumber+3*totalNumberOfNodesXi(1)*totalNumberOfNodesXi(2)
-                            elementNodes(3)=nodeNumber+3+3*totalNumberOfNodesXi(1)*totalNumberOfNodesXi(2)
-                            elementNodes(4)=nodeNumber+3+3*totalNumberOfNodesXi(1)+3*totalNumberOfNodesXi(1)*totalNumberOfNodesXi(2)
-                            elementNodes(5)=nodeNumber+totalNumberOfNodesXi(1)*totalNumberOfNodesXi(2)
-                            elementNodes(6)=nodeNumber+2*totalNumberOfNodesXi(1)*totalNumberOfNodesXi(2)
-                            elementNodes(7)=nodeNumber+1+totalNumberOfNodesXi(1)*totalNumberOfNodesXi(2)
-                            elementNodes(8)=nodeNumber+2+2*totalNumberOfNodesXi(1)*totalNumberOfNodesXi(2)
-                            elementNodes(9)=nodeNumber+1+totalNumberOfNodesXi(1)+totalNumberOfNodesXi(1)*totalNumberOfNodesXi(2)
-                            elementNodes(10)=nodeNumber+2+2*totalNumberOfNodesXi(1)+2*totalNumberOfNodesXi(1)* &
-                              & totalNumberOfNodesXi(2)
-                            elementNodes(11)=nodeNumber+1+3*totalNumberOfNodesXi(1)*totalNumberOfNodesXi(2)
-                            elementNodes(12)=nodeNumber+2+3*totalNumberOfNodesXi(1)*totalNumberOfNodesXi(2)
-                            elementNodes(13)=nodeNumber+3+totalNumberOfNodesXi(1)+3*totalNumberOfNodesXi(1)*totalNumberOfNodesXi(2)
-                            elementNodes(14)=nodeNumber+3+2*totalNumberOfNodesXi(1)+3*totalNumberOfNodesXi(1)* &
-                              & totalNumberOfNodesXi(2)
-                            elementNodes(15)=nodeNumber+1+totalNumberOfNodesXi(1)+3*totalNumberOfNodesXi(1)*totalNumberOfNodesXi(2)
-                            elementNodes(16)=nodeNumber+2+2*totalNumberOfNodesXi(1)+3*totalNumberOfNodesXi(1)* &
-                              & totalNumberOfNodesXi(2)
-                            elementNodes(17)=nodeNumber+1+2*totalNumberOfNodesXi(1)*totalNumberOfNodesXi(2)
-                            elementNodes(18)=nodeNumber+1+totalNumberOfNodesXi(1)+2*totalNumberOfNodesXi(1)*totalNumberOfNodesXi(2)
-                            elementNodes(19)=nodeNumber+2+totalNumberOfNodesXi(1)+2*totalNumberOfNodesXi(1)*totalNumberOfNodesXi(2)
+                            elementNodes(2)=nodeNumber+3+3*totalNumberOfNodesXi(1)*totalNumberOfNodesXi(2)
+                            elementNodes(3)=nodeNumber+3+3*totalNumberOfNodesXi(1)+3*totalNumberOfNodesXi(1)*totalNumberOfNodesXi(2)
+                            elementNodes(4)=nodeNumber+3*totalNumberOfNodesXi(1)*totalNumberOfNodesXi(2)
+                            elementNodes(5)=nodeNumber+1+totalNumberOfNodesXi(1)*totalNumberOfNodesXi(2)
+                            elementNodes(6)=nodeNumber+2+2*totalNumberOfNodesXi(1)*totalNumberOfNodesXi(2)
+                            elementNodes(7)=nodeNumber+1+totalNumberOfNodesXi(1)+totalNumberOfNodesXi(1)*totalNumberOfNodesXi(2)
+                            elementNodes(8)=nodeNumber+2+2*totalNumberOfNodesXi(1)+2*totalNumberOfNodesXi(1)*totalNumberOfNodesXi(2)
+                            elementNodes(9)=nodeNumber+totalNumberOfNodesXi(1)*totalNumberOfNodesXi(2)
+                            elementNodes(10)=nodeNumber+2*totalNumberOfNodesXi(1)*totalNumberOfNodesXi(2)
+                            elementNodes(11)=nodeNumber+3+totalNumberOfNodesXi(1)+3*totalNumberOfNodesXi(1)*totalNumberOfNodesXi(2)
+                            elementNodes(12)=nodeNumber+3+2*totalNumberOfNodesXi(1)+3*totalNumberOfNodesXi(1)*totalNumberOfNodesXi(2)
+                            elementNodes(13)=nodeNumber+2+2*totalNumberOfNodesXi(1)+3*totalNumberOfNodesXi(1)*totalNumberOfNodesXi(2)
+                            elementNodes(14)=nodeNumber+1+totalNumberOfNodesXi(1)+3*totalNumberOfNodesXi(1)*totalNumberOfNodesXi(2)
+                            elementNodes(15)=nodeNumber+2+3*totalNumberOfNodesXi(1)*totalNumberOfNodesXi(2)
+                            elementNodes(16)=nodeNumber+1+3*totalNumberOfNodesXi(1)*totalNumberOfNodesXi(2)
+                            elementNodes(17)=nodeNumber+2+totalNumberOfNodesXi(1)+2*totalNumberOfNodesXi(1)*totalNumberOfNodesXi(2)
+                            elementNodes(18)=nodeNumber+1+2*totalNumberOfNodesXi(1)*totalNumberOfNodesXi(2)
+                            elementNodes(19)=nodeNumber+1+totalNumberOfNodesXi(1)+2*totalNumberOfNodesXi(1)*totalNumberOfNodesXi(2)
                             elementNodes(20)=nodeNumber+2+totalNumberOfNodesXi(1)+3*totalNumberOfNodesXi(1)*totalNumberOfNodesXi(2)
                             CALL GeneratedMeh_ComponentNodesToUserNumbers(regularMesh%generatedMesh,basisIdx,elementNodes, &
                               & elementNodesUserNumbers,err,error,*999)
@@ -1493,62 +1485,50 @@ CONTAINS
                             !Fifth sub-element
                             elementNumber=(gridElementNumber-1)*elementFactor+5
                             elementNodes(1)=nodeNumber
-                            elementNodes(2)=nodeNumber+3*totalNumberOfNodesXi(1)
-                            elementNodes(3)=nodeNumber+3*totalNumberOfNodesXi(1)+3*totalNumberOfNodesXi(1)*totalNumberOfNodesXi(2)
-                            elementNodes(4)=nodeNumber+3+3*totalNumberOfNodesXi(1)+3*totalNumberOfNodesXi(1)*totalNumberOfNodesXi(2)
-                            elementNodes(5)=nodeNumber+totalNumberOfNodesXi(1)
-                            elementNodes(6)=nodeNumber+2*totalNumberOfNodesXi(1)
-                            elementNodes(7)=nodeNumber+totalNumberOfNodesXi(1)+totalNumberOfNodesXi(1)*totalNumberOfNodesXi(2)
-                            elementNodes(8)=nodeNumber+2*totalNumberOfNodesXi(1)+2*totalNumberOfNodesXi(1)*totalNumberOfNodesXi(2)
-                            elementNodes(9)=nodeNumber+1+totalNumberOfNodesXi(1)+totalNumberOfNodesXi(1)*totalNumberOfNodesXi(2)
-                            elementNodes(10)=nodeNumber+2+2*totalNumberOfNodesXi(1)+2*totalNumberOfNodesXi(1)* &
-                              & totalNumberOfNodesXi(2)
+                            elementNodes(2)=nodeNumber+3+3*totalNumberOfNodesXi(1)+3*totalNumberOfNodesXi(1)*totalNumberOfNodesXi(2)
+                            elementNodes(3)=nodeNumber+3*totalNumberOfNodesXi(1)
+                            elementNodes(4)=nodeNumber+3*totalNumberOfNodesXi(1)+3*totalNumberOfNodesXi(1)*totalNumberOfNodesXi(2)
+                            elementNodes(5)=nodeNumber+1+totalNumberOfNodesXi(1)+totalNumberOfNodesXi(1)*totalNumberOfNodesXi(2)
+                            elementNodes(6)=nodeNumber+2+2*totalNumberOfNodesXi(1)+2*totalNumberOfNodesXi(1)*totalNumberOfNodesXi(2)
+                            elementNodes(7)=nodeNumber+totalNumberOfNodesXi(1)
+                            elementNodes(8)=nodeNumber+2*totalNumberOfNodesXi(1)
+                            elementNodes(9)=nodeNumber+totalNumberOfNodesXi(1)+totalNumberOfNodesXi(1)*totalNumberOfNodesXi(2)
+                            elementNodes(10)=nodeNumber+2*totalNumberOfNodesXi(1)+2*totalNumberOfNodesXi(1)*totalNumberOfNodesXi(2)
                             elementNodes(11)=nodeNumber+3*totalNumberOfNodesXi(1)+totalNumberOfNodesXi(1)*totalNumberOfNodesXi(2)
                             elementNodes(12)=nodeNumber+3*totalNumberOfNodesXi(1)+2*totalNumberOfNodesXi(1)*totalNumberOfNodesXi(2)
-                            elementNodes(13)=nodeNumber+1+3*totalNumberOfNodesXi(1)+3*totalNumberOfNodesXi(1)* &
-                              & totalNumberOfNodesXi(2)
-                            elementNodes(14)=nodeNumber+2+3*totalNumberOfNodesXi(1)+3*totalNumberOfNodesXi(1)* &
-                              & totalNumberOfNodesXi(2)
-                            elementNodes(15)=nodeNumber+1+3*totalNumberOfNodesXi(1)+totalNumberOfNodesXi(1)*totalNumberOfNodesXi(2)
-                            elementNodes(16)=nodeNumber+2+3*totalNumberOfNodesXi(1)+2*totalNumberOfNodesXi(1)* &
-                              & totalNumberOfNodesXi(2)
-                            elementNodes(17)=nodeNumber+2*totalNumberOfNodesXi(1)+totalNumberOfNodesXi(1)*totalNumberOfNodesXi(2)
-                            elementNodes(18)=nodeNumber+1+2*totalNumberOfNodesXi(1)+totalNumberOfNodesXi(1)*totalNumberOfNodesXi(2)
-                            elementNodes(19)=nodeNumber+1+2*totalNumberOfNodesXi(1)+2*totalNumberOfNodesXi(1)* &
-                              & totalNumberOfNodesXi(2)
-                            elementNodes(20)=nodeNumber+1+3*totalNumberOfNodesXi(1)+2*totalNumberOfNodesXi(1)* &
-                              & totalNumberOfNodesXi(2)
+                            elementNodes(13)=nodeNumber+3*totalNumberOfNodesXi(1)+totalNumberOfNodesXi(1)*totalNumberOfNodesXi(2)
+                            elementNodes(14)=nodeNumber+3*totalNumberOfNodesXi(1)+2*totalNumberOfNodesXi(1)*totalNumberOfNodesXi(2)
+                            elementNodes(15)=nodeNumber+2+3*totalNumberOfNodesXi(1)+3*totalNumberOfNodesXi(1)*totalNumberOfNodesXi(2)
+                            elementNodes(16)=nodeNumber+1+3*totalNumberOfNodesXi(1)+3*totalNumberOfNodesXi(1)*totalNumberOfNodesXi(2)
+                            elementNodes(17)=nodeNumber+1+2*totalNumberOfNodesXi(1)+totalNumberOfNodesXi(1)*totalNumberOfNodesXi(2)
+                            elementNodes(18)=nodeNumber+1+2*totalNumberOfNodesXi(1)+2*totalNumberOfNodesXi(1)*totalNumberOfNodesXi(2)
+                            elementNodes(19)=nodeNumber+2*totalNumberOfNodesXi(1)+totalNumberOfNodesXi(1)*totalNumberOfNodesXi(2)
+                            elementNodes(20)=nodeNumber+1+2*totalNumberOfNodesXi(1)+2*totalNumberOfNodesXi(1)*totalNumberOfNodesXi(2)
                             CALL GeneratedMeh_ComponentNodesToUserNumbers(regularMesh%generatedMesh,basisIdx,elementNodes, &
                               & elementNodesUserNumbers,err,error,*999)
                             CALL MeshElements_ElementNodesSet(meshElements,elementNumber,elementNodesUserNumbers,err,error,*999)
                             !Sixth sub-element
                             elementNumber=(gridElementNumber-1)*elementFactor+6
                             elementNodes(1)=nodeNumber
-                            elementNodes(2)=nodeNumber+3*totalNumberOfNodesXi(1)+3*totalNumberOfNodesXi(1)*totalNumberOfNodesXi(2)
-                            elementNodes(3)=nodeNumber+3*totalNumberOfNodesXi(1)*totalNumberOfNodesXi(2)
-                            elementNodes(4)=nodeNumber+3+3*totalNumberOfNodesXi(1)+3*totalNumberOfNodesXi(1)*totalNumberOfNodesXi(2)
-                            elementNodes(5)=nodeNumber+totalNumberOfNodesXi(1)+totalNumberOfNodesXi(1)*totalNumberOfNodesXi(2)
-                            elementNodes(6)=nodeNumber+2*totalNumberOfNodesXi(1)+2*totalNumberOfNodesXi(1)*totalNumberOfNodesXi(2)
-                            elementNodes(7)=nodeNumber+totalNumberOfNodesXi(1)*totalNumberOfNodesXi(2)
-                            elementNodes(8)=nodeNumber+2*totalNumberOfNodesXi(1)*totalNumberOfNodesXi(2)
-                            elementNodes(9)=nodeNumber+1+totalNumberOfNodesXi(1)+totalNumberOfNodesXi(1)*totalNumberOfNodesXi(2)
-                            elementNodes(10)=nodeNumber+2+2*totalNumberOfNodesXi(1)+2*totalNumberOfNodesXi(1)* &
-                              & totalNumberOfNodesXi(2)
-                            elementNodes(11)=nodeNumber+2*totalNumberOfNodesXi(1)+3*totalNumberOfNodesXi(1)*totalNumberOfNodesXi(2)
-                            elementNodes(12)=nodeNumber+totalNumberOfNodesXi(1)+3*totalNumberOfNodesXi(1)*totalNumberOfNodesXi(2)
-                            elementNodes(13)=nodeNumber+1+totalNumberOfNodesXi(1)+3*totalNumberOfNodesXi(1)*totalNumberOfNodesXi(2)
-                            elementNodes(14)=nodeNumber+2+2*totalNumberOfNodesXi(1)+3*totalNumberOfNodesXi(1)* &
-                              & totalNumberOfNodesXi(2)
-                            elementNodes(15)=nodeNumber+1+3*totalNumberOfNodesXi(1)+3*totalNumberOfNodesXi(1)* &
-                              & totalNumberOfNodesXi(2)
-                            elementNodes(16)=nodeNumber+2+3*totalNumberOfNodesXi(1)+3*totalNumberOfNodesXi(1)* &
-                              & totalNumberOfNodesXi(2)
-                            elementNodes(17)=nodeNumber+totalNumberOfNodesXi(1)+2*totalNumberOfNodesXi(1)*totalNumberOfNodesXi(2)
-                            elementNodes(18)=nodeNumber+1+2*totalNumberOfNodesXi(1)+2*totalNumberOfNodesXi(1)* &
-                              & totalNumberOfNodesXi(2)
-                            elementNodes(19)=nodeNumber+1+totalNumberOfNodesXi(1)+2*totalNumberOfNodesXi(1)*totalNumberOfNodesXi(2)
-                            elementNodes(20)=nodeNumber+1+2*totalNumberOfNodesXi(1)+3*totalNumberOfNodesXi(1)* &
-                              & totalNumberOfNodesXi(2)
+                            elementNodes(2)=nodeNumber+3+3*totalNumberOfNodesXi(1)+3*totalNumberOfNodesXi(1)*totalNumberOfNodesXi(2)
+                            elementNodes(3)=nodeNumber+3*totalNumberOfNodesXi(1)+3*totalNumberOfNodesXi(1)*totalNumberOfNodesXi(2)
+                            elementNodes(4)=nodeNumber+3*totalNumberOfNodesXi(1)*totalNumberOfNodesXi(2)
+                            elementNodes(5)=nodeNumber+1+totalNumberOfNodesXi(1)+totalNumberOfNodesXi(1)*totalNumberOfNodesXi(2)
+                            elementNodes(6)=nodeNumber+2+2*totalNumberOfNodesXi(1)+2*totalNumberOfNodesXi(1)*totalNumberOfNodesXi(2)
+                            elementNodes(7)=nodeNumber+totalNumberOfNodesXi(1)+totalNumberOfNodesXi(1)*totalNumberOfNodesXi(2)
+                            elementNodes(8)=nodeNumber+2*totalNumberOfNodesXi(2)+2*totalNumberOfNodesXi(1)*totalNumberOfNodesXi(2)
+                            elementNodes(9)=nodeNumber+totalNumberOfNodesXi(1)*totalNumberOfNodesXi(2)
+                            elementNodes(10)=nodeNumber+2*totalNumberOfNodesXi(1)*totalNumberOfNodesXi(2)
+                            elementNodes(11)=nodeNumber+2+3*totalNumberOfNodesXi(1)+3*totalNumberOfNodesXi(1)*totalNumberOfNodesXi(2)
+                            elementNodes(12)=nodeNumber+1+3*totalNumberOfNodesXi(1)+3*totalNumberOfNodesXi(1)*totalNumberOfNodesXi(2)
+                            elementNodes(13)=nodeNumber+2*totalNumberOfNodesXi(1)+3*totalNumberOfNodesXi(1)*totalNumberOfNodesXi(2)
+                            elementNodes(14)=nodeNumber+totalNumberOfNodesXi(1)+3*totalNumberOfNodesXi(1)*totalNumberOfNodesXi(2)
+                            elementNodes(15)=nodeNumber+2+2*totalNumberOfNodesXi(1)+3*totalNumberOfNodesXi(1)*totalNumberOfNodesXi(2)
+                            elementNodes(16)=nodeNumber+1+totalNumberOfNodesXi(1)+3*totalNumberOfNodesXi(1)*totalNumberOfNodesXi(2)
+                            elementNodes(17)=nodeNumber+1+2*totalNumberOfNodesXi(1)+2*totalNumberOfNodesXi(1)*totalNumberOfNodesXi(2)
+                            elementNodes(18)=nodeNumber+1+totalNumberOfNodesXi(1)+totalNumberOfNodesXi(1)*totalNumberOfNodesXi(2)
+                            elementNodes(19)=nodeNumber+totalNumberOfNodesXi(1)+2*totalNumberOfNodesXi(1)*totalNumberOfNodesXi(2)
+                            elementNodes(20)=nodeNumber+1+2*totalNumberOfNodesXi(1)+3*totalNumberOfNodesXi(1)*totalNumberOfNodesXi(2)
                             CALL GeneratedMeh_ComponentNodesToUserNumbers(regularMesh%generatedMesh,basisIdx,elementNodes, &
                               & elementNodesUserNumbers,err,error,*999)
                             CALL MeshElements_ElementNodesSet(meshElements,elementNumber,elementNodesUserNumbers,err,error,*999)

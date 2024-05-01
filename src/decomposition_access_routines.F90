@@ -294,6 +294,8 @@ MODULE DecompositionAccessRoutines
 
   PUBLIC DomainElement_ElementVersionGet
 
+  PUBLIC DomainElement_LocalNumberGet
+  
   PUBLIC DomainElement_NodeLocalNodeGet
   
   PUBLIC DomainElements_ElementGet
@@ -322,6 +324,10 @@ MODULE DecompositionAccessRoutines
 
   PUBLIC DomainFace_DerivativeVersionNumberGet
 
+  PUBLIC DomainFace_LocalNumberGet
+
+  PUBLIC DomainFace_NodeLocalNodeGet
+
   PUBLIC DomainFace_NodeNumberGet
 
   PUBLIC DomainFaces_DerivativeGlobalIndexGet
@@ -345,6 +351,10 @@ MODULE DecompositionAccessRoutines
   PUBLIC DomainLine_DerivativeGlobalIndexGet
 
   PUBLIC DomainLine_DerivativeVersionNumberGet
+
+  PUBLIC DomainLine_LocalNumberGet
+
+  PUBLIC DomainLine_NodeLocalNodeGet
 
   PUBLIC DomainLine_NodeNumberGet
 
@@ -4599,6 +4609,35 @@ CONTAINS
   !================================================================================================================================
   !
 
+  !>Get the local number for a domain element.
+  SUBROUTINE DomainElement_LocalNumberGet(domainElement,localElementNumber,err,error,*)
+
+    !Argument variables
+    TYPE(DomainElementType), POINTER :: domainElement !<A pointer to the domain element to get the local element number for
+    INTEGER(INTG), INTENT(OUT) :: localELementNumber !<On return, the local element number for the domain element. 
+    INTEGER(INTG), INTENT(OUT) :: err !<The error code
+    TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
+    !Local Variables
+
+    ENTERS("DomainElement_LocalNumberGet",err,error,*999)
+
+#ifdef WITH_PRECHECKS    
+    IF(.NOT.ASSOCIATED(domainElement)) CALL FlagError("Domain element is not associated.",err,error,*999)
+#endif    
+      
+    localElementNumber=domainElement%number
+    
+    EXITS("DomainElement_LocalNumberGet")
+    RETURN
+999 ERRORSEXITS("DomainElement_LocalNumberGet",err,error)
+    RETURN 1
+    
+  END SUBROUTINE DomainElement_LocalNumberGet
+
+  !  
+  !================================================================================================================================
+  !
+
   !>Get the local element node number in an element for a given local domain node number. If the local domain node is not in the element then a local element node number of zero is returned. 
   SUBROUTINE DomainElement_NodeLocalNodeGet(domainElement,domainNodeNumber,elementLocalNodeNumber,err,error,*)
 
@@ -5265,6 +5304,85 @@ CONTAINS
     
   END SUBROUTINE DomainFace_DerivativeVersionNumberGet
   
+  !  
+  !================================================================================================================================
+  !
+
+  !>Get the local number for a domain face.
+  SUBROUTINE DomainFace_LocalNumberGet(domainFace,localFaceNumber,err,error,*)
+
+    !Argument variables
+    TYPE(DomainFaceType), POINTER :: domainFace !<A pointer to the domain face to get the local face number for
+    INTEGER(INTG), INTENT(OUT) :: localFaceNumber !<On return, the local face number for the domain face. 
+    INTEGER(INTG), INTENT(OUT) :: err !<The error code
+    TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
+    !Local Variables
+
+    ENTERS("DomainFace_LocalNumberGet",err,error,*999)
+
+#ifdef WITH_PRECHECKS    
+    IF(.NOT.ASSOCIATED(domainFace)) CALL FlagError("Domain face is not associated.",err,error,*999)
+#endif    
+      
+    localFaceNumber=domainFace%number
+    
+    EXITS("DomainFace_LocalNumberGet")
+    RETURN
+999 ERRORSEXITS("DomainFace_LocalNumberGet",err,error)
+    RETURN 1
+    
+  END SUBROUTINE DomainFace_LocalNumberGet
+
+  !  
+  !================================================================================================================================
+  !
+
+  !>Get the local face node number in a face for a given local domain node number. If the local domain node is not in the face then a local face node number of zero is returned. 
+  SUBROUTINE DomainFace_NodeLocalNodeGet(domainFace,domainNodeNumber,faceLocalNodeNumber,err,error,*)
+
+    !Argument variables
+    TYPE(DomainFaceType), POINTER :: domainFace !<A pointer to the domain face to get the local face node number for
+    INTEGER(INTG), INTENT(IN) :: domainNodeNumber !<The local domain node number to get the local face node number number for
+    INTEGER(INTG), INTENT(OUT) :: faceLocalNodeNumber !<On return, the local face node number corrresponding to the domain local node number. If the domain local node number is not withing the face then zero will be returned for the face local node number.
+    INTEGER(INTG), INTENT(OUT) :: err !<The error code
+    TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
+    !Local Variables
+    INTEGER(INTG) :: localNodeIdx
+#ifdef WITH_PRECHECKS
+    TYPE(VARYING_STRING) :: localError
+#endif    
+
+    ENTERS("DomainFace_NodeLocalNodeGet",err,error,*999)
+
+    faceLocalNodeNumber=0
+
+#ifdef WITH_PRECHECKS    
+    IF(.NOT.ASSOCIATED(domainFace)) CALL FlagError("Domain face is not associated.",err,error,*999)
+    IF(.NOT.ASSOCIATED(domainFace%basis)) CALL FlagError("Domain face basis is not associated.",err,error,*999)
+    IF(.NOT.ALLOCATED(domainFace%nodesInFace)) &
+      & CALL FlagError("The nodes in face array is not allocated for the domain face.",err,error,*999)
+    IF(domainFace%basis%numberOfNodes>SIZE(domainFace%nodesInFace,1)) THEN
+      localError="The number of local nodes of "//TRIM(NumberToVString(domainFace%basis%numberOfNodes,"*",err,error))// &
+        & " for the basis for the domain face is greater than the size of the domain face nodes in face array of "// &
+        & TRIM(NumberToVString(SIZE(domainFace%nodesInFace,1),"*",err,error))//"."
+      CALL FlagError(localError,err,error,*999)
+    ENDIF
+#endif    
+
+    DO localNodeIdx=1,domainFace%basis%numberOfNodes
+      IF(domainFace%nodesInFace(localNodeIdx)==domainNodeNumber) THEN
+        faceLocalNodeNumber=localNodeIdx
+        EXIT
+      ENDIF
+    ENDDO !localNodeIdx
+        
+    EXITS("DomainFace_NodeLocalNodeGet")
+    RETURN
+999 ERRORSEXITS("DomainFace_NodeLocalNodeGet",err,error)
+    RETURN 1
+    
+  END SUBROUTINE DomainFace_NodeLocalNodeGet
+  
   !
   !================================================================================================================================
   !
@@ -5831,6 +5949,85 @@ CONTAINS
     RETURN 1
     
   END SUBROUTINE DomainLine_DerivativeVersionNumberGet
+  
+  !  
+  !================================================================================================================================
+  !
+
+  !>Get the local number for a domain line.
+  SUBROUTINE DomainLine_LocalNumberGet(domainLine,localLineNumber,err,error,*)
+
+    !Argument variables
+    TYPE(DomainLineType), POINTER :: domainLine !<A pointer to the domain line to get the local line number for
+    INTEGER(INTG), INTENT(OUT) :: localLineNumber !<On return, the local line number for the domain face. 
+    INTEGER(INTG), INTENT(OUT) :: err !<The error code
+    TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
+    !Local Variables
+
+    ENTERS("DomainLine_LocalNumberGet",err,error,*999)
+
+#ifdef WITH_PRECHECKS    
+    IF(.NOT.ASSOCIATED(domainLine)) CALL FlagError("Domain line is not associated.",err,error,*999)
+#endif    
+      
+    localLineNumber=domainLine%number
+    
+    EXITS("DomainLine_LocalNumberGet")
+    RETURN
+999 ERRORSEXITS("DomainLine_LocalNumberGet",err,error)
+    RETURN 1
+    
+  END SUBROUTINE DomainLine_LocalNumberGet
+
+  !  
+  !================================================================================================================================
+  !
+
+  !>Get the local line node number in a line for a given local domain node number. If the local domain node is not in the line then a local line node number of zero is returned. 
+  SUBROUTINE DomainLine_NodeLocalNodeGet(domainLine,domainNodeNumber,lineLocalNodeNumber,err,error,*)
+
+    !Argument variables
+    TYPE(DomainLineType), POINTER :: domainLine !<A pointer to the domain line to get the local line node number for
+    INTEGER(INTG), INTENT(IN) :: domainNodeNumber !<The local domain node number to get the local line node number number for
+    INTEGER(INTG), INTENT(OUT) :: lineLocalNodeNumber !<On return, the local line node number corrresponding to the domain local node number. If the domain local node number is not withing the line then zero will be returned for the line local node number.
+    INTEGER(INTG), INTENT(OUT) :: err !<The error code
+    TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
+    !Local Variables
+    INTEGER(INTG) :: localNodeIdx
+#ifdef WITH_PRECHECKS
+    TYPE(VARYING_STRING) :: localError
+#endif    
+
+    ENTERS("DomainLine_NodeLocalNodeGet",err,error,*999)
+
+    lineLocalNodeNumber=0
+
+#ifdef WITH_PRECHECKS    
+    IF(.NOT.ASSOCIATED(domainLine)) CALL FlagError("Domain line is not associated.",err,error,*999)
+    IF(.NOT.ASSOCIATED(domainLine%basis)) CALL FlagError("Domain line basis is not associated.",err,error,*999)
+    IF(.NOT.ALLOCATED(domainLine%nodesInLine)) &
+      & CALL FlagError("The nodes in line array is not allocated for the domain line.",err,error,*999)
+    IF(domainLine%basis%numberOfNodes>SIZE(domainLine%nodesInLine,1)) THEN
+      localError="The number of local nodes of "//TRIM(NumberToVString(domainLine%basis%numberOfNodes,"*",err,error))// &
+        & " for the basis for the domain line is greater than the size of the domain line nodes in line array of "// &
+        & TRIM(NumberToVString(SIZE(domainLine%nodesInLine,1),"*",err,error))//"."
+      CALL FlagError(localError,err,error,*999)
+    ENDIF
+#endif    
+
+    DO localNodeIdx=1,domainLine%basis%numberOfNodes
+      IF(domainLine%nodesInLine(localNodeIdx)==domainNodeNumber) THEN
+        lineLocalNodeNumber=localNodeIdx
+        EXIT
+      ENDIF
+    ENDDO !localNodeIdx
+        
+    EXITS("DomainLine_NodeLocalNodeGet")
+    RETURN
+999 ERRORSEXITS("DomainLine_NodeLocalNodeGet",err,error)
+    RETURN 1
+    
+  END SUBROUTINE DomainLine_NodeLocalNodeGet
   
   !
   !================================================================================================================================

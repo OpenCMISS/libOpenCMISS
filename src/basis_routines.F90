@@ -206,14 +206,14 @@ CONTAINS
 
     SELECT CASE(SIZE(xiCoordinates,1))
     CASE(1)
-      xiCoordinates(1)=1.0_DP-areaCoordinates(1)
+      xiCoordinates(1)=areaCoordinates(2)
     CASE(2)
-      xiCoordinates(1)=1.0_DP-areaCoordinates(1)
-      xiCoordinates(2)=1.0_DP-areaCoordinates(2)
+      xiCoordinates(1)=areaCoordinates(2)
+      xiCoordinates(2)=areaCoordinates(3)
     CASE(3)
-      xiCoordinates(1)=1.0_DP-areaCoordinates(1)
-      xiCoordinates(2)=1.0_DP-areaCoordinates(2)
-      xiCoordinates(3)=1.0_DP-areaCoordinates(3)
+      xiCoordinates(1)=areaCoordinates(2)
+      xiCoordinates(2)=areaCoordinates(3)
+      xiCoordinates(3)=areaCoordinates(4)
     CASE DEFAULT
       localError="The number of xi coordinates of "//TRIM(NumberToVString(SIZE(xiCoordinates,1),"*",err,error))// &
         & " is invalid. The number must be >= 1 and <= 3."
@@ -701,7 +701,7 @@ CONTAINS
             & TRIM(NumberToVString(basis%numberOfLocalLines,"*",err,error))//"."
           CALL FlagError(localError,err,error,*999)
         ENDIF
-        SELECT CASE(basis%TYPE)
+        SELECT CASE(basis%type)
         CASE(BASIS_LAGRANGE_HERMITE_TP_TYPE)
           SELECT CASE(numberOfXi)
           CASE(2)
@@ -899,13 +899,13 @@ CONTAINS
             normalXi1=basis%localLineXiNormals(1,localLineFaceNumber)
             SELECT CASE(normalXi1)
             CASE(1)
-              fullXi(1)=0.0_DP
+              fullXi(1)=1.0_DP-boundaryXi(1)
               fullXi(2)=boundaryXi(1)
             CASE(2)
               fullXi(1)=boundaryXi(1)
               fullXi(2)=0.0_DP
             CASE(3)
-              fullXi(1)=boundaryXi(1)
+              fullXi(1)=0.0_DP
               fullXi(2)=1.0_DP-boundaryXi(1)
             CASE DEFAULT
               localError="The normal xi direction of "//TRIM(NumberToVString(normalXi1,"*",err,error))// &
@@ -3886,7 +3886,7 @@ CONTAINS
 
     CALL Basis_AssertNotFinished(basis,err,error,*999)
     CALL Basis_AssertIsSimplexBasis(basis,err,error,*999)
-    IF(ASSOCIATED(basis%quadrature%basis)) CALL FlagError("Quadrature basis is not associated.",err,error,*999)
+    IF(.NOT.ASSOCIATED(basis%quadrature%basis)) CALL FlagError("Quadrature basis is not associated.",err,error,*999)
     IF(order<1.OR.order>5) THEN
       localError="The specified order of "//TRIM(NumberToVString(order,"*",err,error))// &
         & " is invalid. The order must be >= 1 and <= 5."
@@ -4170,7 +4170,7 @@ CONTAINS
     SELECT CASE(basis%numberOfXi)
     CASE(1)
       SELECT CASE(basis%interpolationOrder(1))
-      CASE(basis_LINEAR_INTERPOLATION_ORDER)
+      CASE(BASIS_LINEAR_INTERPOLATION_ORDER)
         !Node 1
         basis%nodePositionIndex(1,1)=2
         BASIS%nodePositionIndex(1,2)=1
@@ -4677,7 +4677,7 @@ CONTAINS
         basis%numberOfNodesInLocalLine(2)=3
         basis%nodeNumbersInLocalLine(1,2)=3
         basis%nodeNumbersInLocalLine(2,2)=6
-        basis%nodeNumbersInLocalLine(3,2)=2
+        basis%nodeNumbersInLocalLine(3,2)=1
         !Line 3
         basis%numberOfNodesInLocalLine(3)=3
         basis%nodeNumbersInLocalLine(1,3)=1
@@ -4891,7 +4891,7 @@ CONTAINS
         basis%nodeNumbersInLocalFace(4,4)=6
         basis%nodeNumbersInLocalFace(5,4)=8
         basis%nodeNumbersInLocalFace(6,4)=5
-      CASE(basis_CUBIC_INTERPOLATION_ORDER)
+      CASE(BASIS_CUBIC_INTERPOLATION_ORDER)
         !Line 1
         basis%numberOfNodesInLocalLine(1)=4
         basis%nodeNumbersInLocalLine(1,1)=1
@@ -5178,50 +5178,50 @@ CONTAINS
 
   !>Evaluates a simplex basis function and its derivatives with respect to external \f$\mathbf{\xi}\f$ coordinates.
   !>For Simplex line elements there are two area coordinates which are a function of \f$\xi_1\f$ : \f$L_1 = 1 - \xi_1\f$ and
-  !>\f$L_2 = \xi_1 - 1\f$.The derivatives wrt to external coordinates are then given by \f$\frac{\partial\mathbf{N}}{\partial\xi_1}=
-  !>\frac{\partial\mathbf(x)}{\partial L_2}-\frac{\partial \mathbf{N}}{\partial L_1}\f$ and \f$\frac{\partial^2\mathbf{N}}{
+  !>\f$L_2 = \xi_1\f$. The derivatives wrt to external coordinates are then given by \f$\frac{\partial\mathbf{N}}{\partial\xi_1}=
+  !>-\frac{\partial\mathbf(x)}{\partial L_1}+\frac{\partial \mathbf{N}}{\partial L_2}\f$ and \f$\frac{\partial^2\mathbf{N}}{
   !>\partial \xi_1^2} = \frac{\partial^2\mathbf{N}}{\partial L_1^2}-2\frac{\partial^2\mathbf{N}}{\partial L_1 \partial L_2}+
   !>\frac{\partial^2\mathbf{N}}{\partial L_2^2}\f$.
   !>For Simplex triangle elements there are three area coordinates which are a function of \f$\xi_1\f$ and
-  !>\f$\xi_2\f$ : \f$L_1 = 1 - \xi_1\f$, \f$L_2 = 1 - \xi_2\f$ and \f$L_3=\xi_1 + \xi_2 - 1\f$. The derivatives wrt to external
-  !>coordinates are then given by \f$\frac{\partial \mathbf{N}}{\partial\xi_1}=\frac{\partial\mathbf(N)}{\partial L_3}-
-  !>\frac{\partial \mathbf{N}}{\partial L_1}\f$, \f$\frac{\partial \mathbf{N}}{\partial\xi_2}=\frac{\partial\mathbf(x)}{
-  !>\partial L_3}-\frac{\partial \mathbf{N}}{\partial L_2}\f$, \f$\frac{\partial^2\mathbf{N}}{\partial \xi_1^2} =
+  !>\f$\xi_2\f$ : \f$L_1 = 1 - \xi_1 - \xi_2\f$, \f$L_2 = \xi_1\f$ and \f$L_3 = \xi_2\f$. The derivatives wrt to external
+  !>coordinates are then given by \f$\frac{\partial \mathbf{N}}{\partial\xi_1}=-\frac{\partial\mathbf(N)}{\partial L_1}+
+  !>\frac{\partial \mathbf{N}}{\partial L_2}\f$, \f$\frac{\partial \mathbf{N}}{\partial\xi_2}=-\frac{\partial\mathbf(x)}{
+  !>\partial L_1}+\frac{\partial \mathbf{N}}{\partial L_3}\f$, \f$\frac{\partial^2\mathbf{N}}{\partial \xi_1^2} =
+  !>\frac{\partial^2\mathbf{N}}{\partial L_1^2}-2\frac{\partial^2\mathbf{N}}{\partial L_1 \partial L_2}+
+  !>\frac{\partial^2\mathbf{N}}{\partial L_2^2}\f$, \f$\frac{\partial^2\mathbf{N}}{\partial \xi_2^2} =
   !>\frac{\partial^2\mathbf{N}}{\partial L_1^2}-2\frac{\partial^2\mathbf{N}}{\partial L_1 \partial L_3}+
-  !>\frac{\partial^2\mathbf{N}}{\partial L_3^2}\f$, \f$\frac{\partial^2\mathbf{N}}{\partial \xi_2^2} =
-  !>\frac{\partial^2\mathbf{N}}{\partial L_2^2}-2\frac{\partial^2\mathbf{N}}{\partial L_2 \partial L_3}+
   !>\frac{\partial^2\mathbf{N}}{\partial L_3^2}\f$ and \f$\frac{\partial^2\mathbf{N}}{\partial \xi_1 \partial \xi_2} =
-  !>\frac{\partial^2\mathbf{N}}{\partial L_3^2}-\frac{\partial^2\mathbf{N}}{\partial L_1 \partial L_3}-
-  !>\frac{\partial^2\mathbf{N}}{\partial L_2 \partial L_3}+\frac{\partial^2\mathbf{N}}{\partial L_1 \partial L_2}\f$.
+  !>\frac{\partial^2\mathbf{N}}{\partial L_1^2}-\frac{\partial^2\mathbf{N}}{\partial L_1 \partial L_2}-
+  !>\frac{\partial^2\mathbf{N}}{\partial L_1 \partial L_3}+\frac{\partial^2\mathbf{N}}{\partial L_2 \partial L_3}\f$.
   !>For Simplex tetrahedral elements there are four area coordinates which are a function of \f$\xi_1\f$,\f$\xi_2\f$ and
-  !>\f$\xi_3\f$ : \f$L_1 = 1 - \xi_1\f$, \f$L_2 = 1 - \xi_2\f$, \f$L_3 = 1 - \xi_3\f$ and
-  !>\f$L_4 = \xi_1 + \xi_2 + \xi_3 - 1\f$. The derivatives wrt to external coordinates are then given by
-  !>\f$\frac{\partial \mathbf{N}}{\partial\xi_1}=\frac{\partial\mathbf(x)}{\partial L_4}-
-  !>\frac{\partial \mathbf{N}}{\partial L_1}\f$,
-  !>\f$\frac{\partial \mathbf{N}}{\partial\xi_2}=\frac{\partial\mathbf(x)}{\partial L_4}-
+  !>\f$\xi_3\f$ : \f$L_1 = 1 - \xi_1 - \xi_2 - \xi_3\f$, \f$L_2 = \xi_1\f$, \f$L_3 = \xi_2\f$ and
+  !>\f$L_4 = \xi_3\f$. The derivatives wrt to external coordinates are then given by
+  !>\f$\frac{\partial \mathbf{N}}{\partial\xi_1}=-\frac{\partial\mathbf(x)}{\partial L_1}-
   !>\frac{\partial \mathbf{N}}{\partial L_2}\f$,
-  !>\f$\frac{\partial \mathbf{N}}{\partial\xi_3}=\frac{\partial\mathbf(x)}{\partial L_4}-
+  !>\f$\frac{\partial \mathbf{N}}{\partial\xi_2}=-\frac{\partial\mathbf(x)}{\partial L_1}-
   !>\frac{\partial \mathbf{N}}{\partial L_3}\f$,
+  !>\f$\frac{\partial \mathbf{N}}{\partial\xi_3}=-\frac{\partial\mathbf(x)}{\partial L_1}-
+  !>\frac{\partial \mathbf{N}}{\partial L_4}\f$,
   !>\f$\frac{\partial^2\mathbf{N}}{\partial \xi_1^2} = \frac{\partial^2\mathbf{N}}{\partial L_1^2}-
-  !>2\frac{\partial^2\mathbf{N}}{\partial L_1 \partial L_4}+\frac{\partial^2\mathbf{N}}{\partial L_4^2}\f$,
-  !>\f$\frac{\partial^2\mathbf{N}}{\partial \xi_2^2} = \frac{\partial^2\mathbf{N}}{\partial L_2^2}-
-  !>2\frac{\partial^2\mathbf{N}}{\partial L_2 \partial L_4}+\frac{\partial^2\mathbf{N}}{\partial L_4^2}\f$
+  !>2\frac{\partial^2\mathbf{N}}{\partial L_1 \partial L_2}+\frac{\partial^2\mathbf{N}}{\partial L_2^2}\f$,
+  !>\f$\frac{\partial^2\mathbf{N}}{\partial \xi_2^2} = \frac{\partial^2\mathbf{N}}{\partial L_1^2}-
+  !>2\frac{\partial^2\mathbf{N}}{\partial L_1 \partial L_3}+\frac{\partial^2\mathbf{N}}{\partial L_3^2}\f$
   !>\f$\frac{\partial^2\mathbf{N}}{\partial \xi_3^2} = \frac{\partial^2\mathbf{N}}{\partial L_3^2}-
   !>2\frac{\partial^2\mathbf{N}}{\partial L_3 \partial L_4}+\frac{\partial^2\mathbf{N}}{\partial L_4^2}\f$,
-  !>\f$\frac{\partial^2\mathbf{N}}{\partial\xi_1\partial \xi_2}=\frac{\partial^2\mathbf{N}}{\partial L_4^2}-
-  !>\frac{\partial^2\mathbf{N}}{\partial L_1 \partial L_4}-\frac{\partial^2\mathbf{N}}{\partial L_2 \partial L_4}+
-  !>\frac{\partial^2\mathbf{N}}{\partial L_1 \partial L_2}\f$,
-  !>\f$\frac{\partial^2\mathbf{N}}{\partial\xi_1\partial\xi_3}=\frac{\partial^2\mathbf{N}}{\partial L_4^2}-
-  !>\frac{\partial^2\mathbf{N}}{\partial L_1 \partial L_4}-\frac{\partial^2\mathbf{N}}{\partial L_3 \partial L_4}+
-  !>\frac{\partial^2\mathbf{N}}{\partial L_1 \partial L_3}\f$,
-  !>\f$\frac{\partial^2\mathbf{N}}{\partial\xi_2\partial\xi_3}=\frac{\partial^2\mathbf{N}}{\partial L_4^2}-
-  !>\frac{\partial^2\mathbf{N}}{\partial L_2 \partial L_4}-\frac{\partial^2\mathbf{N}}{\partial L_3 \partial L_4}+
-  !>\frac{\partial^2\mathbf{N}}{\partial L_2 \partial L_3}\f$ and
-  !>\f$\frac{\partial^3\mathbf{N}}{\partial \xi_1 \partial \xi_2 \partial \xi_3} = \frac{\partial^3\mathbf{N}}{\partial L_4^3}-
-  !>\frac{\partial^3\mathbf{N}}{\partial L_1 \partial L_4^2}-\frac{\partial^3\mathbf{N}}{\partial L_2 \partial L_4^2}-
-  !>\frac{\partial^3\mathbf{N}}{\partial L_3 \partial L_4^2}+\frac{\partial^3\mathbf{N}}{\partial L_1 \partial 2 \partial L_4}+
-  !>\frac{\partial^3\mathbf{N}}{\partial L_1 \partial L_3 \partial L_4}+\frac{\partial^3\mathbf{N}}{\partial L_2 \partial L_3
-  !>\partial L_4}-\frac{\partial^3\mathbf{N}}{\partial L_1 \partial L_2 \partial L_3}\f$.
+  !>\f$\frac{\partial^2\mathbf{N}}{\partial\xi_1\partial \xi_2}=\frac{\partial^2\mathbf{N}}{\partial L_1^2}-
+  !>\frac{\partial^2\mathbf{N}}{\partial L_1 \partial L_2}-\frac{\partial^2\mathbf{N}}{\partial L_1 \partial L_3}+
+  !>\frac{\partial^2\mathbf{N}}{\partial L_2 \partial L_3}\f$,
+  !>\f$\frac{\partial^2\mathbf{N}}{\partial\xi_1\partial\xi_3}=\frac{\partial^2\mathbf{N}}{\partial L_1^2}-
+  !>\frac{\partial^2\mathbf{N}}{\partial L_1 \partial L_2}-\frac{\partial^2\mathbf{N}}{\partial L_1 \partial L_4}+
+  !>\frac{\partial^2\mathbf{N}}{\partial L_2 \partial L_4}\f$,
+  !>\f$\frac{\partial^2\mathbf{N}}{\partial\xi_2\partial\xi_3}=\frac{\partial^2\mathbf{N}}{\partial L_1^2}-
+  !>\frac{\partial^2\mathbf{N}}{\partial L_1 \partial L_2}-\frac{\partial^2\mathbf{N}}{\partial L_1 \partial L_4}+
+  !>\frac{\partial^2\mathbf{N}}{\partial L_3 \partial L_4}\f$ and
+  !>\f$\frac{\partial^3\mathbf{N}}{\partial \xi_1 \partial \xi_2 \partial \xi_3} = -\frac{\partial^3\mathbf{N}}{\partial L_1^3}+
+  !>\frac{\partial^3\mathbf{N}}{\partial L_1^2 \partial L_2}+\frac{\partial^3\mathbf{N}}{\partial L_1^2 \partial L_3}+
+  !>\frac{\partial^3\mathbf{N}}{\partial L_1^2 \partial L_4}-\frac{\partial^3\mathbf{N}}{\partial L_1 \partial 2 \partial L_3}-
+  !>\frac{\partial^3\mathbf{N}}{\partial L_1 \partial L_2 \partial L_4}-\frac{\partial^3\mathbf{N}}{\partial L_1 \partial L_3
+  !>\partial L_4}+\frac{\partial^3\mathbf{N}}{\partial L_2 \partial L_3 \partial L_4}\f$.
   FUNCTION Basis_SimplexBasisEvaluate(basis,localNodeNumber,partialDerivativeIndex,xl,err,error)
     
     !Argument variables
@@ -5251,10 +5251,10 @@ CONTAINS
         IF(err/=0) GOTO 999
       CASE(PART_DERIV_S1)
         Basis_SimplexBasisEvaluate= &
-          & Basis_SimplexBasisDerivativeEvaluate(basis,localNodeNumber,PART_DERIV_S2,xl,err,error)
+          & -1.0_DP*Basis_SimplexBasisDerivativeEvaluate(basis,localNodeNumber,PART_DERIV_S1,xl,err,error)
         IF(err/=0) GOTO 999
-        Basis_SimplexBasisEvaluate=Basis_SimplexBasisEvaluate- &
-          & Basis_SimplexBasisDerivativeEvaluate(basis,localNodeNumber,PART_DERIV_S1,xl,err,error)
+        Basis_SimplexBasisEvaluate=Basis_SimplexBasisEvaluate+ &
+          & Basis_SimplexBasisDerivativeEvaluate(basis,localNodeNumber,PART_DERIV_S2,xl,err,error)
         IF(err/=0) GOTO 999
       CASE(PART_DERIV_S1_S1)
         Basis_SimplexBasisEvaluate= &
@@ -5279,12 +5279,29 @@ CONTAINS
         IF(err/=0) GOTO 999
       CASE(PART_DERIV_S1)
         Basis_SimplexBasisEvaluate= &
-          & Basis_SimplexBasisDerivativeEvaluate(basis,localNodeNumber,PART_DERIV_S3,xl,err,error)
+          & -1.0_DP*Basis_SimplexBasisDerivativeEvaluate(basis,localNodeNumber,PART_DERIV_S1,xl,err,error)
         IF(err/=0) GOTO 999
-        Basis_SimplexBasisEvaluate=Basis_SimplexBasisEvaluate- &
-          & Basis_SimplexBasisDerivativeEvaluate(basis,localNodeNumber,PART_DERIV_S1,xl,err,error)
+        Basis_SimplexBasisEvaluate=Basis_SimplexBasisEvaluate+ &
+          & Basis_SimplexBasisDerivativeEvaluate(basis,localNodeNumber,PART_DERIV_S2,xl,err,error)
         IF(err/=0) GOTO 999
       CASE(PART_DERIV_S1_S1)
+        Basis_SimplexBasisEvaluate= &
+          Basis_SimplexBasisDerivativeEvaluate(basis,localNodeNumber,PART_DERIV_S1_S1,xl,err,error)
+        IF(err/=0) GOTO 999
+        Basis_SimplexBasisEvaluate=Basis_SimplexBasisEvaluate- &
+          & 2.0_DP*Basis_SimplexBasisDerivativeEvaluate(basis,localNodeNumber,PART_DERIV_S1_S2,xl,err,error)
+        IF(err/=0) GOTO 999
+        Basis_SimplexBasisEvaluate=Basis_SimplexBasisEvaluate+ &
+          & Basis_SimplexBasisDerivativeEvaluate(basis,localNodeNumber,PART_DERIV_S2_S2,xl,err,error)
+        IF(err/=0) GOTO 999
+      CASE(PART_DERIV_S2)
+        Basis_SimplexBasisEvaluate= &
+          & -1.0_DP*Basis_SimplexBasisDerivativeEvaluate(basis,localNodeNumber,PART_DERIV_S1,xl,err,error)
+        IF(err/=0) GOTO 999
+        Basis_SimplexBasisEvaluate=Basis_SimplexBasisEvaluate+ &
+          & Basis_SimplexBasisDerivativeEvaluate(basis,localNodeNumber,PART_DERIV_S3,xl,err,error)
+        IF(err/=0) GOTO 999
+      CASE(PART_DERIV_S2_S2)
         Basis_SimplexBasisEvaluate= &
           Basis_SimplexBasisDerivativeEvaluate(basis,localNodeNumber,PART_DERIV_S1_S1,xl,err,error)
         IF(err/=0) GOTO 999
@@ -5294,35 +5311,18 @@ CONTAINS
         Basis_SimplexBasisEvaluate=Basis_SimplexBasisEvaluate+ &
           & Basis_SimplexBasisDerivativeEvaluate(basis,localNodeNumber,PART_DERIV_S3_S3,xl,err,error)
         IF(err/=0) GOTO 999
-      CASE(PART_DERIV_S2)
-        Basis_SimplexBasisEvaluate= &
-          & Basis_SimplexBasisDerivativeEvaluate(basis,localNodeNumber,PART_DERIV_S3,xl,err,error)
-        IF(err/=0) GOTO 999
-        Basis_SimplexBasisEvaluate=Basis_SimplexBasisEvaluate- &
-          & Basis_SimplexBasisDerivativeEvaluate(basis,localNodeNumber,PART_DERIV_S2,xl,err,error)
-        IF(err/=0) GOTO 999
-     CASE(PART_DERIV_S2_S2)
-        Basis_SimplexBasisEvaluate= &
-          Basis_SimplexBasisDerivativeEvaluate(basis,localNodeNumber,PART_DERIV_S2_S2,xl,err,error)
-        IF(err/=0) GOTO 999
-        Basis_SimplexBasisEvaluate=Basis_SimplexBasisEvaluate- &
-          & 2.0_DP*Basis_SimplexBasisDerivativeEvaluate(basis,localNodeNumber,PART_DERIV_S2_S3,xl,err,error)
-        IF(err/=0) GOTO 999
-        Basis_SimplexBasisEvaluate=Basis_SimplexBasisEvaluate+ &
-          & Basis_SimplexBasisDerivativeEvaluate(basis,localNodeNumber,PART_DERIV_S3_S3,xl,err,error)
-        IF(err/=0) GOTO 999
      CASE(PART_DERIV_S1_S2)
         Basis_SimplexBasisEvaluate= &
-          Basis_SimplexBasisDerivativeEvaluate(basis,localNodeNumber,PART_DERIV_S3_S3,xl,err,error)
+          Basis_SimplexBasisDerivativeEvaluate(basis,localNodeNumber,PART_DERIV_S1_S1,xl,err,error)
+        IF(err/=0) GOTO 999
+        Basis_SimplexBasisEvaluate=Basis_SimplexBasisEvaluate- &
+          & Basis_SimplexBasisDerivativeEvaluate(basis,localNodeNumber,PART_DERIV_S1_S2,xl,err,error)
         IF(err/=0) GOTO 999
         Basis_SimplexBasisEvaluate=Basis_SimplexBasisEvaluate- &
           & Basis_SimplexBasisDerivativeEvaluate(basis,localNodeNumber,PART_DERIV_S1_S3,xl,err,error)
         IF(err/=0) GOTO 999
-        Basis_SimplexBasisEvaluate=Basis_SimplexBasisEvaluate- &
-          & Basis_SimplexBasisDerivativeEvaluate(basis,localNodeNumber,PART_DERIV_S2_S3,xl,err,error)
-        IF(err/=0) GOTO 999
         Basis_SimplexBasisEvaluate=Basis_SimplexBasisEvaluate+ &
-          & Basis_SimplexBasisDerivativeEvaluate(basis,localNodeNumber,PART_DERIV_S1_S2,xl,err,error)
+          & Basis_SimplexBasisDerivativeEvaluate(basis,localNodeNumber,PART_DERIV_S2_S3,xl,err,error)
         IF(err/=0) GOTO 999
       CASE DEFAULT
         localError="The specified partial derivative index of "//TRIM(NumberToVString(partialDerivativeIndex,"*",err,error))// &
@@ -5337,12 +5337,59 @@ CONTAINS
         IF(err/=0) GOTO 999
       CASE(PART_DERIV_S1)
         Basis_SimplexBasisEvaluate= &
-          & Basis_SimplexBasisDerivativeEvaluate(basis,localNodeNumber,PART_DERIV_S4,xl,err,error)
+          & -1.0_DP*Basis_SimplexBasisDerivativeEvaluate(basis,localNodeNumber,PART_DERIV_S1,xl,err,error)
         IF(err/=0) GOTO 999
-        Basis_SimplexBasisEvaluate=Basis_SimplexBasisEvaluate- &
-          & Basis_SimplexBasisDerivativeEvaluate(basis,localNodeNumber,PART_DERIV_S1,xl,err,error)
+        Basis_SimplexBasisEvaluate=Basis_SimplexBasisEvaluate+ &
+          & Basis_SimplexBasisDerivativeEvaluate(basis,localNodeNumber,PART_DERIV_S2,xl,err,error)
         IF(err/=0) GOTO 999
       CASE(PART_DERIV_S1_S1)
+        Basis_SimplexBasisEvaluate= &
+          Basis_SimplexBasisDerivativeEvaluate(basis,localNodeNumber,PART_DERIV_S1_S1,xl,err,error)
+        IF(err/=0) GOTO 999
+        Basis_SimplexBasisEvaluate=Basis_SimplexBasisEvaluate- &
+          & 2.0_DP*Basis_SimplexBasisDerivativeEvaluate(basis,localNodeNumber,PART_DERIV_S1_S2,xl,err,error)
+        IF(err/=0) GOTO 999
+        Basis_SimplexBasisEvaluate=Basis_SimplexBasisEvaluate+ &
+          & Basis_SimplexBasisDerivativeEvaluate(basis,localNodeNumber,PART_DERIV_S2_S2,xl,err,error)
+        IF(err/=0) GOTO 999
+      CASE(PART_DERIV_S2)
+        Basis_SimplexBasisEvaluate= &
+          & -1.0_DP*Basis_SimplexBasisDerivativeEvaluate(basis,localNodeNumber,PART_DERIV_S1,xl,err,error)
+        IF(err/=0) GOTO 999
+        Basis_SimplexBasisEvaluate=Basis_SimplexBasisEvaluate+ &
+          & Basis_SimplexBasisDerivativeEvaluate(basis,localNodeNumber,PART_DERIV_S3,xl,err,error)
+        IF(err/=0) GOTO 999
+      CASE(PART_DERIV_S2_S2)
+        Basis_SimplexBasisEvaluate= &
+          Basis_SimplexBasisDerivativeEvaluate(basis,localNodeNumber,PART_DERIV_S1_S1,xl,err,error)
+        IF(err/=0) GOTO 999
+        Basis_SimplexBasisEvaluate=Basis_SimplexBasisEvaluate- &
+          & 2.0_DP*Basis_SimplexBasisDerivativeEvaluate(basis,localNodeNumber,PART_DERIV_S1_S3,xl,err,error)
+        IF(err/=0) GOTO 999
+        Basis_SimplexBasisEvaluate=Basis_SimplexBasisEvaluate+ &
+          & Basis_SimplexBasisDerivativeEvaluate(basis,localNodeNumber,PART_DERIV_S3_S3,xl,err,error)
+        IF(err/=0) GOTO 999
+      CASE(PART_DERIV_S1_S2)
+        Basis_SimplexBasisEvaluate= &
+          Basis_SimplexBasisDerivativeEvaluate(basis,localNodeNumber,PART_DERIV_S1_S1,xl,err,error)
+        IF(err/=0) GOTO 999
+        Basis_SimplexBasisEvaluate=Basis_SimplexBasisEvaluate- &
+          & Basis_SimplexBasisDerivativeEvaluate(basis,localNodeNumber,PART_DERIV_S1_S2,xl,err,error)
+        IF(err/=0) GOTO 999
+        Basis_SimplexBasisEvaluate=Basis_SimplexBasisEvaluate- &
+          & Basis_SimplexBasisDerivativeEvaluate(basis,localNodeNumber,PART_DERIV_S1_S3,xl,err,error)
+        IF(err/=0) GOTO 999
+        Basis_SimplexBasisEvaluate=Basis_SimplexBasisEvaluate+ &
+          & Basis_SimplexBasisDerivativeEvaluate(basis,localNodeNumber,PART_DERIV_S2_S3,xl,err,error)
+        IF(err/=0) GOTO 999
+      CASE(PART_DERIV_S3)
+        Basis_SimplexBasisEvaluate= &
+          & -1.0_DP*Basis_SimplexBasisDerivativeEvaluate(basis,localNodeNumber,PART_DERIV_S1,xl,err,error)
+        IF(err/=0) GOTO 999
+        Basis_SimplexBasisEvaluate=Basis_SimplexBasisEvaluate+ &
+          & Basis_SimplexBasisDerivativeEvaluate(basis,localNodeNumber,PART_DERIV_S4,xl,err,error)
+        IF(err/=0) GOTO 999
+      CASE(PART_DERIV_S3_S3)
         Basis_SimplexBasisEvaluate= &
           Basis_SimplexBasisDerivativeEvaluate(basis,localNodeNumber,PART_DERIV_S1_S1,xl,err,error)
         IF(err/=0) GOTO 999
@@ -5352,103 +5399,56 @@ CONTAINS
         Basis_SimplexBasisEvaluate=Basis_SimplexBasisEvaluate+ &
           & Basis_SimplexBasisDerivativeEvaluate(basis,localNodeNumber,PART_DERIV_S4_S4,xl,err,error)
         IF(err/=0) GOTO 999
-      CASE(PART_DERIV_S2)
-        Basis_SimplexBasisEvaluate= &
-          & Basis_SimplexBasisDerivativeEvaluate(basis,localNodeNumber,PART_DERIV_S4,xl,err,error)
-        IF(err/=0) GOTO 999
-        Basis_SimplexBasisEvaluate=Basis_SimplexBasisEvaluate- &
-          & Basis_SimplexBasisDerivativeEvaluate(basis,localNodeNumber,PART_DERIV_S2,xl,err,error)
-        IF(err/=0) GOTO 999
-      CASE(PART_DERIV_S2_S2)
-        Basis_SimplexBasisEvaluate= &
-          Basis_SimplexBasisDerivativeEvaluate(basis,localNodeNumber,PART_DERIV_S2_S2,xl,err,error)
-        IF(err/=0) GOTO 999
-        Basis_SimplexBasisEvaluate=Basis_SimplexBasisEvaluate- &
-          & 2.0_DP*Basis_SimplexBasisDerivativeEvaluate(basis,localNodeNumber,PART_DERIV_S2_S4,xl,err,error)
-        IF(err/=0) GOTO 999
-        Basis_SimplexBasisEvaluate=Basis_SimplexBasisEvaluate+ &
-          & Basis_SimplexBasisDerivativeEvaluate(basis,localNodeNumber,PART_DERIV_S4_S4,xl,err,error)
-        IF(err/=0) GOTO 999
-      CASE(PART_DERIV_S1_S2)
-        Basis_SimplexBasisEvaluate= &
-          Basis_SimplexBasisDerivativeEvaluate(basis,localNodeNumber,PART_DERIV_S4_S4,xl,err,error)
-        IF(err/=0) GOTO 999
-        Basis_SimplexBasisEvaluate=Basis_SimplexBasisEvaluate- &
-          & Basis_SimplexBasisDerivativeEvaluate(basis,localNodeNumber,PART_DERIV_S1_S4,xl,err,error)
-        IF(err/=0) GOTO 999
-        Basis_SimplexBasisEvaluate=Basis_SimplexBasisEvaluate- &
-          & Basis_SimplexBasisDerivativeEvaluate(basis,localNodeNumber,PART_DERIV_S2_S4,xl,err,error)
-        IF(err/=0) GOTO 999
-        Basis_SimplexBasisEvaluate=Basis_SimplexBasisEvaluate+ &
-          & Basis_SimplexBasisDerivativeEvaluate(basis,localNodeNumber,PART_DERIV_S1_S2,xl,err,error)
-        IF(err/=0) GOTO 999
-      CASE(PART_DERIV_S3)
-        Basis_SimplexBasisEvaluate= &
-          & Basis_SimplexBasisDerivativeEvaluate(basis,localNodeNumber,PART_DERIV_S4,xl,err,error)
-        IF(err/=0) GOTO 999
-        Basis_SimplexBasisEvaluate=Basis_SimplexBasisEvaluate- &
-          & Basis_SimplexBasisDerivativeEvaluate(basis,localNodeNumber,PART_DERIV_S3,xl,err,error)
-        IF(err/=0) GOTO 999
-      CASE(PART_DERIV_S3_S3)
-        Basis_SimplexBasisEvaluate= &
-          Basis_SimplexBasisDerivativeEvaluate(basis,localNodeNumber,PART_DERIV_S3_S3,xl,err,error)
-        IF(err/=0) GOTO 999
-        Basis_SimplexBasisEvaluate=Basis_SimplexBasisEvaluate- &
-          & 2.0_DP*Basis_SimplexBasisDerivativeEvaluate(basis,localNodeNumber,PART_DERIV_S3_S4,xl,err,error)
-        IF(err/=0) GOTO 999
-        Basis_SimplexBasisEvaluate=Basis_SimplexBasisEvaluate+ &
-          & Basis_SimplexBasisDerivativeEvaluate(basis,localNodeNumber,PART_DERIV_S4_S4,xl,err,error)
-        IF(err/=0) GOTO 999
       CASE(PART_DERIV_S1_S3)
         Basis_SimplexBasisEvaluate= &
-          Basis_SimplexBasisDerivativeEvaluate(basis,localNodeNumber,PART_DERIV_S4_S4,xl,err,error)
+          Basis_SimplexBasisDerivativeEvaluate(basis,localNodeNumber,PART_DERIV_S1_S1,xl,err,error)
+        IF(err/=0) GOTO 999
+        Basis_SimplexBasisEvaluate=Basis_SimplexBasisEvaluate- &
+          & Basis_SimplexBasisDerivativeEvaluate(basis,localNodeNumber,PART_DERIV_S1_S2,xl,err,error)
         IF(err/=0) GOTO 999
         Basis_SimplexBasisEvaluate=Basis_SimplexBasisEvaluate- &
           & Basis_SimplexBasisDerivativeEvaluate(basis,localNodeNumber,PART_DERIV_S1_S4,xl,err,error)
         IF(err/=0) GOTO 999
-        Basis_SimplexBasisEvaluate=Basis_SimplexBasisEvaluate- &
-          & Basis_SimplexBasisDerivativeEvaluate(basis,localNodeNumber,PART_DERIV_S3_S4,xl,err,error)
-        IF(err/=0) GOTO 999
         Basis_SimplexBasisEvaluate=Basis_SimplexBasisEvaluate+ &
-          & Basis_SimplexBasisDerivativeEvaluate(basis,localNodeNumber,PART_DERIV_S1_S3,xl,err,error)
+          & Basis_SimplexBasisDerivativeEvaluate(basis,localNodeNumber,PART_DERIV_S2_S4,xl,err,error)
         IF(err/=0) GOTO 999
       CASE(PART_DERIV_S2_S3)
         Basis_SimplexBasisEvaluate= &
-          Basis_SimplexBasisDerivativeEvaluate(basis,localNodeNumber,PART_DERIV_S4_S4,xl,err,error)
+          Basis_SimplexBasisDerivativeEvaluate(basis,localNodeNumber,PART_DERIV_S1_S1,xl,err,error)
         IF(err/=0) GOTO 999
         Basis_SimplexBasisEvaluate=Basis_SimplexBasisEvaluate- &
-          & Basis_SimplexBasisDerivativeEvaluate(basis,localNodeNumber,PART_DERIV_S2_S4,xl,err,error)
+          & Basis_SimplexBasisDerivativeEvaluate(basis,localNodeNumber,PART_DERIV_S1_S3,xl,err,error)
         IF(err/=0) GOTO 999
         Basis_SimplexBasisEvaluate=Basis_SimplexBasisEvaluate- &
-          & Basis_SimplexBasisDerivativeEvaluate(basis,localNodeNumber,PART_DERIV_S3_S4,xl,err,error)
+          & Basis_SimplexBasisDerivativeEvaluate(basis,localNodeNumber,PART_DERIV_S1_S4,xl,err,error)
         IF(err/=0) GOTO 999
         Basis_SimplexBasisEvaluate=Basis_SimplexBasisEvaluate+ &
-          & Basis_SimplexBasisDerivativeEvaluate(basis,localNodeNumber,PART_DERIV_S2_S3,xl,err,error)
+          & Basis_SimplexBasisDerivativeEvaluate(basis,localNodeNumber,PART_DERIV_S3_S4,xl,err,error)
         IF(err/=0) GOTO 999
       CASE(PART_DERIV_S1_S2_S3)
         Basis_SimplexBasisEvaluate= &
-          Basis_SimplexBasisDerivativeEvaluate(basis,localNodeNumber,PART_DERIV_S4_S4_S4,xl,err,error)
-        IF(err/=0) GOTO 999
-        Basis_SimplexBasisEvaluate=Basis_SimplexBasisEvaluate- &
-          & Basis_SimplexBasisDerivativeEvaluate(basis,localNodeNumber,PART_DERIV_S1_S4_S4,xl,err,error)
-        IF(err/=0) GOTO 999
-        Basis_SimplexBasisEvaluate=Basis_SimplexBasisEvaluate- &
-          & Basis_SimplexBasisDerivativeEvaluate(basis,localNodeNumber,PART_DERIV_S2_S4_S4,xl,err,error)
-        IF(err/=0) GOTO 999
-        Basis_SimplexBasisEvaluate=Basis_SimplexBasisEvaluate- &
-          & Basis_SimplexBasisDerivativeEvaluate(basis,localNodeNumber,PART_DERIV_S3_S4_S4,xl,err,error)
+          -1.0_DP*Basis_SimplexBasisDerivativeEvaluate(basis,localNodeNumber,PART_DERIV_S1_S1_S1,xl,err,error)
         IF(err/=0) GOTO 999
         Basis_SimplexBasisEvaluate=Basis_SimplexBasisEvaluate+ &
+          & Basis_SimplexBasisDerivativeEvaluate(basis,localNodeNumber,PART_DERIV_S1_S1_S2,xl,err,error)
+        IF(err/=0) GOTO 999
+        Basis_SimplexBasisEvaluate=Basis_SimplexBasisEvaluate+ &
+          & Basis_SimplexBasisDerivativeEvaluate(basis,localNodeNumber,PART_DERIV_S1_S1_S3,xl,err,error)
+        IF(err/=0) GOTO 999
+        Basis_SimplexBasisEvaluate=Basis_SimplexBasisEvaluate+ &
+          & Basis_SimplexBasisDerivativeEvaluate(basis,localNodeNumber,PART_DERIV_S1_S1_S4,xl,err,error)
+        IF(err/=0) GOTO 999
+        Basis_SimplexBasisEvaluate=Basis_SimplexBasisEvaluate- &
+          & Basis_SimplexBasisDerivativeEvaluate(basis,localNodeNumber,PART_DERIV_S1_S2_S3,xl,err,error)
+        IF(err/=0) GOTO 999
+        Basis_SimplexBasisEvaluate=Basis_SimplexBasisEvaluate- &
           & Basis_SimplexBasisDerivativeEvaluate(basis,localNodeNumber,PART_DERIV_S1_S2_S4,xl,err,error)
         IF(err/=0) GOTO 999
-        Basis_SimplexBasisEvaluate=Basis_SimplexBasisEvaluate+ &
+        Basis_SimplexBasisEvaluate=Basis_SimplexBasisEvaluate- &
           & Basis_SimplexBasisDerivativeEvaluate(basis,localNodeNumber,PART_DERIV_S1_S3_S4,xl,err,error)
         IF(err/=0) GOTO 999
         Basis_SimplexBasisEvaluate=Basis_SimplexBasisEvaluate+ &
           & Basis_SimplexBasisDerivativeEvaluate(basis,localNodeNumber,PART_DERIV_S2_S3_S4,xl,err,error)
-        IF(err/=0) GOTO 999
-        Basis_SimplexBasisEvaluate=Basis_SimplexBasisEvaluate- &
-          & Basis_SimplexBasisDerivativeEvaluate(basis,localNodeNumber,PART_DERIV_S1_S2_S3,xl,err,error)
         IF(err/=0) GOTO 999
       CASE DEFAULT
         localError="The specified partial derivative index of "//TRIM(NumberToVString(partialDerivativeIndex,"*",err,error))// &
@@ -5835,16 +5835,16 @@ CONTAINS
     SELECT CASE(SIZE(xiCoordinates,1))
     CASE(1)
       areaCoordinates(1)=1.0_DP-xiCoordinates(1)
-      areaCoordinates(2)=xiCoordinates(1)-1.0_DP
+      areaCoordinates(2)=xiCoordinates(1)
     CASE(2)
-      areaCoordinates(1)=1.0_DP-xiCoordinates(1)
-      areaCoordinates(2)=1.0_DP-xiCoordinates(2)
-      areaCoordinates(3)=xiCoordinates(1)+xiCoordinates(2)-1.0_DP
+      areaCoordinates(1)=1.0_DP-xiCoordinates(1)-xiCoordinates(2)
+      areaCoordinates(2)=xiCoordinates(1)
+      areaCoordinates(3)=xiCoordinates(2)+xiCoordinates(2)-1.0_DP
     CASE(3)
-      areaCoordinates(1)=1.0_DP-xiCoordinates(1)
-      areaCoordinates(2)=1.0_DP-xiCoordinates(2)
-      areaCoordinates(3)=1.0_DP-xiCoordinates(3)
-      areaCoordinates(4)=xiCoordinates(1)+xiCoordinates(2)+xiCoordinates(3)-2.0_DP
+      areaCoordinates(1)=1.0_DP-xiCoordinates(1)-xiCoordinates(2)-xiCoordinates(3)
+      areaCoordinates(2)=xiCoordinates(1)
+      areaCoordinates(3)=xiCoordinates(2)
+      areaCoordinates(4)=xiCoordinates(3)
     CASE DEFAULT
       localError="The number of xi coordinates of "//TRIM(NumberToVString(SIZE(xiCoordinates,1),"*",err,error))// &
         & " is invalid. The number must be >= 1 and <= 3."
@@ -7266,7 +7266,7 @@ CONTAINS
       CASE(2)
         Simplex_CubicEvaluateDP=3.0_DP*xl !3L
       CASE(3)
-        Simplex_CubicEvaluateDP=3.0_DP/2.0_DP*xl*(3.0_DP*xl-1.0_DP) !3/2.L(3L-1)
+        Simplex_CubicEvaluateDP=3.0_DP/2.0_DP*xl*(3.0_DP*xl-1.0_DP) !3/2.L(3L-1)=3/2
       CASE(4)
         Simplex_CubicEvaluateDP=0.5_DP*xl*(3.0_DP*xl-1.0_DP)*(3.0_DP*xl-2.0_DP) !1/2.L(3L-1)(3L-2)
       CASE DEFAULT
@@ -7454,7 +7454,7 @@ CONTAINS
       CASE(1)
         Simplex_QuadraticEvaluateDP=0.0_DP !0
       CASE(2)
-        Simplex_QuadraticEvaluateDP=2.0_DP !4
+        Simplex_QuadraticEvaluateDP=2.0_DP !2
       CASE(3)
         Simplex_QuadraticEvaluateDP=4.0_DP*xl-1.0_DP !4L-1
       CASE DEFAULT
