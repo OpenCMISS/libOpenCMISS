@@ -4674,7 +4674,7 @@ MODULE BoundaryConditionsRoutines
             CALL FlagError("Not implemented.",err,error,*999)
           CASE DEFAULT
             localError="The DOF type of "//TRIM(NumberToVString(dofType,"*",err,error))// &
-              & " for local DOF "//TRIM(NumberToVString(localDOF,"*",err,error))//" is invalid."
+              & " for local DOF "//TRIM(NumberToVString(neumannLocalDOF,"*",err,error))//" is invalid."
             CALL FlagError(localError,err,error,*999)
           END SELECT
           NULLIFY(domain)
@@ -4777,10 +4777,10 @@ MODULE BoundaryConditionsRoutines
                         CALL FieldInterpolatedPointMetrics_JacobianGet(interpolatedPointMetrics,jacobian,err,error,*999)
                         
                         !Get basis function values at guass points
-                        CALL BasisQuadratureScheme_GaussBasisFunctionGet(quadratureScheme,rowElementParameterIdx,NO_PART_DERIV, &
-                          & gaussIdx,rowPhi,err,error,*999)
-                        CALL BasisQuadratureScheme_GaussBasisFunctionGet(quadratureScheme,columnElementParameterIdx,NO_PART_DERIV, &
-                          & gaussIdx,columnPhi,err,error,*999)
+                        CALL BasisQuadratureScheme_GaussBasisFunctionGet(quadratureScheme,rowElementParameterIdx, &
+                          & NO_PART_DERIV,gaussIdx,rowPhi,err,error,*999)
+                        CALL BasisQuadratureScheme_GaussBasisFunctionGet(quadratureScheme,columnElementParameterIdx, &
+                          & NO_PART_DERIV,gaussIdx,columnPhi,err,error,*999)
                         
                         !Add gauss point value to total line integral
                         integratedValue=integratedValue+rowPhi*columnPhi*gaussWeight*jacobian
@@ -5009,7 +5009,7 @@ MODULE BoundaryConditionsRoutines
       & numberOfNodes,numberNonZeros,numberOfPointDOFs,numberRowEntries,numberOfVariables,totalNumberOfLocal,versionNumber
     INTEGER(INTG), ALLOCATABLE :: rowIndices(:), columnIndices(:), localDOFNumbers(:)
     REAL(DP) :: pointValue
-    LOGICAL :: boundaryFace,boundaryLine,boundaryNode
+    LOGICAL :: boundaryFace,boundaryLine,boundaryNode,calculateFaces,calculateLines
     TYPE(BasisType), POINTER :: basis
     TYPE(BoundaryConditionsType), POINTER :: boundaryConditions
     TYPE(BoundaryConditionsNeumannType), POINTER :: boundaryConditionsNeumann
@@ -5139,6 +5139,7 @@ MODULE BoundaryConditionsRoutines
       CALL List_CreateFinish(rowColumnIndicesList,err,error,*999)
       rowIndices(1)=1
 
+      !Loop over all the rows
       DO localDof=1,totalNumberOfLocal
         CALL FieldVariable_DOFTypeGet(fieldVariable,localDOF,dofType,dofTypeIdx,err,error,*999)
         SELECT CASE(dofType)
@@ -5161,6 +5162,8 @@ MODULE BoundaryConditionsRoutines
 
         NULLIFY(domain)
         CALL FieldVariable_ComponentDomainGet(fieldVariable,componentNumber,domain,err,error,*999)
+        NULLIFY(decomposition)
+        CALL Domain_DecompositionGet(domain,decomposition,err,error,*999)
         NULLIFY(domainTopology)
         CALL Domain_DomainTopologyGet(domain,domainTopology,err,error,*999)
         CALL FieldVariable_ComponentInterpolationGet(fieldVariable,componentNumber,interpolationType,err,error,*999)
@@ -5195,13 +5198,15 @@ MODULE BoundaryConditionsRoutines
               ENDIF
             CASE(2)
               !Loop over all lines for this node and find any DOFs that have a Neumann point condition set
+              CALL Decomposition_CalculateLinesGet(decomposition,calculateLines,err,error,*999)
+              IF(.NOT.calculateLines) CALL FlagError("Decomposition does not have lines calculated.",err,error,*999)
               NULLIFY(domainLines)
               CALL DomainTopology_DomainLinesGet(domainTopology,domainLines,err,error,*999)
               CALL DomainNodes_NodeNumberOfLinesGet(domainNodes,nodeNumber,numberOfNodeLines,err,error,*999)
-              DO lineIdx=1,numberOfNodeLines
+              linesLoop: DO lineIdx=1,numberOfNodeLines
                 CALL DomainNodes_NodeLineNumberGet(domainNodes,lineIdx,nodeNumber,lineNumber,err,error,*999)
                 CALL DomainLines_LineBoundaryLineGet(domainLines,lineNumber,boundaryLine,err,error,*999)
-                IF(.NOT.boundaryLine) CYCLE
+                IF(.NOT.boundaryLine) CYCLE linesLoop
                 NULLIFY(basis)
                 CALL DomainLines_LineBasisGet(domainLines,lineNumber,basis,err,error,*999)
                 CALL Basis_NumberOfLocalNodesGet(basis,numberOfNodes,err,error,*999)
@@ -5231,16 +5236,18 @@ MODULE BoundaryConditionsRoutines
                     ENDIF
                   ENDDO !derivIdx
                 ENDDO !localNodeIdx
-              ENDDO !lineIdx
+              ENDDO linesLoop !lineIdx
             CASE(3)
+              CALL Decomposition_CalculateFacesGet(decomposition,calculateFaces,err,error,*999)
+              IF(.NOT.calculateFaces) CALL FlagError("Decomposition does not have faces calculated.",err,error,*999)
               NULLIFY(domainFaces)
               CALL DomainTopology_DomainFacesGet(domainTopology,domainFaces,err,error,*999)
               CALL DomainNodes_NodeNumberOfFacesGet(domainNodes,nodeNumber,numberOfNodeFaces,err,error,*999)
               ! Loop over all faces for this node and find any DOFs that have a Neumann point condition set
-              DO faceIdx=1,numberOfNodeFaces
+              facesLoop: DO faceIdx=1,numberOfNodeFaces
                 CALL DomainNodes_NodeFaceNumberGet(domainNodes,faceIdx,nodeNumber,faceNumber,err,error,*999)
                 CALL DomainFaces_FaceBoundaryFaceGet(domainFaces,faceNumber,boundaryface,err,error,*999)
-                IF(.NOT.boundaryFace) CYCLE
+                IF(.NOT.boundaryFace) CYCLE facesLoop
                 NULLIFY(basis)
                 CALL DomainFaces_FaceBasisGet(domainFaces,faceNumber,basis,err,error,*999)
                 CALL Basis_NumberOfLocalNodesGet(basis,numberOfNodes,err,error,*999)
@@ -5270,7 +5277,7 @@ MODULE BoundaryConditionsRoutines
                     ENDIF
                   ENDDO !derivIdx
                 ENDDO !nodeIdx
-              ENDDO !faceIdx
+              ENDDO facesLoop !faceIdx
             CASE DEFAULT
               localError="The domain dimension of "//TRIM(NumberToVString(numberOfDimensions,"*",err,error))// &
                 & " is invalid for point Neumann conditions."

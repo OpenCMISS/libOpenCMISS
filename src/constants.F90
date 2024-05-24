@@ -203,6 +203,25 @@ MODULE Constants
   INTEGER(INTG), PARAMETER :: PART_DERIV_S1_S1_S1=23 !<Third partial derivative in the s1 direction i.e., d^3u/ds1^3 \see Constants_PartialDerivativeConstants,Constants
   !>@}
   
+!> \addtogroup Constants_PhysicalDerivativeConstants OpenCMISS::Iron::Constants::PhysicalDerivativeConstants
+  !> \brief Physical derivative constant identifiers. Note will assume Hessians are symmetric for now.
+  !> \see Constants
+  !>@{ 
+  INTEGER(INTG), PARAMETER :: MAXIMUM_PHYSICAL_DERIV_NUMBER=10 !<The maximum physical derivative number
+  INTEGER(INTG), PARAMETER :: NO_PHYSICAL_DERIV=1 !<No physical derivative i.e., u \see Constants_PhysicalDerivativeConstants,Constants
+  INTEGER(INTG), PARAMETER :: FIRST_PHYSICAL_DERIV=2 !<First physical derivative i.e., du/ds \see Constants_PhysicalDerivativeConstants,Constants
+  INTEGER(INTG), PARAMETER :: SECOND_PHYSICAL_DERIV=3 !<Second physical derivative i.e., d^2u/ds^2 \see Constants_PhysicalDerivativeConstants,Constants
+  INTEGER(INTG), PARAMETER :: GRADIENT_DERIV_S1=2 !<Gradient physical derivative in the s1 direction i.e., du/ds1 \see Constants_PhysicalDerivativeConstants,Constants
+  INTEGER(INTG), PARAMETER :: HESSIAN_DERIV_S1_S1=3 !<Hessian physical derivative in the s1 direction i.e., d^2u/ds1ds1 \see Constants_PhysicalDerivativeConstants,Constants
+  INTEGER(INTG), PARAMETER :: GRADIENT_DERIV_S2=4 !<Gradient physical derivative in the s2 direction i.e., du/ds2 \see Constants_PhysicalDerivativeConstants,Constants
+  INTEGER(INTG), PARAMETER :: HESSIAN_DERIV_S2_S2=5 !<Hessian physical derivative in the s2 direction i.e., d^2u/ds2ds2 \see Constants_PhysicalDerivativeConstants,Constants
+  INTEGER(INTG), PARAMETER :: HESSIAN_DERIV_S1_S2=6 !<Hessian derivative in the s1 and s2 direction i.e., d^2u/ds1ds2 \see Constants_PhysicalDerivativeConstants,Constants
+  INTEGER(INTG), PARAMETER :: GRADIENT_DERIV_S3=7 !<Gradient physical derivative in the s3 direction i.e., du/ds3 \see Constants_PhysicalDerivativeConstants,Constants
+  INTEGER(INTG), PARAMETER :: HESSIAN_DERIV_S3_S3=8 !<Hessian physical derivative in the s3 direction i.e., d^2u/ds3ds3 \see Constants_PhysicalDerivativeConstants,Constants
+  INTEGER(INTG), PARAMETER :: HESSIAN_DERIV_S1_S3=9 !<Hessian derivative in the s1 and s3 direction i.e., d^2u/ds1ds3 \see Constants_PhysicalDerivativeConstants,Constants
+  INTEGER(INTG), PARAMETER :: HESSIAN_DERIV_S2_S3=10 !<Hessian derivative in the s2 and s3 direction i.e., d^2u/ds2ds3 \see Constants_PhysicalDerivativeConstants,Constants
+  !>@}
+  
   !> \addtogroup Constants_GlobalDerivativeConstants OpenCMISS::Iron::Constants::GlobalDerivativeConstants
   !> \brief Global derivative constant identifiers
   !> \see Constants
@@ -222,9 +241,10 @@ MODULE Constants
   !> \brief Physical derivative constant identifiers
   !> \see Constants
   !>@{ 
-  INTEGER(INTG), PARAMETER :: MAXIMUM_PHYSICAL_DERIV_NUMBER=2 !<The maximum physical derivative number
-  INTEGER(INTG), PARAMETER :: NO_PHYSICAL_DERIV=1 !<No physical derivative i.e., u \see Constants_PhysicalDerivativeConstants,Constants
-  INTEGER(INTG), PARAMETER :: GRADIENT_PHYSICAL_DERIV=2 !<Gradient physical derivative i.e., grad u \see Constants_PhysicalDerivativeConstants,Constants
+  INTEGER(INTG), PARAMETER :: MAXIMUM_PHYSICAL_DERIV_TYPES=3 !<The maximum physical derivative types
+  INTEGER(INTG), PARAMETER :: NO_PHYSICAL_DERIVATIVE=1 !<No physical derivative i.e., u \see Constants_PhysicalDerivativeConstants,Constants
+  INTEGER(INTG), PARAMETER :: GRADIENT_PHYSICAL_DERIVATIVE=2 !<Gradient physical derivative i.e., grad u \see Constants_PhysicalDerivativeConstants,Constants
+  INTEGER(INTG), PARAMETER :: HESSIAN_PHYSICAL_DERIVATIVE=3 !<Hessian physical derivative i.e., grad^2 u \see Constants_PhysicalDerivativeConstants,Constants
   !>@}
   
   INTEGER(INTG) :: PARTIAL_DERIVATIVE_INDEX(23,4) = RESHAPE( &
@@ -265,6 +285,15 @@ MODULE Constants
 
   INTEGER(INTG) :: PARTIAL_DERIVATIVE_GLOBAL_DERIVATIVE_MAP(20) = [ NO_GLOBAL_DERIV,GLOBAL_DERIV_S1,0,GLOBAL_DERIV_S2,0, &
     & GLOBAL_DERIV_S1_S2,GLOBAL_DERIV_S3,0,GLOBAL_DERIV_S1_S3,GLOBAL_DERIV_S2_S3,GLOBAL_DERIV_S1_S2_S3,0,0,0,0,0,0,0,0,0 ] !<PARTIAL_DERIVATIVE_GLOBAL_DERIVATIVE_MAP(nu) gives the global derivative index for the the nu'th partial derivative. If no global derivative exists the map is zero
+
+  INTEGER(INTG) :: PHYSICAL_DERIVATIVE_GRADIENT_MAP(3) = [ GRADIENT_DERIV_S1,GRADIENT_DERIV_S2,GRADIENT_DERIV_S3 ] !<PHYSICAL_DERIVATIVE_FIRST_GRADIENT_MAP(dimensionIdx) gives the physical derivative index for the gradient in the dimensionIdx'th physical direction
+  
+  INTEGER(INTG) :: PHYSICAL_DERIVATIVE_HESSIAN_MAP(3,3) =  RESHAPE([ &
+    & HESSIAN_DERIV_S1_S1, HESSIAN_DERIV_S1_S2, HESSIAN_DERIV_S1_S3, &
+    & HESSIAN_DERIV_S1_S2, HESSIAN_DERIV_S2_S2, HESSIAN_DERIV_S2_S3, &
+    & HESSIAN_DERIV_S1_S3, HESSIAN_DERIV_S2_S3, HESSIAN_DERIV_S3_S3], [3,3]) !<PHYSICAL_DERIVATIVE_HESSIAN_MAP(dimensionIdx1,dimensionIdx2) gives the physical derivative index for the Hessian in the dimensionIdx1'th and dimensionIdx2'th physical directions. Note: assuming Hessians are symmetric for now.
+
+  INTEGER(INTG) :: PHYSICAL_DERIVATIVE_MAXIMUM_MAP(3) = [ HESSIAN_DERIV_S1_S1,HESSIAN_DERIV_S1_S2,HESSIAN_DERIV_S2_S3 ] !<PHYSICAL_DERIVATIVE_MAXIMUM_MAP(dimensionIdx) gives the maximum of physical derivative indices for the the dimensionIdx'th physical direction.
 
   INTEGER(INTG) :: GLOBAL_DERIVATIVE_PARTIAL_DERIVATIVE_MAP(8) = [ NO_PART_DERIV,PART_DERIV_S1,PART_DERIV_S2,PART_DERIV_S1_S2, &
     & PART_DERIV_S3,PART_DERIV_S1_S3,PART_DERIV_S2_S3,PART_DERIV_S1_S2_S3] !<GLOBAL_DERIVATIVE_PARTIAL_DERIVATIVE_MAP(nk) gives the partial derivative index for the the nk'th global derivative.

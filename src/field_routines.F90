@@ -115,6 +115,12 @@ MODULE FieldRoutines
     MODULE PROCEDURE Field_CreateStartRegion
   END INTERFACE Field_CreateStart
 
+  !>Interpolates a field at a xi location
+  INTERFACE Field_InterpolateXi
+    MODULE PROCEDURE Field_InterpolateXiInterpPt
+    MODULE PROCEDURE Field_InterpolateXiPhysicalPt
+  END INTERFACE Field_InterpolateXi
+
   !>Sets/changes the label for a field.
   INTERFACE Field_LabelSet
     MODULE PROCEDURE Field_LabelSetC
@@ -934,6 +940,8 @@ MODULE FieldRoutines
   PUBLIC FieldVariable_ParameterSetVectorGet
 
   PUBLIC FieldVariable_ParametersToFieldVariableParametersCopy
+
+  PUBLIC FieldVariable_PositionNormalTangentsCalculateNode
 
   PUBLIC FieldVariablesList_CreateStart,FieldVariablesList_CreateFinish
 
@@ -1935,6 +1943,8 @@ CONTAINS
         END SELECT
       CASE(FIELD_DELUDELN_VARIABLE_TYPE)
         field%createValuesCache%variableLabels(variableIdx)="del U/del n"
+      CASE(FIELD_T_VARIABLE_TYPE)
+        field%createValuesCache%variableLabels(variableIdx)="T"
       CASE(FIELD_DELUDELT_VARIABLE_TYPE)
         field%createValuesCache%variableLabels(variableIdx)="del U/del t"
       CASE(FIELD_DEL2UDELT2_VARIABLE_TYPE)
@@ -3834,8 +3844,8 @@ CONTAINS
     INTEGER(INTG), INTENT(OUT) :: err !<The error code
     TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
     !Local Variables
-    INTEGER(INTG) :: componentIdx,element,elementIdx,localNodeNumber,localNodeIdx,numberOfSurroundingElements, &
-      & partialDerivativeIdx,xiIdx
+    INTEGER(INTG) :: componentIdx,dimensionIdx,element,elementIdx,localNodeNumber,localNodeIdx,numberOfDimensions, &
+      & numberOfSurroundingElements, partialDerivativeIndex,physicalDerivativeIndex,xiIdx
     REAL(DP) :: xi(3),dXdXi(3,3),dXidX(3,3),detdXdXi
     TYPE(BasisType), POINTER :: basis
     TYPE(CoordinateSystemType), POINTER :: coordinateSystem
@@ -3865,6 +3875,7 @@ CONTAINS
     CALL FieldInterpolationParameters_FieldVariableGet(fieldInterpParameters,fieldVariable,err,error,*999)
     NULLIFY(geometricVariable)
     CALL FieldInterpolationParameters_FieldVariableGet(geometricInterpParameters,geometricVariable,err,error,*999)
+    CALL FieldVariable_NumberOfComponentsGet(geometricVariable,numberOfDimensions,err,error,*999)
     NULLIFY(field)
     CALL FieldVariable_FieldGet(fieldVariable,field,err,error,*999)
     NULLIFY(coordinateSystem)
@@ -3884,11 +3895,10 @@ CONTAINS
       CALL FlagError(localError,err,error,*999)
     ENDIF    
     physicalPoint%values=0.0_DP
-    IF(physicalDerivativeType==NO_PHYSICAL_DERIV) THEN
+    IF(physicalDerivativeType==NO_PHYSICAL_DERIVATIVE) THEN
       numberOfSurroundingElements=1
     ELSE
       numberOfSurroundingElements=domainNodes%nodes(nodeNumber)%numberOfSurroundingElements
-      physicalPoint%values=0.0_DP
     ENDIF
     !Loop over the elements surrounding the node
     DO elementIdx=1,numberOfSurroundingElements
@@ -3898,7 +3908,7 @@ CONTAINS
       CALL DomainElements_ElementBasisGet(domainElements,element,basis,err,error,*999)
       localNodeNumber=0
       DO localNodeIdx=1,basis%numberOfNodes
-        IF(domainElements%ELEMENTS(element)%elementNodes(localNodeIdx)==nodeNumber) THEN
+        IF(domainElements%elements(element)%elementNodes(localNodeIdx)==nodeNumber) THEN
           localNodeNumber=localNodeIdx
           EXIT
         ENDIF
@@ -3910,16 +3920,16 @@ CONTAINS
       ENDIF
       CALL Basis_LocalNodeXiCalculate(basis,localNodeNumber,xi,err,error,*999)  
       SELECT CASE(physicalDerivativeType)
-      CASE(NO_PHYSICAL_DERIV)
+      CASE(NO_PHYSICAL_DERIVATIVE)
         DO componentIdx=1,fieldVariable%numberOfComponents
           SELECT CASE(fieldVariable%components(componentIdx)%interpolationType)
           CASE(FIELD_CONSTANT_INTERPOLATION)
-            physicalPoint%values(componentIdx)=fieldInterpParameters%parameters(1,componentIdx)
+            physicalPoint%values(componentIdx,NO_PHYSICAL_DERIV)=fieldInterpParameters%parameters(1,componentIdx)
           CASE(FIELD_ELEMENT_BASED_INTERPOLATION)
-            physicalPoint%values(componentIdx)=fieldInterpParameters%parameters(1,componentIdx)
+            physicalPoint%values(componentIdx,NO_PHYSICAL_DERIV)=fieldInterpParameters%parameters(1,componentIdx)
           CASE(FIELD_NODE_BASED_INTERPOLATION)
-            physicalPoint%values(componentIdx)=Basis_InterpolateXi(fieldInterpParameters%bases(componentIdx)%ptr,NO_PART_DERIV, &
-              & xi,fieldInterpParameters%parameters(:,componentIdx),err,error)
+            physicalPoint%values(componentIdx,NO_PHYSICAL_DERIV)=Basis_InterpolateXi(fieldInterpParameters% &
+              & bases(componentIdx)%ptr,NO_PART_DERIV,xi,fieldInterpParameters%parameters(:,componentIdx),err,error)
             IF(err/=0) GOTO 999
           CASE(FIELD_GRID_POINT_BASED_INTERPOLATION)
             CALL FlagError("Not implemented.",err,error,*999)
@@ -3934,36 +3944,50 @@ CONTAINS
               & TRIM(NumberToVString(componentIdx,"*",err,error))//"."
           END SELECT
         ENDDO !componentIdx
-        physicalPoint%physicalDerivativeType=NO_PHYSICAL_DERIV
-      CASE(GRADIENT_PHYSICAL_DERIV)
+        physicalPoint%physicalDerivativeType=NO_PHYSICAL_DERIVATIVE
+      CASE(GRADIENT_PHYSICAL_DERIVATIVE)
         DO componentIdx=1,fieldVariable%numberOfComponents
           SELECT CASE(fieldVariable%components(componentIdx)%interpolationType)
           CASE(FIELD_CONSTANT_INTERPOLATION)
+            !Handle the non-derivative case
+            physicalPoint%values(componentIdx,NO_PHYSICAL_DERIV)=fieldInterpParameters%parameters(NO_PART_DERIV,componentIdx)
             !There is no gradient for constant interpolation
-            physicalPoint%values(componentIdx)=0.0_DP                                            
+            DO dimensionIdx=1,numberOfDimensions
+              physicalDerivativeIndex=PHYSICAL_DERIVATIVE_GRADIENT_MAP(dimensionIdx)
+              physicalPoint%values(componentIdx,physicalDerivativeIndex)=0.0_DP
+            ENDDO !dimensionIdx
           CASE(FIELD_ELEMENT_BASED_INTERPOLATION)
-            !There is no graident for element interpolation
-            physicalPoint%values(componentIdx)=0.0_DP
+            !Handle the non-derivative case
+            physicalPoint%values(componentIdx,NO_PHYSICAL_DERIV)=fieldInterpParameters%parameters(NO_PART_DERIV,componentIdx)
+            !There is no gradient for element based interpolation
+            DO dimensionIdx=1,numberOfDimensions
+              physicalDerivativeIndex=PHYSICAL_DERIVATIVE_GRADIENT_MAP(dimensionIdx)
+              physicalPoint%values(componentIdx,physicalDerivativeIndex)=0.0_DP
+            ENDDO !dimensionIdx
           CASE(FIELD_NODE_BASED_INTERPOLATION)
-            CALL Field_InterpolationParametersElementGet(FIELD_VALUES_SET_TYPE,element,geometricInterpParameters,err,error,*999)
+            !Handle the non-derivative case
+            physicalPoint%values(componentIdx,NO_PHYSICAL_DERIV)=Basis_InterpolateXi(fieldInterpParameters% &
+              & bases(componentIdx)%ptr,NO_PART_DERIV,xi,fieldInterpParameters%parameters(:,componentIdx),err,error)
+            IF(err/=0) GOTO 999
             !Now process all the first partial derivatives
+            CALL Field_InterpolationParametersElementGet(FIELD_VALUES_SET_TYPE,element,geometricInterpParameters,err,error,*999)
             DO xiIdx=1,fieldInterpParameters%bases(componentIdx)%ptr%numberOfXi
-              partialDerivativeIdx=PARTIAL_DERIVATIVE_FIRST_DERIVATIVE_MAP(xiIdx)
+              partialDerivativeIndex=PARTIAL_DERIVATIVE_FIRST_DERIVATIVE_MAP(xiIdx)
               !Interpolate the field
-              fieldInterpPoint%values(componentIdx,partialDerivativeIdx)=Basis_InterpolateXi( &
-                & fieldInterpParameters%bases(componentIdx)%ptr,partialDerivativeIdx,xi, &
+              fieldInterpPoint%values(componentIdx,partialDerivativeIndex)=Basis_InterpolateXi( &
+                & fieldInterpParameters%bases(componentIdx)%ptr,partialDerivativeIndex,xi, &
                 & fieldInterpParameters%parameters(:,componentIdx),err,error)
               IF(err/=0) GOTO 999
-              CALL CoordinateSystem_InterpolationAdjust(coordinateSystem,partialDerivativeIdx, &
-                & fieldInterpPoint%values(componentIdx,partialDerivativeIdx),err,error,*999)
-              geometricInterpPoint%values(componentIdx,partialDerivativeIdx)=Basis_InterpolateXi( &
-                & geometricInterpParameters%bases(componentIdx)%ptr,partialDerivativeIdx,xi, &
+              CALL CoordinateSystem_InterpolationAdjust(coordinateSystem,partialDerivativeIndex, &
+                & fieldInterpPoint%values(componentIdx,partialDerivativeIndex),err,error,*999)
+              geometricInterpPoint%values(componentIdx,partialDerivativeIndex)=Basis_InterpolateXi( &
+                & geometricInterpParameters%bases(componentIdx)%ptr,partialDerivativeIndex,xi, &
                 & geometricInterpParameters%parameters(:,componentIdx),err,error)
               IF(err/=0) GOTO 999
-              CALL CoordinateSystem_InterpolationAdjust(coordinateSystem,partialDerivativeIdx, &
-                & geometricInterpPoint%values(componentIdx,partialDerivativeIdx), &
+              CALL CoordinateSystem_InterpolationAdjust(coordinateSystem,partialDerivativeIndex, &
+                & geometricInterpPoint%values(componentIdx,partialDerivativeIndex), &
                 & err,error,*999)
-              dXdXi(componentIdx,xiIdx)=geometricInterpPoint%values(componentIdx,partialDerivativeIdx)
+              dXdXi(componentIdx,xiIdx)=geometricInterpPoint%values(componentIdx,partialDerivativeIndex)
             ENDDO !xiIdx
           CASE(FIELD_GRID_POINT_BASED_INTERPOLATION)
             CALL FlagError("Not implemented.",err,error,*999)
@@ -3981,20 +4005,26 @@ CONTAINS
         !Form the physical derivative
         CALL Invert(dXdXi,dXidX,detdXdXi,err,error,*999)
         DO componentIdx=1,fieldVariable%numberOfComponents
-          DO xiIdx=1,fieldInterpParameters%bases(componentIdx)%ptr%numberOfXi
-            partialDerivativeIdx=PARTIAL_DERIVATIVE_FIRST_DERIVATIVE_MAP(xiIdx)
-            physicalPoint%values(componentIdx)=physicalPoint%values(componentIdx)+ &
-              & fieldInterpPoint%values(componentIdx,partialDerivativeIdx)*dXidX(xiIdx,componentIdx)
-          ENDDO !xiIdx
+          DO dimensionIdx=1,numberOfDimensions
+            physicalDerivativeIndex=PHYSICAL_DERIVATIVE_GRADIENT_MAP(dimensionIdx)
+            DO xiIdx=1,fieldInterpParameters%bases(componentIdx)%ptr%numberOfXi
+              partialDerivativeIndex=PARTIAL_DERIVATIVE_FIRST_DERIVATIVE_MAP(xiIdx)
+              physicalPoint%values(componentIdx,physicalDerivativeIndex)= &
+                & physicalPoint%values(componentIdx,physicalDerivativeIndex)+ &
+                & fieldInterpPoint%values(componentIdx,partialDerivativeIndex)*dXidX(xiIdx,dimensionIdx)
+            ENDDO !xiIdx
+          ENDDO !dimensionIdx
         ENDDO !componentIdx
-        physicalPoint%physicalDerivativeType=GRADIENT_PHYSICAL_DERIV
+        physicalPoint%physicalDerivativeType=GRADIENT_PHYSICAL_DERIVATIVE
+      CASE(HESSIAN_PHYSICAL_DERIVATIVE)
+        CALL FlagError("Not implemented.",err,error,*999)
       CASE DEFAULT
         localError="The physical derivative type of "// &
           & TRIM(NumberToVString(physicalDerivativeType,"*",err,error))//" is invalid."
         CALL FlagError(localError,err,error,*999)
       END SELECT
     ENDDO !elementIdx
-    IF(physicalDerivativeType==NO_PHYSICAL_DERIV) THEN
+    IF(physicalDerivativeType>NO_PHYSICAL_DERIVATIVE) THEN
       !Now calculate the average of the interpolated physical point
       DO componentIdx=1,fieldVariable%numberOfComponents
         SELECT CASE(fieldVariable%components(componentIdx)%interpolationType)
@@ -4002,8 +4032,15 @@ CONTAINS
           !Do nothing
         CASE(FIELD_ELEMENT_BASED_INTERPOLATION)
           !Do nothing
-        CASE(FIELD_NODE_BASED_INTERPOLATION)                                      
-          physicalPoint%values(componentIdx)=physicalPoint%values(componentIdx)/REAL(numberOfSurroundingElements,DP)
+        CASE(FIELD_NODE_BASED_INTERPOLATION)
+          IF(physicalDerivativeType>=GRADIENT_PHYSICAL_DERIVATIVE) THEN
+            DO dimensionIdx=1,numberOfDimensions
+              physicalDerivativeIndex=PHYSICAL_DERIVATIVE_GRADIENT_MAP(dimensionIdx)
+              physicalPoint%values(componentIdx,physicalDerivativeIndex)= &
+                & physicalPoint%values(componentIdx,physicalDerivativeIndex)/ &
+                & REAL(numberOfSurroundingElements,DP)
+            ENDDO !dimensionIdx
+          ENDIF
         CASE(FIELD_GRID_POINT_BASED_INTERPOLATION)
           CALL FlagError("Not implemented.",err,error,*999)
         CASE(FIELD_GAUSS_POINT_BASED_INTERPOLATION)
@@ -4081,8 +4118,8 @@ CONTAINS
     INTEGER(INTG), INTENT(OUT) :: err !<The error code
     TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
     !Local Variables
-    INTEGER(INTG) :: componentIdx,element,elementIdx,localNodeNumber,localNodeIdx,numberOfSurroundingElements, &
-      & partialDerivativeIdx,xiIdx
+    INTEGER(INTG) :: componentIdx,dimensionIdx,element,elementIdx,localNodeNumber,localNodeIdx,numberOfDimensions, &
+      & numberOfSurroundingElements,partialDerivativeIndex,physicalDerivativeIndex,xiIdx
     REAL(DP) :: xi(3),dXdXi(3,3),dXidX(3,3),detdXdXi
     TYPE(BasisType), POINTER :: basis
     TYPE(CoordinateSystemType), POINTER :: coordinateSystem
@@ -4113,6 +4150,7 @@ CONTAINS
     CALL FieldInterpolationParameters_FieldVariableGet(fieldInterpParameters,interpVariable,err,error,*999)
     NULLIFY(geometricVariable)
     CALL FieldInterpolationParameters_FieldVariableGet(geometricInterpParameters,geometricVariable,err,error,*999)
+    CALL FieldVariable_NumberOfComponentsGet(geometricVariable,numberOfDimensions,err,error,*999)
     NULLIFY(interpField)
     CALL FieldVariable_FieldGet(interpVariable,interpField,err,error,*999)
     NULLIFY(coordinateSystem)
@@ -4132,12 +4170,11 @@ CONTAINS
       CALL FlagError(localError,err,error,*999)
     ENDIF
     physicalPoint%values=0.0_DP
-    IF(physicalDerivativeType==NO_PHYSICAL_DERIV) THEN
+    IF(physicalDerivativeType==NO_PHYSICAL_DERIVATIVE) THEN
       numberOfSurroundingElements=1
     ELSE
       numberOfSurroundingElements=domainNodes%nodes(nodeNumber)% &
         & numberOfSurroundingElements
-      physicalPoint%VALUES=0.0_DP
     ENDIF
     !Loop over the elements surrounding the node
     DO elementIdx=1,numberOfSurroundingElements
@@ -4160,15 +4197,15 @@ CONTAINS
       ENDIF
       CALL Basis_LocalNodeXiCalculate(basis,localNodeNumber,xi,err,error,*999)  
       SELECT CASE(physicalDerivativeType)
-      CASE(NO_PHYSICAL_DERIV)
+      CASE(NO_PHYSICAL_DERIVATIVE)
         DO componentIdx=1,interpVariable%numberOfComponents
           SELECT CASE(interpVariable%components(componentIdx)%interpolationType)
           CASE(FIELD_CONSTANT_INTERPOLATION)
-            physicalPoint%values(componentIdx)=fieldInterpParameters%parameters(1,componentIdx)
+            physicalPoint%values(componentIdx,NO_PHYSICAL_DERIV)=fieldInterpParameters%parameters(1,componentIdx)
           CASE(FIELD_ELEMENT_BASED_INTERPOLATION)
-            physicalPoint%values(componentIdx)=fieldInterpParameters%parameters(1,componentIdx)
+            physicalPoint%values(componentIdx,NO_PHYSICAL_DERIV)=fieldInterpParameters%parameters(1,componentIdx)
           CASE(FIELD_NODE_BASED_INTERPOLATION)
-            physicalPoint%values(componentIdx)=Basis_InterpolateXi( &
+            physicalPoint%values(componentIdx,NO_PHYSICAL_DERIV)=Basis_InterpolateXi( &
               & fieldInterpParameters%bases(componentIdx)%ptr,NO_PART_DERIV, &
               & xi,fieldInterpParameters%parameters(:,componentIdx),err,error)
             IF(err/=0) GOTO 999
@@ -4185,37 +4222,51 @@ CONTAINS
               & TRIM(NumberToVString(componentIdx,"*",err,error))//"."
           END SELECT
         ENDDO! componentIdx
-        physicalPoint%physicalDerivativeType=NO_PHYSICAL_DERIV
-      CASE(GRADIENT_PHYSICAL_DERIV)
+        physicalPoint%physicalDerivativeType=NO_PHYSICAL_DERIVATIVE
+      CASE(GRADIENT_PHYSICAL_DERIVATIVE)
         DO componentIdx=1,interpVariable%numberOfComponents
           SELECT CASE(interpVariable%components(componentIdx)%interpolationType)
           CASE(FIELD_CONSTANT_INTERPOLATION)
+            !Handle the non-derivative case
+            physicalPoint%values(componentIdx,NO_PHYSICAL_DERIV)=fieldInterpParameters%parameters(1,componentIdx)            
             !There is no gradient for constant interpolation
-            physicalPoint%values(componentIdx)=0.0_DP
+            DO dimensionIdx=1,numberOfDimensions
+              physicalDerivativeIndex=PHYSICAL_DERIVATIVE_GRADIENT_MAP(dimensionIdx)
+              physicalPoint%values(componentIdx,physicalDerivativeIndex)=0.0_DP
+            ENDDO !dimensionIdx
           CASE(FIELD_ELEMENT_BASED_INTERPOLATION)
-            !There is no graident for element interpolation
-            physicalPoint%values(componentIdx)=0.0_DP
+            !Handle the non-derivative case
+            physicalPoint%values(componentIdx,NO_PHYSICAL_DERIV)=fieldInterpParameters%parameters(1,componentIdx)
+            !There is no gradient for element based interpolation
+            DO dimensionIdx=1,numberOfDimensions
+              physicalDerivativeIndex=PHYSICAL_DERIVATIVE_GRADIENT_MAP(dimensionIdx)
+              physicalPoint%values(componentIdx,physicalDerivativeIndex)=0.0_DP
+            ENDDO !dimensionIdx
           CASE(FIELD_NODE_BASED_INTERPOLATION)
-            CALL Field_InterpolationParametersElementGet(FIELD_VALUES_SET_TYPE,element,geometricInterpParameters,err,error,*999)
+            !Handle the non-derivative case
+            physicalPoint%values(componentIdx,NO_PHYSICAL_DERIV)=Basis_InterpolateXi(fieldInterpParameters% &
+              & bases(componentIdx)%ptr,NO_PART_DERIV,xi,fieldInterpParameters%parameters(:,componentIdx),err,error)
+            IF(err/=0) GOTO 999
             !Now process all the first partial derivatives
+            CALL Field_InterpolationParametersElementGet(FIELD_VALUES_SET_TYPE,element,geometricInterpParameters,err,error,*999)
             DO xiIdx=1,fieldInterpParameters%bases(componentIdx)%ptr%numberOfXi
-              partialDerivativeIdx=PARTIAL_DERIVATIVE_FIRST_DERIVATIVE_MAP(xiIdx)
+              partialDerivativeIndex=PARTIAL_DERIVATIVE_FIRST_DERIVATIVE_MAP(xiIdx)
               !Interpolate the field
-              fieldInterpPoint%values(componentIdx,partialDerivativeIdx)=Basis_InterpolateXi( &
-                & fieldInterpParameters%bases(componentIdx)%ptr,partialDerivativeIdx,xi, &
+              fieldInterpPoint%values(componentIdx,partialDerivativeIndex)=Basis_InterpolateXi( &
+                & fieldInterpParameters%bases(componentIdx)%ptr,partialDerivativeIndex,xi, &
                 & fieldInterpParameters%parameters(:,componentIdx),err,error)
               IF(err/=0) GOTO 999
-              CALL CoordinateSystem_InterpolationAdjust(coordinateSystem,partialDerivativeIdx, &
-                & fieldInterpPoint%values(componentIdx,partialDerivativeIdx),err,error,*999)
-              geometricInterpPoint%values(componentIdx,partialDerivativeIdx) = &
+              CALL CoordinateSystem_InterpolationAdjust(coordinateSystem,partialDerivativeIndex, &
+                & fieldInterpPoint%values(componentIdx,partialDerivativeIndex),err,error,*999)
+              geometricInterpPoint%values(componentIdx,partialDerivativeIndex) = &
                 & Basis_InterpolateXi(geometricInterpParameters%bases(componentIdx)% &
-                & PTR,partialDerivativeIdx,xi,geometricInterpParameters%parameters(:, &
+                & PTR,partialDerivativeIndex,xi,geometricInterpParameters%parameters(:, &
                 & componentIdx),err,error)
               IF(err/=0) GOTO 999
-              CALL CoordinateSystem_InterpolationAdjust(coordinateSystem,partialDerivativeIdx, &
-                & geometricInterpPoint%values(componentIdx,partialDerivativeIdx), &
+              CALL CoordinateSystem_InterpolationAdjust(coordinateSystem,partialDerivativeIndex, &
+                & geometricInterpPoint%values(componentIdx,partialDerivativeIndex), &
                 & err,error,*999)
-              dXdXi(componentIdx,xiIdx)=geometricInterpPoint%values(componentIdx,partialDerivativeIdx)
+              dXdXi(componentIdx,xiIdx)=geometricInterpPoint%values(componentIdx,partialDerivativeIndex)
             ENDDO !xiIdx
           CASE(FIELD_GRID_POINT_BASED_INTERPOLATION)
             CALL FlagError("Not implemented.",err,error,*999)
@@ -4234,20 +4285,26 @@ CONTAINS
         !Form the physical derivative
         CALL Invert(dXdXi,dXidX,detdXdXi,err,error,*999)
         DO componentIdx=1,interpVariable%numberOfComponents
-          DO xiIdx=1,fieldInterpParameters%bases(componentIdx)%ptr%numberOfXi
-            partialDerivativeIdx=PARTIAL_DERIVATIVE_FIRST_DERIVATIVE_MAP(xiIdx)
-            physicalPoint%values(componentIdx)=physicalPoint%values(componentIdx)+ &
-              & fieldInterpPoint%values(componentIdx,partialDerivativeIdx)*dXidX(xiIdx,componentIdx)
-          ENDDO !xiIdx
+          DO dimensionIdx=1,numberOfDimensions
+            physicalDerivativeIndex=PHYSICAL_DERIVATIVE_GRADIENT_MAP(dimensionIdx)
+            DO xiIdx=1,fieldInterpParameters%bases(componentIdx)%ptr%numberOfXi
+              partialDerivativeIndex=PARTIAL_DERIVATIVE_FIRST_DERIVATIVE_MAP(xiIdx)
+              physicalPoint%values(componentIdx,physicalDerivativeIndex)= &
+                & physicalPoint%values(componentIdx,physicalDerivativeIndex)+ &
+                & fieldInterpPoint%values(componentIdx,partialDerivativeIndex)*dXidX(xiIdx,dimensionIdx)
+            ENDDO !xiIdx
+          ENDDO !dimensionIdx
         ENDDO !componentIdx
-        physicalPoint%physicalDerivativeType=GRADIENT_PHYSICAL_DERIV
+        physicalPoint%physicalDerivativeType=GRADIENT_PHYSICAL_DERIVATIVE
+      CASE(HESSIAN_PHYSICAL_DERIVATIVE)
+        CALL FlagError("Not implemented.",err,error,*999)
       CASE DEFAULT
         localError="The physical derivative type of "// &
           & TRIM(NumberToVString(physicalDerivativeType,"*",err,error))//" is invalid."
         CALL FlagError(localError,err,error,*999)
       END SELECT
     ENDDO !elementIdx
-    IF(physicalDerivativeType==NO_PHYSICAL_DERIV) THEN
+    IF(physicalDerivativeType>NO_PHYSICAL_DERIVATIVE) THEN
       !Now calculate the average of the interpolated physical point
       DO componentIdx=1,interpVariable%numberOfComponents
         SELECT CASE(interpVariable%components(componentIdx)%interpolationType)
@@ -4256,7 +4313,14 @@ CONTAINS
         CASE(FIELD_ELEMENT_BASED_INTERPOLATION)
           !Do nothing
         CASE(FIELD_NODE_BASED_INTERPOLATION)                                      
-          physicalPoint%values(componentIdx)=physicalPoint%values(componentIdx)/REAL(numberOfSurroundingElements,DP)
+          IF(physicalDerivativeType>=GRADIENT_PHYSICAL_DERIVATIVE) THEN
+            DO dimensionIdx=1,numberOfDimensions
+              physicalDerivativeIndex=PHYSICAL_DERIVATIVE_GRADIENT_MAP(dimensionIdx)
+              physicalPoint%values(componentIdx,physicalDerivativeIndex)= &
+                & physicalPoint%values(componentIdx,physicalDerivativeIndex)/ &
+                & REAL(numberOfSurroundingElements,DP)
+            ENDDO !dimensionIdx
+          ENDIF
         CASE(FIELD_GRID_POINT_BASED_INTERPOLATION)
           CALL FlagError("Not implemented.",err,error,*999)
         CASE(FIELD_GAUSS_POINT_BASED_INTERPOLATION)
@@ -4298,7 +4362,7 @@ CONTAINS
     TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
     INTEGER(INTG), OPTIONAL, INTENT(IN) :: componentType !<The components type to interpolate
     !Local Variables
-    INTEGER(INTG) :: componentIdx,xiIdx,partialDerivativeIdx,startComponentIdx,endComponentIdx
+    INTEGER(INTG) :: componentIdx,xiIdx,partialDerivativeIndex,startComponentIdx,endComponentIdx
     TYPE(CoordinateSystemType), POINTER :: coordinateSystem
     TYPE(FieldType), POINTER :: field,geometricField
     TYPE(FieldInterpolationParametersType), POINTER :: interpolationParameters
@@ -4398,10 +4462,10 @@ CONTAINS
             & err,error,*999)
           !Now process all the first partial derivatives
           DO xiIdx=1,interpolationParameters%bases(componentIdx)%ptr%numberOfXi
-            partialDerivativeIdx=PARTIAL_DERIVATIVE_FIRST_DERIVATIVE_MAP(xiIdx)
-            interpolatedPoint%values(componentIdx,partialDerivativeIdx)=0.0_DP
-            CALL CoordinateSystem_InterpolationAdjust(coordinateSystem,partialDerivativeIdx, &
-              & interpolatedPoint%values(componentIdx,partialDerivativeIdx),err,error,*999)
+            partialDerivativeIndex=PARTIAL_DERIVATIVE_FIRST_DERIVATIVE_MAP(xiIdx)
+            interpolatedPoint%values(componentIdx,partialDerivativeIndex)=0.0_DP
+            CALL CoordinateSystem_InterpolationAdjust(coordinateSystem,partialDerivativeIndex, &
+              & interpolatedPoint%values(componentIdx,partialDerivativeIndex),err,error,*999)
           ENDDO !xiIdx
         CASE(FIELD_ELEMENT_BASED_INTERPOLATION)
           !Handle the first case of no partial derivative
@@ -4410,10 +4474,10 @@ CONTAINS
             & err,error,*999)
           !Now process all the first partial derivatives
           DO xiIdx=1,interpolationParameters%bases(componentIdx)%ptr%numberOfXi
-            partialDerivativeIdx=PARTIAL_DERIVATIVE_FIRST_DERIVATIVE_MAP(xiIdx)
-            interpolatedPoint%values(componentIdx,partialDerivativeIdx)=0.0_DP
-            CALL CoordinateSystem_InterpolationAdjust(coordinateSystem,partialDerivativeIdx, &
-              & interpolatedPoint%values(componentIdx,partialDerivativeIdx),err,error,*999)
+            partialDerivativeIndex=PARTIAL_DERIVATIVE_FIRST_DERIVATIVE_MAP(xiIdx)
+            interpolatedPoint%values(componentIdx,partialDerivativeIndex)=0.0_DP
+            CALL CoordinateSystem_InterpolationAdjust(coordinateSystem,partialDerivativeIndex, &
+              & interpolatedPoint%values(componentIdx,partialDerivativeIndex),err,error,*999)
           ENDDO !xiIdx
         CASE(FIELD_NODE_BASED_INTERPOLATION)
           !Handle the first case of no partial derivative
@@ -4425,13 +4489,13 @@ CONTAINS
             & err,error,*999)
           !Now process all the first partial derivatives
           DO xiIdx=1,interpolationParameters%bases(componentIdx)%ptr%numberOfXi
-            partialDerivativeIdx=PARTIAL_DERIVATIVE_FIRST_DERIVATIVE_MAP(xiIdx)
-            interpolatedPoint%values(componentIdx,partialDerivativeIdx)=Basis_InterpolateLocalFaceGauss( &
-              & interpolationParameters%bases(componentIdx)%ptr,partialDerivativeIdx,quadratureScheme, &
+            partialDerivativeIndex=PARTIAL_DERIVATIVE_FIRST_DERIVATIVE_MAP(xiIdx)
+            interpolatedPoint%values(componentIdx,partialDerivativeIndex)=Basis_InterpolateLocalFaceGauss( &
+              & interpolationParameters%bases(componentIdx)%ptr,partialDerivativeIndex,quadratureScheme, &
               & localFaceNumber,gaussPointNumber,interpolationParameters%parameters(:,componentIdx),err,error)
             IF(err/=0) GOTO 999
-            CALL CoordinateSystem_InterpolationAdjust(coordinateSystem,partialDerivativeIdx, &
-              & interpolatedPoint%values(componentIdx,partialDerivativeIdx),err,error,*999)
+            CALL CoordinateSystem_InterpolationAdjust(coordinateSystem,partialDerivativeIndex, &
+              & interpolatedPoint%values(componentIdx,partialDerivativeIndex),err,error,*999)
           ENDDO !xiIdx
         CASE(FIELD_GRID_POINT_BASED_INTERPOLATION)
           CALL FlagError("Not implemented.",err,error,*999)
@@ -4455,31 +4519,31 @@ CONTAINS
           CALL CoordinateSystem_InterpolationAdjust(coordinateSystem,NO_PART_DERIV,interpolatedPoint%values(componentIdx,1), &
             & err,error,*999)
           !Now process the rest of partial derivatives
-          DO partialDerivativeIdx=1,interpolationParameters%bases(componentIdx)%ptr%numberOfPartialDerivatives
-            interpolatedPoint%values(componentIdx,partialDerivativeIdx)=0.0_DP
-            CALL CoordinateSystem_InterpolationAdjust(coordinateSystem,partialDerivativeIdx, &
-              & interpolatedPoint%values(componentIdx,partialDerivativeIdx),err,error,*999)
-          ENDDO !partialDerivativeIdx
+          DO partialDerivativeIndex=1,interpolationParameters%bases(componentIdx)%ptr%numberOfPartialDerivatives
+            interpolatedPoint%values(componentIdx,partialDerivativeIndex)=0.0_DP
+            CALL CoordinateSystem_InterpolationAdjust(coordinateSystem,partialDerivativeIndex, &
+              & interpolatedPoint%values(componentIdx,partialDerivativeIndex),err,error,*999)
+          ENDDO !partialDerivativeIndex
         CASE(FIELD_ELEMENT_BASED_INTERPOLATION)
           !Handle the first case of no partial derivative
           interpolatedPoint%values(componentIdx,1)=interpolationParameters%parameters(1,componentIdx)
           CALL CoordinateSystem_InterpolationAdjust(coordinateSystem,NO_PART_DERIV,interpolatedPoint%values(componentIdx,1), &
             & err,error,*999)
           !Now process the rest of partial derivatives
-          DO partialDerivativeIdx=1,interpolationParameters%bases(componentIdx)%ptr%numberOfPartialDerivatives
-            interpolatedPoint%values(componentIdx,partialDerivativeIdx)=0.0_DP
-            CALL CoordinateSystem_InterpolationAdjust(coordinateSystem,partialDerivativeIdx, &
-              & interpolatedPoint%values(componentIdx,partialDerivativeIdx),err,error,*999)
-          ENDDO !partialDerivativeIdx
+          DO partialDerivativeIndex=1,interpolationParameters%bases(componentIdx)%ptr%numberOfPartialDerivatives
+            interpolatedPoint%values(componentIdx,partialDerivativeIndex)=0.0_DP
+            CALL CoordinateSystem_InterpolationAdjust(coordinateSystem,partialDerivativeIndex, &
+              & interpolatedPoint%values(componentIdx,partialDerivativeIndex),err,error,*999)
+          ENDDO !partialDerivativeIndex
         CASE(FIELD_NODE_BASED_INTERPOLATION)              
-          DO partialDerivativeIdx=1,interpolationParameters%bases(componentIdx)%ptr%numberOfPartialDerivatives
-            interpolatedPoint%values(componentIdx,partialDerivativeIdx)=Basis_InterpolateLocalFaceGauss( &
-              & interpolationParameters%bases(componentIdx)%ptr,partialDerivativeIdx,quadratureScheme, &
+          DO partialDerivativeIndex=1,interpolationParameters%bases(componentIdx)%ptr%numberOfPartialDerivatives
+            interpolatedPoint%values(componentIdx,partialDerivativeIndex)=Basis_InterpolateLocalFaceGauss( &
+              & interpolationParameters%bases(componentIdx)%ptr,partialDerivativeIndex,quadratureScheme, &
               & localFaceNumber,gaussPointNumber,interpolationParameters%parameters(:,componentIdx),err,error)
             IF(err/=0) GOTO 999
-            CALL CoordinateSystem_InterpolationAdjust(coordinateSystem,partialDerivativeIdx, &
-              & interpolatedPoint%values(componentIdx,partialDerivativeIdx),err,error,*999)
-          ENDDO !partialDerivativeIdx
+            CALL CoordinateSystem_InterpolationAdjust(coordinateSystem,partialDerivativeIndex, &
+              & interpolatedPoint%values(componentIdx,partialDerivativeIndex),err,error,*999)
+          ENDDO !partialDerivativeIndex
         CASE(FIELD_GRID_POINT_BASED_INTERPOLATION)
           CALL FlagError("Not implemented.",err,error,*999)
         CASE(FIELD_GAUSS_POINT_BASED_INTERPOLATION)
@@ -4511,7 +4575,7 @@ CONTAINS
   !
 
   !>Interpolates a field at a xi location to give an interpolated point. XI is the element location to be interpolated at. partialDerivativeType controls which partial derivatives are evaluated. If it is NO_PART_DERIV then only the field values are interpolated. If it is FIRST_PART_DERIV then the field values and first partial derivatives are interpolated. If it is SECOND_PART_DERIV the the field values and first and second partial derivatives are evaluated. Old CMISS name PXI
-  SUBROUTINE Field_InterpolateXi(partialDerivativeType,xi,interpolatedPoint,err,error,*,componentType)
+  SUBROUTINE Field_InterpolateXiInterpPt(partialDerivativeType,xi,interpolatedPoint,err,error,*,componentType)
 
     !Argument variables
     INTEGER(INTG), INTENT(IN) :: partialDerivativeType !<The partial derivative type of the provide field interpolation
@@ -4521,14 +4585,14 @@ CONTAINS
     TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
     INTEGER(INTG), OPTIONAL, INTENT(IN) :: componentType !<The components type to interpolate
     !Local Variables
-    INTEGER(INTG) :: componentIdx,xiIdx,partialDerivativeIdx,startComponentIdx,endComponentIdx
+    INTEGER(INTG) :: componentIdx,xiIdx,partialDerivativeIndex,startComponentIdx,endComponentIdx
     TYPE(CoordinateSystemType), POINTER :: coordinateSystem
     TYPE(FieldType), POINTER :: field,geometricField
     TYPE(FieldInterpolationParametersType), POINTER :: interpolationParameters
     TYPE(FieldVariableType), POINTER :: fieldVariable,geometricVariable
     TYPE(VARYING_STRING) :: localError
 
-    ENTERS("Field_InterpolateXi",err,error,*999)
+    ENTERS("Field_InterpolateXiInterpPt",err,error,*999)
 
     IF(.NOT.ASSOCIATED(interpolatedPoint)) CALL FlagError("Interpolated point is not associated.",err,error,*999)
     
@@ -4620,10 +4684,10 @@ CONTAINS
             & err,error,*999)
           !Now process all the first partial derivatives
           DO xiIdx=1,interpolationParameters%bases(componentIdx)%ptr%numberOfXi
-            partialDerivativeIdx=PARTIAL_DERIVATIVE_FIRST_DERIVATIVE_MAP(xiIdx)
-            interpolatedPoint%values(componentIdx,partialDerivativeIdx)=0.0_DP
-            CALL CoordinateSystem_InterpolationAdjust(coordinateSystem,partialDerivativeIdx, &
-              & interpolatedPoint%values(componentIdx,partialDerivativeIdx),err,error,*999)
+            partialDerivativeIndex=PARTIAL_DERIVATIVE_FIRST_DERIVATIVE_MAP(xiIdx)
+            interpolatedPoint%values(componentIdx,partialDerivativeIndex)=0.0_DP
+            CALL CoordinateSystem_InterpolationAdjust(coordinateSystem,partialDerivativeIndex, &
+              & interpolatedPoint%values(componentIdx,partialDerivativeIndex),err,error,*999)
           ENDDO !xiIdx
         CASE(FIELD_ELEMENT_BASED_INTERPOLATION)
           !Handle the first case of no partial derivative
@@ -4632,10 +4696,10 @@ CONTAINS
             & err,error,*999)
           !Now process all the first partial derivatives
           DO xiIdx=1,interpolationParameters%bases(componentIdx)%ptr%numberOfXi
-            partialDerivativeIdx=PARTIAL_DERIVATIVE_FIRST_DERIVATIVE_MAP(xiIdx)
-            interpolatedPoint%values(componentIdx,partialDerivativeIdx)=0.0_DP
-            CALL CoordinateSystem_InterpolationAdjust(coordinateSystem,partialDerivativeIdx, &
-              & interpolatedPoint%values(componentIdx,partialDerivativeIdx),err,error,*999)
+            partialDerivativeIndex=PARTIAL_DERIVATIVE_FIRST_DERIVATIVE_MAP(xiIdx)
+            interpolatedPoint%values(componentIdx,partialDerivativeIndex)=0.0_DP
+            CALL CoordinateSystem_InterpolationAdjust(coordinateSystem,partialDerivativeIndex, &
+              & interpolatedPoint%values(componentIdx,partialDerivativeIndex),err,error,*999)
           ENDDO !xiIdx
         CASE(FIELD_NODE_BASED_INTERPOLATION)
           !Handle the first case of no partial derivative
@@ -4646,13 +4710,13 @@ CONTAINS
             & err,error,*999)
           !Now process all the first partial derivatives
           DO xiIdx=1,interpolationParameters%bases(componentIdx)%ptr%numberOfXi
-            partialDerivativeIdx=PARTIAL_DERIVATIVE_FIRST_DERIVATIVE_MAP(xiIdx)
-            interpolatedPoint%values(componentIdx,partialDerivativeIdx)=Basis_InterpolateXi(interpolationParameters% &
-              & BASES(componentIdx)%ptr,partialDerivativeIdx,xi,interpolationParameters%parameters(:,componentIdx), &
+            partialDerivativeIndex=PARTIAL_DERIVATIVE_FIRST_DERIVATIVE_MAP(xiIdx)
+            interpolatedPoint%values(componentIdx,partialDerivativeIndex)=Basis_InterpolateXi(interpolationParameters% &
+              & BASES(componentIdx)%ptr,partialDerivativeIndex,xi,interpolationParameters%parameters(:,componentIdx), &
               & err,error)
             IF(err/=0) GOTO 999
-            CALL CoordinateSystem_InterpolationAdjust(coordinateSystem,partialDerivativeIdx, &
-              & interpolatedPoint%values(componentIdx,partialDerivativeIdx),err,error,*999)
+            CALL CoordinateSystem_InterpolationAdjust(coordinateSystem,partialDerivativeIndex, &
+              & interpolatedPoint%values(componentIdx,partialDerivativeIndex),err,error,*999)
           ENDDO !xiIdx
         CASE(FIELD_GRID_POINT_BASED_INTERPOLATION)
           CALL FlagError("Not implemented.",err,error,*999)
@@ -4676,31 +4740,31 @@ CONTAINS
           CALL CoordinateSystem_InterpolationAdjust(coordinateSystem,NO_PART_DERIV,interpolatedPoint%values(componentIdx,1), &
             & err,error,*999)
           !Now process the rest of partial derivatives
-          DO partialDerivativeIdx=1,interpolationParameters%bases(componentIdx)%ptr%numberOfPartialDerivatives
-            interpolatedPoint%values(componentIdx,partialDerivativeIdx)=0.0_DP
-            CALL CoordinateSystem_InterpolationAdjust(coordinateSystem,partialDerivativeIdx, &
-              & interpolatedPoint%values(componentIdx,partialDerivativeIdx),err,error,*999)
-          ENDDO !partialDerivativeIdx
+          DO partialDerivativeIndex=1,interpolationParameters%bases(componentIdx)%ptr%numberOfPartialDerivatives
+            interpolatedPoint%values(componentIdx,partialDerivativeIndex)=0.0_DP
+            CALL CoordinateSystem_InterpolationAdjust(coordinateSystem,partialDerivativeIndex, &
+              & interpolatedPoint%values(componentIdx,partialDerivativeIndex),err,error,*999)
+          ENDDO !partialDerivativeIndex
         CASE(FIELD_ELEMENT_BASED_INTERPOLATION)
           !Handle the first case of no partial derivative
           interpolatedPoint%values(componentIdx,1)=interpolationParameters%parameters(1,componentIdx)
           CALL CoordinateSystem_InterpolationAdjust(coordinateSystem,NO_PART_DERIV,interpolatedPoint%values(componentIdx,1), &
             & err,error,*999)
           !Now process the rest of partial derivatives
-          DO partialDerivativeIdx=1,interpolationParameters%bases(componentIdx)%ptr%numberOfPartialDerivatives
-            interpolatedPoint%values(componentIdx,partialDerivativeIdx)=0.0_DP
-            CALL CoordinateSystem_InterpolationAdjust(coordinateSystem,partialDerivativeIdx, &
-              & interpolatedPoint%values(componentIdx,partialDerivativeIdx),err,error,*999)
-          ENDDO !partialDerivativeIdx
+          DO partialDerivativeIndex=1,interpolationParameters%bases(componentIdx)%ptr%numberOfPartialDerivatives
+            interpolatedPoint%values(componentIdx,partialDerivativeIndex)=0.0_DP
+            CALL CoordinateSystem_InterpolationAdjust(coordinateSystem,partialDerivativeIndex, &
+              & interpolatedPoint%values(componentIdx,partialDerivativeIndex),err,error,*999)
+          ENDDO !partialDerivativeIndex
         CASE(FIELD_NODE_BASED_INTERPOLATION)              
-          DO partialDerivativeIdx=1,interpolationParameters%bases(componentIdx)%ptr%numberOfPartialDerivatives
-            interpolatedPoint%values(componentIdx,partialDerivativeIdx)=Basis_InterpolateXi(interpolationParameters% &
-              & BASES(componentIdx)%ptr,partialDerivativeIdx,xi,interpolationParameters%parameters(:,componentIdx), &
+          DO partialDerivativeIndex=1,interpolationParameters%bases(componentIdx)%ptr%numberOfPartialDerivatives
+            interpolatedPoint%values(componentIdx,partialDerivativeIndex)=Basis_InterpolateXi(interpolationParameters% &
+              & BASES(componentIdx)%ptr,partialDerivativeIndex,xi,interpolationParameters%parameters(:,componentIdx), &
               & err,error)
             IF(err/=0) GOTO 999
-            CALL CoordinateSystem_InterpolationAdjust(coordinateSystem,partialDerivativeIdx, &
-              & interpolatedPoint%values(componentIdx,partialDerivativeIdx),err,error,*999)
-          ENDDO! partialDerivativeIdx
+            CALL CoordinateSystem_InterpolationAdjust(coordinateSystem,partialDerivativeIndex, &
+              & interpolatedPoint%values(componentIdx,partialDerivativeIndex),err,error,*999)
+          ENDDO! partialDerivativeIndex
         CASE(FIELD_GRID_POINT_BASED_INTERPOLATION)
           CALL FlagError("Not implemented.",err,error,*999)
         CASE(FIELD_GAUSS_POINT_BASED_INTERPOLATION)
@@ -4720,12 +4784,216 @@ CONTAINS
       CALL FlagError(localError,err,error,*999)
     END SELECT
 
-    EXITS("Field_InterpolateXi")
+    EXITS("Field_InterpolateXiInterpPt")
     RETURN
-999 ERRORSEXITS("Field_InterpolateXi",err,error)
+999 ERRORSEXITS("Field_InterpolateXiInterpPt",err,error)
     RETURN 1
 
-  END SUBROUTINE Field_InterpolateXi
+  END SUBROUTINE Field_InterpolateXiInterpPt
+
+  !
+  !================================================================================================================================
+  !
+
+  !>Interpolates a field at a xi location to give a physical point. Xi is the element location to be interpolated at. physicalDerivativeType controls which physical derivatives are evaluated. If it is NO_PHYSICAL_DERIV then only the field values are interpolated. If it is GRADIENT_PHYSICAL_DERIV then the field values and first partial derivatives are interpolated to give a gradient. If it is HESSIAN_PHYSICAL_DERIV the the field values and first and second partial derivatives are evaluated.
+  SUBROUTINE Field_InterpolateXiPhysicalPt(physicalDerivativeType,xi,physicalPoint,err,error,*,componentType)
+
+    !Argument variables
+    INTEGER(INTG), INTENT(IN) :: physicalDerivativeType !<The physical derivative type of the provide field interpolation \see Constants_PhysicalDerivativeConstants,Constants
+    REAL(DP), INTENT(IN) :: xi(:) !<xi(xiIdx). The xiIdx'th Xi coordinate to evaluate the field at
+    TYPE(FieldPhysicalPointType), POINTER :: physicalPoint !<The pointer to the physical point which will contain the field interpolation information at the specified Xi point
+    INTEGER(INTG), INTENT(OUT) :: err !<The error code
+    TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
+    INTEGER(INTG), OPTIONAL, INTENT(IN) :: componentType !<The components type to interpolate
+    !Local Variables
+    INTEGER(INTG) :: componentIdx,dimensionIdx,endComponentIdx,numberOfDimensions,partialDerivativeIndex, &
+      & physicalDerivativeIndex,startComponentIdx,xiIdx
+    REAL(DP) :: dXdXi(3,3),dXidX(3,3),detdXdXi
+    TYPE(BasisType), POINTER :: basis
+    TYPE(CoordinateSystemType), POINTER :: coordinateSystem
+    TYPE(DomainType), POINTER :: domain
+    TYPE(DomainElementsType), POINTER :: domainElements
+    TYPE(DomainNodesType), POINTER :: domainNodes
+    TYPE(DomainTopologyType), POINTER :: domainTopology
+    TYPE(FieldType), POINTER :: field,geometricField
+    TYPE(FieldInterpolatedPointType), POINTER :: fieldInterpPoint,geometricInterpPoint
+    TYPE(FieldInterpolationParametersType), POINTER :: fieldInterpParameters,geometricInterpParameters
+    TYPE(FieldVariableType), POINTER :: fieldVariable,geometricVariable
+    TYPE(VARYING_STRING) :: localError
+
+    ENTERS("Field_InterpolateXiPhysicalPt",err,error,*999)
+
+    IF(.NOT.ASSOCIATED(physicalPoint)) CALL FlagError("Physical point is not associated.",err,error,*999)
+
+    NULLIFY(fieldInterpPoint)
+    CALL FieldPhysicalPoint_FieldInterpolatedPointGet(physicalPoint,fieldInterpPoint,err,error,*999)
+    NULLIFY(geometricInterpPoint)
+    CALL FieldPhysicalPoint_GeometricInterpolatedPointGet(physicalPoint,geometricInterpPoint,err,error,*999)
+    NULLIFY(fieldInterpParameters)
+    CALL FieldInterpolatedPoint_InterpolationParametersGet(fieldInterpPoint,fieldInterpParameters,err,error,*999)
+    NULLIFY(geometricInterpParameters)
+    CALL FieldInterpolatedPoint_InterpolationParametersGet(geometricInterpPoint,geometricInterpParameters,err,error,*999)
+    NULLIFY(fieldVariable)
+    CALL FieldInterpolationParameters_FieldVariableGet(fieldInterpParameters,fieldVariable,err,error,*999)
+    NULLIFY(field)
+    CALL FieldVariable_FieldGet(fieldVariable,field,err,error,*999)
+    NULLIFY(geometricField)
+    CALL Field_GeometricFieldGet(field,geometricField,err,error,*999)
+    NULLIFY(geometricVariable)
+    CALL Field_VariableGet(geometricField,FIELD_U_VARIABLE_TYPE,geometricVariable,err,error,*999)
+    CALL FieldVariable_NumberOfComponentsGet(geometricVariable,numberOfDimensions,err,error,*999)
+    NULLIFY(coordinateSystem)
+    CALL Field_CoordinateSystemGet(field,coordinateSystem,err,error,*999)
+    IF(PRESENT(componentType)) THEN
+      SELECT CASE(componentType)
+      CASE(FIELD_ALL_COMPONENTS_TYPE)
+        startComponentIdx=1
+        endComponentIdx=fieldVariable%numberOfComponents
+      CASE(FIELD_GEOMETRIC_COMPONENTS_TYPE)
+        IF(field%TYPE==FIELD_GEOMETRIC_GENERAL_TYPE) THEN
+          startComponentIdx=1
+          endComponentIdx=geometricVariable%numberOfComponents
+        ELSE IF(field%type==FIELD_GEOMETRIC_TYPE) THEN
+          startComponentIdx=1
+          endComponentIdx=fieldVariable%numberOfComponents
+        ELSE
+          localError="Field type "//TRIM(NumberToVString(field%TYPE,"*",err,error))// &
+            & " is not valid for only interpolating geometric field, use FIELD_GEOMETRIC_GENERAL_TYPE."
+          CALL FlagError(localError,err,error,*999)
+        ENDIF
+      CASE(FIELD_NONGEOMETRIC_COMPONENTS_TYPE)
+        IF(field%TYPE==FIELD_GEOMETRIC_GENERAL_TYPE) THEN
+          startComponentIdx=geometricVariable%numberOfComponents+1
+          endComponentIdx=fieldVariable%numberOfComponents
+        ELSE
+          localError="Field type "//TRIM(NumberToVString(field%TYPE,"*",err,error))// &
+            & " is not valid for only interpolating geometric field, use FIELD_GEOMETRIC_GENERAL_TYPE."
+          CALL FlagError(localError,err,error,*999)
+        ENDIF
+      CASE DEFAULT
+        localError="Interpolation component type "//TRIM(NumberToVString(componentType,"*",err,error))//" is not valid."
+        CALL FlagError(localError,err,error,*999)
+      END SELECT
+    ELSE
+      startComponentIdx=1
+      endComponentIdx=fieldVariable%numberOfComponents
+    ENDIF
+
+    CALL IdentityMatrix(dXidX(1:numberOfdimensions,1:numberOfDimensions),err,error,*999)
+    
+    SELECT CASE(physicalDerivativeType)
+    CASE(NO_PHYSICAL_DERIVATIVE)
+      DO componentIdx=startComponentIdx,endComponentIdx
+        SELECT CASE(fieldVariable%components(componentIdx)%interpolationType)
+        CASE(FIELD_CONSTANT_INTERPOLATION)
+          physicalPoint%values(componentIdx,NO_PHYSICAL_DERIV)=fieldInterpParameters%parameters(NO_PART_DERIV,componentIdx)
+         CASE(FIELD_ELEMENT_BASED_INTERPOLATION)
+          physicalPoint%values(componentIdx,NO_PHYSICAL_DERIV)=fieldInterpParameters%parameters(NO_PART_DERIV,componentIdx) 
+        CASE(FIELD_NODE_BASED_INTERPOLATION)
+          physicalPoint%values(componentIdx,NO_PHYSICAL_DERIV)=Basis_InterpolateXi(fieldInterpParameters% &
+            & bases(componentIdx)%ptr,NO_PART_DERIV,xi,fieldInterpParameters%parameters(:,componentIdx),err,error)
+          IF(err/=0) GOTO 999
+        CASE(FIELD_GRID_POINT_BASED_INTERPOLATION)
+          CALL FlagError("Not implemented.",err,error,*999)
+        CASE(FIELD_GAUSS_POINT_BASED_INTERPOLATION)
+          CALL FlagError("Not implemented.",err,error,*999)
+        CASE(FIELD_DATA_POINT_BASED_INTERPOLATION)
+          CALL FlagError("Not implemented.",err,error,*999)
+        CASE DEFAULT
+          localError="The field component interpolation type of "//TRIM(NumberToVString(fieldVariable% &
+            & components(componentIdx)%interpolationType,"*",err,error))// &
+            & " is invalid for component index "//TRIM(NumberToVString(componentIdx,"*",err,error))//"."
+        END SELECT
+        CALL CoordinateSystem_InterpolationAdjust(coordinateSystem,NO_PART_DERIV,physicalPoint%values(componentIdx,1), &
+          & err,error,*999)
+      ENDDO !componentIdx
+      physicalPoint%physicalDerivativeType=NO_PHYSICAL_DERIVATIVE
+    CASE(GRADIENT_PHYSICAL_DERIVATIVE)
+      DO componentIdx=startComponentIdx,endComponentIdx
+        SELECT CASE(fieldVariable%components(componentIdx)%interpolationType)
+        CASE(FIELD_CONSTANT_INTERPOLATION)
+          !Handle the first case of no partial derivative
+          physicalPoint%values(componentIdx,NO_PHYSICAL_DERIV)=fieldInterpParameters%parameters(NO_PART_DERIV,componentIdx)
+          !There is no gradient for constant based interpolation
+          DO xiIdx=1,fieldInterpParameters%bases(componentIdx)%ptr%numberOfXi
+            partialDerivativeIndex=PARTIAL_DERIVATIVE_FIRST_DERIVATIVE_MAP(xiIdx)
+            !Interpolate the field
+            fieldInterpPoint%values(componentIdx,partialDerivativeIndex)=0.0_DP
+          ENDDO !xiIdx
+        CASE(FIELD_ELEMENT_BASED_INTERPOLATION)
+          !Handle the first case of no partial derivative
+          physicalPoint%values(componentIdx,NO_PHYSICAL_DERIV)=fieldInterpParameters%parameters(NO_PART_DERIV,componentIdx)
+          !There is no gradient for element based interpolation
+          DO xiIdx=1,fieldInterpParameters%bases(componentIdx)%ptr%numberOfXi
+            partialDerivativeIndex=PARTIAL_DERIVATIVE_FIRST_DERIVATIVE_MAP(xiIdx)
+            !Interpolate the field
+            fieldInterpPoint%values(componentIdx,partialDerivativeIndex)=0.0_DP
+          ENDDO !xiIdx
+        CASE(FIELD_NODE_BASED_INTERPOLATION)
+          !Handle the non-derivative case
+          physicalPoint%values(componentIdx,NO_PHYSICAL_DERIV)=Basis_InterpolateXi(fieldInterpParameters% &
+            & bases(componentIdx)%ptr,NO_PART_DERIV,xi,fieldInterpParameters%parameters(:,componentIdx),err,error)
+          IF(err/=0) GOTO 999
+          !Now process all the first partial derivatives
+           physicalPoint%values(componentIdx,NO_PHYSICAL_DERIV)=Basis_InterpolateXi(geometricInterpParameters% &
+            & bases(componentIdx)%ptr,NO_PART_DERIV,xi,geometricInterpParameters%parameters(:,componentIdx),err,error)
+          IF(err/=0) GOTO 999
+          CALL CoordinateSystem_InterpolationAdjust(coordinateSystem,NO_PART_DERIV,physicalPoint% &
+            & values(componentIdx,NO_PHYSICAL_DERIV),err,error,*999)
+          !Now process all the first partial derivatives
+          DO xiIdx=1,fieldInterpParameters%bases(componentIdx)%ptr%numberOfXi
+            partialDerivativeIndex=PARTIAL_DERIVATIVE_FIRST_DERIVATIVE_MAP(xiIdx)
+            !Interpolate the field
+            fieldInterpPoint%values(componentIdx,partialDerivativeIndex)=Basis_InterpolateXi( &
+              & fieldInterpParameters%bases(componentIdx)%ptr,partialDerivativeIndex,xi, &
+              & fieldInterpParameters%parameters(:,componentIdx),err,error)
+            IF(err/=0) GOTO 999
+            geometricInterpPoint%values(componentIdx,partialDerivativeIndex)=Basis_InterpolateXi( &
+              & geometricInterpParameters%bases(componentIdx)%ptr,partialDerivativeIndex,xi, &
+              & geometricInterpParameters%parameters(:,componentIdx),err,error)
+            IF(err/=0) GOTO 999
+            dXdXi(componentIdx,xiIdx)=geometricInterpPoint%values(componentIdx,partialDerivativeIndex)
+          ENDDO !xiIdx
+        CASE(FIELD_GRID_POINT_BASED_INTERPOLATION)
+          CALL FlagError("Not implemented.",err,error,*999)
+        CASE(FIELD_GAUSS_POINT_BASED_INTERPOLATION)
+          CALL FlagError("Not implemented.",err,error,*999)
+        CASE(FIELD_DATA_POINT_BASED_INTERPOLATION)
+          CALL FlagError("Not implemented.",err,error,*999)
+        CASE DEFAULT
+          localError="The field component interpolation type of "//TRIM(NumberToVString(fieldVariable% &
+            & COMPONENTS(componentIdx)%interpolationType,"*",err,error))// &
+            & " is invalid for component index "//TRIM(NumberToVString(componentIdx,"*",err,error))//"."
+        END SELECT
+      ENDDO !componentIdx
+      !Form the physical derivative
+      CALL Invert(dXdXi,dXidX,detdXdXi,err,error,*999)
+      DO componentIdx=1,fieldVariable%numberOfComponents
+        DO dimensionIdx=1,numberOfDimensions
+          physicalDerivativeIndex=PHYSICAL_DERIVATIVE_GRADIENT_MAP(dimensionIdx)
+          DO xiIdx=1,fieldInterpParameters%bases(componentIdx)%ptr%numberOfXi
+            partialDerivativeIndex=PARTIAL_DERIVATIVE_FIRST_DERIVATIVE_MAP(xiIdx)
+            physicalPoint%values(componentIdx,physicalDerivativeIndex)= &
+              & physicalPoint%values(componentIdx,physicalDerivativeIndex)+ &
+              & fieldInterpPoint%values(componentIdx,partialDerivativeIndex)*dXidX(xiIdx,dimensionIdx)
+          ENDDO !xiIdx
+        ENDDO !dimensionIdx
+      ENDDO !componentIdx
+      physicalPoint%physicalDerivativeType=GRADIENT_PHYSICAL_DERIVATIVE
+    CASE(HESSIAN_PHYSICAL_DERIVATIVE)
+      CALL FlagError("Not implemented.",err,error,*999)
+    CASE DEFAULT
+      localError="The physical derivative type of "//TRIM(NumberToVString(physicalDerivativeType,"*",err,error))// &
+        & " is invalid."
+      CALL FlagError(localError,err,error,*999)
+    END SELECT
+    
+    EXITS("Field_InterpolateXiPhysicalPt")
+    RETURN
+999 ERRORSEXITS("Field_InterpolateXiPhysicalPt",err,error)
+    RETURN 1
+
+  END SUBROUTINE Field_InterpolateXiPhysicalPt
 
   !
   !================================================================================================================================
@@ -4797,7 +5065,7 @@ CONTAINS
       CASE(FIELD_ALL_COMPONENTS_TYPE)
         numberOfComponents=fieldVariable%numberOfComponents
       CASE(FIELD_GEOMETRIC_COMPONENTS_TYPE)
-        IF(field%TYPE==FIELD_GEOMETRIC_GENERAL_TYPE) THEN
+        IF(field%type==FIELD_GEOMETRIC_GENERAL_TYPE) THEN
           NULLIFY(geometricField)
           CALL Field_GeometricFieldGet(field,geometricField,err,error,*999)
           NULLIFY(geometricVariable)
@@ -4831,7 +5099,7 @@ CONTAINS
     ENDIF
     ALLOCATE(interpolatedPoint%values(numberOfComponents,interpolatedPoint%maximumPartialDerivativeIndex),STAT=err)
     IF(err/=0) CALL FlagError("Could not allocate interpolated point values.",err,error,*999)
-    interpolatedPoint%VALUES=0.0_DP
+    interpolatedPoint%values=0.0_DP
 
     EXITS("Field_InterpolatedPointInitialise")
     RETURN
@@ -8447,6 +8715,8 @@ CONTAINS
               createValuesCache%variableLabels(variableTypeIdx)="U"
             CASE(FIELD_DELUDELN_VARIABLE_TYPE)
               createValuesCache%variableLabels(variableTypeIdx)="del U/del n"
+             CASE(FIELD_T_VARIABLE_TYPE)
+              createValuesCache%variableLabels(variableTypeIdx)="T"
             CASE(FIELD_DELUDELT_VARIABLE_TYPE)
               createValuesCache%variableLabels(variableTypeIdx)="del U/del t"
             CASE(FIELD_DEL2UDELT2_VARIABLE_TYPE)
@@ -13313,7 +13583,7 @@ CONTAINS
     INTEGER(INTG), INTENT(OUT) :: err !<The error code
     TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
     !Local Variables
-    INTEGER(INTG) :: dummyErr
+    INTEGER(INTG) :: dummyErr,numberOfDimensions
     TYPE(FieldType), POINTER :: field,geometricField
     TYPE(FieldInterpolationParametersType), POINTER :: fieldInterpParameters,geometricInterpParameters
     TYPE(FieldVariableType), POINTER :: fieldVariable,geometricVariable
@@ -13339,13 +13609,15 @@ CONTAINS
     CALL FieldVariable_FieldGet(geometricVariable,geometricField,err,error,*999)
     IF(.NOT.ASSOCIATED(field%geometricField,geometricField)) &
       & CALL FlagError("The field geometric field and the specified geometric field are not associated.",err,error,*999)
+    CALL FieldVariable_NumberOfComponentsGet(geometricVariable,numberOfDimensions,err,error,*999)
 
     ALLOCATE(physicalPoint,STAT=err)
     IF(err/=0) CALL FlagError("Could not allocate physical point.",err,error,*999)
     physicalPoint%fieldInterpolatedPoint=>fieldInterpPoint
     physicalPoint%geometricInterpolatedPoint=>geometricInterpPoint
     physicalPoint%physicalDerivativeType=0
-    ALLOCATE(physicalPoint%values(fieldVariable%numberOfComponents),STAT=err)
+    physicalPoint%maximumPhysicalDerivativeIndex=PHYSICAL_DERIVATIVE_MAXIMUM_MAP(numberOfDimensions)
+    ALLOCATE(physicalPoint%values(fieldVariable%numberOfComponents,physicalPoint%maximumPhysicalDerivativeIndex),STAT=err)
     IF(err/=0) CALL FlagError("Could not allocate physical point values.",err,error,*999)
     physicalPoint%values=0.0_DP
 
@@ -13428,6 +13700,42 @@ CONTAINS
   END SUBROUTINE Field_PhysicalPointsInitialise
 
   !
+  !================================================================================================================================
+  !
+
+  !>Computes the geometric position, normal and tangent vectors at a node in a field. If the node is internal to the mesh the normal and tangents are zero.
+  SUBROUTINE Field_PositionNormalTangentsCalculateNode(field,variableType,componentNumber,localNodeNumber, &
+    & position,normal,tangents,err,error,*)
+
+    !Argument variables
+    TYPE(FieldType), POINTER, INTENT(IN) :: field !<A pointer to the field to interpolate the geometric information for
+    INTEGER(INTG), INTENT(IN) :: variableType !<The variable type of the field to compute the geometric information for
+    INTEGER(INTG), INTENT(IN) :: componentNumber !<The component number of the node to compute the geometric information for
+    INTEGER(INTG), INTENT(IN) :: localNodeNumber !<The local node number to compute the geometric information for
+
+    REAL(DP), INTENT(OUT) :: position(:) !<position(coordinateIdx), on exit the geometric position of the node
+    REAL(DP), INTENT(OUT) :: normal(:) !<normal(coordinateIdx), on exit the normal vector. If the node is internal the normal vector is zero.
+    REAL(DP), INTENT(OUT) :: tangents(:,:) !<tangents(coordinateIdx,tangentIdx), on exit the tangent vectors for the tangentIdx'th tangent at the node. There are up to numberOfXi tangent vectors.
+    INTEGER(INTG), INTENT(OUT) :: err !<The error code
+    TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
+    !Local Variables
+    TYPE(FieldVariableType), POINTER :: fieldVariable
+
+    ENTERS("Field_PositionNormalTangentsCalculateNode",err,error,*999)
+
+    NULLIFY(fieldVariable)
+    CALL Field_VariableGet(field,variableType,fieldVariable,err,error,*999)
+    CALL FieldVariable_PositionNormalTangentsCalculateNode(fieldVariable,componentNumber,localNodeNumber, &
+      & position,normal,tangents,err,error,*999)
+    
+    EXITS("Field_PositionNormalTangentsCalculateNode")
+    RETURN
+999 ERRORSEXITS("Field_PositionNormalTangentsCalculateNode",err,error)
+    RETURN 1
+    
+  END SUBROUTINE Field_PositionNormalTangentsCalculateNode
+
+    !
   !================================================================================================================================
   !
 
@@ -13537,501 +13845,6 @@ CONTAINS
     RETURN 1
 
   END SUBROUTINE Field_PositionNormalTangentsCalculateIntPtMetric
-
-  !
-  !================================================================================================================================
-  !
-
-  !>Computes the geometric position, normal and tangent vectors at a node in a field. If the node is internal to the mesh the normal and tangents are zero.
-  SUBROUTINE Field_PositionNormalTangentsCalculateNode(field,variableType,componentNumber,localNodeNumber, &
-    & position,normal,tangents,err,error,*)
-
-    !Argument variables
-    TYPE(FieldType), POINTER, INTENT(IN) :: field !<A pointer to the field to interpolate the geometric information for
-    INTEGER(INTG), INTENT(IN) :: variableType !<The variable type of the node to compute the geometric information for
-    INTEGER(INTG), INTENT(IN) :: componentNumber !<The component number of the node to compute the geometric information for
-    INTEGER(INTG), INTENT(IN) :: localNodeNumber !<The local node number to compute the geometric information for
-    REAL(DP), INTENT(OUT) :: position(:) !<position(coordinateIdx), on exit the geometric position of the node
-    REAL(DP), INTENT(OUT) :: normal(:) !<normal(coordinateIdx), on exit the normal vector. If the node is internal the normal vector is zero.
-    REAL(DP), INTENT(OUT) :: tangents(:,:) !<tangents(coordinateIdx,tangentIdx), on exit the tangent vectors for the tangentIdx'th tangent at the node. There are up to numberOfXi tangent vectors.
-    INTEGER(INTG), INTENT(OUT) :: err !<The error code
-    TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
-    !Local Variables
-    INTEGER(INTG) :: basisFamilyType,componentIdx,derivativeIdx,element,elementIdx,faceIdx,faceNode,index,indexMatch, &
-      & interpolationType,lineIdx,lineNode,localElementNumber,localNode,localNodeIdx,nodeFaceNumber,nodeLineNumber, &
-      & nodePositionIdx,numberOfAdjacentElements,numberOfDimensions,numberOfDomainDimensions,numberOfElements,numberOfNodeFaces, &
-      & numberOfNodeLines,numberOfNodesXiC(4),numberOfNormals,numberOfSurroundingElements,numberOfTangents,numberOfXi, &
-      & numberOfXiCoordinates,tangentIdx,tangentXiIdx,xiCoordIdx,xiIdx
-    REAL(DP) :: dXdXi(3,3),vector1(3),vector2(3),xi(3)
-    LOGICAL :: boundaryFace,boundaryLine,boundaryNode
-    TYPE(BasisType), POINTER :: basis
-    TYPE(DomainType), POINTER :: domain
-    TYPE(DomainElementType), POINTER :: domainElement
-    TYPE(DomainElementsType), POINTER :: domainElements
-    TYPE(DomainFacesType), POINTER :: domainFaces
-    TYPE(DomainLineType), POINTER :: domainLine
-    TYPE(DomainLinesType), POINTER :: domainLines
-    TYPE(DomainFaceType), POINTER :: domainFace
-    TYPE(DomainNodeType), POINTER :: domainNode
-    TYPE(DomainNodesType), POINTER :: domainNodes
-    TYPE(DomainTopologyType), POINTER :: domainTopology
-    TYPE(DecompositionType), POINTER :: decomposition
-    TYPE(DecompositionTopologyType), POINTER :: decompositionTopology
-    TYPE(DecompositionElementType), POINTER :: decompositionElement
-    TYPE(DecompositionElementsType), POINTER :: decompositionElements
-    TYPE(FieldType), POINTER :: geometricField
-    TYPE(FieldVariableType), POINTER :: fieldVariable,geometricVariable
-    TYPE(FieldInterpolationParametersType), POINTER :: interpolationParameters
-    TYPE(FieldInterpolatedPointType), POINTER :: interpolatedPoint
-    TYPE(VARYING_STRING) :: localError
-
-    ENTERS("Field_PositionNormalTangentsCalculateNode",err,error,*999)
-
-    CALL Field_AssertIsFinished(field,err,error,*999)
-    
-    NULLIFY(geometricField)
-    CALL Field_GeometricFieldGet(field,geometricField,err,error,*999)
-    NULLIFY(fieldVariable)
-    CALL Field_VariableGet(field,variableType,fieldVariable,err,error,*999)
-    NULLIFY(geometricVariable)
-    CALL Field_VariableGet(geometricField,FIELD_U_VARIABLE_TYPE,geometricVariable,err,error,*999)
-    CALL FieldVariable_NumberOfComponentsGet(geometricVariable,numberOfDimensions,err,error,*999)
-    IF(SIZE(position,1)<numberOfDimensions) THEN
-      localError="The size of the supplied position array of "//TRIM(NumberToVString(SIZE(position,1), &
-        & "*",err,error))//" is too small. The size of the supplied array must be >= "// &
-        & TRIM(NumberToVString(numberOfDimensions,"*",err,error))//"."
-      CALL FlagError(localError,err,error,*999)
-    ENDIF
-    IF(SIZE(normal,1)<numberOfDimensions) THEN
-      localError="The size of the supplied normal array of "//TRIM(NumberToVString(SIZE(normal,1), &
-        & "*",err,error))//" is too small. The size of the supplied array must be >= "// &
-        & TRIM(NumberToVString(numberOfDimensions,"*",err,error))//"."
-      CALL FlagError(localError,err,error,*999)
-    ENDIF
-    IF(SIZE(tangents,1)<numberOfDimensions) THEN
-      localError="The first dimension of the supplied tangent array of "// &
-        & TRIM(NumberToVString(SIZE(tangents,1),"*",err,error))// &
-        & " is too small. The first dimension of the supplied array must be >= "// &
-        & TRIM(NumberToVString(numberOfDimensions,"*",err,error))//"."
-      CALL FlagError(localError,err,error,*999)
-    ENDIF       
-    NULLIFY(domain)
-    CALL FieldVariable_ComponentDomainGet(fieldVariable,componentNumber,domain,err,error,*999)
-    CALL Domain_NumberOfDimensionsGet(domain,numberOfDomainDimensions,err,error,*999)
-    NULLIFY(domainTopology)
-    CALL Domain_DomainTopologyGet(domain,domainTopology,err,error,*999)
-    NULLIFY(decomposition)
-    CALL Field_DecompositionGet(field,decomposition,err,error,*999)
-    NULLIFY(decompositionTopology)
-    CALL Decomposition_DecompositionTopologyGet(decomposition,decompositionTopology,err,error,*999)
-    NULLIFY(decompositionElements)
-    CALL DecompositionTopology_DecompositionElementsGet(decompositionTopology,decompositionElements,err,error,*999)
-    CALL FieldVariable_ComponentInterpolationGet(fieldVariable,componentNumber,interpolationType,err,error,*999)
-    SELECT CASE(interpolationType)
-    CASE(FIELD_CONSTANT_INTERPOLATION)
-      localError="Cannot compute the normal at a node for component number "// &
-        & TRIM(NumberToVString(componentNumber,"*",err,error))//" for variable type "// &
-        & TRIM(NumberToVString(variableType,"*",err,error))//" of field number "// &
-        & TRIM(NumberToVString(field%userNumber,"*",err,error))// &
-        & " which has constant interpolation."
-      CALL FlagError(localError,err,error,*999)
-    CASE(FIELD_ELEMENT_BASED_INTERPOLATION)
-      localError="Cannot compute the normal at a node for component number "// &
-        & TRIM(NumberToVString(componentNumber,"*",err,error))//" for variable type "// &
-        & TRIM(NumberToVString(variableType,"*",err,error))//" of field number "// &
-        & TRIM(NumberToVString(field%userNumber,"*",err,error))//" which has element based&
-        & interpolation."
-      CALL FlagError(localError,err,error,*999)
-    CASE(FIELD_NODE_BASED_INTERPOLATION)
-      NULLIFY(domainElements)
-      CALL DomainTopology_DomainElementsGet(domainTopology,domainElements,err,error,*999)      
-      NULLIFY(domainNodes)
-      CALL DomainTopology_DomainNodesGet(domainTopology,domainNodes,err,error,*999)
-      IF(localNodeNumber<1.OR.localNodeNumber>domainNodes%numberOfNodes) THEN
-        localError="The local node number of "//TRIM(NumberToVString(localNodeNumber,"*",err,error))// &
-          & " is invalid for component number "//TRIM(NumberToVString(componentNumber,"*",err,error))//" of variable type "// &
-          & TRIM(NumberToVString(variableType,"*",err,error))//" of field number "// &
-          & TRIM(NumberToVString(field%userNumber,"*",err,error))//". The local node number must be > 0 and <="// &
-          & TRIM(NumberToVString(domainNodes%numberOfNodes,"*",err,error))//"."
-        CALL FlagError(localError,err,error,*999)
-      ENDIF
-      NULLIFY(domainNode)
-      CALL DomainNodes_NodeGet(domainNodes,localNodeNumber,domainNode,err,error,*999)
-      !Normal & tangent will be calculated as averages in all surrounding elements. This is
-      !because there could be discontinuity in the surface gradients across elements.
-      position(1:numberOfDimensions)=0.0_DP
-      dXdXi=0.0_DP
-      normal(1:numberOfDimensions)=0.0_DP
-      tangents(1:numberOfDimensions,:)=0.0_DP
-      NULLIFY(interpolationParameters)
-      CALL FieldVariable_InterpolationParameterInitialise(geometricVariable,interpolationParameters,err,error,*999)
-      NULLIFY(interpolatedPoint)
-      CALL Field_InterpolatedPointInitialise(interpolationParameters,interpolatedPoint,err,error,*999)
-      CALL DomainNode_BoundaryNodeGet(domainNode,boundaryNode,err,error,*999)
-      IF(boundaryNode) THEN
-        numberOftangents=0
-        numberOfNormals=0
-        SELECT CASE(numberOfDomainDimensions)
-        CASE(1)
-          !1D domain, no tangents, just a position
-          CALL DomainNode_NumberOfSurroundingElementsGet(domainNode,numberOfSurroundingElements,err,error,*999)
-          DO elementIdx=1,numberOfSurroundingElements
-            CALL DomainNode_SurroundingElementGet(domainNode,elementIdx,localElementNumber,err,error,*999)
-            NULLIFY(domainElement)
-            CALL DomainElements_ElementGet(domainElements,localElementNumber,domainElement,err,error,*999)
-            NULLIFY(decompositionElement)
-            CALL DecompositionElements_ElementGet(decompositionElements,localElementNumber,decompositionElement,err,error,*999)
-            NULLIFY(basis)
-            CALL DomainElement_BasisGet(domainElement,basis,err,error,*999)
-            CALL Basis_NumberOfXiGet(basis,numberOfXi,err,error,*999)
-            CALL Basis_NumberOfXiCoordinatesGet(basis,numberOfXiCoordinates,err,error,*999)
-            !Find local node number in the basis
-            CALL DomainElement_NodeLocalNodeGet(domainElement,localNodeNumber,localNode,err,error,*999)
-            !Find the xi position of the node in the element. In most cases this will be 0,1.0 etc
-            !but in some cases the geometric field may not contain this node in which case xi can be
-            !arbitrary
-            CALL Basis_LocalNodeXiCalculate(basis,localNode,xi,err,error,*999)
-            !Interpolate the geometric field at the xi position.
-            CALL Field_InterpolationParametersElementGet(FIELD_VALUES_SET_TYPE,localElementNumber,interpolationParameters, &
-              & err,error,*999)
-            CALL Field_InterpolateXi(FIRST_PART_DERIV,xi(1:numberOfXi),interpolatedPoint,err,error,*999)
-            !Grab the position. This shouldn't vary between elements so do it once only
-            IF(elementIdx==1) position(1:numberOfDimensions)=interpolatedPoint%values(1:numberOfDimensions,NO_PART_DERIV)
-          ENDDO !ElementIdx
-        CASE(2)
-          !2D domain, one tangent and one normal
-          NULLIFY(domainLines)
-          CALL DomainTopology_DomainLinesGet(domainTopology,domainLines,err,error,*999)
-          !Loop over the lines around this node.
-          CALL DomainNode_NumberOfNodeLinesGet(domainNode,numberOfNodeLines,err,error,*999)
-          DO lineIdx=1,numberOfNodeLines
-            CALL DomainNode_NodeLineGet(domainNode,lineIdx,nodeLineNumber,err,error,*999)
-            NULLIFY(domainLine)
-            CALL DomainLines_LineGet(domainLines,nodeLineNumber,domainLine,err,error,*999)
-            !See if it is a boundary line
-            CALL DomainLine_BoundaryLineGet(domainLine,boundaryLine,err,error,*999)
-            IF(boundaryLine) THEN
-              !The line through the node is on the boundary so compute tangent and normal. The tangent is in the direction of dXdXi
-              !and the normal is, by definition, a clockwise 90 degree rotation of the tangent.
-              NULLIFY(basis)
-              CALL DomainLine_BasisGet(domainLine,basis,err,error,*999)
-              !Find the local node position in the line
-              CALL DomainLine_NodeLocalNodeGet(domainLine,localNodeNumber,lineNode,err,error,*999)
-              IF(lineNode==0) THEN
-                localError="Could not find the node number "//TRIM(NumberToVString(localNodeNumber,"*",err,error))// &
-                  & " in line number "//TRIM(NumberToVString(nodeLineNumber,"*",err,error))// &
-                  & " in the field with component number "//TRIM(NumberToVString(componentNumber,"*",err,error))// &
-                  & " of variable type "//TRIM(NumberToVString(variableType,"*",err,error))//" of field number "// &
-                  & TRIM(NumberToVString(field%userNumber,"*",err,error))//"."
-                CALL FlagError(localError,err,error,*999)
-              ENDIF
-              !Find the xi position of the node in the element. In most cases this will be 0,1.0 etc
-              ! but in some cases the geometric field may not contain this node in which case xi can be
-              ! arbitrary
-              CALL Basis_LocalNodeXiCalculate(basis,lineNode,xi,err,error,*999)
-              !Interpolate the geometric field at the xi position.
-              CALL Field_InterpolationParametersLineGet(FIELD_VALUES_SET_TYPE,nodeLineNumber,interpolationParameters, &
-                & err,error,*999)
-              CALL Field_InterpolateXi(FIRST_PART_DERIV,xi(1:1),interpolatedPoint,err,error,*999)
-              !Grab the position. This shouldn't vary between lines
-              position(1:numberOfDimensions)=interpolatedPoint%values(1:numberOfDimensions,NO_PART_DERIV)
-              vector1(1:numberOfDimensions)=interpolatedPoint%values(1:numberOfDimensions,FIRST_PART_DERIV)
-              CALL Normalise(vector1(1:numberOfDimensions),vector1(1:numberOfDimensions),err,error,*999)
-              tangents(1:numberOfDimensions,1)=tangents(1:numberOfDimensions,1)+vector1(1:numberOfDimensions)
-              numberOfTangents=numberOfTangents+1
-              !Rotate vector 90 degrees clockward. Just take first two components for now.
-              vector1(numberOfDimensions)=interpolatedPoint%values(numberOfDimensions,FIRST_PART_DERIV)
-              vector1(1)=interpolatedPoint%values(2,FIRST_PART_DERIV)
-              vector1(2)=-1.0_DP*interpolatedPoint%values(1,FIRST_PART_DERIV)
-              CALL Normalise(vector1(1:2),vector1(1:2),err,error,*999)
-              normal(1:numberOfDimensions)=normal(1:numberOfDimensions)+vector1(1:numberOfDimensions)
-              numberOfNormals=numberOfNormals+1           
-            ENDIF
-          ENDDO !lineIdx
-        CASE(3)
-          !3D domain, two tangents and one normal
-          NULLIFY(domainFaces)
-          CALL DomainTopology_DomainFacesGet(domainTopology,domainFaces,err,error,*999)
-          !Loop over the faces around this node.
-          CALL DomainNode_NumberOfNodeFacesGet(domainNode,numberOfNodeFaces,err,error,*999)
-          DO faceIdx=1,numberOfNodeFaces
-            CALL DomainNode_NodeFaceGet(domainNode,faceIdx,nodeFaceNumber,err,error,*999)
-            NULLIFY(domainFace)
-            CALL DomainFaces_FaceGet(domainFaces,nodeFaceNumber,domainFace,err,error,*999)
-            !See if it is a boundary face
-            CALL DomainFace_BoundaryFaceGet(domainFace,boundaryFace,err,error,*999)
-            IF(boundaryFace) THEN
-              !The face through the node is on the boundary so compute
-              !tangents and normal. The tangents are given by dxdxi
-              !and the normal is the cross product of these two.
-              NULLIFY(basis)
-              CALL DomainFace_BasisGet(domainFace,basis,err,error,*999)
-              !Find the local node position in the line
-              CALL DomainFace_NodeLocalNodeGet(domainFace,localNodeNumber,faceNode,err,error,*999)
-              IF(faceNode==0) THEN
-                localError="Could not find the node number "//TRIM(NumberToVString(localNodeNumber,"*",err,error))// &
-                  & " in face number "//TRIM(NumberToVString(nodeFaceNumber,"*",err,error))// &
-                  & " in the field with component number "//TRIM(NumberToVString(componentNumber,"*",err,error))// &
-                  & " of variable type "//TRIM(NumberToVString(variableType,"*",err,error))//" of field number "// &
-                  & TRIM(NumberToVString(field%userNumber,"*",err,error))//"."
-                CALL FlagError(localError,err,error,*999)
-              ENDIF
-              !Find the xi position of the node in the element. In most cases this will be 0,1.0 etc
-              !but in some cases the geometric field may not contain this node in which case xi can be
-              !arbitrary
-              CALL Basis_LocalNodeXiCalculate(basis,faceNode,xi,err,error,*999)
-              !Interpolate the geometric field at the xi position.
-              CALL Field_InterpolationParametersFaceGet(FIELD_VALUES_SET_TYPE,nodeFaceNumber,interpolationParameters, &
-                & err,error,*999)
-              CALL Field_InterpolateXi(FIRST_PART_DERIV,xi(1:2),interpolatedPoint,err,error,*999)
-              !Grab the position. This shouldn't vary between lines
-              position(1:numberOfDimensions)=interpolatedPoint%values(1:numberOfDimensions,NO_PART_DERIV)
-              vector1(1:numberOfDimensions)=interpolatedPoint%values(1:numberOfDimensions,PART_DERIV_S1)
-              CALL Normalise(vector1(1:numberOfDimensions),vector1(1:numberOfDimensions),err,error,*999)
-              tangents(1:numberOfDimensions,1)=tangents(1:numberOfDimensions,1)+vector1(1:numberOfDimensions)
-              vector2(1:numberOfDimensions)=interpolatedPoint%values(1:numberOfDimensions,PART_DERIV_S2)
-              CALL Normalise(vector2(1:numberOfDimensions),vector2(1:numberOfDimensions),err,error,*999)
-              tangents(1:numberOfDimensions,2)=tangents(1:numberOfDimensions,2)+vector2(1:numberOfDimensions)
-              numberOfTangents=numberOfTangents+1
-              !Compute normal from the cross product
-              CALL CrossProduct(vector1(1:numberOfDimensions),vector2(1:numberOfDimensions), &
-                & vector1(1:numberOfDimensions),err,error,*999)
-              CALL Normalise(vector1(1:2),vector1(1:2),err,error,*999)
-              normal(1:numberOfDimensions)=normal(1:numberOfDimensions)+vector1(1:numberOfDimensions)
-              numberOfNormals=numberOfNormals+1           
-            ENDIF
-          ENDDO !faceIdx
-        CASE DEFAULT
-          localError="The number of domain dimensions of "//TRIM(NumberToVString(numberOfDomainDimensions,"*",err,error))// &
-            & " is invalid for component number "//TRIM(NumberToVString(componentNumber,"*",err,error))//" of variable type "// &
-            & TRIM(NumberToVString(variableType,"*",err,error))//" of field number "// &
-            & TRIM(NumberToVString(field%userNumber,"*",err,error))//". The local node number must be >= 1 and <= 3."
-          CALL FlagError(localError,err,error,*999) 
-        END SELECT
-      ELSE
-        CALL DomainNode_NumberOfSurroundingElementsGet(domainNode,numberOfSurroundingElements,err,error,*999)
-        DO elementIdx=1,numberOfSurroundingElements
-          CALL DomainNode_SurroundingElementGet(domainNode,elementIdx,localElementNumber,err,error,*999)
-          NULLIFY(domainElement)
-          CALL DomainElements_ElementGet(domainElements,localElementNumber,domainElement,err,error,*999)
-          NULLIFY(decompositionElement)
-          CALL DecompositionElements_ElementGet(decompositionElements,localElementNumber,decompositionElement,err,error,*999)
-          NULLIFY(basis)
-          CALL DomainElement_BasisGet(domainElement,basis,err,error,*999)
-          CALL Basis_NumberOfXiGet(basis,numberOfXi,err,error,*999)
-          CALL Basis_NumberOfXiCoordinatesGet(basis,numberOfXiCoordinates,err,error,*999)
-          CALL Basis_TypeGet(basis,basisFamilyType,err,error,*999)
-          !Find local node number in the basis
-          CALL DomainElement_NodeLocalNodeGet(domainElement,localNodeNumber,localNode,err,error,*999)
-          !Find the xi position of the node in the element. In most cases this will be 0,1.0 etc
-          ! but in some cases the geometric field may not contain this node in which case xi can be
-          ! arbitrary
-          CALL Basis_LocalNodeXiCalculate(basis,localNode,xi,err,error,*999)
-          !Interpolate the geometric field at the xi position.
-          CALL Field_InterpolationParametersElementGet(FIELD_VALUES_SET_TYPE,localElementNumber,interpolationParameters, &
-            & err,error,*999)
-          CALL Field_InterpolateXi(FIRST_PART_DERIV,xi(1:numberOfXi),interpolatedPoint,err,error,*999)
-          !Grab the position. This shouldn't vary between elements so do it once only
-          IF(elementIdx==1) position(1:numberOfDimensions)=interpolatedPoint%values(1:numberOfDimensions,NO_PART_DERIV)
-        ENDDO !ElementIdx
-      ENDIF
-      ! CALL DomainNode_NumberOfSurroundingElementsGet(domainNode,numberOfSurroundingElements,err,error,*999)
-      ! numberOfElements=0
-      ! DO elementIdx=1,numberOfSurroundingElements
-      !   CALL DomainNode_SurroundingElementGet(domainNode,elementIdx,localElementNumber,err,error,*999)
-      !   NULLIFY(domainElement)
-      !   CALL DomainElements_ElementGet(domainElements,localElementNumber,domainElement,err,error,*999)
-      !   NULLIFY(decompositionElement)
-      !   CALL DecompositionElements_ElementGet(decompositionElements,localElementNumber,decompositionElement,err,error,*999)
-      !   NULLIFY(basis)
-      !   CALL DomainElement_BasisGet(domainElement,basis,err,error,*999)
-      !   CALL Basis_NumberOfXiGet(basis,numberOfXi,err,error,*999)
-      !   CALL Basis_NumberOfXiCoordinatesGet(basis,numberOfXiCoordinates,err,error,*999)
-      !   CALL Basis_TypeGet(basis,basisFamilyType,err,error,*999)
-      !   !Find local node number in the basis
-      !   CALL DomainElement_NodeLocalNodeGet(domainElement,localNodeNumber,localNode,err,error,*999)
-      !   !Find the xi position of the node in the element. In most cases this will be 0,1.0 etc
-      !   ! but in some cases the geometric field may not contain this node in which case xi can be
-      !   ! arbitrary
-      !   CALL Basis_LocalNodeXiCalculate(basis,localNode,xi,err,error,*999)
-      !   !Interpolate the geometric field at the xi position.
-      !   CALL Field_InterpolationParametersElementGet(FIELD_VALUES_SET_TYPE,localElementNumber,interpolationParameters, &
-      !     & err,error,*999)
-      !   CALL Field_InterpolateXi(FIRST_PART_DERIV,xi(1:numberOfXi),interpolatedPoint,err,error,*999)
-      !   !Grab the position. This shouldn't vary between elements so do it once only
-      !   IF(elementIdx==1) position(1:numberOfDimensions)=interpolatedPoint%values(1:numberOfDimensions,NO_PART_DERIV)
-      !   !Get dXdXi
-      !   !\todo: What if the surrounding elements have different number of xi? then dXdXi will be different in size.
-      !   !       Which one do we return in that case?
-      !   DO componentIdx=1,numberOfDimensions
-      !     DO xiIdx=1,numberOfXi
-      !       derivativeIdx=PARTIAL_DERIVATIVE_FIRST_DERIVATIVE_MAP(xiIdx) !2,4,7
-      !       dXdXi(componentIdx,xiIdx)=interpolatedPoint%values(componentIdx,derivativeIdx) !dx/dxi
-      !     ENDDO !xiIdx
-      !   ENDDO !componentIdx
-      !   !Calculate the tangents and normal vectors
-      !   IF(boundaryNode) THEN
-      !     SELECT CASE(basisFamilyType)
-      !     CASE(BASIS_LAGRANGE_HERMITE_TP_TYPE)            
-      !       !Calculate tangents from dXdXi: which xi corresponds to normal direction?
-      !       CALL Basis_NumberOfNodesXiCGet(basis,numberOfNodesXiC,err,error,*999)
-      !       DO xiCoordIdx=-numberOfXiCoordinates,numberOfXiCoordinates
-      !         CALL DecompositionElement_NumberAdjacentGet(decompositionElement,ABS(xiCoordIdx),numberOfAdjacentElements, &
-      !           & err,error,*999)
-      !         IF(numberOfAdjacentElements==0) THEN
-      !           IF(xiCoordIdx>0) THEN
-      !             indexMatch=numberOfNodesXiC(ABS(xiCoordIdx))
-      !           ELSE IF(xiCoordIdx<0) THEN
-      !             indexMatch=1
-      !           ENDIF
-      !           CALL Basis_NodePositionIndexGet(basis,localNode,ABS(xiCoordIdx),nodePositionIdx,err,error,*999)
-      !           IF(nodePositionIdx==indexMatch) THEN
-      !             !1D/2D/3D: tangents and normal
-      !             SELECT CASE(numberOfXi)
-      !             CASE(1)
-      !               !There are no tangents.
-      !               vector1(1:numberOfDimensions)=dXdXi(1:numberOfDimensions,1)
-      !               CALL Normalise(vector1(1:numberOfDimensions),vector1(1:numberOfDimensions),err,error,*999)
-      !               normal(1:numberOfDimensions)=normal(1:numberOfDimensions)+vector1(1:numberOfDimensions)
-      !             CASE(2)
-      !               !One tangent vector, one normal vector
-      !               tangentXiIdx=OTHER_XI_DIRECTIONS2(ABS(xiCoordIdx))
-      !               vector1(1:numberOfDimensions)=dXdXi(1:numberOfDimensions,tangentXiIdx)
-      !               CALL Normalise(vector1(1:numberOfDimensions),vector1(1:numberOfDimensions),err,error,*999)
-      !               tangents(1:numberOfDimensions,1)=tangents(1:numberOfDimensions,1)+vector1(1:numberOfDimensions)
-      !               !Normal is the other component in dXdXi (correct?) Ensure the direction is outward
-      !               vector1(1:numberOfDimensions)=dXdXi(1:numberOfDimensions,ABS(xiCoordIdx))
-      !               IF(xiCoordIdx<0) vector1=-vector1
-      !               CALL Normalise(vector1(1:numberOfDimensions),vector1(1:numberOfDimensions),err,error,*999)
-      !               normal(1:numberOfDimensions)=normal(1:numberOfDimensions)+vector1(1:numberOfDimensions)
-      !             CASE(3)
-      !               !Two tangent vectors, one normal vector
-      !               tangents=0.0_DP
-      !               tangentXiIdx=OTHER_XI_DIRECTIONS3(ABS(xiCoordIdx),2,1)
-      !               vector1(1:numberOfDimensions)=dXdXi(1:numberOfDimensions,1)
-      !               CALL Normalise(vector1(1:numberOfDimensions),vector1(1:numberOfDimensions),err,error,*999)
-      !               tangents(1:numberOfDimensions,1)=tangents(1:numberOfDimensions,1)+vector1(1:numberOfDimensions)
-      !               tangentXiIdx=OTHER_XI_DIRECTIONS3(ABS(xiCoordIdx),3,1)
-      !               vector2(1:numberOfDimensions)=dXdXi(1:numberOfDimensions,tangentXiIdx)
-      !               CALL Normalise(vector2(1:numberOfDimensions),vector2(1:numberOfDimensions),err,error,*999)
-      !               tangents(1:numberOfDimensions,2)=tangents(1:numberOfDimensions,2)+vector2(1:numberOfDimensions)
-      !               !Calculate the normal vector
-      !               CALL CrossProduct(vector1(1:numberOfDimensions),vector2(1:numberOfDimensions), &
-      !                 & vector1(1:numberOfDimensions),err,error,*999)
-      !               !Yes below is compicated, but that's what it takes to get the normals pointing outwards
-      !               IF(xiCoordIdx<0) vector1=-vector1
-      !               IF(ABS(xiCoordIdx)==2) vector1=-vector1
-      !               normal(1:numberOfDimensions)=normal(1:numberOfDimensions)+vector1(1:numberOfDimensions)
-      !             CASE DEFAULT
-      !               !Should never happen anyway
-      !             END SELECT
-      !             numberOfElements=numberOfElements+1
-      !           ENDIF
-      !         ENDIF
-      !       ENDDO !xiCoordIdx
-      !     CASE(BASIS_SIMPLEX_TYPE)
-      !       CALL FlagError("Not implemented.",err,error,*999)
-      !       !Loop over the lines, faces that have this local node. If it is a boundary face calculate normal and tangents
-      !       SELECT CASE(numberOfXi)
-      !       CASE(1)
-      !         !There are no tangents.
-      !         vector1(1:numberOfDimensions)=dXdXi(1:numberOfDimensions,1)
-      !         CALL Normalise(vector1(1:numberOfDimensions),vector1(1:numberOfDimensions),err,error,*999)
-      !         normal(1:numberOfDimensions)=normal(1:numberOfDimensions)+vector1(1:numberOfDimensions)
-      !       CASE(2)
-      !         !Loop over the lines
-              
-      !         DO localLineIdx=1,
-      !       CASE(3)
-      !       CASE DEFAULT
-      !       END SELECT
-      !     CASE(BASIS_SERENDIPITY_TYPE)
-      !       CALL FlagError("Not implemented.",err,error,*999)
-      !     CASE(BASIS_AUXILLIARY_TYPE)
-      !       CALL FlagError("Not implemented.",err,error,*999)
-      !     CASE(BASIS_B_SPLINE_TP_TYPE)
-      !       CALL FlagError("Not implemented.",err,error,*999)
-      !     CASE(BASIS_FOURIER_LAGRANGE_HERMITE_TP_TYPE)
-      !       CALL FlagError("Not implemented.",err,error,*999)
-      !     CASE(BASIS_EXTENDED_LAGRANGE_TP_TYPE)
-      !       CALL FlagError("Not implemented.",err,error,*999)
-      !     CASE DEFAULT
-      !       localError="The basis type of "//TRIM(NumberToVString(basis%type,"*",err,error))//" is invalid."
-      !       CALL FlagError(localError,err,error,*999)
-      !     END SELECT
-      !   ELSE
-      !     !Node is internal to the mesh. Assign zero normal and compute tangents only
-      !     DO tangentIdx=1,numberOfXi
-      !       vector1(1:numberOfDimensions)=dXdXi(1:numberOfDimensions,tangentIdx)
-      !       CALL Normalise(vector1(1:numberOfDimensions),vector1(1:numberOfDimensions),err,error,*999)
-      !       tangents(1:numberOfDimensions,tangentIdx)=tangents(1:numberOfDimensions,tangentIdx)+vector1(1:numberOfDimensions)
-      !     ENDDO !tangentIdx
-      !     numberOfElements=numberOfElements+1
-      !   ENDIF
-      ! ENDDO !elementIdx
-      
-      !Normalise the normal vector
-      IF(numberOfNormals>0) normal(1:numberOfDimensions)=normal(1:numberOfDimensions)/REAL(numberOfNormals,DP)
-      CALL Normalise(normal(1:numberOfDimensions),normal(1:numberOfDimensions),err,error,*999)
-      !Normalise the tangent vectors
-      DO tangentIdx=1,numberOfDomainDimensions-1
-        IF(numberOfTangents>0) &
-          & tangents(1:numberOfDimensions,tangentIdx)=tangents(1:numberOfDimensions,tangentIdx)/REAL(numberOfTangents,DP)
-        CALL Normalise(tangents(1:numberOfDimensions,tangentIdx),tangents(1:numberOfDimensions,tangentIdx),err,error,*999)
-      ENDDO !tangentIdx
-      
-      CALL Field_InterpolatedPointFinalise(interpolatedPoint,err,error,*999)
-      CALL FieldVariable_InterpolationParameterFinalise(interpolationParameters,err,error,*999)
-
-    CASE(FIELD_GRID_POINT_BASED_INTERPOLATION)
-      localError="Cannot compute the normal at a node for component number "// &
-        & TRIM(NumberToVString(componentNumber,"*",err,error))//" for variable type "// &
-        & TRIM(NumberToVString(variableType,"*",err,error))//" of field number "// &
-        & TRIM(NumberToVString(field%userNumber,"*",err,error))// &
-        & " which has grid point based interpolation."
-      CALL FlagError(localError,err,error,*999)
-    CASE(FIELD_GAUSS_POINT_BASED_INTERPOLATION)
-      localError="Cannot compute the normal at a node for component number "// &
-        & TRIM(NumberToVString(componentNumber,"*",err,error))//" for variable type "// &
-        & TRIM(NumberToVString(variableType,"*",err,error))//" of field number "// &
-        & TRIM(NumberToVString(field%userNumber,"*",err,error))// &
-        & " which has Gauss point based interpolation."
-      CALL FlagError(localError,err,error,*999)
-    CASE(FIELD_DATA_POINT_BASED_INTERPOLATION)
-      localError="Cannot compute the normal at a node for component number "// &
-        & TRIM(NumberToVString(componentNumber,"*",err,error))//" for variable type "// &
-        & TRIM(NumberToVString(variableType,"*",err,error))//" of field number "// &
-        & TRIM(NumberToVString(field%userNumber,"*",err,error))// &
-        & " which has data point based interpolation."
-      CALL FlagError(localError,err,error,*999)
-    CASE DEFAULT
-      localError="The interpolation type of "//TRIM(NumberToVString &
-        & (fieldVariable%components(componentNumber)%interpolationType,"*",err,error))// &
-        & " is invalid for component number "//TRIM(NumberToVString(componentNumber,"*", &
-        & err,error))//" for variable type "//TRIM(NumberToVString(variableType,"*",err,error))// &
-        & " of field number "//TRIM(NumberToVString(field%userNumber,"*",err,error))//"."
-      CALL FlagError(localError,err,error,*999)
-    END SELECT
- 
-    IF(diagnostics1) THEN
-      CALL WriteString(DIAGNOSTIC_OUTPUT_TYPE,"Field normal at a node:",err,error,*999)
-      CALL WriteStringValue(DIAGNOSTIC_OUTPUT_TYPE,"  Field number      = ",field%userNumber,err,error,*999)
-      CALL WriteStringValue(DIAGNOSTIC_OUTPUT_TYPE,"  Variable type     = ",variableType,err,error,*999)
-      CALL WriteStringValue(DIAGNOSTIC_OUTPUT_TYPE,"  Component number  = ",componentNumber,err,error,*999)
-      CALL WriteStringValue(DIAGNOSTIC_OUTPUT_TYPE,"  Local node number = ",localNodeNumber,err,error,*999)
-      CALL WriteStringVector(DIAGNOSTIC_OUTPUT_TYPE,1,1,numberOfDimensions,3,3,position, &
-        & '("  Position          :",3(X,E13.6))','(21X,3(X,E13.6))',err,error,*999)      
-      CALL WriteStringVector(DIAGNOSTIC_OUTPUT_TYPE,1,1,numberOfDimensions,3,3,normal, &
-        & '("  Normal            :",3(X,E13.6))','(21X,3(X,E13.6))',err,error,*999)      
-    ENDIF
-
-    EXITS("Field_PositionNormalTangentsCalculateNode")
-    RETURN
-999 ERRORS("Field_PositionNormalTangentsCalculateNode",err,error)
-    EXITS("Field_PositionNormalTangentsCalculateNode")
-    RETURN 1
-
-  END SUBROUTINE Field_PositionNormalTangentsCalculateNode
 
   !
   !================================================================================================================================
@@ -21960,6 +21773,504 @@ CONTAINS
     RETURN 1
 
   END SUBROUTINE FieldVariable_ParametersToFieldVariableParametersCopy
+
+  !
+  !================================================================================================================================
+  !
+
+
+    !
+  !================================================================================================================================
+  !
+
+  !>Computes the geometric position, normal and tangent vectors at a node in a field variable. If the node is internal to the mesh the normal and tangents are zero.
+  SUBROUTINE FieldVariable_PositionNormalTangentsCalculateNode(fieldVariable,componentNumber,localNodeNumber, &
+    & position,normal,tangents,err,error,*)
+
+    !Argument variables
+    TYPE(FieldVariableType), POINTER, INTENT(IN) :: fieldVariable !<A pointer to the field variable to interpolate the geometric information for
+    INTEGER(INTG), INTENT(IN) :: componentNumber !<The component number of the node to compute the geometric information for
+    INTEGER(INTG), INTENT(IN) :: localNodeNumber !<The local node number to compute the geometric information for
+    REAL(DP), INTENT(OUT) :: position(:) !<position(coordinateIdx), on exit the geometric position of the node
+    REAL(DP), INTENT(OUT) :: normal(:) !<normal(coordinateIdx), on exit the normal vector. If the node is internal the normal vector is zero.
+    REAL(DP), INTENT(OUT) :: tangents(:,:) !<tangents(coordinateIdx,tangentIdx), on exit the tangent vectors for the tangentIdx'th tangent at the node. There are up to numberOfXi tangent vectors.
+    INTEGER(INTG), INTENT(OUT) :: err !<The error code
+    TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
+    !Local Variables
+    INTEGER(INTG) :: basisFamilyType,componentIdx,derivativeIdx,element,elementIdx,faceIdx,faceNode,index,indexMatch, &
+      & interpolationType,lineIdx,lineNode,localElementNumber,localNode,localNodeIdx,nodeFaceNumber,nodeLineNumber, &
+      & nodePositionIdx,numberOfAdjacentElements,numberOfDimensions,numberOfDomainDimensions,numberOfElements,numberOfNodeFaces, &
+      & numberOfNodeLines,numberOfNodesXiC(4),numberOfNormals,numberOfSurroundingElements,numberOfTangents,numberOfXi, &
+      & numberOfXiCoordinates,tangentIdx,tangentXiIdx,variableType,xiCoordIdx,xiIdx
+    REAL(DP) :: dXdXi(3,3),vector1(3),vector2(3),xi(3)
+    LOGICAL :: boundaryFace,boundaryLine,boundaryNode
+    TYPE(BasisType), POINTER :: basis
+    TYPE(DomainType), POINTER :: domain
+    TYPE(DomainElementType), POINTER :: domainElement
+    TYPE(DomainElementsType), POINTER :: domainElements
+    TYPE(DomainFacesType), POINTER :: domainFaces
+    TYPE(DomainLineType), POINTER :: domainLine
+    TYPE(DomainLinesType), POINTER :: domainLines
+    TYPE(DomainFaceType), POINTER :: domainFace
+    TYPE(DomainNodeType), POINTER :: domainNode
+    TYPE(DomainNodesType), POINTER :: domainNodes
+    TYPE(DomainTopologyType), POINTER :: domainTopology
+    TYPE(DecompositionType), POINTER :: decomposition
+    TYPE(DecompositionTopologyType), POINTER :: decompositionTopology
+    TYPE(DecompositionElementType), POINTER :: decompositionElement
+    TYPE(DecompositionElementsType), POINTER :: decompositionElements
+    TYPE(FieldType), POINTER :: field,geometricField
+    TYPE(FieldVariableType), POINTER :: geometricVariable
+    TYPE(FieldInterpolationParametersType), POINTER :: interpolationParameters
+    TYPE(FieldInterpolatedPointType), POINTER :: interpolatedPoint
+    TYPE(VARYING_STRING) :: localError
+
+    ENTERS("FieldVariable_PositionNormalTangentsCalculateNode",err,error,*999)
+
+    CALL FieldVariable_VariableTypeGet(fieldVariable,variableType,err,error,*999)    
+    NULLIFY(field)
+    CALL FieldVariable_FieldGet(fieldVariable,field,err,error,*999)
+    NULLIFY(geometricField)
+    CALL Field_GeometricFieldGet(field,geometricField,err,error,*999)
+    NULLIFY(geometricVariable)
+    CALL Field_VariableGet(geometricField,FIELD_U_VARIABLE_TYPE,geometricVariable,err,error,*999)
+    CALL FieldVariable_NumberOfComponentsGet(geometricVariable,numberOfDimensions,err,error,*999)
+    IF(SIZE(position,1)<numberOfDimensions) THEN
+      localError="The size of the supplied position array of "//TRIM(NumberToVString(SIZE(position,1), &
+        & "*",err,error))//" is too small. The size of the supplied array must be >= "// &
+        & TRIM(NumberToVString(numberOfDimensions,"*",err,error))//"."
+      CALL FlagError(localError,err,error,*999)
+    ENDIF
+    IF(SIZE(normal,1)<numberOfDimensions) THEN
+      localError="The size of the supplied normal array of "//TRIM(NumberToVString(SIZE(normal,1), &
+        & "*",err,error))//" is too small. The size of the supplied array must be >= "// &
+        & TRIM(NumberToVString(numberOfDimensions,"*",err,error))//"."
+      CALL FlagError(localError,err,error,*999)
+    ENDIF
+    IF(SIZE(tangents,1)<numberOfDimensions) THEN
+      localError="The first dimension of the supplied tangent array of "// &
+        & TRIM(NumberToVString(SIZE(tangents,1),"*",err,error))// &
+        & " is too small. The first dimension of the supplied array must be >= "// &
+        & TRIM(NumberToVString(numberOfDimensions,"*",err,error))//"."
+      CALL FlagError(localError,err,error,*999)
+    ENDIF       
+    NULLIFY(domain)
+    CALL FieldVariable_ComponentDomainGet(fieldVariable,componentNumber,domain,err,error,*999)
+    CALL Domain_NumberOfDimensionsGet(domain,numberOfDomainDimensions,err,error,*999)
+    NULLIFY(domainTopology)
+    CALL Domain_DomainTopologyGet(domain,domainTopology,err,error,*999)
+    NULLIFY(decomposition)
+    CALL Field_DecompositionGet(field,decomposition,err,error,*999)
+    NULLIFY(decompositionTopology)
+    CALL Decomposition_DecompositionTopologyGet(decomposition,decompositionTopology,err,error,*999)
+    NULLIFY(decompositionElements)
+    CALL DecompositionTopology_DecompositionElementsGet(decompositionTopology,decompositionElements,err,error,*999)
+    CALL FieldVariable_ComponentInterpolationGet(fieldVariable,componentNumber,interpolationType,err,error,*999)
+    SELECT CASE(interpolationType)
+    CASE(FIELD_CONSTANT_INTERPOLATION)
+      localError="Cannot compute the normal at a node for component number "// &
+        & TRIM(NumberToVString(componentNumber,"*",err,error))//" for variable type "// &
+        & TRIM(NumberToVString(variableType,"*",err,error))//" of field number "// &
+        & TRIM(NumberToVString(field%userNumber,"*",err,error))// &
+        & " which has constant interpolation."
+      CALL FlagError(localError,err,error,*999)
+    CASE(FIELD_ELEMENT_BASED_INTERPOLATION)
+      localError="Cannot compute the normal at a node for component number "// &
+        & TRIM(NumberToVString(componentNumber,"*",err,error))//" for variable type "// &
+        & TRIM(NumberToVString(variableType,"*",err,error))//" of field number "// &
+        & TRIM(NumberToVString(field%userNumber,"*",err,error))//" which has element based&
+        & interpolation."
+      CALL FlagError(localError,err,error,*999)
+    CASE(FIELD_NODE_BASED_INTERPOLATION)
+      NULLIFY(domainElements)
+      CALL DomainTopology_DomainElementsGet(domainTopology,domainElements,err,error,*999)      
+      NULLIFY(domainNodes)
+      CALL DomainTopology_DomainNodesGet(domainTopology,domainNodes,err,error,*999)
+      IF(localNodeNumber<1.OR.localNodeNumber>domainNodes%numberOfNodes) THEN
+        localError="The local node number of "//TRIM(NumberToVString(localNodeNumber,"*",err,error))// &
+          & " is invalid for component number "//TRIM(NumberToVString(componentNumber,"*",err,error))//" of variable type "// &
+          & TRIM(NumberToVString(variableType,"*",err,error))//" of field number "// &
+          & TRIM(NumberToVString(field%userNumber,"*",err,error))//". The local node number must be > 0 and <="// &
+          & TRIM(NumberToVString(domainNodes%numberOfNodes,"*",err,error))//"."
+        CALL FlagError(localError,err,error,*999)
+      ENDIF
+      NULLIFY(domainNode)
+      CALL DomainNodes_NodeGet(domainNodes,localNodeNumber,domainNode,err,error,*999)
+      !Normal & tangent will be calculated as averages in all surrounding elements. This is
+      !because there could be discontinuity in the surface gradients across elements.
+      position(1:numberOfDimensions)=0.0_DP
+      dXdXi=0.0_DP
+      normal(1:numberOfDimensions)=0.0_DP
+      tangents(1:numberOfDimensions,:)=0.0_DP
+      NULLIFY(interpolationParameters)
+      CALL FieldVariable_InterpolationParameterInitialise(geometricVariable,interpolationParameters,err,error,*999)
+      NULLIFY(interpolatedPoint)
+      CALL Field_InterpolatedPointInitialise(interpolationParameters,interpolatedPoint,err,error,*999)
+      CALL DomainNode_BoundaryNodeGet(domainNode,boundaryNode,err,error,*999)
+      IF(boundaryNode) THEN
+        numberOftangents=0
+        numberOfNormals=0
+        SELECT CASE(numberOfDomainDimensions)
+        CASE(1)
+          !1D domain, no tangents, just a position
+          CALL DomainNode_NumberOfSurroundingElementsGet(domainNode,numberOfSurroundingElements,err,error,*999)
+          DO elementIdx=1,numberOfSurroundingElements
+            CALL DomainNode_SurroundingElementGet(domainNode,elementIdx,localElementNumber,err,error,*999)
+            NULLIFY(domainElement)
+            CALL DomainElements_ElementGet(domainElements,localElementNumber,domainElement,err,error,*999)
+            NULLIFY(decompositionElement)
+            CALL DecompositionElements_ElementGet(decompositionElements,localElementNumber,decompositionElement,err,error,*999)
+            NULLIFY(basis)
+            CALL DomainElement_BasisGet(domainElement,basis,err,error,*999)
+            CALL Basis_NumberOfXiGet(basis,numberOfXi,err,error,*999)
+            CALL Basis_NumberOfXiCoordinatesGet(basis,numberOfXiCoordinates,err,error,*999)
+            !Find local node number in the basis
+            CALL DomainElement_NodeLocalNodeGet(domainElement,localNodeNumber,localNode,err,error,*999)
+            !Find the xi position of the node in the element. In most cases this will be 0,1.0 etc
+            !but in some cases the geometric field may not contain this node in which case xi can be
+            !arbitrary
+            CALL Basis_LocalNodeXiCalculate(basis,localNode,xi,err,error,*999)
+            !Interpolate the geometric field at the xi position.
+            CALL Field_InterpolationParametersElementGet(FIELD_VALUES_SET_TYPE,localElementNumber,interpolationParameters, &
+              & err,error,*999)
+            CALL Field_InterpolateXi(FIRST_PART_DERIV,xi(1:numberOfXi),interpolatedPoint,err,error,*999)
+            !Grab the position. This shouldn't vary between elements so do it once only
+            IF(elementIdx==1) position(1:numberOfDimensions)=interpolatedPoint%values(1:numberOfDimensions,NO_PART_DERIV)
+          ENDDO !ElementIdx
+        CASE(2)
+          !2D domain, one tangent and one normal
+          NULLIFY(domainLines)
+          CALL DomainTopology_DomainLinesGet(domainTopology,domainLines,err,error,*999)
+          !Loop over the lines around this node.
+          CALL DomainNode_NumberOfNodeLinesGet(domainNode,numberOfNodeLines,err,error,*999)
+          DO lineIdx=1,numberOfNodeLines
+            CALL DomainNode_NodeLineGet(domainNode,lineIdx,nodeLineNumber,err,error,*999)
+            NULLIFY(domainLine)
+            CALL DomainLines_LineGet(domainLines,nodeLineNumber,domainLine,err,error,*999)
+            !See if it is a boundary line
+            CALL DomainLine_BoundaryLineGet(domainLine,boundaryLine,err,error,*999)
+            IF(boundaryLine) THEN
+              !The line through the node is on the boundary so compute tangent and normal. The tangent is in the direction of dXdXi
+              !and the normal is, by definition, a clockwise 90 degree rotation of the tangent.
+              NULLIFY(basis)
+              CALL DomainLine_BasisGet(domainLine,basis,err,error,*999)
+              !Find the local node position in the line
+              CALL DomainLine_NodeLocalNodeGet(domainLine,localNodeNumber,lineNode,err,error,*999)
+              IF(lineNode==0) THEN
+                localError="Could not find the node number "//TRIM(NumberToVString(localNodeNumber,"*",err,error))// &
+                  & " in line number "//TRIM(NumberToVString(nodeLineNumber,"*",err,error))// &
+                  & " in the field with component number "//TRIM(NumberToVString(componentNumber,"*",err,error))// &
+                  & " of variable type "//TRIM(NumberToVString(variableType,"*",err,error))//" of field number "// &
+                  & TRIM(NumberToVString(field%userNumber,"*",err,error))//"."
+                CALL FlagError(localError,err,error,*999)
+              ENDIF
+              !Find the xi position of the node in the element. In most cases this will be 0,1.0 etc
+              ! but in some cases the geometric field may not contain this node in which case xi can be
+              ! arbitrary
+              CALL Basis_LocalNodeXiCalculate(basis,lineNode,xi,err,error,*999)
+              !Interpolate the geometric field at the xi position.
+              CALL Field_InterpolationParametersLineGet(FIELD_VALUES_SET_TYPE,nodeLineNumber,interpolationParameters, &
+                & err,error,*999)
+              CALL Field_InterpolateXi(FIRST_PART_DERIV,xi(1:1),interpolatedPoint,err,error,*999)
+              !Grab the position. This shouldn't vary between lines
+              position(1:numberOfDimensions)=interpolatedPoint%values(1:numberOfDimensions,NO_PART_DERIV)
+              vector1(1:numberOfDimensions)=interpolatedPoint%values(1:numberOfDimensions,FIRST_PART_DERIV)
+              CALL Normalise(vector1(1:numberOfDimensions),vector1(1:numberOfDimensions),err,error,*999)
+              tangents(1:numberOfDimensions,1)=tangents(1:numberOfDimensions,1)+vector1(1:numberOfDimensions)
+              numberOfTangents=numberOfTangents+1
+              !Rotate vector 90 degrees clockward. Just take first two components for now.
+              vector1(numberOfDimensions)=interpolatedPoint%values(numberOfDimensions,FIRST_PART_DERIV)
+              vector1(1)=interpolatedPoint%values(2,FIRST_PART_DERIV)
+              vector1(2)=-1.0_DP*interpolatedPoint%values(1,FIRST_PART_DERIV)
+              CALL Normalise(vector1(1:2),vector1(1:2),err,error,*999)
+              normal(1:numberOfDimensions)=normal(1:numberOfDimensions)+vector1(1:numberOfDimensions)
+              numberOfNormals=numberOfNormals+1           
+            ENDIF
+          ENDDO !lineIdx
+        CASE(3)
+          !3D domain, two tangents and one normal
+          NULLIFY(domainFaces)
+          CALL DomainTopology_DomainFacesGet(domainTopology,domainFaces,err,error,*999)
+          !Loop over the faces around this node.
+          CALL DomainNode_NumberOfNodeFacesGet(domainNode,numberOfNodeFaces,err,error,*999)
+          DO faceIdx=1,numberOfNodeFaces
+            CALL DomainNode_NodeFaceGet(domainNode,faceIdx,nodeFaceNumber,err,error,*999)
+            NULLIFY(domainFace)
+            CALL DomainFaces_FaceGet(domainFaces,nodeFaceNumber,domainFace,err,error,*999)
+            !See if it is a boundary face
+            CALL DomainFace_BoundaryFaceGet(domainFace,boundaryFace,err,error,*999)
+            IF(boundaryFace) THEN
+              !The face through the node is on the boundary so compute
+              !tangents and normal. The tangents are given by dxdxi
+              !and the normal is the cross product of these two.
+              NULLIFY(basis)
+              CALL DomainFace_BasisGet(domainFace,basis,err,error,*999)
+              !Find the local node position in the line
+              CALL DomainFace_NodeLocalNodeGet(domainFace,localNodeNumber,faceNode,err,error,*999)
+              IF(faceNode==0) THEN
+                localError="Could not find the node number "//TRIM(NumberToVString(localNodeNumber,"*",err,error))// &
+                  & " in face number "//TRIM(NumberToVString(nodeFaceNumber,"*",err,error))// &
+                  & " in the field with component number "//TRIM(NumberToVString(componentNumber,"*",err,error))// &
+                  & " of variable type "//TRIM(NumberToVString(variableType,"*",err,error))//" of field number "// &
+                  & TRIM(NumberToVString(field%userNumber,"*",err,error))//"."
+                CALL FlagError(localError,err,error,*999)
+              ENDIF
+              !Find the xi position of the node in the element. In most cases this will be 0,1.0 etc
+              !but in some cases the geometric field may not contain this node in which case xi can be
+              !arbitrary
+              CALL Basis_LocalNodeXiCalculate(basis,faceNode,xi,err,error,*999)
+              !Interpolate the geometric field at the xi position.
+              CALL Field_InterpolationParametersFaceGet(FIELD_VALUES_SET_TYPE,nodeFaceNumber,interpolationParameters, &
+                & err,error,*999)
+              CALL Field_InterpolateXi(FIRST_PART_DERIV,xi(1:2),interpolatedPoint,err,error,*999)
+              !Grab the position. This shouldn't vary between lines
+              position(1:numberOfDimensions)=interpolatedPoint%values(1:numberOfDimensions,NO_PART_DERIV)
+              vector1(1:numberOfDimensions)=interpolatedPoint%values(1:numberOfDimensions,PART_DERIV_S1)
+              CALL Normalise(vector1(1:numberOfDimensions),vector1(1:numberOfDimensions),err,error,*999)
+              tangents(1:numberOfDimensions,1)=tangents(1:numberOfDimensions,1)+vector1(1:numberOfDimensions)
+              vector2(1:numberOfDimensions)=interpolatedPoint%values(1:numberOfDimensions,PART_DERIV_S2)
+              CALL Normalise(vector2(1:numberOfDimensions),vector2(1:numberOfDimensions),err,error,*999)
+              tangents(1:numberOfDimensions,2)=tangents(1:numberOfDimensions,2)+vector2(1:numberOfDimensions)
+              numberOfTangents=numberOfTangents+1
+              !Compute normal from the cross product
+              CALL CrossProduct(vector1(1:numberOfDimensions),vector2(1:numberOfDimensions), &
+                & vector1(1:numberOfDimensions),err,error,*999)
+              CALL Normalise(vector1(1:2),vector1(1:2),err,error,*999)
+              normal(1:numberOfDimensions)=normal(1:numberOfDimensions)+vector1(1:numberOfDimensions)
+              numberOfNormals=numberOfNormals+1           
+            ENDIF
+          ENDDO !faceIdx
+        CASE DEFAULT
+          localError="The number of domain dimensions of "//TRIM(NumberToVString(numberOfDomainDimensions,"*",err,error))// &
+            & " is invalid for component number "//TRIM(NumberToVString(componentNumber,"*",err,error))//" of variable type "// &
+            & TRIM(NumberToVString(variableType,"*",err,error))//" of field number "// &
+            & TRIM(NumberToVString(field%userNumber,"*",err,error))//". The local node number must be >= 1 and <= 3."
+          CALL FlagError(localError,err,error,*999) 
+        END SELECT
+      ELSE
+        CALL DomainNode_NumberOfSurroundingElementsGet(domainNode,numberOfSurroundingElements,err,error,*999)
+        DO elementIdx=1,numberOfSurroundingElements
+          CALL DomainNode_SurroundingElementGet(domainNode,elementIdx,localElementNumber,err,error,*999)
+          NULLIFY(domainElement)
+          CALL DomainElements_ElementGet(domainElements,localElementNumber,domainElement,err,error,*999)
+          NULLIFY(decompositionElement)
+          CALL DecompositionElements_ElementGet(decompositionElements,localElementNumber,decompositionElement,err,error,*999)
+          NULLIFY(basis)
+          CALL DomainElement_BasisGet(domainElement,basis,err,error,*999)
+          CALL Basis_NumberOfXiGet(basis,numberOfXi,err,error,*999)
+          CALL Basis_NumberOfXiCoordinatesGet(basis,numberOfXiCoordinates,err,error,*999)
+          CALL Basis_TypeGet(basis,basisFamilyType,err,error,*999)
+          !Find local node number in the basis
+          CALL DomainElement_NodeLocalNodeGet(domainElement,localNodeNumber,localNode,err,error,*999)
+          !Find the xi position of the node in the element. In most cases this will be 0,1.0 etc
+          ! but in some cases the geometric field may not contain this node in which case xi can be
+          ! arbitrary
+          CALL Basis_LocalNodeXiCalculate(basis,localNode,xi,err,error,*999)
+          !Interpolate the geometric field at the xi position.
+          CALL Field_InterpolationParametersElementGet(FIELD_VALUES_SET_TYPE,localElementNumber,interpolationParameters, &
+            & err,error,*999)
+          CALL Field_InterpolateXi(FIRST_PART_DERIV,xi(1:numberOfXi),interpolatedPoint,err,error,*999)
+          !Grab the position. This shouldn't vary between elements so do it once only
+          IF(elementIdx==1) position(1:numberOfDimensions)=interpolatedPoint%values(1:numberOfDimensions,NO_PART_DERIV)
+        ENDDO !ElementIdx
+      ENDIF
+      ! CALL DomainNode_NumberOfSurroundingElementsGet(domainNode,numberOfSurroundingElements,err,error,*999)
+      ! numberOfElements=0
+      ! DO elementIdx=1,numberOfSurroundingElements
+      !   CALL DomainNode_SurroundingElementGet(domainNode,elementIdx,localElementNumber,err,error,*999)
+      !   NULLIFY(domainElement)
+      !   CALL DomainElements_ElementGet(domainElements,localElementNumber,domainElement,err,error,*999)
+      !   NULLIFY(decompositionElement)
+      !   CALL DecompositionElements_ElementGet(decompositionElements,localElementNumber,decompositionElement,err,error,*999)
+      !   NULLIFY(basis)
+      !   CALL DomainElement_BasisGet(domainElement,basis,err,error,*999)
+      !   CALL Basis_NumberOfXiGet(basis,numberOfXi,err,error,*999)
+      !   CALL Basis_NumberOfXiCoordinatesGet(basis,numberOfXiCoordinates,err,error,*999)
+      !   CALL Basis_TypeGet(basis,basisFamilyType,err,error,*999)
+      !   !Find local node number in the basis
+      !   CALL DomainElement_NodeLocalNodeGet(domainElement,localNodeNumber,localNode,err,error,*999)
+      !   !Find the xi position of the node in the element. In most cases this will be 0,1.0 etc
+      !   ! but in some cases the geometric field may not contain this node in which case xi can be
+      !   ! arbitrary
+      !   CALL Basis_LocalNodeXiCalculate(basis,localNode,xi,err,error,*999)
+      !   !Interpolate the geometric field at the xi position.
+      !   CALL Field_InterpolationParametersElementGet(FIELD_VALUES_SET_TYPE,localElementNumber,interpolationParameters, &
+      !     & err,error,*999)
+      !   CALL Field_InterpolateXi(FIRST_PART_DERIV,xi(1:numberOfXi),interpolatedPoint,err,error,*999)
+      !   !Grab the position. This shouldn't vary between elements so do it once only
+      !   IF(elementIdx==1) position(1:numberOfDimensions)=interpolatedPoint%values(1:numberOfDimensions,NO_PART_DERIV)
+      !   !Get dXdXi
+      !   !\todo: What if the surrounding elements have different number of xi? then dXdXi will be different in size.
+      !   !       Which one do we return in that case?
+      !   DO componentIdx=1,numberOfDimensions
+      !     DO xiIdx=1,numberOfXi
+      !       derivativeIdx=PARTIAL_DERIVATIVE_FIRST_DERIVATIVE_MAP(xiIdx) !2,4,7
+      !       dXdXi(componentIdx,xiIdx)=interpolatedPoint%values(componentIdx,derivativeIdx) !dx/dxi
+      !     ENDDO !xiIdx
+      !   ENDDO !componentIdx
+      !   !Calculate the tangents and normal vectors
+      !   IF(boundaryNode) THEN
+      !     SELECT CASE(basisFamilyType)
+      !     CASE(BASIS_LAGRANGE_HERMITE_TP_TYPE)            
+      !       !Calculate tangents from dXdXi: which xi corresponds to normal direction?
+      !       CALL Basis_NumberOfNodesXiCGet(basis,numberOfNodesXiC,err,error,*999)
+      !       DO xiCoordIdx=-numberOfXiCoordinates,numberOfXiCoordinates
+      !         CALL DecompositionElement_NumberAdjacentGet(decompositionElement,ABS(xiCoordIdx),numberOfAdjacentElements, &
+      !           & err,error,*999)
+      !         IF(numberOfAdjacentElements==0) THEN
+      !           IF(xiCoordIdx>0) THEN
+      !             indexMatch=numberOfNodesXiC(ABS(xiCoordIdx))
+      !           ELSE IF(xiCoordIdx<0) THEN
+      !             indexMatch=1
+      !           ENDIF
+      !           CALL Basis_NodePositionIndexGet(basis,localNode,ABS(xiCoordIdx),nodePositionIdx,err,error,*999)
+      !           IF(nodePositionIdx==indexMatch) THEN
+      !             !1D/2D/3D: tangents and normal
+      !             SELECT CASE(numberOfXi)
+      !             CASE(1)
+      !               !There are no tangents.
+      !               vector1(1:numberOfDimensions)=dXdXi(1:numberOfDimensions,1)
+      !               CALL Normalise(vector1(1:numberOfDimensions),vector1(1:numberOfDimensions),err,error,*999)
+      !               normal(1:numberOfDimensions)=normal(1:numberOfDimensions)+vector1(1:numberOfDimensions)
+      !             CASE(2)
+      !               !One tangent vector, one normal vector
+      !               tangentXiIdx=OTHER_XI_DIRECTIONS2(ABS(xiCoordIdx))
+      !               vector1(1:numberOfDimensions)=dXdXi(1:numberOfDimensions,tangentXiIdx)
+      !               CALL Normalise(vector1(1:numberOfDimensions),vector1(1:numberOfDimensions),err,error,*999)
+      !               tangents(1:numberOfDimensions,1)=tangents(1:numberOfDimensions,1)+vector1(1:numberOfDimensions)
+      !               !Normal is the other component in dXdXi (correct?) Ensure the direction is outward
+      !               vector1(1:numberOfDimensions)=dXdXi(1:numberOfDimensions,ABS(xiCoordIdx))
+      !               IF(xiCoordIdx<0) vector1=-vector1
+      !               CALL Normalise(vector1(1:numberOfDimensions),vector1(1:numberOfDimensions),err,error,*999)
+      !               normal(1:numberOfDimensions)=normal(1:numberOfDimensions)+vector1(1:numberOfDimensions)
+      !             CASE(3)
+      !               !Two tangent vectors, one normal vector
+      !               tangents=0.0_DP
+      !               tangentXiIdx=OTHER_XI_DIRECTIONS3(ABS(xiCoordIdx),2,1)
+      !               vector1(1:numberOfDimensions)=dXdXi(1:numberOfDimensions,1)
+      !               CALL Normalise(vector1(1:numberOfDimensions),vector1(1:numberOfDimensions),err,error,*999)
+      !               tangents(1:numberOfDimensions,1)=tangents(1:numberOfDimensions,1)+vector1(1:numberOfDimensions)
+      !               tangentXiIdx=OTHER_XI_DIRECTIONS3(ABS(xiCoordIdx),3,1)
+      !               vector2(1:numberOfDimensions)=dXdXi(1:numberOfDimensions,tangentXiIdx)
+      !               CALL Normalise(vector2(1:numberOfDimensions),vector2(1:numberOfDimensions),err,error,*999)
+      !               tangents(1:numberOfDimensions,2)=tangents(1:numberOfDimensions,2)+vector2(1:numberOfDimensions)
+      !               !Calculate the normal vector
+      !               CALL CrossProduct(vector1(1:numberOfDimensions),vector2(1:numberOfDimensions), &
+      !                 & vector1(1:numberOfDimensions),err,error,*999)
+      !               !Yes below is compicated, but that's what it takes to get the normals pointing outwards
+      !               IF(xiCoordIdx<0) vector1=-vector1
+      !               IF(ABS(xiCoordIdx)==2) vector1=-vector1
+      !               normal(1:numberOfDimensions)=normal(1:numberOfDimensions)+vector1(1:numberOfDimensions)
+      !             CASE DEFAULT
+      !               !Should never happen anyway
+      !             END SELECT
+      !             numberOfElements=numberOfElements+1
+      !           ENDIF
+      !         ENDIF
+      !       ENDDO !xiCoordIdx
+      !     CASE(BASIS_SIMPLEX_TYPE)
+      !       CALL FlagError("Not implemented.",err,error,*999)
+      !       !Loop over the lines, faces that have this local node. If it is a boundary face calculate normal and tangents
+      !       SELECT CASE(numberOfXi)
+      !       CASE(1)
+      !         !There are no tangents.
+      !         vector1(1:numberOfDimensions)=dXdXi(1:numberOfDimensions,1)
+      !         CALL Normalise(vector1(1:numberOfDimensions),vector1(1:numberOfDimensions),err,error,*999)
+      !         normal(1:numberOfDimensions)=normal(1:numberOfDimensions)+vector1(1:numberOfDimensions)
+      !       CASE(2)
+      !         !Loop over the lines
+              
+      !         DO localLineIdx=1,
+      !       CASE(3)
+      !       CASE DEFAULT
+      !       END SELECT
+      !     CASE(BASIS_SERENDIPITY_TYPE)
+      !       CALL FlagError("Not implemented.",err,error,*999)
+      !     CASE(BASIS_AUXILLIARY_TYPE)
+      !       CALL FlagError("Not implemented.",err,error,*999)
+      !     CASE(BASIS_B_SPLINE_TP_TYPE)
+      !       CALL FlagError("Not implemented.",err,error,*999)
+      !     CASE(BASIS_FOURIER_LAGRANGE_HERMITE_TP_TYPE)
+      !       CALL FlagError("Not implemented.",err,error,*999)
+      !     CASE(BASIS_EXTENDED_LAGRANGE_TP_TYPE)
+      !       CALL FlagError("Not implemented.",err,error,*999)
+      !     CASE DEFAULT
+      !       localError="The basis type of "//TRIM(NumberToVString(basis%type,"*",err,error))//" is invalid."
+      !       CALL FlagError(localError,err,error,*999)
+      !     END SELECT
+      !   ELSE
+      !     !Node is internal to the mesh. Assign zero normal and compute tangents only
+      !     DO tangentIdx=1,numberOfXi
+      !       vector1(1:numberOfDimensions)=dXdXi(1:numberOfDimensions,tangentIdx)
+      !       CALL Normalise(vector1(1:numberOfDimensions),vector1(1:numberOfDimensions),err,error,*999)
+      !       tangents(1:numberOfDimensions,tangentIdx)=tangents(1:numberOfDimensions,tangentIdx)+vector1(1:numberOfDimensions)
+      !     ENDDO !tangentIdx
+      !     numberOfElements=numberOfElements+1
+      !   ENDIF
+      ! ENDDO !elementIdx
+      
+      !Normalise the normal vector
+      IF(numberOfNormals>0) normal(1:numberOfDimensions)=normal(1:numberOfDimensions)/REAL(numberOfNormals,DP)
+      CALL Normalise(normal(1:numberOfDimensions),normal(1:numberOfDimensions),err,error,*999)
+      !Normalise the tangent vectors
+      DO tangentIdx=1,numberOfDomainDimensions-1
+        IF(numberOfTangents>0) &
+          & tangents(1:numberOfDimensions,tangentIdx)=tangents(1:numberOfDimensions,tangentIdx)/REAL(numberOfTangents,DP)
+        CALL Normalise(tangents(1:numberOfDimensions,tangentIdx),tangents(1:numberOfDimensions,tangentIdx),err,error,*999)
+      ENDDO !tangentIdx
+      
+      CALL Field_InterpolatedPointFinalise(interpolatedPoint,err,error,*999)
+      CALL FieldVariable_InterpolationParameterFinalise(interpolationParameters,err,error,*999)
+
+    CASE(FIELD_GRID_POINT_BASED_INTERPOLATION)
+      localError="Cannot compute the normal at a node for component number "// &
+        & TRIM(NumberToVString(componentNumber,"*",err,error))//" for variable type "// &
+        & TRIM(NumberToVString(variableType,"*",err,error))//" of field number "// &
+        & TRIM(NumberToVString(field%userNumber,"*",err,error))// &
+        & " which has grid point based interpolation."
+      CALL FlagError(localError,err,error,*999)
+    CASE(FIELD_GAUSS_POINT_BASED_INTERPOLATION)
+      localError="Cannot compute the normal at a node for component number "// &
+        & TRIM(NumberToVString(componentNumber,"*",err,error))//" for variable type "// &
+        & TRIM(NumberToVString(variableType,"*",err,error))//" of field number "// &
+        & TRIM(NumberToVString(field%userNumber,"*",err,error))// &
+        & " which has Gauss point based interpolation."
+      CALL FlagError(localError,err,error,*999)
+    CASE(FIELD_DATA_POINT_BASED_INTERPOLATION)
+      localError="Cannot compute the normal at a node for component number "// &
+        & TRIM(NumberToVString(componentNumber,"*",err,error))//" for variable type "// &
+        & TRIM(NumberToVString(variableType,"*",err,error))//" of field number "// &
+        & TRIM(NumberToVString(field%userNumber,"*",err,error))// &
+        & " which has data point based interpolation."
+      CALL FlagError(localError,err,error,*999)
+    CASE DEFAULT
+      localError="The interpolation type of "//TRIM(NumberToVString &
+        & (fieldVariable%components(componentNumber)%interpolationType,"*",err,error))// &
+        & " is invalid for component number "//TRIM(NumberToVString(componentNumber,"*", &
+        & err,error))//" for variable type "//TRIM(NumberToVString(variableType,"*",err,error))// &
+        & " of field number "//TRIM(NumberToVString(field%userNumber,"*",err,error))//"."
+      CALL FlagError(localError,err,error,*999)
+    END SELECT
+ 
+    IF(diagnostics1) THEN
+      CALL WriteString(DIAGNOSTIC_OUTPUT_TYPE,"Field variable at a node:",err,error,*999)
+      CALL WriteStringValue(DIAGNOSTIC_OUTPUT_TYPE,"  Field number      = ",field%userNumber,err,error,*999)
+      CALL WriteStringValue(DIAGNOSTIC_OUTPUT_TYPE,"  Variable type     = ",variableType,err,error,*999)
+      CALL WriteStringValue(DIAGNOSTIC_OUTPUT_TYPE,"  Component number  = ",componentNumber,err,error,*999)
+      CALL WriteStringValue(DIAGNOSTIC_OUTPUT_TYPE,"  Local node number = ",localNodeNumber,err,error,*999)
+      CALL WriteStringVector(DIAGNOSTIC_OUTPUT_TYPE,1,1,numberOfDimensions,3,3,position, &
+        & '("  Position          :",3(X,E13.6))','(21X,3(X,E13.6))',err,error,*999)      
+      CALL WriteStringVector(DIAGNOSTIC_OUTPUT_TYPE,1,1,numberOfDimensions,3,3,normal, &
+        & '("  Normal            :",3(X,E13.6))','(21X,3(X,E13.6))',err,error,*999)      
+    ENDIF
+
+    EXITS("FieldVariable_PositionNormalTangentsCalculateNode")
+    RETURN
+999 ERRORS("FieldVariable_PositionNormalTangentsCalculateNode",err,error)
+    EXITS("FieldVariable_PositionNormalTangentsCalculateNode")
+    RETURN 1
+
+  END SUBROUTINE FieldVariable_PositionNormalTangentsCalculateNode
 
   !
   !================================================================================================================================

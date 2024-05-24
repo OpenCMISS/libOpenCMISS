@@ -4813,6 +4813,8 @@ CONTAINS
         END SELECT
       CASE(FIELD_DELUDELN_VARIABLE_TYPE)
         FIELD_IO_GET_VARIABLE_INFO_LABEL="Normal_derivative,  field,  normal derivative of variable"
+      CASE(FIELD_T_VARIABLE_TYPE)
+        FIELD_IO_GET_VARIABLE_INFO_LABEL="Traction,  field,  rectangular cartesian"
       CASE(FIELD_DELUDELT_VARIABLE_TYPE)
         FIELD_IO_GET_VARIABLE_INFO_LABEL="first_time_derivative,  field,  first time derivative of variable"
       CASE(FIELD_DEL2UDELT2_VARIABLE_TYPE)
@@ -4845,6 +4847,8 @@ CONTAINS
 !kmith - 17.10.08:
       CASE(FIELD_DELUDELN_VARIABLE_TYPE)
         FIELD_IO_GET_VARIABLE_INFO_LABEL="norm_dev_variable,  field,  string"
+      CASE(FIELD_T_VARIABLE_TYPE)
+        FIELD_IO_GET_VARIABLE_INFO_LABEL="traction,  field,  rectangular cartesian"
       CASE(FIELD_DELUDELT_VARIABLE_TYPE)
         FIELD_IO_GET_VARIABLE_INFO_LABEL="first_time_variable,  field,  first time derivative of variable"
       CASE(FIELD_DEL2UDELT2_VARIABLE_TYPE)
@@ -4861,6 +4865,8 @@ CONTAINS
 !kmith - 17.10.08:
       CASE(FIELD_DELUDELN_VARIABLE_TYPE)
         FIELD_IO_GET_VARIABLE_INFO_LABEL="normal_material,  field,  normal derivative of variable"
+      CASE(FIELD_T_VARIABLE_TYPE)
+        FIELD_IO_GET_VARIABLE_INFO_LABEL="traction,  field,  rectangular cartesian"
       CASE(FIELD_DELUDELT_VARIABLE_TYPE)
         FIELD_IO_GET_VARIABLE_INFO_LABEL="fist_time_material,  field,  first time derivative of variable"
       CASE(FIELD_DEL2UDELT2_VARIABLE_TYPE)
@@ -4877,6 +4883,8 @@ CONTAINS
 !kmith - 17.10.08:
       CASE(FIELD_DELUDELN_VARIABLE_TYPE)
         FIELD_IO_GET_VARIABLE_INFO_LABEL="norm_dev_variable,  field,  string"
+       CASE(FIELD_T_VARIABLE_TYPE)
+        FIELD_IO_GET_VARIABLE_INFO_LABEL="traction,  field,  rectangular cartesian"
       CASE(FIELD_DELUDELT_VARIABLE_TYPE)
         FIELD_IO_GET_VARIABLE_INFO_LABEL="first_time_variable,  field,  first time derivative of variable"
       CASE(FIELD_DEL2UDELT2_VARIABLE_TYPE)
@@ -4890,6 +4898,8 @@ CONTAINS
         FIELD_IO_GET_VARIABLE_INFO_LABEL="unknown,  field,  unknown standand variable type"
       CASE(FIELD_DELUDELN_VARIABLE_TYPE)
         FIELD_IO_GET_VARIABLE_INFO_LABEL="unknown,  field,  unknown normal derivative of variable"
+      CASE(FIELD_T_VARIABLE_TYPE)
+        FIELD_IO_GET_VARIABLE_INFO_LABEL="unknown,  field,  unknown traction"
       CASE(FIELD_DELUDELT_VARIABLE_TYPE)
         FIELD_IO_GET_VARIABLE_INFO_LABEL="unknown,  field,  unknown first time derivative of variable"
       CASE(FIELD_DEL2UDELT2_VARIABLE_TYPE)

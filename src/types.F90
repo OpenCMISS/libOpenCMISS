@@ -1371,8 +1371,9 @@ END TYPE GeneratedMeshEllipsoidType
   TYPE FieldPhysicalPointType
     TYPE(FieldInterpolatedPointType), POINTER :: fieldInterpolatedPoint !<A pointer to the interpolated point of the field that is to be interpolated.
     TYPE(FieldInterpolatedPointType), POINTER :: geometricInterpolatedPoint !<A pointer to the interpolated point of the geometric field that is to be interpolated.
-    INTEGER(INTG) :: physicalDerivativeType !<The type of the physical derivatives that have been interpolated. \see CONSTANTS_PhysicalDerivativeConstants
-    REAL(DP), ALLOCATABLE :: values(:) !<values(componentIdx). The physical field component values.
+    INTEGER(INTG) :: physicalDerivativeType !<The type of the physical derivatives that have been interpolated. \see Constants_PhysicalDerivativeConstants
+    INTEGER(INTG) :: maximumPhysicalDerivativeIndex !<The maximum number of physical derivative indices in the values array.
+    REAL(DP), ALLOCATABLE :: values(:,:) !<values(componentIdx,physicalDerivIdx). The physical field values for the componentIdx'th field component and the physicalDerivativeIdx'th physical derivative.
   END TYPE FieldPhysicalPointType
 
   !>Buffer type to allow for arrays of pointers to FieldPhysicalPointType

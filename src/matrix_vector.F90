@@ -1661,54 +1661,48 @@ CONTAINS
     CASE(MATRIX_COMPRESSED_ROW_STORAGE_TYPE)
       !Search for the column number in the sparsity list using the bisection (binary search) algorithm
       lowLimit=matrix%rowIndices(i)
-      IF(lowLimit<=matrix%numberOfNonZeros) THEN
-        IF(j>=matrix%columnIndices(lowLimit)) THEN
-          upLimit=matrix%rowIndices(i+1)
-          IF(upLimit>matrix%numberOfNonZeros) upLimit=upLimit-1
-          IF(upLimit>lowLimit) THEN
-            IF(j<=matrix%columnIndices(upLimit-1)) THEN
-              DO WHILE((upLimit-lowLimit)>bisectionToLinearSearchThreshold)
-                midPoint=(upLimit+lowLimit)/2
-                IF(matrix%columnIndices(midPoint)>j) THEN
-                  upLimit=midPoint
-                ELSE
-                  lowLimit=midPoint
-                ENDIF
-              ENDDO
-              DO k=lowLimit,upLimit
-                IF(matrix%columnIndices(k)==j) THEN
-                  location=k
-                  EXIT
-                ENDIF
-              ENDDO !k
-            ENDIF
+      IF(j>=matrix%columnIndices(lowLimit)) THEN
+        upLimit=matrix%rowIndices(i+1)
+        IF(upLimit>lowLimit) THEN
+          IF(j<=matrix%columnIndices(upLimit-1)) THEN
+            DO WHILE((upLimit-lowLimit)>bisectionToLinearSearchThreshold)
+              midPoint=(upLimit+lowLimit)/2
+              IF(matrix%columnIndices(midPoint)>j) THEN
+                upLimit=midPoint
+              ELSE
+                lowLimit=midPoint
+              ENDIF
+            ENDDO
+            DO k=lowLimit,upLimit
+              IF(matrix%columnIndices(k)==j) THEN
+                location=k
+                EXIT
+              ENDIF
+            ENDDO !k
           ENDIF
         ENDIF
       ENDIF
     CASE(MATRIX_COMPRESSED_COLUMN_STORAGE_TYPE)
       !Search for the row number in the sparsity list using the bisection (binary search) algorithm
       lowLimit=matrix%columnIndices(j)
-      IF(lowLimit<=matrix%numberOfNonZeros) THEN
-        IF(i>=matrix%rowIndices(lowLimit)) THEN
-          upLimit=matrix%columnIndices(j+1)
-          IF(upLimit>matrix%numberOfNonZeros) upLimit=upLimit-1
-          IF(upLimit>lowLimit) THEN
-            IF(i<=matrix%rowIndices(upLimit-1)) THEN
-              DO WHILE((upLimit-lowLimit)>bisectionToLinearSearchThreshold)
-                midPoint=(upLimit+lowLimit)/2
-                IF(matrix%rowIndices(midPoint)>i) THEN
-                  upLimit=midPoint
-                ELSE
-                  lowLimit=midPoint
-                ENDIF
-              ENDDO
-              DO k=lowLimit,upLimit
-                IF(matrix%rowIndices(k)==i) THEN
-                  location=k
-                  EXIT
-                ENDIF
-              ENDDO !k
-            ENDIF
+      IF(i>=matrix%rowIndices(lowLimit)) THEN
+        upLimit=matrix%columnIndices(j+1)
+        IF(upLimit>lowLimit) THEN
+          IF(i<=matrix%rowIndices(upLimit-1)) THEN
+            DO WHILE((upLimit-lowLimit)>bisectionToLinearSearchThreshold)
+              midPoint=(upLimit+lowLimit)/2
+              IF(matrix%rowIndices(midPoint)>i) THEN
+                upLimit=midPoint
+              ELSE
+                lowLimit=midPoint
+              ENDIF
+            ENDDO
+            DO k=lowLimit,upLimit
+              IF(matrix%rowIndices(k)==i) THEN
+                location=k
+                EXIT
+              ENDIF
+            ENDDO !k
           ENDIF
         ENDIF
       ENDIF

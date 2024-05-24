@@ -4331,11 +4331,11 @@ CONTAINS
     TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
     !Local Variables
     INTEGER(INTG) :: basisLocalFaceIdx,basisLocalFaceDerivativeIdx,basisLocalFaceNodeIdx,componentIdx,derivativeIdx,elementIdx, &
-      & elementLocalNodeIdx,faceIdx,faceNumber,nodeIdx,maxNumberOfFaces,nodesInFace(16),numberOfFaces,newMaxNumberOfFaces, &
-      & surroundingElement,surroundingElementIdx,surroundingElementBasisLocalFaceIdx,versionIdx
+      & elementLocalNodeIdx,faceIdx,faceNumber,localNodeIdx1,localNodeIdx2,maxNumberOfFaces,nodeIdx,nodesInFace(16), &
+      & numberOfFaces,newMaxNumberOfFaces,surroundingElement,surroundingElementIdx,surroundingElementBasisLocalFaceIdx,versionIdx
     INTEGER(INTG), ALLOCATABLE :: nodesNumberOfFaces(:)
     INTEGER(INTG), POINTER :: tempFaces(:,:),newTempFaces(:,:)
-    LOGICAL :: found
+    LOGICAL :: allNodesFound,found,nodeFound
     TYPE(BasisType), POINTER :: basis,basis2
     TYPE(DecompositionType), POINTER :: decomposition
     TYPE(DecompositionElementType), POINTER :: decompositionElement
@@ -4414,24 +4414,34 @@ CONTAINS
           !Try and find a previously created face that matches in the adjacent elements
           found=.FALSE.
           nodeIdx=nodesInFace(1)
-          DO surroundingElementIdx=1,domainNodes%nodes(nodeIdx)%numberOfSurroundingElements
+          surroundingElementLoop: DO surroundingElementIdx=1,domainNodes%nodes(nodeIdx)%numberOfSurroundingElements
             surroundingElement=domainNodes%nodes(nodeIdx)%surroundingElements(surroundingElementIdx)
             IF(surroundingElement/=elementIdx) THEN
               IF(ALLOCATED(decompositionElements%elements(surroundingElement)%elementFaces)) THEN
                 basis2=>domainElements%elements(surroundingElement)%basis
-                DO surroundingElementBasisLocalFaceIdx=1,basis2%numberOfLocalFaces
+                surroundingElementFaceLoop: DO surroundingElementBasisLocalFaceIdx=1,basis2%numberOfLocalFaces
                   faceIdx=decompositionElements%elements(surroundingElement)%elementFaces( &
                     & surroundingElementBasisLocalFaceIdx)
-                  IF(ALL(nodesInFace(1:basis%numberOfNodesInLocalFace(basisLocalFaceIdx))== &
-                    & tempFaces(1:basis%numberOfNodesInLocalFace(basisLocalFaceIdx),faceIdx))) THEN
+                  allNodesFound=.TRUE.
+                  localFaceNodeLoop1: DO localNodeIdx1=1,basis%numberOfNodesInLocalFace(basisLocalFaceIdx)
+                    nodeFound=.FALSE.
+                    localFaceNodeLoop2: DO localNodeIdx2=1,basis%numberOfNodesInLocalFace(basisLocalFaceIdx)
+                      IF(nodesInFace(localNodeIdx1)==tempFaces(localNodeIdx2,faceIdx)) THEN
+                        nodeFound=.TRUE.
+                        EXIT localFaceNodeLoop2 !localNodeIdx1
+                      ENDIF
+                    ENDDO localFaceNodeLoop2 !localNodeIdx2
+                    allNodesFound=allNodesFound.AND.nodeFound
+                  ENDDO localFaceNodeLoop1 !localNodeIdx1
+                  IF(allNodesFound) THEN
                     found=.TRUE.
-                    EXIT
+                    EXIT surroundingElementFaceLoop
                   ENDIF
-                ENDDO !surroundingElementBasisLocalFaceIdx
-                IF(found) EXIT
+                ENDDO surroundingElementFaceLoop !surroundingElementBasisLocalFaceIdx
+                IF(found) EXIT surroundingElementLoop
               ENDIF
             ENDIF
-          ENDDO !surroundingElemntIdx
+          ENDDO surroundingElementLoop !surroundingElementIdx
           IF(found) THEN
             !Face has already been created
             decompositionElement%elementFaces(basisLocalFaceIdx)=faceIdx
@@ -4499,8 +4509,8 @@ CONTAINS
           domainFace=>domainFaces%faces(faceNumber)
           decompositionFace%numberOfSurroundingElements=decompositionFace%numberOfSurroundingElements+1
           IF(.NOT.ASSOCIATED(domainFace%basis)) THEN
-            decompositionFace%NUMBER=faceNumber
-            domainFace%NUMBER=faceNumber
+            decompositionFace%number=faceNumber
+            domainFace%number=faceNumber
             domainFace%elementNumber=elementIdx !! Needs checking
             !decompositionFace%elementNumber=decompositionElement%number
             !domainFace%elementNumber=domainElement%number
@@ -4561,9 +4571,9 @@ CONTAINS
         ALLOCATE(decompositionFace%surroundingElements(decompositionFace%numberOfSurroundingElements),STAT=err)
         IF(err/=0) CALL FlagError("Could not allocate face surrounding elements",err,error,*999)          
         ALLOCATE(decompositionFace%elementFaces(decompositionFace%numberOfSurroundingElements),STAT=err)
-        IF(err/=0) CALL FlagError("Could not allocate face element faces",err,error,*999)
+        IF(err/=0) CALL FlagError("Could not allocate face element faces",err,error,*999)        
+        decompositionFace%numberOfSurroundingElements=0
         
-        !decompositionFace%numberOfSurroundingElements=0
         !decompositionFace%ADJACENT_FACES=0
         !Loop over the nodes at each end of the face
         !DO nodeIdx1=0,1
@@ -4620,15 +4630,16 @@ CONTAINS
         decompositionElement=>decompositionElements%elements(elementIdx)
         domainElement=>domainElements%elements(elementIdx)
         basis=>domainElement%basis
+        !Loop over local faces of element
         DO basisLocalFaceIdx=1,basis%numberOfLocalFaces
           faceNumber=decompositionElement%elementFaces(basisLocalFaceIdx)
           decompositionFace=>decompositionFaces%faces(faceNumber)
-          DO faceIdx=1,decompositionFace%numberOfSurroundingElements
-            decompositionFace%surroundingElements(faceIdx)=elementIdx
-            decompositionFace%elementFaces(faceIdx)=basisLocalFaceIdx
-          ENDDO
+          decompositionFace%numberOfSurroundingElements=decompositionFace%numberOfSurroundingElements+1
+          decompositionFace%surroundingElements(decompositionFace%numberOfSurroundingElements)=elementIdx
+          decompositionFace%elementFaces(decompositionFace%numberOfSurroundingElements)=basisLocalFaceIdx
         ENDDO !basisLocalFaceIdx
       ENDDO !elementIdx
+          
     CASE DEFAULT
       CALL FlagError("Invalid number of dimensions for a topology domain",err,error,*999)
     END SELECT

@@ -9630,7 +9630,7 @@ CONTAINS
       & transposeMatrixCoefficient,vectorCoefficient
     REAL(DP), POINTER :: matrixCheckData(:),currentValuesVector(:),previousValuesVector(:),previousVelocityVector(:), &
       & previousAccelerationVector(:),previousResidualParameters(:),previous2ResidualParameters(:), &
-      & previous3ResidualParameters(:),rhsIntegratedParameters(:),rhsParameters(:),solverRHSCheckData(:),solverResidualCheckData(:)
+      & previous3ResidualParameters(:),rhsCoefficient,rhsIntegratedParameters(:),rhsParameters(:),solverRHSCheckData(:),solverResidualCheckData(:)
     LOGICAL :: hasIntegratedValues,hasTranspose,includeResidual,interfaceMatrixDynamic,rhsLinearMatrix,rhsResidual, &
       & updateResidual,updateRHS,updateSolverMatrix
     TYPE(BoundaryConditionsType), POINTER :: boundaryConditions
@@ -10486,6 +10486,7 @@ CONTAINS
             CALL FieldVariable_ParameterSetCreated(rhsVariable,FIELD_INTEGRATED_NEUMANN_SET_TYPE,hasIntegratedValues, &
               & err,error,*999)
             CALL EquationsMatricesVector_RHSVectorGet(vectorMatrices,rhsVector,err,error,*999)
+            CALL EquationsMatricesRHS_VectorCoefficientGet(rhsVector,rhsCoefficient,err,error,*999)
             CALL EquationsMatricesRHS_DistributedVectorGet(rhsVector,EQUATIONS_MATRICES_CURRENT_VECTOR,currentRHSVector, &
               & err,error,*999)
             CALL EquationsMatricesRHS_DistributedVectorGet(rhsVector,EQUATIONS_MATRICES_PREVIOUS_VECTOR,previousRHSVector, &
@@ -10579,6 +10580,7 @@ CONTAINS
                   rhsValue=rhsValue+previous3RHSValue*previous3FunctionFactor
                 ENDIF
               ENDIF
+              rhsValue=rhsValue*rhsCoefficient
             ELSE
               rhsValue=0.0_DP
             ENDIF
@@ -11367,8 +11369,8 @@ CONTAINS
     INTEGER(INTG), POINTER :: equationsRowToLHSDOFMap(:),equationsRowToRHSDOFMap(:)
     REAL(SP) :: systemElapsed,systemTime1(1),systemTime2(1),userElapsed,userTime1(1),userTime2(1)
     REAL(DP) :: alphaValue,currentRHSValue,dependentValue,dofValue,linearValue,linearValueSum,matrixCoefficient, &
-      & matrixCoefficients(2),nonlinearValue,residualCoefficient,residualValue,rhsIntegratedValue,rhsValue,solverRHSValue, &
-      & sourceCoefficient,sourceValue
+      & matrixCoefficients(2),nonlinearValue,residualCoefficient,residualValue,rhsCoefficient,rhsIntegratedValue,rhsValue, &
+      & solverRHSValue,sourceCoefficient,sourceValue
     REAL(DP), POINTER :: checkData(:),checkData2(:),checkData3(:),checkData4(:),matrixCheckData(:),rhsIntegratedParameters(:), &
       & rhsParameters(:),solverResidualCheckData(:),solverRHSCheckData(:)
     TYPE(RealDPPtrType), ALLOCATABLE :: dependentParameters(:)
@@ -11796,6 +11798,7 @@ CONTAINS
             CALL FieldVariable_ParameterSetCreated(rhsVariable,FIELD_INTEGRATED_NEUMANN_SET_TYPE,hasIntegratedValues, &
               & err,error,*999)
             CALL EquationsMatricesVector_RHSVectorGet(vectorMatrices,rhsVector,err,error,*999)
+            CALL EquationsMatricesRHS_VectorCoefficientGet(rhsVector,rhsCoefficient,err,error,*999)
             CALL EquationsMatricesRHS_DistributedVectorGet(rhsVector,EQUATIONS_MATRICES_CURRENT_VECTOR,currentRHSVector, &
               & err,error,*999)
             CALL FieldVariable_ParameterSetDataGet(rhsVariable,FIELD_VALUES_SET_TYPE,rhsParameters,err,error,*999) 
@@ -11862,6 +11865,7 @@ CONTAINS
                   & err,error,*999)
               ENDIF
               CALL DistributedVector_ValuesGet(currentRHSVector,equationsRowNumber,rhsValue,err,error,*999)
+              rhsValue=rhsValue*rhsCoefficient
             ELSE
               rhsValue=0.0_DP
             ENDIF

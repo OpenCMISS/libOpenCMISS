@@ -2130,6 +2130,7 @@ CONTAINS
             CALL EquationsMappingVector_DynamicVariableTypeSet(vectorMapping,FIELD_U_VARIABLE_TYPE,err,error,*999)
             CALL EquationsMappingVector_RHSVariableTypeSet(vectorMapping,FIELD_DELUDELN_VARIABLE_TYPE,err,error,*999)
           END SELECT
+          CALL EquationsMappingVector_RHSCoefficientSet(vectorMapping,-1.0_DP,err,error,*999)
           NULLIFY(sourceField)
           CALL EquationsSet_SourceFieldExists(equationsSet,sourceField,err,error,*999)
           IF(ASSOCIATED(sourceField)) THEN

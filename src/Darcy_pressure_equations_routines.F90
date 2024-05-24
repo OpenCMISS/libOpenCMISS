@@ -881,6 +881,7 @@ CONTAINS
           CALL EquationsMappingVector_ResidualVariableTypesSet(vectorMapping,1,[FIELD_V_VARIABLE_TYPE,FIELD_U_VARIABLE_TYPE], &
             & err,error,*999)
           CALL EquationsMappingVector_RHSVariableTypeSet(vectorMapping,FIELD_DELVDELN_VARIABLE_TYPE,err,error,*999)
+          CALL EquationsMappingVector_RHSCoefficientSet(vectorMapping,-1.0_DP,err,error,*999)
           CALL EquationsMapping_VectorCreateFinish(vectorMapping,err,error,*999)
           !Create the equations matrices
           NULLIFY(vectorMatrices)

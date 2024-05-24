@@ -1,4 +1,4 @@
-!!> \file
+!> \file
 !> \author Chris Bradley
 !> \brief This module handles all equations set routines.
 !>
@@ -435,9 +435,9 @@ CONTAINS
           DO nodeIdx=1,numberOfNodes
             CALL Field_PositionNormalTangentsCalculateNode(dependentField,variableType,componentIdx,nodeIdx,position,normal, &
               & tangents,err,error,*999)
-            IF(ASSOCIATED(analyticField)) CALL Field_InterpolateFieldVariableNode(NO_PHYSICAL_DERIV,FIELD_VALUES_SET_TYPE, &
-                & analyticVariable,componentIdx,nodeIdx,analyticPhysicalPoint,err,error,*999)
-            IF(ASSOCIATED(materialsField)) CALL Field_InterpolateFieldVariableNode(NO_PHYSICAL_DERIV,FIELD_VALUES_SET_TYPE, &
+            IF(ASSOCIATED(analyticField)) CALL Field_InterpolateFieldVariableNode(NO_PHYSICAL_DERIVATIVE,FIELD_VALUES_SET_TYPE, &
+              & analyticVariable,componentIdx,nodeIdx,analyticPhysicalPoint,err,error,*999)
+            IF(ASSOCIATED(materialsField)) CALL Field_InterpolateFieldVariableNode(NO_PHYSICAL_DERIVATIVE,FIELD_VALUES_SET_TYPE, &
               & materialsVariable,componentIdx,nodeIdx,materialsPhysicalPoint,err,error,*999)
             !Loop over the derivatives
             CALL DomainNodes_NodeNumberOfDerivativesGet(domainNodes,nodeIdx,numberOfNodeDerivatives,err,error,*999)
@@ -447,18 +447,19 @@ CONTAINS
               IF(ASSOCIATED(analyticField)) THEN
                 IF(ASSOCIATED(materialsField)) THEN
                   CALL EquationsSet_AnalyticFunctionsEvaluate(equationsSet,analyticFunctionType,position,tangents,normal, &
-                    & analyticTime,variableType,globalDerivativeIndex,componentIdx,analyticPhysicalPoint%values, &
-                    & materialsPhysicalPoint%values,analyticValue,err,error,*999)
+                    & analyticTime,variableType,globalDerivativeIndex,componentIdx,analyticPhysicalPoint% &
+                    & values(:,NO_PHYSICAL_DERIV),materialsPhysicalPoint%values(:,NO_PHYSICAL_DERIV),analyticValue, &
+                    & err,error,*999)
                 ELSE
                   CALL EquationsSet_AnalyticFunctionsEvaluate(equationsSet,analyticFunctionType,position,tangents,normal, &
-                    & analyticTime,variableType,globalDerivativeIndex,componentIdx,analyticPhysicalPoint%values, &
-                    & materialsDummyValues,analyticValue,err,error,*999)
+                    & analyticTime,variableType,globalDerivativeIndex,componentIdx,analyticPhysicalPoint% &
+                    & values(:,NO_PHYSICAL_DERIV),materialsDummyValues,analyticValue,err,error,*999)
                 ENDIF
               ELSE
                 IF(ASSOCIATED(materialsField)) THEN
                   CALL EquationsSet_AnalyticFunctionsEvaluate(equationsSet,analyticFunctionType,position,tangents,normal, &
                     & analyticTime,variableType,globalDerivativeIndex,componentIdx,analyticDummyValues, &
-                    & materialsPhysicalPoint%values,analyticValue,err,error,*999)
+                    & materialsPhysicalPoint%values(:,NO_PHYSICAL_DERIV),analyticValue,err,error,*999)
                 ELSE
                   CALL EquationsSet_AnalyticFunctionsEvaluate(equationsSet,analyticFunctionType,position,tangents,normal, &
                     & analyticTime,variableType,globalDerivativeIndex,componentIdx,analyticDummyValues,materialsDummyValues, &

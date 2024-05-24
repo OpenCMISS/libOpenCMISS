@@ -1433,6 +1433,7 @@ CONTAINS
             CALL EquationsMappingVector_ResidualVariableTypesSet(vectorMapping,1,FIELD_U_VARIABLE_TYPE,err,error,*999)            
           ENDIF
           CALL EquationsMappingVector_RHSVariableTypeSet(vectorMapping,FIELD_DELUDELN_VARIABLE_TYPE,err,error,*999)
+          CALL EquationsMappingVector_RHSCoefficientSet(vectorMapping,-1.0_DP,err,error,*999)
           IF(ASSOCIATED(equationsSource)) THEN
             CALL EquationsMappingVector_NumberOfSourcesSet(vectorMapping,1,err,error,*999)
             CALL EquationsMappingVector_SourcesVariableTypesSet(vectorMapping,FIELD_U_VARIABLE_TYPE,err,error,*999)

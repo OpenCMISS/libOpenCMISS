@@ -340,6 +340,15 @@ MODULE InputOutput
     MODULE PROCEDURE WriteStringMatrixSP
   END INTERFACE WriteStringMatrix
 
+  !>Write a string followed by a transposed matrix to a specified output stream
+  INTERFACE WriteStringMatrixTranspose
+    MODULE PROCEDURE WriteStringMatrixTransposeDP
+    MODULE PROCEDURE WriteStringMatrixTransposeIntg
+    MODULE PROCEDURE WriteStringMatrixTransposeLIntg
+    MODULE PROCEDURE WriteStringMatrixTransposeL
+    MODULE PROCEDURE WriteStringMatrixTransposeSP
+  END INTERFACE WriteStringMatrixTranspose
+
   !>Write a string followed by a matrix to a specified output stream
   INTERFACE WriteStringMatrixFour
     MODULE PROCEDURE WriteStringMatrixFourDP
@@ -369,6 +378,8 @@ MODULE InputOutput
   PUBLIC WriteStringIdxVector
 
   PUBLIC WriteStringMatrix
+
+  PUBLIC WriteStringMatrixTranspose
 
   PUBLIC WriteStringMatrixFour
 
@@ -4165,6 +4176,336 @@ CONTAINS
     RETURN 1
     
   END SUBROUTINE WriteStringMatrixSP
+
+  !
+  !================================================================================================================================
+  !
+
+  !>Writes the given double precision tranposed matrix to the given output stream specified by ID. The basic output is determined by the flag indexFormatType. If indexFormatType is WRITE_STRING_MATRIX_NAME_ONLY then the first line of output for each column is matrixNameFormat concatenated named with the firstFormat. If indexFormatType is WRITE_STRING_MATRIX_NAME_AND_INDICES then the first line of output for each column is matrixNameFormat concatenated with columnIndexFormat and concatenated with firstFormat. Note that with a WRITE_STRING_MATRIX_NAME_AND_INDICES index format type the column number will be supplied to the format before the matrix data. The firstFormat is the format initially used, followed by the repeatFormat which is repeated as many times as necessary. numberFirst is the number of data items in the firstFormat and numberRepeat is the number of data items in the repeatFormat. firstRow/firstColumn and lastRow/lastColumn are the extents of the row/column and deltaRow/deltaColumn is the number of indices to skip for each row/column index.
+  SUBROUTINE WriteStringMatrixTransposeDP(id,firstRow,deltaRow,lastRow,firstColumn,deltaColumn,lastColumn,numberFirst, &
+    & numberRepeat,matrix,indexFormatType,matrixNameFormat,columnIndexFormat,firstFormat,repeatFormat,err,error,*)
+
+    !Argument variables
+    INTEGER(INTG), INTENT(IN) :: id !<The ID of the output stream. An ID of > 9 specifies file output \see BaseRoutines_OutputType,BaseRoutines_FileUnits
+    INTEGER(INTG), INTENT(IN) :: firstRow !<The first row of the matrix to be output
+    INTEGER(INTG), INTENT(IN) :: deltaRow !<The delta row increment to be used when outputing the first through to the last matrix row
+    INTEGER(INTG), INTENT(IN) :: lastRow !<The last row of the matrix to be output
+    INTEGER(INTG), INTENT(IN) :: firstColumn !<The first column of the matrix to be output
+    INTEGER(INTG), INTENT(IN) :: deltaColumn !<The delta column increate to be used when outputing the first through to the last matrix column
+    INTEGER(INTG), INTENT(IN) :: lastColumn !<The last column of the matrix to be output
+    INTEGER(INTG), INTENT(IN) :: numberFirst !<The number of matrix elements to be output on the first line
+    INTEGER(INTG), INTENT(IN) :: numberRepeat !<The number of matrix elements to be output on the second and subsequently repeated lines
+    REAL(DP), INTENT(IN) :: matrix(:,:) !<The matrix to be output
+    INTEGER(INTG), INTENT(IN) :: indexFormatType !<The format type to be used for the matrix name and indices \see InputOutput_MatrixNameIndexFormat,InputOutput::MatrixNameIndexFormat
+    CHARACTER(LEN=*), INTENT(IN) :: matrixNameFormat !<The format string to be used to format the matrix name
+    CHARACTER(LEN=*), INTENT(IN) :: columnIndexFormat !<The format string to be used to format the column indices
+    CHARACTER(LEN=*), INTENT(IN) :: firstFormat !<The format string to be used for the first line of output
+    CHARACTER(LEN=*), INTENT(IN) :: repeatFormat !<The format type to be used for the second and subsequently repeated lines of output
+    INTEGER(INTG), INTENT(OUT) :: err !<The error code
+    TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
+    !Local variables
+    INTEGER(INTG) ::  currentRow,currentColumn,finalRow,count
+    CHARACTER(LEN=MAXSTRLEN) :: formatStr
+
+!    ENTERS("WriteStringMatrixTransposeDP",err,error,*999)
+
+    IF(indexFormatType==WRITE_STRING_MATRIX_NAME_ONLY) THEN
+      formatStr=matrixNameFormat//firstFormat
+    ELSE IF(indexFormatType==WRITE_STRING_MATRIX_NAME_AND_INDICES) THEN
+      formatStr=matrixNameFormat//columnIndexFormat//firstFormat
+    ELSE
+      CALL FlagError("Invalid index format type.",err,error,*999)
+    ENDIF
+    DO currentColumn=firstColumn,lastColumn,deltaColumn
+      currentRow=firstRow
+      finalRow=currentRow+(numberFirst-1)*deltaRow
+      IF(finalRow>lastRow) finalRow=lastRow
+      IF(indexFormatType==WRITE_STRING_MATRIX_NAME_ONLY) THEN
+        WRITE(outputString,FMT=formatStr) (matrix(count,currentColumn),count=currentRow,finalRow,deltaRow)
+      ELSE IF(indexFormatType==WRITE_STRING_MATRIX_NAME_AND_INDICES) THEN
+        WRITE(outputString,FMT=formatStr) currentColumn,(matrix(count,currentColumn),count=currentRow,finalRow,deltaRow)
+      ENDIF
+      CALL WriteStr(id,err,error,*999)
+      DO WHILE(finalRow<lastRow) !more stuff to do
+        currentRow=finalRow+deltaRow
+        finalRow=finalRow+numberRepeat*deltaRow
+        IF(finalRow>lastRow) finalRow=lastRow
+        WRITE(outputString,FMT=repeatFormat) (matrix(count,currentColumn),count=currentRow,finalRow,deltaRow)
+        CALL WriteStr(id,err,error,*999)
+      ENDDO !finalRow<lastRow
+    ENDDO !currentColumn
+    
+!    EXITS("WriteStringMatrixTransposeDP")
+    RETURN
+999 ERRORS("WriteStringMatrixTransposeDP",err,error)
+!    EXITS("WriteStringMatrixTransposeDP")
+    RETURN 1
+    
+  END SUBROUTINE WriteStringMatrixTransposeDP
+
+  !
+  !================================================================================================================================
+  !
+
+  !>Writes the given integer tranposed matrix to the given output stream specified by ID. The basic output is determined by the flag indexFormatType. If indexFormatType is WRITE_STRING_MATRIX_NAME_ONLY then the first line of output for each column is matrixNameFormat concatenated named with the firstFormat. If indexFormatType is WRITE_STRING_MATRIX_NAME_AND_INDICES then the first line of output for each column is matrixNameFormat concatenated with columnIndexFormat and concatenated with firstFormat. Note that with a WRITE_STRING_MATRIX_NAME_AND_INDICES index format type the column number will be supplied to the format before the matrix data. The firstFormat is the format initially used, followed by the repeatFormat which is repeated as many times as necessary. numberFirst is the number of data items in the firstFormat and numberRepeat is the number of data items in the repeatFormat. firstRow/firstColumn and lastRow/lastColumn are the extents of the row/column and deltaRow/deltaColumn is the number of indices to skip for each row/column index.
+  SUBROUTINE WriteStringMatrixTransposeIntg(id,firstRow,deltaRow,lastRow,firstColumn,deltaColumn,lastColumn,numberFirst, &
+    & numberRepeat,matrix,indexFormatType,matrixNameFormat,columnIndexFormat,firstFormat,repeatFormat,err,error,*)
+
+    !Argument variables
+    INTEGER(INTG), INTENT(IN) :: id !<The ID of the output stream. An ID of > 9 specifies file output \see BaseRoutines_OutputType,BaseRoutines_FileUnits
+    INTEGER(INTG), INTENT(IN) :: firstRow !<The first row of the matrix to be output
+    INTEGER(INTG), INTENT(IN) :: deltaRow !<The delta row increment to be used when outputing the first through to the last matrix row
+    INTEGER(INTG), INTENT(IN) :: lastRow !<The last row of the matrix to be output
+    INTEGER(INTG), INTENT(IN) :: firstColumn !<The first column of the matrix to be output
+    INTEGER(INTG), INTENT(IN) :: deltaColumn !<The delta column increate to be used when outputing the first through to the last matrix column
+    INTEGER(INTG), INTENT(IN) :: lastColumn !<The last column of the matrix to be output
+    INTEGER(INTG), INTENT(IN) :: numberFirst !<The number of matrix elements to be output on the first line
+    INTEGER(INTG), INTENT(IN) :: numberRepeat !<The number of matrix elements to be output on the second and subsequently repeated lines
+    INTEGER(INTG), INTENT(IN) :: matrix(:,:) !<The matrix to be output
+    INTEGER(INTG), INTENT(IN) :: indexFormatType !<The format type to be used for the matrix name and indices \see InputOutput_MatrixNameIndexFormat,InputOutput::MatrixNameIndexFormat
+    CHARACTER(LEN=*), INTENT(IN) :: matrixNameFormat !<The format string to be used to format the matrix name
+    CHARACTER(LEN=*), INTENT(IN) :: columnIndexFormat !<The format string to be used to format the column indices
+    CHARACTER(LEN=*), INTENT(IN) :: firstFormat !<The format string to be used for the first line of output
+    CHARACTER(LEN=*), INTENT(IN) :: repeatFormat !<The format type to be used for the second and subsequently repeated lines of output
+    INTEGER(INTG), INTENT(OUT) :: err !<The error code
+    TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
+    !Local variables
+    INTEGER(INTG) ::  currentRow,currentColumn,finalRow,count
+    CHARACTER(LEN=MAXSTRLEN) :: formatStr
+
+!    ENTERS("WriteStringMatrixTransposeIntg",err,error,*999)
+
+    IF(indexFormatType==WRITE_STRING_MATRIX_NAME_ONLY) THEN
+      formatStr=matrixNameFormat//firstFormat
+    ELSE IF(indexFormatType==WRITE_STRING_MATRIX_NAME_AND_INDICES) THEN
+      formatStr=matrixNameFormat//columnIndexFormat//firstFormat
+    ELSE
+      CALL FlagError("Invalid index format type.",err,error,*999)
+    ENDIF
+    DO currentColumn=firstColumn,lastColumn,deltaColumn
+      currentRow=firstRow
+      finalRow=currentRow+(numberFirst-1)*deltaRow
+      IF(finalRow>lastRow) finalRow=lastRow
+      IF(indexFormatType==WRITE_STRING_MATRIX_NAME_ONLY) THEN
+        WRITE(outputString,FMT=formatStr) (matrix(count,currentColumn),count=currentRow,finalRow,deltaRow)
+      ELSE IF(indexFormatType==WRITE_STRING_MATRIX_NAME_AND_INDICES) THEN
+        WRITE(outputString,FMT=formatStr) currentColumn,(matrix(count,currentColumn),count=currentRow,finalRow,deltaRow)
+      ENDIF
+      CALL WriteStr(id,err,error,*999)
+      DO WHILE(finalRow<lastRow) !more stuff to do
+        currentRow=finalRow+deltaRow
+        finalRow=finalRow+numberRepeat*deltaRow
+        IF(finalRow>lastRow) finalRow=lastRow
+        WRITE(outputString,FMT=repeatFormat) (matrix(count,currentColumn),count=currentRow,finalRow,deltaRow)
+        CALL WriteStr(id,err,error,*999)
+      ENDDO !finalRow<lastRow
+    ENDDO !currentColumn
+    
+!    EXITS("WriteStringMatrixTransposeIntg")
+    RETURN
+999 ERRORS("WriteStringMatrixTransposeIntg",err,error)
+!    EXITS("WriteStringMatrixTransposeIntg")
+    RETURN 1
+    
+  END SUBROUTINE WriteStringMatrixTransposeIntg
+
+  !
+  !================================================================================================================================
+  !
+
+  !>Writes the given long integer tranposed matrix to the given output stream specified by ID. The basic output is determined by the flag indexFormatType. If indexFormatType is WRITE_STRING_MATRIX_NAME_ONLY then the first line of output for each column is matrixNameFormat concatenated named with the firstFormat. If indexFormatType is WRITE_STRING_MATRIX_NAME_AND_INDICES then the first line of output for each column is matrixNameFormat concatenated with columnIndexFormat and concatenated with firstFormat. Note that with a WRITE_STRING_MATRIX_NAME_AND_INDICES index format type the column number will be supplied to the format before the matrix data. The firstFormat is the format initially used, followed by the repeatFormat which is repeated as many times as necessary. numberFirst is the number of data items in the firstFormat and numberRepeat is the number of data items in the repeatFormat. firstRow/firstColumn and lastRow/lastColumn are the extents of the row/column and deltaRow/deltaColumn is the number of indices to skip for each row/column index.
+  SUBROUTINE WriteStringMatrixTransposeLIntg(id,firstRow,deltaRow,lastRow,firstColumn,deltaColumn,lastColumn,numberFirst, &
+    & numberRepeat,matrix,indexFormatType,matrixNameFormat,columnIndexFormat,firstFormat,repeatFormat,err,error,*)
+
+    !Argument variables
+    INTEGER(INTG), INTENT(IN) :: id !<The ID of the output stream. An ID of > 9 specifies file output \see BaseRoutines_OutputType,BaseRoutines_FileUnits
+    INTEGER(INTG), INTENT(IN) :: firstRow !<The first row of the matrix to be output
+    INTEGER(INTG), INTENT(IN) :: deltaRow !<The delta row increment to be used when outputing the first through to the last matrix row
+    INTEGER(INTG), INTENT(IN) :: lastRow !<The last row of the matrix to be output
+    INTEGER(INTG), INTENT(IN) :: firstColumn !<The first column of the matrix to be output
+    INTEGER(INTG), INTENT(IN) :: deltaColumn !<The delta column increate to be used when outputing the first through to the last matrix column
+    INTEGER(INTG), INTENT(IN) :: lastColumn !<The last column of the matrix to be output
+    INTEGER(INTG), INTENT(IN) :: numberFirst !<The number of matrix elements to be output on the first line
+    INTEGER(INTG), INTENT(IN) :: numberRepeat !<The number of matrix elements to be output on the second and subsequently repeated lines
+    INTEGER(LINTG), INTENT(IN) :: matrix(:,:) !<The matrix to be output
+    INTEGER(INTG), INTENT(IN) :: indexFormatType !<The format type to be used for the matrix name and indices \see InputOutput_MatrixNameIndexFormat,InputOutput::MatrixNameIndexFormat
+    CHARACTER(LEN=*), INTENT(IN) :: matrixNameFormat !<The format string to be used to format the matrix name
+    CHARACTER(LEN=*), INTENT(IN) :: columnIndexFormat !<The format string to be used to format the column indices
+    CHARACTER(LEN=*), INTENT(IN) :: firstFormat !<The format string to be used for the first line of output
+    CHARACTER(LEN=*), INTENT(IN) :: repeatFormat !<The format type to be used for the second and subsequently repeated lines of output
+    INTEGER(INTG), INTENT(OUT) :: err !<The error code
+    TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
+    !Local variables
+    INTEGER(INTG) ::  currentRow,currentColumn,finalRow,count
+    CHARACTER(LEN=MAXSTRLEN) :: formatStr
+
+!    ENTERS("WriteStringMatrixTransposeLIntg",err,error,*999)
+
+    IF(indexFormatType==WRITE_STRING_MATRIX_NAME_ONLY) THEN
+      formatStr=matrixNameFormat//firstFormat
+    ELSE IF(indexFormatType==WRITE_STRING_MATRIX_NAME_AND_INDICES) THEN
+      formatStr=matrixNameFormat//columnIndexFormat//firstFormat
+    ELSE
+      CALL FlagError("Invalid index format type.",err,error,*999)
+    ENDIF
+    DO currentColumn=firstColumn,lastColumn,deltaColumn
+      currentRow=firstRow
+      finalRow=currentRow+(numberFirst-1)*deltaRow
+      IF(finalRow>lastRow) finalRow=lastRow
+      IF(indexFormatType==WRITE_STRING_MATRIX_NAME_ONLY) THEN
+        WRITE(outputString,FMT=formatStr) (matrix(count,currentColumn),count=currentRow,finalRow,deltaRow)
+      ELSE IF(indexFormatType==WRITE_STRING_MATRIX_NAME_AND_INDICES) THEN
+        WRITE(outputString,FMT=formatStr) currentColumn,(matrix(count,currentColumn),count=currentRow,finalRow,deltaRow)
+      ENDIF
+      CALL WriteStr(id,err,error,*999)
+      DO WHILE(finalRow<lastRow) !more stuff to do
+        currentRow=finalRow+deltaRow
+        finalRow=finalRow+numberRepeat*deltaRow
+        IF(finalRow>lastRow) finalRow=lastRow
+        WRITE(outputString,FMT=repeatFormat) (matrix(count,currentColumn),count=currentRow,finalRow,deltaRow)
+        CALL WriteStr(id,err,error,*999)
+      ENDDO !finalRow<lastRow
+    ENDDO !currentColumn
+    
+!    EXITS("WriteStringMatrixTransposeLIntg")
+    RETURN
+999 ERRORS("WriteStringMatrixTransposeLIntg",err,error)
+!    EXITS("WriteStringMatrixTransposeLIntg")
+    RETURN 1
+    
+  END SUBROUTINE WriteStringMatrixTransposeLIntg
+
+  !
+  !================================================================================================================================
+  !
+
+  !>Writes the given logical tranposed matrix to the given output stream specified by ID. The basic output is determined by the flag indexFormatType. If indexFormatType is WRITE_STRING_MATRIX_NAME_ONLY then the first line of output for each column is matrixNameFormat concatenated named with the firstFormat. If indexFormatType is WRITE_STRING_MATRIX_NAME_AND_INDICES then the first line of output for each column is matrixNameFormat concatenated with columnIndexFormat and concatenated with firstFormat. Note that with a WRITE_STRING_MATRIX_NAME_AND_INDICES index format type the column number will be supplied to the format before the matrix data. The firstFormat is the format initially used, followed by the repeatFormat which is repeated as many times as necessary. numberFirst is the number of data items in the firstFormat and numberRepeat is the number of data items in the repeatFormat. firstRow/firstColumn and lastRow/lastColumn are the extents of the row/column and deltaRow/deltaColumn is the number of indices to skip for each row/column index.
+  SUBROUTINE WriteStringMatrixTransposeL(id,firstRow,deltaRow,lastRow,firstColumn,deltaColumn,lastColumn,numberFirst, &
+    & numberRepeat,matrix,indexFormatType,matrixNameFormat,columnIndexFormat,firstFormat,repeatFormat,err,error,*)
+
+    !Argument variables
+    INTEGER(INTG), INTENT(IN) :: id !<The ID of the output stream. An ID of > 9 specifies file output \see BaseRoutines_OutputType,BaseRoutines_FileUnits
+    INTEGER(INTG), INTENT(IN) :: firstRow !<The first row of the matrix to be output
+    INTEGER(INTG), INTENT(IN) :: deltaRow !<The delta row increment to be used when outputing the first through to the last matrix row
+    INTEGER(INTG), INTENT(IN) :: lastRow !<The last row of the matrix to be output
+    INTEGER(INTG), INTENT(IN) :: firstColumn !<The first column of the matrix to be output
+    INTEGER(INTG), INTENT(IN) :: deltaColumn !<The delta column increate to be used when outputing the first through to the last matrix column
+    INTEGER(INTG), INTENT(IN) :: lastColumn !<The last column of the matrix to be output
+    INTEGER(INTG), INTENT(IN) :: numberFirst !<The number of matrix elements to be output on the first line
+    INTEGER(INTG), INTENT(IN) :: numberRepeat !<The number of matrix elements to be output on the second and subsequently repeated lines
+    LOGICAL, INTENT(IN) :: matrix(:,:) !<The matrix to be output
+    INTEGER(INTG), INTENT(IN) :: indexFormatType !<The format type to be used for the matrix name and indices \see InputOutput_MatrixNameIndexFormat,InputOutput::MatrixNameIndexFormat
+    CHARACTER(LEN=*), INTENT(IN) :: matrixNameFormat !<The format string to be used to format the matrix name
+    CHARACTER(LEN=*), INTENT(IN) :: columnIndexFormat !<The format string to be used to format the column indices
+    CHARACTER(LEN=*), INTENT(IN) :: firstFormat !<The format string to be used for the first line of output
+    CHARACTER(LEN=*), INTENT(IN) :: repeatFormat !<The format type to be used for the second and subsequently repeated lines of output
+    INTEGER(INTG), INTENT(OUT) :: err !<The error code
+    TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
+    !Local variables
+    INTEGER(INTG) ::  currentRow,currentColumn,finalRow,count
+    CHARACTER(LEN=MAXSTRLEN) :: formatStr
+
+!    ENTERS("WriteStringMatrixTransposeL",err,error,*999)
+
+    IF(indexFormatType==WRITE_STRING_MATRIX_NAME_ONLY) THEN
+      formatStr=matrixNameFormat//firstFormat
+    ELSE IF(indexFormatType==WRITE_STRING_MATRIX_NAME_AND_INDICES) THEN
+      formatStr=matrixNameFormat//columnIndexFormat//firstFormat
+    ELSE
+      CALL FlagError("Invalid index format type.",err,error,*999)
+    ENDIF
+    DO currentColumn=firstColumn,lastColumn,deltaColumn
+      currentRow=firstRow
+      finalRow=currentRow+(numberFirst-1)*deltaRow
+      IF(finalRow>lastRow) finalRow=lastRow
+      IF(indexFormatType==WRITE_STRING_MATRIX_NAME_ONLY) THEN
+        WRITE(outputString,FMT=formatStr) (matrix(count,currentColumn),count=currentRow,finalRow,deltaRow)
+      ELSE IF(indexFormatType==WRITE_STRING_MATRIX_NAME_AND_INDICES) THEN
+        WRITE(outputString,FMT=formatStr) currentColumn,(matrix(count,currentColumn),count=currentRow,finalRow,deltaRow)
+      ENDIF
+      CALL WriteStr(id,err,error,*999)
+      DO WHILE(finalRow<lastRow) !more stuff to do
+        currentRow=finalRow+deltaRow
+        finalRow=finalRow+numberRepeat*deltaRow
+        IF(finalRow>lastRow) finalRow=lastRow
+        WRITE(outputString,FMT=repeatFormat) (matrix(count,currentColumn),count=currentRow,finalRow,deltaRow)
+        CALL WriteStr(id,err,error,*999)
+      ENDDO !finalRow<lastRow
+    ENDDO !currentColumn
+    
+!    EXITS("WriteStringMatrixTransposeL")
+    RETURN
+999 ERRORS("WriteStringMatrixTransposeL",err,error)
+!    EXITS("WriteStringMatrixTransposeL")
+    RETURN 1
+    
+  END SUBROUTINE WriteStringMatrixTransposeL
+
+  !
+  !================================================================================================================================
+  !
+
+  !>Writes the given single precision tranposed matrix to the given output stream specified by ID. The basic output is determined by the flag indexFormatType. If indexFormatType is WRITE_STRING_MATRIX_NAME_ONLY then the first line of output for each column is matrixNameFormat concatenated named with the firstFormat. If indexFormatType is WRITE_STRING_MATRIX_NAME_AND_INDICES then the first line of output for each column is matrixNameFormat concatenated with columnIndexFormat and concatenated with firstFormat. Note that with a WRITE_STRING_MATRIX_NAME_AND_INDICES index format type the column number will be supplied to the format before the matrix data. The firstFormat is the format initially used, followed by the repeatFormat which is repeated as many times as necessary. numberFirst is the number of data items in the firstFormat and numberRepeat is the number of data items in the repeatFormat. firstRow/firstColumn and lastRow/lastColumn are the extents of the row/column and deltaRow/deltaColumn is the number of indices to skip for each row/column index.
+  SUBROUTINE WriteStringMatrixTransposeSP(id,firstRow,deltaRow,lastRow,firstColumn,deltaColumn,lastColumn,numberFirst, &
+    & numberRepeat,matrix,indexFormatType,matrixNameFormat,columnIndexFormat,firstFormat,repeatFormat,err,error,*)
+
+    !Argument variables
+    INTEGER(INTG), INTENT(IN) :: id !<The ID of the output stream. An ID of > 9 specifies file output \see BaseRoutines_OutputType,BaseRoutines_FileUnits
+    INTEGER(INTG), INTENT(IN) :: firstRow !<The first row of the matrix to be output
+    INTEGER(INTG), INTENT(IN) :: deltaRow !<The delta row increment to be used when outputing the first through to the last matrix row
+    INTEGER(INTG), INTENT(IN) :: lastRow !<The last row of the matrix to be output
+    INTEGER(INTG), INTENT(IN) :: firstColumn !<The first column of the matrix to be output
+    INTEGER(INTG), INTENT(IN) :: deltaColumn !<The delta column increate to be used when outputing the first through to the last matrix column
+    INTEGER(INTG), INTENT(IN) :: lastColumn !<The last column of the matrix to be output
+    INTEGER(INTG), INTENT(IN) :: numberFirst !<The number of matrix elements to be output on the first line
+    INTEGER(INTG), INTENT(IN) :: numberRepeat !<The number of matrix elements to be output on the second and subsequently repeated lines
+    REAL(SP), INTENT(IN) :: matrix(:,:) !<The matrix to be output
+    INTEGER(INTG), INTENT(IN) :: indexFormatType !<The format type to be used for the matrix name and indices \see InputOutput_MatrixNameIndexFormat,InputOutput::MatrixNameIndexFormat
+    CHARACTER(LEN=*), INTENT(IN) :: matrixNameFormat !<The format string to be used to format the matrix name
+    CHARACTER(LEN=*), INTENT(IN) :: columnIndexFormat !<The format string to be used to format the column indices
+    CHARACTER(LEN=*), INTENT(IN) :: firstFormat !<The format string to be used for the first line of output
+    CHARACTER(LEN=*), INTENT(IN) :: repeatFormat !<The format type to be used for the second and subsequently repeated lines of output
+    INTEGER(INTG), INTENT(OUT) :: err !<The error code
+    TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
+    !Local variables
+    INTEGER(INTG) ::  currentRow,currentColumn,finalRow,count
+    CHARACTER(LEN=MAXSTRLEN) :: formatStr
+
+!    ENTERS("WriteStringMatrixTransposeSP",err,error,*999)
+
+    IF(indexFormatType==WRITE_STRING_MATRIX_NAME_ONLY) THEN
+      formatStr=matrixNameFormat//firstFormat
+    ELSE IF(indexFormatType==WRITE_STRING_MATRIX_NAME_AND_INDICES) THEN
+      formatStr=matrixNameFormat//columnIndexFormat//firstFormat
+    ELSE
+      CALL FlagError("Invalid index format type.",err,error,*999)
+    ENDIF
+    DO currentColumn=firstColumn,lastColumn,deltaColumn
+      currentRow=firstRow
+      finalRow=currentRow+(numberFirst-1)*deltaRow
+      IF(finalRow>lastRow) finalRow=lastRow
+      IF(indexFormatType==WRITE_STRING_MATRIX_NAME_ONLY) THEN
+        WRITE(outputString,FMT=formatStr) (matrix(count,currentColumn),count=currentRow,finalRow,deltaRow)
+      ELSE IF(indexFormatType==WRITE_STRING_MATRIX_NAME_AND_INDICES) THEN
+        WRITE(outputString,FMT=formatStr) currentColumn,(matrix(count,currentColumn),count=currentRow,finalRow,deltaRow)
+      ENDIF
+      CALL WriteStr(id,err,error,*999)
+      DO WHILE(finalRow<lastRow) !more stuff to do
+        currentRow=finalRow+deltaRow
+        finalRow=finalRow+numberRepeat*deltaRow
+        IF(finalRow>lastRow) finalRow=lastRow
+        WRITE(outputString,FMT=repeatFormat) (matrix(count,currentColumn),count=currentRow,finalRow,deltaRow)
+        CALL WriteStr(id,err,error,*999)
+      ENDDO !finalRow<lastRow
+    ENDDO !currentColumn
+    
+!    EXITS("WriteStringMatrixTransposeSP")
+    RETURN
+999 ERRORS("WriteStringMatrixTransposeSP",err,error)
+!    EXITS("WriteStringMatrixTransposeSP")
+    RETURN 1
+    
+  END SUBROUTINE WriteStringMatrixTransposeSP
 
   !
   !================================================================================================================================

@@ -435,9 +435,9 @@ CONTAINS
     
     SELECT CASE(esSpecification(2))
     CASE(EQUATIONS_SET_LINEAR_ELASTICITY_TYPE)
-      CALL FlagError("Not implemented.",err,error,*999)
+      CALL LinearElasticity_EquationsSetDerivedVariableCalculate(equationsSet,derivedType,err,error,*999)
     CASE(EQUATIONS_SET_FINITE_ELASTICITY_TYPE)
-      CALL FiniteElasticityEquationsSet_DerivedVariableCalculate(equationsSet,derivedType,err,error,*999)
+      CALL FiniteElasticity_EquationsSetDerivedVariableCalculate(equationsSet,derivedType,err,error,*999)
     CASE DEFAULT
       localError="The second equations set specification of "//TRIM(NumberToVString(esSpecification(2),"*",err,error))// &
         & " is not valid for an elasticity equations set."

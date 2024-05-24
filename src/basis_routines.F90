@@ -3137,9 +3137,8 @@ CONTAINS
       ENDDO !xiIdx
     CASE(BASIS_SIMPLEX_TYPE)
       DO xiIdx=1,basis%numberOfXi
-        xi(xiIdx)=REAL(basis%numberOfNodesXiC(xiIdx)-basis%nodePositionIndex(localNodeNumber,xiIdx),DP)/ &
-          & REAL(basis%numberOfNodesXiC(xiIdx)-1,DP)
-      ENDDO !xiIdx
+        xi(xiIdx)=REAL(basis%nodePositionIndex(localNodeNumber,xiIdx+1)-1,DP)/REAL(basis%numberOfNodesXiC(xiIdx+1)-1,DP)
+      ENDDO !xiIdx      
     CASE(BASIS_SERENDIPITY_TYPE)
       CALL FlagError("Not implemented.",err,error,*999)
     CASE(BASIS_AUXILLIARY_TYPE)
@@ -5839,7 +5838,7 @@ CONTAINS
     CASE(2)
       areaCoordinates(1)=1.0_DP-xiCoordinates(1)-xiCoordinates(2)
       areaCoordinates(2)=xiCoordinates(1)
-      areaCoordinates(3)=xiCoordinates(2)+xiCoordinates(2)-1.0_DP
+      areaCoordinates(3)=xiCoordinates(2)
     CASE(3)
       areaCoordinates(1)=1.0_DP-xiCoordinates(1)-xiCoordinates(2)-xiCoordinates(3)
       areaCoordinates(2)=xiCoordinates(1)

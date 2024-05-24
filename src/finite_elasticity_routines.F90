@@ -176,7 +176,7 @@ MODULE FiniteElasticityRoutines
 
   PUBLIC FiniteElasticity_StressStrainCalculate
     
-  PUBLIC FiniteElasticityEquationsSet_DerivedVariableCalculate
+  PUBLIC FiniteElasticity_EquationsSetDerivedVariableCalculate
 
   PUBLIC FiniteElasticity_PostLoop
   
@@ -276,7 +276,7 @@ CONTAINS
       CALL Decomposition_NodeDomainGet(decomposition,userNodeNumber,1,domainNumber,err,error,*999)
       IF(domainNumber==myGroupComputationNodeNumber) THEN
         !Default to version 1 of each node derivative
-        CALL BoundaryConditions_SetNode(boundaryConditions,dependentField,FIELD_DELUDELN_VARIABLE_TYPE,1,1, &
+        CALL BoundaryConditions_SetNode(boundaryConditions,dependentField,FIELD_T_VARIABLE_TYPE,1,1, &
           & userNodeNumber,ABS(innerNormalXi),BOUNDARY_CONDITION_PRESSURE_INCREMENTED,pIn,err,error,*999)
       ENDIF
     ENDDO !nodeIdx
@@ -288,7 +288,7 @@ CONTAINS
       CALL Decomposition_NodeDomainGet(decomposition,userNodeNumber,1,domainNumber,err,error,*999)
       IF(domainNumber==myGroupComputationNodeNumber) THEN
         !Default to version 1 of each node derivative
-        CALL BoundaryConditions_SetNode(boundaryConditions,dependentField,FIELD_DELUDELN_VARIABLE_TYPE,1,1, &
+        CALL BoundaryConditions_SetNode(boundaryConditions,dependentField,FIELD_T_VARIABLE_TYPE,1,1, &
           & userNodeNumber,ABS(outerNormalXi),BOUNDARY_CONDITION_PRESSURE_INCREMENTED,pOut,err,error,*999)
       ENDIF
     ENDDO !nodeIdx
@@ -415,7 +415,7 @@ CONTAINS
                   & " is invalid."
                 CALL FlagError(localError,err,error,*999)
               END SELECT
-            CASE(FIELD_DELUDELN_VARIABLE_TYPE)
+            CASE(FIELD_T_VARIABLE_TYPE)
               SELECT CASE(globalDerivativeIndex)
               CASE(NO_GLOBAL_DERIV)
                 !Not implemented, but don't want to cause an error so do nothing
@@ -7377,7 +7377,7 @@ CONTAINS
   !
 
   !>Calculated an output field for a finite elasticity equations set.
-  SUBROUTINE FiniteElasticityEquationsSet_DerivedVariableCalculate(equationsSet,derivedType,err,error,*)
+  SUBROUTINE FiniteElasticity_EquationsSetDerivedVariableCalculate(equationsSet,derivedType,err,error,*)
 
     !Argument variables
     TYPE(EquationsSetType), POINTER, INTENT(IN) :: equationsSet !<A pointer to the equations set to calculate the output for
@@ -7387,19 +7387,19 @@ CONTAINS
     !Local variables
     TYPE(FieldVariableType), POINTER :: derivedVariable
 
-    ENTERS("FiniteElasticityEquationsSet_DerivedVariableCalculate",err,error,*999)
+    ENTERS("FiniteElasticity_EquationsSetDerivedVariableCalculate",err,error,*999)
     
     NULLIFY(derivedVariable)
     CALL EquationsSet_DerivedTypeVariableGet(equationsSet,derivedType,derivedVariable,err,error,*999)
     CALL FiniteElasticity_StressStrainCalculate(equationsSet,derivedType,derivedVariable,err,error,*999)
    
-    EXITS("FiniteElasticityEquationsSet_DerivedVariableCalculate")
+    EXITS("FiniteElasticity_EquationsSetDerivedVariableCalculate")
     RETURN
-999 ERRORS("FiniteElasticityEquationsSet_DerivedVariableCalculate",err,error)
-    EXITS("FiniteElasticityEquationsSet_DerivedVariableCalculate")
+999 ERRORS("FiniteElasticity_EquationsSetDerivedVariableCalculate",err,error)
+    EXITS("FiniteElasticity_EquationsSetDerivedVariableCalculate")
     RETURN 1
     
-  END SUBROUTINE FiniteElasticityEquationsSet_DerivedVariableCalculate
+  END SUBROUTINE FiniteElasticity_EquationsSetDerivedVariableCalculate
 
   !
   !================================================================================================================================
@@ -9008,7 +9008,7 @@ CONTAINS
     TYPE(EquationsSetType), POINTER :: equationsSet !<A pointer to the equations set
     INTEGER(INTG), INTENT(IN) :: elementNumber
     INTEGER(INTG), INTENT(IN) :: var1 !<'U' variable number in single-physics case
-    INTEGER(INTG), INTENT(IN) :: var2 !<'DELUDELN' variable number in single-physics case
+    INTEGER(INTG), INTENT(IN) :: var2 !<'T' variable number in single-physics case
     INTEGER(INTG), INTENT(OUT) :: err !<The error code
     TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
     !Local variables
@@ -12073,22 +12073,22 @@ CONTAINS
               CALL Field_NumberOfVariablesSetAndLock(equationsSet%dependent%dependentField,dependentFieldNumberOfVariables, &
                 & err,error,*999)
               CALL Field_VariableTypesSetAndLock(equationsSet%dependent%dependentField,[FIELD_U_VARIABLE_TYPE, &
-                & FIELD_DELUDELN_VARIABLE_TYPE],err,error,*999)
+                & FIELD_T_VARIABLE_TYPE],err,error,*999)
               CALL Field_VariableLabelSet(equationsSet%dependent%dependentField,FIELD_U_VARIABLE_TYPE,"U",err,error,*999)
-              CALL Field_VariableLabelSet(equationsSet%dependent%dependentField,FIELD_DELUDELN_VARIABLE_TYPE,"del U/del n", &
+              CALL Field_VariableLabelSet(equationsSet%dependent%dependentField,FIELD_T_VARIABLE_TYPE,"del U/del n", &
                 & err,error,*999)
             ENDIF
             CALL Field_DimensionSetAndLock(equationsSet%dependent%dependentField,FIELD_U_VARIABLE_TYPE, &
               & FIELD_VECTOR_DIMENSION_TYPE,err,error,*999)
-            CALL Field_DimensionSetAndLock(equationsSet%dependent%dependentField,FIELD_DELUDELN_VARIABLE_TYPE, &
+            CALL Field_DimensionSetAndLock(equationsSet%dependent%dependentField,FIELD_T_VARIABLE_TYPE, &
               & FIELD_VECTOR_DIMENSION_TYPE,err,error,*999)
             CALL Field_DataTypeSetAndLock(equationsSet%dependent%dependentField,FIELD_U_VARIABLE_TYPE,FIELD_DP_TYPE,err,error,*999)
-            CALL Field_DataTypeSetAndLock(equationsSet%dependent%dependentField,FIELD_DELUDELN_VARIABLE_TYPE,FIELD_DP_TYPE, &
+            CALL Field_DataTypeSetAndLock(equationsSet%dependent%dependentField,FIELD_T_VARIABLE_TYPE,FIELD_DP_TYPE, &
               & err,error,*999)
             CALL Field_NumberOfComponentsGet(geometricField,FIELD_U_VARIABLE_TYPE,numberOfDimensions,err,error,*999)
             CALL Field_NumberOfComponentsSetAndLock(equationsSet%dependent%dependentField,FIELD_U_VARIABLE_TYPE, &
               & numberOfComponents,err,error,*999)
-            CALL Field_NumberOfComponentsSetAndLock(equationsSet%dependent%dependentField,FIELD_DELUDELN_VARIABLE_TYPE, &
+            CALL Field_NumberOfComponentsSetAndLock(equationsSet%dependent%dependentField,FIELD_T_VARIABLE_TYPE, &
               & numberOfComponents,err,error,*999)
             IF(equationsSetSubtype==EQUATIONS_SET_ACTIVE_STRAIN_SUBTYPE) THEN
               CALL Field_DimensionSetAndLock(equationsSet%dependent%dependentField,FIELD_V_VARIABLE_TYPE, &
@@ -12116,7 +12116,7 @@ CONTAINS
                 & err,error,*999)
               CALL Field_ComponentMeshComponentSet(equationsSet%dependent%dependentField,FIELD_U_VARIABLE_TYPE, &
                 & componentIdx,geometricMeshComponent,err,error,*999)
-              CALL Field_ComponentMeshComponentSet(equationsSet%dependent%dependentField,FIELD_DELUDELN_VARIABLE_TYPE, &
+              CALL Field_ComponentMeshComponentSet(equationsSet%dependent%dependentField,FIELD_T_VARIABLE_TYPE, &
                 & componentIdx,geometricMeshComponent,err,error,*999)
               IF(equationsSetSubtype==EQUATIONS_SET_ACTIVE_STRAIN_SUBTYPE) THEN
                 CALL Field_ComponentMeshComponentSet(equationsSet%dependent%dependentField,FIELD_V_VARIABLE_TYPE, &
@@ -12138,7 +12138,7 @@ CONTAINS
               CALL Field_ComponentMeshComponentGet(geometricField,FIELD_U_VARIABLE_TYPE,1,geometricMeshComponent,err,error,*999)
               CALL Field_ComponentMeshComponentSet(equationsSet%dependent%dependentField,FIELD_U_VARIABLE_TYPE, &
                 & numberOfComponents,geometricMeshComponent,err,error,*999)
-              CALL Field_ComponentMeshComponentSet(equationsSet%dependent%dependentField,FIELD_DELUDELN_VARIABLE_TYPE, &
+              CALL Field_ComponentMeshComponentSet(equationsSet%dependent%dependentField,FIELD_T_VARIABLE_TYPE, &
                 & numberOfComponents,geometricMeshComponent,err,error,*999)
             ENDIF
             CALL EquationsSet_SolutionMethodGet(equationsSet,solutionMethod,err,error,*999)
@@ -12148,14 +12148,14 @@ CONTAINS
               DO componentIdx=1,numberOfDimensions
                 CALL Field_ComponentInterpolationSet(equationsSet%dependent%dependentField,FIELD_U_VARIABLE_TYPE, &
                   & componentIdx,FIELD_NODE_BASED_INTERPOLATION,err,error,*999)
-                CALL Field_ComponentInterpolationSet(equationsSet%dependent%dependentField,FIELD_DELUDELN_VARIABLE_TYPE, &
+                CALL Field_ComponentInterpolationSet(equationsSet%dependent%dependentField,FIELD_T_VARIABLE_TYPE, &
                   & componentIdx,FIELD_NODE_BASED_INTERPOLATION,err,error,*999)
               ENDDO !componentIdx
               IF(isHydrostaticPressureDependentField) THEN
                 !Set the hydrostatic pressure component to element based interpolation
                 CALL Field_ComponentInterpolationSet(equationsSet%dependent%dependentField,FIELD_U_VARIABLE_TYPE, &
                   & numberOfComponents,FIELD_ELEMENT_BASED_INTERPOLATION,err,error,*999)
-                CALL Field_ComponentInterpolationSet(equationsSet%dependent%dependentField,FIELD_DELUDELN_VARIABLE_TYPE, &
+                CALL Field_ComponentInterpolationSet(equationsSet%dependent%dependentField,FIELD_T_VARIABLE_TYPE, &
                   & numberOfComponents,FIELD_ELEMENT_BASED_INTERPOLATION,err,error,*999)
               ENDIF
               !Default the scaling to the geometric field scaling
@@ -12181,13 +12181,13 @@ CONTAINS
             CALL Field_DependentTypeCheck(equationsSetSetup%field,FIELD_DEPENDENT_TYPE,err,error,*999)
             IF(equationsSetSubtype==EQUATIONS_SET_ACTIVE_STRAIN_SUBTYPE) THEN
               CALL Field_NumberOfVariablesCheck(equationsSetSetup%field,3,err,error,*999)
-              CALL Field_VariableTypesCheck(equationsSetSetup%field,[FIELD_U_VARIABLE_TYPE,FIELD_DELUDELN_VARIABLE_TYPE, &
+              CALL Field_VariableTypesCheck(equationsSetSetup%field,[FIELD_U_VARIABLE_TYPE,FIELD_T_VARIABLE_TYPE, &
                 & FIELD_V_VARIABLE_TYPE],err,error,*999)
               CALL Field_DimensionCheck(equationsSetSetup%field,FIELD_V_VARIABLE_TYPE,FIELD_VECTOR_DIMENSION_TYPE,err,error,*999)
               CALL Field_DataTypeCheck(equationsSetSetup%field,FIELD_V_VARIABLE_TYPE,FIELD_DP_TYPE,err,error,*999)
             ELSE IF(equationsSetSubtype==EQUATIONS_SET_MULTISCALE_ACTIVE_STRAIN_SUBTYPE) THEN
               CALL Field_NumberOfVariablesCheck(equationsSetSetup%field,4,err,error,*999)
-              CALL Field_VariableTypesCheck(equationsSetSetup%field,[FIELD_U_VARIABLE_TYPE,FIELD_DELUDELN_VARIABLE_TYPE, &
+              CALL Field_VariableTypesCheck(equationsSetSetup%field,[FIELD_U_VARIABLE_TYPE,FIELD_T_VARIABLE_TYPE, &
                 & FIELD_V_VARIABLE_TYPE,FIELD_U1_VARIABLE_TYPE],err,error,*999)
               CALL Field_DimensionCheck(equationsSetSetup%field,FIELD_V_VARIABLE_TYPE,FIELD_VECTOR_DIMENSION_TYPE,err,error,*999)
               CALL Field_DataTypeCheck(equationsSetSetup%field,FIELD_V_VARIABLE_TYPE,FIELD_DP_TYPE,err,error,*999)
@@ -12195,16 +12195,16 @@ CONTAINS
               CALL Field_DataTypeCheck(equationsSetSetup%field,FIELD_U1_VARIABLE_TYPE,FIELD_DP_TYPE,err,error,*999)
             ELSE
               CALL Field_NumberOfVariablesCheck(equationsSetSetup%field,2,err,error,*999)
-              CALL Field_VariableTypesCheck(equationsSetSetup%field,[FIELD_U_VARIABLE_TYPE,FIELD_DELUDELN_VARIABLE_TYPE], &
+              CALL Field_VariableTypesCheck(equationsSetSetup%field,[FIELD_U_VARIABLE_TYPE,FIELD_T_VARIABLE_TYPE], &
                 & err,error,*999)
             ENDIF
             CALL Field_DimensionCheck(equationsSetSetup%field,FIELD_U_VARIABLE_TYPE,FIELD_VECTOR_DIMENSION_TYPE,err,error,*999)
-            CALL Field_DimensionCheck(equationsSetSetup%field,FIELD_DELUDELN_VARIABLE_TYPE,FIELD_VECTOR_DIMENSION_TYPE, &
+            CALL Field_DimensionCheck(equationsSetSetup%field,FIELD_T_VARIABLE_TYPE,FIELD_VECTOR_DIMENSION_TYPE, &
               & err,error,*999)
             CALL Field_DataTypeCheck(equationsSetSetup%field,FIELD_U_VARIABLE_TYPE,FIELD_DP_TYPE,err,error,*999)
-            CALL Field_DataTypeCheck(equationsSetSetup%field,FIELD_DELUDELN_VARIABLE_TYPE,FIELD_DP_TYPE,err,error,*999)
+            CALL Field_DataTypeCheck(equationsSetSetup%field,FIELD_T_VARIABLE_TYPE,FIELD_DP_TYPE,err,error,*999)
             CALL Field_NumberOfComponentsCheck(equationsSetSetup%field,FIELD_U_VARIABLE_TYPE,numberOfComponents,err,error,*999)
-            CALL Field_NumberOfComponentsCheck(equationsSetSetup%field,FIELD_DELUDELN_VARIABLE_TYPE,numberOfComponents, &
+            CALL Field_NumberOfComponentsCheck(equationsSetSetup%field,FIELD_T_VARIABLE_TYPE,numberOfComponents, &
               & err,error,*999)
             IF(equationsSetSubtype==EQUATIONS_SET_ACTIVE_STRAIN_SUBTYPE) THEN
               CALL Field_NumberOfComponentsCheck(equationsSetSetup%field,FIELD_V_VARIABLE_TYPE,numberOfDimensions,err,error,*999)
@@ -12212,9 +12212,9 @@ CONTAINS
               CALL Field_NumberOfComponentsCheck(equationsSetSetup%field,FIELD_V_VARIABLE_TYPE,numberOfDimensions,err,error,*999)
               CALL Field_NumberOfComponentsCheck(equationsSetSetup%field,FIELD_U1_VARIABLE_TYPE,2,err,error,*999)
             ENDIF
-            !Check that the pressure values set type is created here?? (second variable is a DELUDELN type, as checked above)
+            !Check that the pressure values set type is created here?? (second variable is a T type, as checked above)
             !\todo: Decide whether these set_types (previous one as well) is to be created by user or automatically.
-            CALL Field_ParameterSetEnsureCreated(equationsSetSetup%field,FIELD_DELUDELN_VARIABLE_TYPE, &
+            CALL Field_ParameterSetEnsureCreated(equationsSetSetup%field,FIELD_T_VARIABLE_TYPE, &
               & FIELD_PRESSURE_VALUES_SET_TYPE,err,error,*999)
             CALL EquationsSet_SolutionMethodGet(equationsSet,solutionMethod,err,error,*999)
             SELECT CASE(solutionMethod)
@@ -12222,7 +12222,7 @@ CONTAINS
               DO componentIdx=1,numberOfDimensions
                 CALL Field_ComponentInterpolationCheck(equationsSetSetup%field,FIELD_U_VARIABLE_TYPE,componentIdx, &
                   & FIELD_NODE_BASED_INTERPOLATION,err,error,*999)
-                CALL Field_ComponentInterpolationCheck(equationsSetSetup%field,FIELD_DELUDELN_VARIABLE_TYPE,componentIdx, &
+                CALL Field_ComponentInterpolationCheck(equationsSetSetup%field,FIELD_T_VARIABLE_TYPE,componentIdx, &
                   & FIELD_NODE_BASED_INTERPOLATION,err,error,*999)
               ENDDO !componentIdx
             CASE(EQUATIONS_SET_BEM_SOLUTION_METHOD)
@@ -12253,7 +12253,7 @@ CONTAINS
             & equationsSet%specification(3)==EQUATIONS_SET_DYNAMIC_MOONEY_RIVLIN_SUBTYPE.OR. &
             & equationsSet%specification(3)==EQUATIONS_SET_DYNAMIC_COMP_ST_VENANT_KIRCHOFF_SUBTYPE.OR. &
             & equationsSet%specification(3)==EQUATIONS_SET_DYNAMIC_COMP_MOONEY_RIVLIN_SUBTYPE) THEN
-            CALL Field_ParameterSetCreate(equationsSet%dependent%dependentField,FIELD_DELUDELN_VARIABLE_TYPE, &
+            CALL Field_ParameterSetCreate(equationsSet%dependent%dependentField,FIELD_T_VARIABLE_TYPE, &
               & FIELD_BOUNDARY_CONDITIONS_SET_TYPE,err,error,*999)                
           ENDIF
         CASE DEFAULT
@@ -12279,20 +12279,20 @@ CONTAINS
             CALL Field_GeometricFieldSetAndLock(equationsSet%dependent%dependentField,geometricField,err,error,*999)
             CALL Field_NumberOfVariablesSetAndLock(equationsSet%dependent%dependentField,2,err,error,*999)
             CALL Field_VariableTypesSetAndLock(equationsSet%dependent%dependentField,[FIELD_U_VARIABLE_TYPE, &
-              & FIELD_DELUDELN_VARIABLE_TYPE],err,error,*999)
+              & FIELD_T_VARIABLE_TYPE],err,error,*999)
             CALL Field_VariableLabelSet(equationsSet%dependent%dependentField,FIELD_U_VARIABLE_TYPE,"Z",err,error,*999)
-            CALL Field_VariableLabelSet(equationsSet%dependent%dependentField,FIELD_DELUDELN_VARIABLE_TYPE,"Traction", &
+            CALL Field_VariableLabelSet(equationsSet%dependent%dependentField,FIELD_T_VARIABLE_TYPE,"Traction", &
               & err,error,*999)
             CALL Field_DimensionSetAndLock(equationsSet%dependent%dependentField,FIELD_U_VARIABLE_TYPE, &
               & FIELD_VECTOR_DIMENSION_TYPE,err,error,*999)
-            CALL Field_DimensionSetAndLock(equationsSet%dependent%dependentField,FIELD_DELUDELN_VARIABLE_TYPE, &
+            CALL Field_DimensionSetAndLock(equationsSet%dependent%dependentField,FIELD_T_VARIABLE_TYPE, &
               & FIELD_VECTOR_DIMENSION_TYPE,err,error,*999)
             CALL Field_DataTypeSetAndLock(equationsSet%dependent%dependentField,FIELD_U_VARIABLE_TYPE,FIELD_DP_TYPE,err,error,*999)
-            CALL Field_DataTypeSetAndLock(equationsSet%dependent%dependentField,FIELD_DELUDELN_VARIABLE_TYPE,FIELD_DP_TYPE, &
+            CALL Field_DataTypeSetAndLock(equationsSet%dependent%dependentField,FIELD_T_VARIABLE_TYPE,FIELD_DP_TYPE, &
               & err,error,*999)
             CALL Field_NumberOfComponentsSetAndLock(equationsSet%dependent%dependentField,FIELD_U_VARIABLE_TYPE, &
               & numberOfDimensions,err,error,*999)
-            CALL Field_NumberOfComponentsSetAndLock(equationsSet%dependent%dependentField,FIELD_DELUDELN_VARIABLE_TYPE, &
+            CALL Field_NumberOfComponentsSetAndLock(equationsSet%dependent%dependentField,FIELD_T_VARIABLE_TYPE, &
               & numberOfDimensions,err,error,*999)
 
             !Default to the geometric interpolation setup
@@ -12301,7 +12301,7 @@ CONTAINS
                 & err,error,*999)
               CALL Field_ComponentMeshComponentSet(equationsSet%dependent%dependentField,FIELD_U_VARIABLE_TYPE, &
                 & componentIdx,geometricMeshComponent,err,error,*999)
-              CALL Field_ComponentMeshComponentSet(equationsSet%dependent%dependentField,FIELD_DELUDELN_VARIABLE_TYPE, &
+              CALL Field_ComponentMeshComponentSet(equationsSet%dependent%dependentField,FIELD_T_VARIABLE_TYPE, &
                 & componentIdx,geometricMeshComponent,err,error,*999)
             ENDDO !componentIdx
 
@@ -12313,14 +12313,14 @@ CONTAINS
                 CALL Field_ComponentInterpolationSetAndLock(equationsSet%dependent%dependentField, &
                   & FIELD_U_VARIABLE_TYPE,componentIdx,FIELD_NODE_BASED_INTERPOLATION,err,error,*999)
                 CALL Field_ComponentInterpolationSetAndLock(equationsSet%dependent%dependentField, &
-                  & FIELD_DELUDELN_VARIABLE_TYPE,componentIdx,FIELD_NODE_BASED_INTERPOLATION,err,error,*999)
+                  & FIELD_T_VARIABLE_TYPE,componentIdx,FIELD_NODE_BASED_INTERPOLATION,err,error,*999)
               ENDDO !componentIdx
 
               IF(isHydrostaticPressureDependentField) THEN
                 !Set the hydrostatic pressure component to element based interpolation
                 CALL Field_ComponentInterpolationSet(equationsSet%dependent%dependentField,FIELD_U_VARIABLE_TYPE, &
                   & numberOfDimensions+1,FIELD_ELEMENT_BASED_INTERPOLATION,err,error,*999)
-                CALL Field_ComponentInterpolationSet(equationsSet%dependent%dependentField,FIELD_DELUDELN_VARIABLE_TYPE, &
+                CALL Field_ComponentInterpolationSet(equationsSet%dependent%dependentField,FIELD_T_VARIABLE_TYPE, &
                   & numberOfDimensions+1,FIELD_ELEMENT_BASED_INTERPOLATION,err,error,*999)
               ENDIF
               !Default the scaling to the geometric field scaling
@@ -12345,19 +12345,19 @@ CONTAINS
             CALL Field_TypeCheck(equationsSetSetup%field,FIELD_GEOMETRIC_GENERAL_TYPE,err,error,*999)
             CALL Field_DependentTypeCheck(equationsSetSetup%field,FIELD_DEPENDENT_TYPE,err,error,*999)
             CALL Field_NumberOfVariablesCheck(equationsSetSetup%field,2,err,error,*999)
-            CALL Field_VariableTypesCheck(equationsSetSetup%field,[FIELD_U_VARIABLE_TYPE,FIELD_DELUDELN_VARIABLE_TYPE], &
+            CALL Field_VariableTypesCheck(equationsSetSetup%field,[FIELD_U_VARIABLE_TYPE,FIELD_T_VARIABLE_TYPE], &
               & err,error,*999)
             CALL Field_DimensionCheck(equationsSetSetup%field,FIELD_U_VARIABLE_TYPE,FIELD_VECTOR_DIMENSION_TYPE,err,error,*999)
-            CALL Field_DimensionCheck(equationsSetSetup%field,FIELD_DELUDELN_VARIABLE_TYPE,FIELD_VECTOR_DIMENSION_TYPE, &
+            CALL Field_DimensionCheck(equationsSetSetup%field,FIELD_T_VARIABLE_TYPE,FIELD_VECTOR_DIMENSION_TYPE, &
               & err,error,*999)
             CALL Field_DataTypeCheck(equationsSetSetup%field,FIELD_U_VARIABLE_TYPE,FIELD_DP_TYPE,err,error,*999)
-            CALL Field_DataTypeCheck(equationsSetSetup%field,FIELD_DELUDELN_VARIABLE_TYPE,FIELD_DP_TYPE,err,error,*999)
+            CALL Field_DataTypeCheck(equationsSetSetup%field,FIELD_T_VARIABLE_TYPE,FIELD_DP_TYPE,err,error,*999)
             CALL Field_NumberOfComponentsCheck(equationsSetSetup%field,FIELD_U_VARIABLE_TYPE,numberOfDimensions,err,error,*999)
-            CALL Field_NumberOfComponentsCheck(equationsSetSetup%field,FIELD_DELUDELN_VARIABLE_TYPE,numberOfDimensions, &
+            CALL Field_NumberOfComponentsCheck(equationsSetSetup%field,FIELD_T_VARIABLE_TYPE,numberOfDimensions, &
               & err,error,*999)
-            !Check that the pressure values set type is created here?? (second variable is a DELUDELN type, as checked above)
+            !Check that the pressure values set type is created here?? (second variable is a T type, as checked above)
             !\todo: Decide whether these set_types (previous one as well) is to be created by user or automatically..
-            CALL Field_ParameterSetEnsureCreated(equationsSetSetup%field,FIELD_DELUDELN_VARIABLE_TYPE, &
+            CALL Field_ParameterSetEnsureCreated(equationsSetSetup%field,FIELD_T_VARIABLE_TYPE, &
               & FIELD_PRESSURE_VALUES_SET_TYPE,err,error,*999)
             CALL EquationsSet_SolutionMethodGet(equationsSet,solutionMethod,err,error,*999)
             SELECT CASE(solutionMethod)
@@ -12365,7 +12365,7 @@ CONTAINS
               DO componentIdx=1,numberOfDimensions
                 CALL Field_ComponentInterpolationCheck(equationsSetSetup%field,FIELD_U_VARIABLE_TYPE,componentIdx, &
                   & FIELD_NODE_BASED_INTERPOLATION,err,error,*999)
-                CALL Field_ComponentInterpolationCheck(equationsSetSetup%field,FIELD_DELUDELN_VARIABLE_TYPE,componentIdx, &
+                CALL Field_ComponentInterpolationCheck(equationsSetSetup%field,FIELD_T_VARIABLE_TYPE,componentIdx, &
                   & FIELD_NODE_BASED_INTERPOLATION,err,error,*999)
               ENDDO !componentIdx
             CASE(EQUATIONS_SET_BEM_SOLUTION_METHOD)
@@ -12411,24 +12411,24 @@ CONTAINS
             CALL Field_GeometricFieldSetAndLock(equationsSet%dependent%dependentField,geometricField,err,error,*999)
             CALL Field_NumberOfVariablesSetAndLock(equationsSet%dependent%dependentField,3,err,error,*999)
             CALL Field_VariableTypesSetAndLock(equationsSet%dependent%dependentField,[FIELD_U_VARIABLE_TYPE, &
-              & FIELD_DELUDELN_VARIABLE_TYPE,FIELD_U3_VARIABLE_TYPE],err,error,*999)
+              & FIELD_T_VARIABLE_TYPE,FIELD_U3_VARIABLE_TYPE],err,error,*999)
             CALL Field_VariableLabelSet(equationsSet%dependent%dependentField,FIELD_U_VARIABLE_TYPE,"U",err,error,*999)
-            CALL Field_VariableLabelSet(equationsSet%dependent%dependentField,FIELD_DELUDELN_VARIABLE_TYPE,"del U/del n", &
+            CALL Field_VariableLabelSet(equationsSet%dependent%dependentField,FIELD_T_VARIABLE_TYPE,"del U/del n", &
               & err,error,*999)
             CALL Field_VariableLabelSet(equationsSet%dependent%dependentField,FIELD_U3_VARIABLE_TYPE,"U3",err,error,*999)
             CALL Field_DimensionSetAndLock(equationsSet%dependent%dependentField,FIELD_U_VARIABLE_TYPE, &
               & FIELD_VECTOR_DIMENSION_TYPE,err,error,*999)
-            CALL Field_DimensionSetAndLock(equationsSet%dependent%dependentField,FIELD_DELUDELN_VARIABLE_TYPE, &
+            CALL Field_DimensionSetAndLock(equationsSet%dependent%dependentField,FIELD_T_VARIABLE_TYPE, &
               & FIELD_VECTOR_DIMENSION_TYPE,err,error,*999)
             CALL Field_DimensionSetAndLock(equationsSet%dependent%dependentField,FIELD_U3_VARIABLE_TYPE, &
               & FIELD_VECTOR_DIMENSION_TYPE,err,error,*999)
             CALL Field_DataTypeSetAndLock(equationsSet%dependent%dependentField,FIELD_U_VARIABLE_TYPE,FIELD_DP_TYPE,err,error,*999)
-            CALL Field_DataTypeSetAndLock(equationsSet%dependent%dependentField,FIELD_DELUDELN_VARIABLE_TYPE,FIELD_DP_TYPE, &
+            CALL Field_DataTypeSetAndLock(equationsSet%dependent%dependentField,FIELD_T_VARIABLE_TYPE,FIELD_DP_TYPE, &
               & err,error,*999)
             CALL Field_DataTypeSetAndLock(equationsSet%dependent%dependentField,FIELD_U3_VARIABLE_TYPE,FIELD_DP_TYPE,err,error,*999)
             CALL Field_NumberOfComponentsSetAndLock(equationsSet%dependent%dependentField,FIELD_U_VARIABLE_TYPE, &
               & numberOfComponents,err,error,*999)
-            CALL Field_NumberOfComponentsSetAndLock(equationsSet%dependent%dependentField,FIELD_DELUDELN_VARIABLE_TYPE, &
+            CALL Field_NumberOfComponentsSetAndLock(equationsSet%dependent%dependentField,FIELD_T_VARIABLE_TYPE, &
               & numberOfComponents,err,error,*999)
             CALL Field_NumberOfComponentsSetAndLock(equationsSet%dependent%dependentField,FIELD_U3_VARIABLE_TYPE, &
               & numberOfDimensions,err,error,*999)
@@ -12439,7 +12439,7 @@ CONTAINS
                 & err,error,*999)
               CALL Field_ComponentMeshComponentSet(equationsSet%dependent%dependentField,FIELD_U_VARIABLE_TYPE, &
                 & componentIdx,geometricMeshComponent,err,error,*999)
-              CALL Field_ComponentMeshComponentSet(equationsSet%dependent%dependentField,FIELD_DELUDELN_VARIABLE_TYPE, &
+              CALL Field_ComponentMeshComponentSet(equationsSet%dependent%dependentField,FIELD_T_VARIABLE_TYPE, &
                 & componentIdx,geometricMeshComponent,err,error,*999)
               CALL Field_ComponentMeshComponentSet(equationsSet%dependent%dependentField,FIELD_U3_VARIABLE_TYPE, &
                 & componentIdx,geometricMeshComponent,err,error,*999)
@@ -12450,7 +12450,7 @@ CONTAINS
               CALL Field_ComponentMeshComponentGet(geometricField,FIELD_U_VARIABLE_TYPE,1,geometricMeshComponent,err,error,*999)
               CALL Field_ComponentMeshComponentSet(equationsSet%dependent%dependentField,FIELD_U_VARIABLE_TYPE, &
                 & numberOfComponents,geometricMeshComponent,err,error,*999)
-              CALL Field_ComponentMeshComponentSet(equationsSet%dependent%dependentField,FIELD_DELUDELN_VARIABLE_TYPE, &
+              CALL Field_ComponentMeshComponentSet(equationsSet%dependent%dependentField,FIELD_T_VARIABLE_TYPE, &
                 & numberOfComponents,geometricMeshComponent,err,error,*999)
             ENDIF
 
@@ -12462,7 +12462,7 @@ CONTAINS
                 CALL Field_ComponentInterpolationSetAndLock(equationsSet%dependent%dependentField, &
                   & FIELD_U_VARIABLE_TYPE,componentIdx,FIELD_NODE_BASED_INTERPOLATION,err,error,*999)
                 CALL Field_ComponentInterpolationSetAndLock(equationsSet%dependent%dependentField, &
-                  & FIELD_DELUDELN_VARIABLE_TYPE,componentIdx,FIELD_NODE_BASED_INTERPOLATION,err,error,*999)
+                  & FIELD_T_VARIABLE_TYPE,componentIdx,FIELD_NODE_BASED_INTERPOLATION,err,error,*999)
                 CALL Field_ComponentInterpolationSetAndLock(equationsSet%dependent%dependentField, &
                   & FIELD_U3_VARIABLE_TYPE,componentIdx,FIELD_GAUSS_POINT_BASED_INTERPOLATION,err,error,*999)
               ENDDO !componentIdx
@@ -12471,7 +12471,7 @@ CONTAINS
                 !Set the hydrostatic pressure component to element based interpolation
                 CALL Field_ComponentInterpolationSet(equationsSet%dependent%dependentField,FIELD_U_VARIABLE_TYPE, &
                   & numberOfComponents,FIELD_ELEMENT_BASED_INTERPOLATION,err,error,*999)
-                CALL Field_ComponentInterpolationSet(equationsSet%dependent%dependentField,FIELD_DELUDELN_VARIABLE_TYPE, &
+                CALL Field_ComponentInterpolationSet(equationsSet%dependent%dependentField,FIELD_T_VARIABLE_TYPE, &
                   & numberOfComponents,FIELD_ELEMENT_BASED_INTERPOLATION,err,error,*999)
               ENDIF
 
@@ -12499,23 +12499,23 @@ CONTAINS
             CALL Field_TypeCheck(equationsSetSetup%field,FIELD_GEOMETRIC_GENERAL_TYPE,err,error,*999)
             CALL Field_DependentTypeCheck(equationsSetSetup%field,FIELD_DEPENDENT_TYPE,err,error,*999)
             CALL Field_NumberOfVariablesCheck(equationsSetSetup%field,4,err,error,*999)
-            CALL Field_VariableTypesCheck(equationsSetSetup%field,[FIELD_U_VARIABLE_TYPE,FIELD_DELUDELN_VARIABLE_TYPE, &
+            CALL Field_VariableTypesCheck(equationsSetSetup%field,[FIELD_U_VARIABLE_TYPE,FIELD_T_VARIABLE_TYPE, &
               & FIELD_U3_VARIABLE_TYPE],err,error,*999)
             CALL Field_DimensionCheck(equationsSetSetup%field,FIELD_U_VARIABLE_TYPE,FIELD_VECTOR_DIMENSION_TYPE,err,error,*999)
-            CALL Field_DimensionCheck(equationsSetSetup%field,FIELD_DELUDELN_VARIABLE_TYPE,FIELD_VECTOR_DIMENSION_TYPE, &
+            CALL Field_DimensionCheck(equationsSetSetup%field,FIELD_T_VARIABLE_TYPE,FIELD_VECTOR_DIMENSION_TYPE, &
               & err,error,*999)
             CALL Field_DimensionCheck(equationsSetSetup%field,FIELD_U3_VARIABLE_TYPE,FIELD_VECTOR_DIMENSION_TYPE,err,error,*999)
             CALL Field_DataTypeCheck(equationsSetSetup%field,FIELD_U_VARIABLE_TYPE,FIELD_DP_TYPE,err,error,*999)
-            CALL Field_DataTypeCheck(equationsSetSetup%field,FIELD_DELUDELN_VARIABLE_TYPE,FIELD_DP_TYPE,err,error,*999)
+            CALL Field_DataTypeCheck(equationsSetSetup%field,FIELD_T_VARIABLE_TYPE,FIELD_DP_TYPE,err,error,*999)
             CALL Field_DataTypeCheck(equationsSetSetup%field,FIELD_U3_VARIABLE_TYPE,FIELD_DP_TYPE,err,error,*999)
             CALL Field_NumberOfComponentsCheck(equationsSetSetup%field,FIELD_U_VARIABLE_TYPE,numberOfComponents,err,error,*999)
-            CALL Field_NumberOfComponentsCheck(equationsSetSetup%field,FIELD_DELUDELN_VARIABLE_TYPE,numberOfComponents, &
+            CALL Field_NumberOfComponentsCheck(equationsSetSetup%field,FIELD_T_VARIABLE_TYPE,numberOfComponents, &
               & err,error,*999)
             CALL Field_NumberOfComponentsCheck(equationsSetSetup%field,FIELD_U3_VARIABLE_TYPE,numberOfDimensions,err,error,*999)
 
-            !Check that the pressure values set type is created here?? (second variable is a DELUDELN type, as checked above)
+            !Check that the pressure values set type is created here?? (second variable is a T type, as checked above)
             !\todo: Decide whether these set_types (previous one as well) is to be created by user or automatically..
-            CALL Field_ParameterSetEnsureCreated(equationsSetSetup%field,FIELD_DELUDELN_VARIABLE_TYPE, &
+            CALL Field_ParameterSetEnsureCreated(equationsSetSetup%field,FIELD_T_VARIABLE_TYPE, &
               & FIELD_PRESSURE_VALUES_SET_TYPE,err,error,*999)
             CALL EquationsSet_SolutionMethodGet(equationsSet,solutionMethod,err,error,*999)
             SELECT CASE(solutionMethod)
@@ -12523,7 +12523,7 @@ CONTAINS
               DO componentIdx=1,numberOfDimensions
                 CALL Field_ComponentInterpolationCheck(equationsSetSetup%field,FIELD_U_VARIABLE_TYPE,componentIdx, &
                   & FIELD_NODE_BASED_INTERPOLATION,err,error,*999)
-                CALL Field_ComponentInterpolationCheck(equationsSetSetup%field,FIELD_DELUDELN_VARIABLE_TYPE,componentIdx, &
+                CALL Field_ComponentInterpolationCheck(equationsSetSetup%field,FIELD_T_VARIABLE_TYPE,componentIdx, &
                   & FIELD_NODE_BASED_INTERPOLATION,err,error,*999)
                 CALL Field_ComponentInterpolationCheck(equationsSetSetup%field,FIELD_U3_VARIABLE_TYPE,componentIdx, &
                   & FIELD_GAUSS_POINT_BASED_INTERPOLATION,err,error,*999)
@@ -12580,29 +12580,29 @@ CONTAINS
             IF(equationsSet%SPECIFICATION(3)==EQUATIONS_SET_CONSTITUTIVE_AND_GROWTH_LAW_IN_CELLML_SUBTYPE) THEN
               CALL Field_NumberOfVariablesSetAndLock(equationsSet%dependent%dependentField,5,err,error,*999)
               CALL Field_VariableTypesSetAndLock(equationsSet%dependent%dependentField,[FIELD_U_VARIABLE_TYPE, &
-                & FIELD_DELUDELN_VARIABLE_TYPE,FIELD_U1_VARIABLE_TYPE,FIELD_U2_VARIABLE_TYPE,FIELD_U3_VARIABLE_TYPE], &
+                & FIELD_T_VARIABLE_TYPE,FIELD_U1_VARIABLE_TYPE,FIELD_U2_VARIABLE_TYPE,FIELD_U3_VARIABLE_TYPE], &
                 & err,error,*999)
             ELSE
               CALL Field_NumberOfVariablesSetAndLock(equationsSet%dependent%dependentField,4,err,error,*999)
               CALL Field_VariableTypesSetAndLock(equationsSet%dependent%dependentField,[FIELD_U_VARIABLE_TYPE, &
-                & FIELD_DELUDELN_VARIABLE_TYPE,FIELD_U1_VARIABLE_TYPE,FIELD_U2_VARIABLE_TYPE],err,error,*999)
+                & FIELD_T_VARIABLE_TYPE,FIELD_U1_VARIABLE_TYPE,FIELD_U2_VARIABLE_TYPE],err,error,*999)
             ENDIF
             CALL Field_DimensionSetAndLock(equationsSet%dependent%dependentField,FIELD_U_VARIABLE_TYPE, &
               & FIELD_VECTOR_DIMENSION_TYPE,err,error,*999)
-            CALL Field_DimensionSetAndLock(equationsSet%dependent%dependentField,FIELD_DELUDELN_VARIABLE_TYPE, &
+            CALL Field_DimensionSetAndLock(equationsSet%dependent%dependentField,FIELD_T_VARIABLE_TYPE, &
               & FIELD_VECTOR_DIMENSION_TYPE,err,error,*999)
             CALL Field_DimensionSetAndLock(equationsSet%dependent%dependentField,FIELD_U1_VARIABLE_TYPE, &
               & FIELD_VECTOR_DIMENSION_TYPE,err,error,*999)
             CALL Field_DimensionSetAndLock(equationsSet%dependent%dependentField,FIELD_U2_VARIABLE_TYPE, &
               & FIELD_VECTOR_DIMENSION_TYPE,err,error,*999)
             CALL Field_DataTypeSetAndLock(equationsSet%dependent%dependentField,FIELD_U_VARIABLE_TYPE,FIELD_DP_TYPE,err,error,*999)
-            CALL Field_DataTypeSetAndLock(equationsSet%dependent%dependentField,FIELD_DELUDELN_VARIABLE_TYPE,FIELD_DP_TYPE, &
+            CALL Field_DataTypeSetAndLock(equationsSet%dependent%dependentField,FIELD_T_VARIABLE_TYPE,FIELD_DP_TYPE, &
               & err,error,*999)
             CALL Field_DataTypeSetAndLock(equationsSet%dependent%dependentField,FIELD_U1_VARIABLE_TYPE,FIELD_DP_TYPE,err,error,*999)
             CALL Field_DataTypeSetAndLock(equationsSet%dependent%dependentField,FIELD_U2_VARIABLE_TYPE,FIELD_DP_TYPE,err,error,*999)
             CALL Field_NumberOfComponentsSetAndLock(equationsSet%dependent%dependentField,FIELD_U_VARIABLE_TYPE, &
               & numberOfComponents,err,error,*999)
-            CALL Field_NumberOfComponentsSetAndLock(equationsSet%dependent%dependentField,FIELD_DELUDELN_VARIABLE_TYPE, &
+            CALL Field_NumberOfComponentsSetAndLock(equationsSet%dependent%dependentField,FIELD_T_VARIABLE_TYPE, &
               & numberOfComponents,err,error,*999)
             CALL Field_NumberOfComponentsSetAndLock(equationsSet%dependent%dependentField,FIELD_U1_VARIABLE_TYPE, &
               & numberOfComponents2,err,error,*999)
@@ -12624,7 +12624,7 @@ CONTAINS
                 & err,error,*999)
               CALL Field_ComponentMeshComponentSet(equationsSet%dependent%dependentField,FIELD_U_VARIABLE_TYPE, &
                 & componentIdx,geometricMeshComponent,err,error,*999)
-              CALL Field_ComponentMeshComponentSet(equationsSet%dependent%dependentField,FIELD_DELUDELN_VARIABLE_TYPE, &
+              CALL Field_ComponentMeshComponentSet(equationsSet%dependent%dependentField,FIELD_T_VARIABLE_TYPE, &
                 & componentIdx,geometricMeshComponent,err,error,*999)
             ENDDO !componentIdx
 
@@ -12633,7 +12633,7 @@ CONTAINS
               CALL Field_ComponentMeshComponentGet(geometricField,FIELD_U_VARIABLE_TYPE,1,geometricMeshComponent,err,error,*999)
               CALL Field_ComponentMeshComponentSet(equationsSet%dependent%dependentField,FIELD_U_VARIABLE_TYPE, &
                 & numberOfComponents,geometricMeshComponent,err,error,*999)
-              CALL Field_ComponentMeshComponentSet(equationsSet%dependent%dependentField,FIELD_DELUDELN_VARIABLE_TYPE, &
+              CALL Field_ComponentMeshComponentSet(equationsSet%dependent%dependentField,FIELD_T_VARIABLE_TYPE, &
                 & numberOfComponents,geometricMeshComponent,err,error,*999)
               !kmith
             ENDIF
@@ -12659,7 +12659,7 @@ CONTAINS
                 CALL Field_ComponentInterpolationSetAndLock(equationsSet%dependent%dependentField,FIELD_U_VARIABLE_TYPE, &
                   & componentIdx,FIELD_NODE_BASED_INTERPOLATION,err,error,*999)
                 CALL Field_ComponentInterpolationSetAndLock(equationsSet%dependent%dependentField, &
-                  & FIELD_DELUDELN_VARIABLE_TYPE,componentIdx,FIELD_NODE_BASED_INTERPOLATION,err,error,*999)
+                  & FIELD_T_VARIABLE_TYPE,componentIdx,FIELD_NODE_BASED_INTERPOLATION,err,error,*999)
               ENDDO !componentIdx
 
               IF(isHydrostaticPressureDependentField) THEN
@@ -12667,7 +12667,7 @@ CONTAINS
                 CALL Field_ComponentInterpolationSet(equationsSet%dependent%dependentField,FIELD_U_VARIABLE_TYPE, &
                   & numberOfComponents,FIELD_ELEMENT_BASED_INTERPOLATION,err,error,*999)
                 CALL Field_ComponentInterpolationSet(equationsSet%dependent%dependentField, &
-                  & FIELD_DELUDELN_VARIABLE_TYPE,numberOfComponents,FIELD_ELEMENT_BASED_INTERPOLATION,err,error,*999)
+                  & FIELD_T_VARIABLE_TYPE,numberOfComponents,FIELD_ELEMENT_BASED_INTERPOLATION,err,error,*999)
               ENDIF
 
               !Set the stress and strain components to gauss point interpolation
@@ -12707,24 +12707,24 @@ CONTAINS
             CALL Field_DependentTypeCheck(equationsSetSetup%field,FIELD_DEPENDENT_TYPE,err,error,*999)
             IF(equationsSet%specification(3)==EQUATIONS_SET_CONSTITUTIVE_AND_GROWTH_LAW_IN_CELLML_SUBTYPE) THEN
               CALL Field_NumberOfVariablesCheck(equationsSetSetup%field,5,err,error,*999)
-              CALL Field_VariableTypesCheck(equationsSetSetup%field,[FIELD_U_VARIABLE_TYPE,FIELD_DELUDELN_VARIABLE_TYPE, &
+              CALL Field_VariableTypesCheck(equationsSetSetup%field,[FIELD_U_VARIABLE_TYPE,FIELD_T_VARIABLE_TYPE, &
                 & FIELD_U1_VARIABLE_TYPE,FIELD_U2_VARIABLE_TYPE,FIELD_U3_VARIABLE_TYPE],err,error,*999)
             ELSE
               CALL Field_NumberOfVariablesCheck(equationsSetSetup%field,4,err,error,*999)
-              CALL Field_VariableTypesCheck(equationsSetSetup%field,[FIELD_U_VARIABLE_TYPE,FIELD_DELUDELN_VARIABLE_TYPE, &
+              CALL Field_VariableTypesCheck(equationsSetSetup%field,[FIELD_U_VARIABLE_TYPE,FIELD_T_VARIABLE_TYPE, &
                 & FIELD_U1_VARIABLE_TYPE,FIELD_U2_VARIABLE_TYPE],err,error,*999)
             ENDIF
             CALL Field_DimensionCheck(equationsSetSetup%field,FIELD_U_VARIABLE_TYPE,FIELD_VECTOR_DIMENSION_TYPE,err,error,*999)
-            CALL Field_DimensionCheck(equationsSetSetup%field,FIELD_DELUDELN_VARIABLE_TYPE,FIELD_VECTOR_DIMENSION_TYPE, &
+            CALL Field_DimensionCheck(equationsSetSetup%field,FIELD_T_VARIABLE_TYPE,FIELD_VECTOR_DIMENSION_TYPE, &
               & err,error,*999)
             CALL Field_DimensionCheck(equationsSetSetup%field,FIELD_U1_VARIABLE_TYPE,FIELD_VECTOR_DIMENSION_TYPE,err,error,*999)
             CALL Field_DimensionCheck(equationsSetSetup%field,FIELD_U2_VARIABLE_TYPE,FIELD_VECTOR_DIMENSION_TYPE,err,error,*999)
             CALL Field_DataTypeCheck(equationsSetSetup%field,FIELD_U_VARIABLE_TYPE,FIELD_DP_TYPE,err,error,*999)
-            CALL Field_DataTypeCheck(equationsSetSetup%field,FIELD_DELUDELN_VARIABLE_TYPE,FIELD_DP_TYPE,err,error,*999)
+            CALL Field_DataTypeCheck(equationsSetSetup%field,FIELD_T_VARIABLE_TYPE,FIELD_DP_TYPE,err,error,*999)
             CALL Field_DataTypeCheck(equationsSetSetup%field,FIELD_U1_VARIABLE_TYPE,FIELD_DP_TYPE,err,error,*999)
             CALL Field_DataTypeCheck(equationsSetSetup%field,FIELD_U2_VARIABLE_TYPE,FIELD_DP_TYPE,err,error,*999)
             CALL Field_NumberOfComponentsCheck(equationsSetSetup%field,FIELD_U_VARIABLE_TYPE,numberOfComponents,err,error,*999)
-            CALL Field_NumberOfComponentsCheck(equationsSetSetup%field,FIELD_DELUDELN_VARIABLE_TYPE,numberOfComponents, &
+            CALL Field_NumberOfComponentsCheck(equationsSetSetup%field,FIELD_T_VARIABLE_TYPE,numberOfComponents, &
               & err,error,*999)
             CALL Field_NumberOfComponentsCheck(equationsSetSetup%field,FIELD_U1_VARIABLE_TYPE,numberOfComponents2,err,error,*999)
             CALL Field_NumberOfComponentsCheck(equationsSetSetup%field,FIELD_U2_VARIABLE_TYPE,numberOfComponents2,err,error,*999)
@@ -12734,9 +12734,9 @@ CONTAINS
               CALL Field_NumberOfComponentsCheck(equationsSetSetup%field,FIELD_U3_VARIABLE_TYPE,numberOfDimensions,err,error,*999)
             ENDIF
 
-            !Check that the pressure values set type is created here?? (second variable is a DELUDELN type, as checked above)
+            !Check that the pressure values set type is created here?? (second variable is a T type, as checked above)
             !\todo: Decide whether these set_types (previous one as well) is to be created by user or automatically..
-            CALL Field_ParameterSetEnsureCreated(equationsSetSetup%field,FIELD_DELUDELN_VARIABLE_TYPE, &
+            CALL Field_ParameterSetEnsureCreated(equationsSetSetup%field,FIELD_T_VARIABLE_TYPE, &
               & FIELD_PRESSURE_VALUES_SET_TYPE,err,error,*999)
             CALL EquationsSet_SolutionMethodGet(equationsSet,solutionMethod,err,error,*999)
             SELECT CASE(solutionMethod)
@@ -12744,7 +12744,7 @@ CONTAINS
               DO componentIdx=1,numberOfDimensions
                 CALL Field_ComponentInterpolationCheck(equationsSetSetup%field,FIELD_U_VARIABLE_TYPE,componentIdx, &
                   & FIELD_NODE_BASED_INTERPOLATION,err,error,*999)
-                CALL Field_ComponentInterpolationCheck(equationsSetSetup%field,FIELD_DELUDELN_VARIABLE_TYPE,componentIdx, &
+                CALL Field_ComponentInterpolationCheck(equationsSetSetup%field,FIELD_T_VARIABLE_TYPE,componentIdx, &
                   & FIELD_NODE_BASED_INTERPOLATION,err,error,*999)
                 IF(equationsSet%specification(3)==EQUATIONS_SET_CONSTITUTIVE_AND_GROWTH_LAW_IN_CELLML_SUBTYPE) THEN
                   CALL Field_ComponentInterpolationCheck(equationsSetSetup%field,FIELD_U3_VARIABLE_TYPE,componentIdx, &
@@ -12803,20 +12803,20 @@ CONTAINS
               & EQUATIONS_SET_COMPRESSIBLE_RATE_BASED_SMOOTH_MODEL_SUBTYPE)
               CALL Field_NumberOfVariablesSetAndLock(equationsSet%dependent%dependentField,3,err,error,*999)
               CALL Field_VariableTypesSetAndLock(equationsSet%dependent%dependentField,[FIELD_U_VARIABLE_TYPE, &
-                & FIELD_DELUDELN_VARIABLE_TYPE,FIELD_U1_VARIABLE_TYPE],err,error,*999)
+                & FIELD_T_VARIABLE_TYPE,FIELD_U1_VARIABLE_TYPE],err,error,*999)
               CALL Field_VariableLabelSet(equationsSet%dependent%dependentField,FIELD_U_VARIABLE_TYPE,"U",err,error,*999)
-              CALL Field_VariableLabelSet(equationsSet%dependent%dependentField,FIELD_DELUDELN_VARIABLE_TYPE,"del U/del n", &
+              CALL Field_VariableLabelSet(equationsSet%dependent%dependentField,FIELD_T_VARIABLE_TYPE,"del U/del n", &
                 & err,error,*999)
               CALL Field_VariableLabelSet(equationsSet%dependent%dependentField,FIELD_U1_VARIABLE_TYPE,"U1",err,error,*999)
               CALL Field_DimensionSetAndLock(equationsSet%dependent%dependentField,FIELD_U_VARIABLE_TYPE, &
                 & FIELD_VECTOR_DIMENSION_TYPE,err,error,*999)
-              CALL Field_DimensionSetAndLock(equationsSet%dependent%dependentField,FIELD_DELUDELN_VARIABLE_TYPE, &
+              CALL Field_DimensionSetAndLock(equationsSet%dependent%dependentField,FIELD_T_VARIABLE_TYPE, &
                 & FIELD_VECTOR_DIMENSION_TYPE,err,error,*999)
               CALL Field_DimensionSetAndLock(equationsSet%dependent%dependentField,FIELD_U1_VARIABLE_TYPE, &
                 & FIELD_VECTOR_DIMENSION_TYPE,err,error,*999)
               CALL Field_DataTypeSetAndLock(equationsSet%dependent%dependentField,FIELD_U_VARIABLE_TYPE,FIELD_DP_TYPE, &
                 & err,error,*999)
-              CALL Field_DataTypeSetAndLock(equationsSet%dependent%dependentField,FIELD_DELUDELN_VARIABLE_TYPE,FIELD_DP_TYPE, &
+              CALL Field_DataTypeSetAndLock(equationsSet%dependent%dependentField,FIELD_T_VARIABLE_TYPE,FIELD_DP_TYPE, &
                 & err,error,*999)
               CALL Field_DataTypeSetAndLock(equationsSet%dependent%dependentField,FIELD_U1_VARIABLE_TYPE,FIELD_DP_TYPE, &
                 & err,error,*999)
@@ -12824,15 +12824,15 @@ CONTAINS
               & EQUATIONS_SET_COMPRESSIBLE_RATE_BASED_GROWTH_MODEL_SUBTYPE)
               CALL Field_NumberOfVariablesSetAndLock(equationsSet%dependent%dependentField,4,err,error,*999)
               CALL Field_VariableTypesSetAndLock(equationsSet%dependent%dependentField,[FIELD_U_VARIABLE_TYPE, &
-                & FIELD_DELUDELN_VARIABLE_TYPE,FIELD_U1_VARIABLE_TYPE,FIELD_U2_VARIABLE_TYPE],err,error,*999)
+                & FIELD_T_VARIABLE_TYPE,FIELD_U1_VARIABLE_TYPE,FIELD_U2_VARIABLE_TYPE],err,error,*999)
               CALL Field_VariableLabelSet(equationsSet%dependent%dependentField,FIELD_U_VARIABLE_TYPE,"U",err,error,*999)
-              CALL Field_VariableLabelSet(equationsSet%dependent%dependentField,FIELD_DELUDELN_VARIABLE_TYPE,"del U/del n", &
+              CALL Field_VariableLabelSet(equationsSet%dependent%dependentField,FIELD_T_VARIABLE_TYPE,"del U/del n", &
                 & err,error,*999)
               CALL Field_VariableLabelSet(equationsSet%dependent%dependentField,FIELD_U1_VARIABLE_TYPE,"U1",err,error,*999)
               CALL Field_VariableLabelSet(equationsSet%dependent%dependentField,FIELD_U1_VARIABLE_TYPE,"U2",err,error,*999)
               CALL Field_DimensionSetAndLock(equationsSet%dependent%dependentField,FIELD_U_VARIABLE_TYPE, &
                 & FIELD_VECTOR_DIMENSION_TYPE,err,error,*999)
-              CALL Field_DimensionSetAndLock(equationsSet%dependent%dependentField,FIELD_DELUDELN_VARIABLE_TYPE, &
+              CALL Field_DimensionSetAndLock(equationsSet%dependent%dependentField,FIELD_T_VARIABLE_TYPE, &
                 & FIELD_VECTOR_DIMENSION_TYPE,err,error,*999)
               CALL Field_DimensionSetAndLock(equationsSet%dependent%dependentField,FIELD_U1_VARIABLE_TYPE, &
                 & FIELD_VECTOR_DIMENSION_TYPE,err,error,*999)
@@ -12840,7 +12840,7 @@ CONTAINS
                 & FIELD_VECTOR_DIMENSION_TYPE,err,error,*999)
               CALL Field_DataTypeSetAndLock(equationsSet%dependent%dependentField,FIELD_U_VARIABLE_TYPE,FIELD_DP_TYPE, &
                 & err,error,*999)
-              CALL Field_DataTypeSetAndLock(equationsSet%dependent%dependentField,FIELD_DELUDELN_VARIABLE_TYPE,FIELD_DP_TYPE, &
+              CALL Field_DataTypeSetAndLock(equationsSet%dependent%dependentField,FIELD_T_VARIABLE_TYPE,FIELD_DP_TYPE, &
                 & err,error,*999)
               CALL Field_DataTypeSetAndLock(equationsSet%dependent%dependentField,FIELD_U1_VARIABLE_TYPE,FIELD_DP_TYPE, &
                 & err,error,*999)
@@ -12857,7 +12857,7 @@ CONTAINS
               & EQUATIONS_SET_COMPRESSIBLE_RATE_BASED_SMOOTH_MODEL_SUBTYPE)
               CALL Field_NumberOfComponentsSetAndLock(equationsSet%dependent%dependentField,FIELD_U_VARIABLE_TYPE, &
                 & numberOfComponents,err,error,*999)
-              CALL Field_NumberOfComponentsSetAndLock(equationsSet%dependent%dependentField,FIELD_DELUDELN_VARIABLE_TYPE, &
+              CALL Field_NumberOfComponentsSetAndLock(equationsSet%dependent%dependentField,FIELD_T_VARIABLE_TYPE, &
                 & numberOfComponents,err,error,*999)
               CALL Field_NumberOfComponentsSetAndLock(equationsSet%dependent%dependentField,FIELD_U1_VARIABLE_TYPE, &
                 & 1+NUMBER_OF_VOIGT(numberOfDimensions),err,error,*999)
@@ -12865,7 +12865,7 @@ CONTAINS
               & EQUATIONS_SET_COMPRESSIBLE_RATE_BASED_GROWTH_MODEL_SUBTYPE)
               CALL Field_NumberOfComponentsSetAndLock(equationsSet%dependent%dependentField,FIELD_U_VARIABLE_TYPE, &
                 & numberOfComponents,err,error,*999)
-              CALL Field_NumberOfComponentsSetAndLock(equationsSet%dependent%dependentField,FIELD_DELUDELN_VARIABLE_TYPE, &
+              CALL Field_NumberOfComponentsSetAndLock(equationsSet%dependent%dependentField,FIELD_T_VARIABLE_TYPE, &
                 & numberOfComponents,err,error,*999)
               CALL Field_NumberOfComponentsSetAndLock(equationsSet%dependent%dependentField,FIELD_U1_VARIABLE_TYPE, &
                 & 1+NUMBER_OF_VOIGT(numberOfDimensions),err,error,*999)
@@ -12881,14 +12881,14 @@ CONTAINS
             DO componentIdx=1,numberOfComponents
               CALL Field_ComponentMeshComponentSet(equationsSet%dependent%dependentField,FIELD_U_VARIABLE_TYPE, &
                 & componentIdx,geometricMeshComponent,err,error,*999)
-              CALL Field_ComponentMeshComponentSet(equationsSet%dependent%dependentField,FIELD_DELUDELN_VARIABLE_TYPE, &
+              CALL Field_ComponentMeshComponentSet(equationsSet%dependent%dependentField,FIELD_T_VARIABLE_TYPE, &
                 & componentIdx,geometricMeshComponent,err,error,*999)
             ENDDO !componentIdx
             IF(isHydrostaticPressureDependentField) THEN
               !Set the hydrostatic component to that of the first geometric component
               CALL Field_ComponentMeshComponentSet(equationsSet%dependent%dependentField,FIELD_U_VARIABLE_TYPE, &
                 & numberOfDimensions+1,geometricMeshComponent,err,error,*999)
-              CALL Field_ComponentMeshComponentSet(equationsSet%dependent%dependentField,FIELD_DELUDELN_VARIABLE_TYPE, &
+              CALL Field_ComponentMeshComponentSet(equationsSet%dependent%dependentField,FIELD_T_VARIABLE_TYPE, &
                 & numberOfDimensions+1,geometricMeshComponent,err,error,*999)
             ENDIF
             CALL EquationsSet_SolutionMethodGet(equationsSet,solutionMethod,err,error,*999)
@@ -12899,14 +12899,14 @@ CONTAINS
                 CALL Field_ComponentInterpolationSet(equationsSet%dependent%dependentField,FIELD_U_VARIABLE_TYPE, &
                   & componentIdx,FIELD_NODE_BASED_INTERPOLATION,err,error,*999)
                 CALL Field_ComponentInterpolationSet(equationsSet%dependent%dependentField, &
-                  & FIELD_DELUDELN_VARIABLE_TYPE,componentIdx,FIELD_NODE_BASED_INTERPOLATION,err,error,*999)
+                  & FIELD_T_VARIABLE_TYPE,componentIdx,FIELD_NODE_BASED_INTERPOLATION,err,error,*999)
               ENDDO !componentIdx
               IF(isHydrostaticPressureDependentField) THEN
                 !Set the hydrostatic pressure component to element based interpolation
                 CALL Field_ComponentInterpolationSet(equationsSet%dependent%dependentField,FIELD_U_VARIABLE_TYPE, &
                   & numberOfDimensions+1,FIELD_ELEMENT_BASED_INTERPOLATION,err,error,*999)
                 CALL Field_ComponentInterpolationSet(equationsSet%dependent%dependentField, &
-                  & FIELD_DELUDELN_VARIABLE_TYPE,numberOfDimensions+1,FIELD_ELEMENT_BASED_INTERPOLATION,err,error,*999)
+                  & FIELD_T_VARIABLE_TYPE,numberOfDimensions+1,FIELD_ELEMENT_BASED_INTERPOLATION,err,error,*999)
               ENDIF
             CASE(EQUATIONS_SET_BEM_SOLUTION_METHOD)
               CALL FlagError("Not implemented.",err,error,*999)
@@ -12963,27 +12963,27 @@ CONTAINS
             CASE(EQUATIONS_SET_RATE_BASED_SMOOTH_MODEL_SUBTYPE, &
               & EQUATIONS_SET_COMPRESSIBLE_RATE_BASED_SMOOTH_MODEL_SUBTYPE)
               CALL Field_NumberOfVariablesCheck(equationsSetSetup%field,3,err,error,*999)
-              CALL Field_VariableTypesCheck(equationsSetSetup%field,[FIELD_U_VARIABLE_TYPE,FIELD_DELUDELN_VARIABLE_TYPE, &
+              CALL Field_VariableTypesCheck(equationsSetSetup%field,[FIELD_U_VARIABLE_TYPE,FIELD_T_VARIABLE_TYPE, &
                 & FIELD_U1_VARIABLE_TYPE],err,error,*999)
               CALL Field_DimensionCheck(equationsSetSetup%field,FIELD_U_VARIABLE_TYPE,FIELD_VECTOR_DIMENSION_TYPE,err,error,*999)
-              CALL Field_DimensionCheck(equationsSetSetup%field,FIELD_DELUDELN_VARIABLE_TYPE,FIELD_VECTOR_DIMENSION_TYPE, &
+              CALL Field_DimensionCheck(equationsSetSetup%field,FIELD_T_VARIABLE_TYPE,FIELD_VECTOR_DIMENSION_TYPE, &
                 & err,error,*999)
               CALL Field_DimensionCheck(equationsSetSetup%field,FIELD_U1_VARIABLE_TYPE,FIELD_VECTOR_DIMENSION_TYPE,err,error,*999)
               CALL Field_DataTypeCheck(equationsSetSetup%field,FIELD_U_VARIABLE_TYPE,FIELD_DP_TYPE,err,error,*999)
-              CALL Field_DataTypeCheck(equationsSetSetup%field,FIELD_DELUDELN_VARIABLE_TYPE,FIELD_DP_TYPE,err,error,*999)
+              CALL Field_DataTypeCheck(equationsSetSetup%field,FIELD_T_VARIABLE_TYPE,FIELD_DP_TYPE,err,error,*999)
               CALL Field_DataTypeCheck(equationsSetSetup%field,FIELD_U1_VARIABLE_TYPE,FIELD_DP_TYPE,err,error,*999)
             CASE( EQUATIONS_SET_RATE_BASED_GROWTH_MODEL_SUBTYPE, &
               & EQUATIONS_SET_COMPRESSIBLE_RATE_BASED_GROWTH_MODEL_SUBTYPE)
               CALL Field_NumberOfVariablesCheck(equationsSetSetup%field,4,err,error,*999)
-              CALL Field_VariableTypesCheck(equationsSetSetup%field,[FIELD_U_VARIABLE_TYPE,FIELD_DELUDELN_VARIABLE_TYPE, &
+              CALL Field_VariableTypesCheck(equationsSetSetup%field,[FIELD_U_VARIABLE_TYPE,FIELD_T_VARIABLE_TYPE, &
                 & FIELD_U1_VARIABLE_TYPE,FIELD_U2_VARIABLE_TYPE],err,error,*999)
               CALL Field_DimensionCheck(equationsSetSetup%field,FIELD_U_VARIABLE_TYPE,FIELD_VECTOR_DIMENSION_TYPE,err,error,*999)
-              CALL Field_DimensionCheck(equationsSetSetup%field,FIELD_DELUDELN_VARIABLE_TYPE,FIELD_VECTOR_DIMENSION_TYPE, &
+              CALL Field_DimensionCheck(equationsSetSetup%field,FIELD_T_VARIABLE_TYPE,FIELD_VECTOR_DIMENSION_TYPE, &
                 & err,error,*999)
               CALL Field_DimensionCheck(equationsSetSetup%field,FIELD_U1_VARIABLE_TYPE,FIELD_VECTOR_DIMENSION_TYPE,err,error,*999)
               CALL Field_DimensionCheck(equationsSetSetup%field,FIELD_U2_VARIABLE_TYPE,FIELD_VECTOR_DIMENSION_TYPE,err,error,*999)
               CALL Field_DataTypeCheck(equationsSetSetup%field,FIELD_U_VARIABLE_TYPE,FIELD_DP_TYPE,err,error,*999)
-              CALL Field_DataTypeCheck(equationsSetSetup%field,FIELD_DELUDELN_VARIABLE_TYPE,FIELD_DP_TYPE,err,error,*999)
+              CALL Field_DataTypeCheck(equationsSetSetup%field,FIELD_T_VARIABLE_TYPE,FIELD_DP_TYPE,err,error,*999)
               CALL Field_DataTypeCheck(equationsSetSetup%field,FIELD_U1_VARIABLE_TYPE,FIELD_DP_TYPE,err,error,*999)
               CALL Field_DataTypeCheck(equationsSetSetup%field,FIELD_U2_VARIABLE_TYPE,FIELD_DP_TYPE,err,error,*999)
             CASE DEFAULT
@@ -12992,7 +12992,7 @@ CONTAINS
               CALL FlagError(localError,err,error,*999)
             END SELECT
             CALL Field_NumberOfComponentsCheck(equationsSetSetup%field,FIELD_U_VARIABLE_TYPE,numberOfComponents,err,error,*999)
-            CALL Field_NumberOfComponentsCheck(equationsSetSetup%field,FIELD_DELUDELN_VARIABLE_TYPE,numberOfComponents, &
+            CALL Field_NumberOfComponentsCheck(equationsSetSetup%field,FIELD_T_VARIABLE_TYPE,numberOfComponents, &
               & err,error,*999)
             CALL EquationsSet_SolutionMethodGet(equationsSet,solutionMethod,err,error,*999)
             SELECT CASE(solutionMethod)
@@ -13000,7 +13000,7 @@ CONTAINS
               DO componentIdx=1,numberOfDimensions
                 CALL Field_ComponentInterpolationCheck(equationsSetSetup%field,FIELD_U_VARIABLE_TYPE,componentIdx, &
                   & FIELD_NODE_BASED_INTERPOLATION,err,error,*999)
-                CALL Field_ComponentInterpolationCheck(equationsSetSetup%field,FIELD_DELUDELN_VARIABLE_TYPE,componentIdx, &
+                CALL Field_ComponentInterpolationCheck(equationsSetSetup%field,FIELD_T_VARIABLE_TYPE,componentIdx, &
                   & FIELD_NODE_BASED_INTERPOLATION,err,error,*999)
               ENDDO !componentIdx
             CASE(EQUATIONS_SET_BEM_SOLUTION_METHOD)
@@ -13045,9 +13045,9 @@ CONTAINS
                 & " is invalid."
               CALL FlagError(localError,err,error,*999)
             END SELECT
-            !Check that the pressure values set type is created here?? (second variable is a DELUDELN type, as checked above)
+            !Check that the pressure values set type is created here?? (second variable is a T type, as checked above)
             !\todo: Decide whether these set_types (previous one as well) is to be created by user or automatically..
-            CALL Field_ParameterSetEnsureCreated(equationsSetSetup%field,FIELD_DELUDELN_VARIABLE_TYPE, &
+            CALL Field_ParameterSetEnsureCreated(equationsSetSetup%field,FIELD_T_VARIABLE_TYPE, &
               & FIELD_PRESSURE_VALUES_SET_TYPE,err,error,*999)
           ENDIF
         CASE(EQUATIONS_SET_SETUP_FINISH_ACTION)
@@ -13092,9 +13092,9 @@ CONTAINS
             & FIELD_PREVIOUS_VALUES_SET_TYPE,err,error,*999)
           CALL Field_ParameterSetEnsureCreated(equationsSet%dependent%dependentField,FIELD_U_VARIABLE_TYPE, &
             & FIELD_PREVIOUS_ITERATION_VALUES_SET_TYPE,err,error,*999)
-          CALL Field_ParameterSetEnsureCreated(equationsSet%dependent%dependentField,FIELD_DELUDELN_VARIABLE_TYPE, &
+          CALL Field_ParameterSetEnsureCreated(equationsSet%dependent%dependentField,FIELD_T_VARIABLE_TYPE, &
             & FIELD_PREVIOUS_VALUES_SET_TYPE,err,error,*999)
-          CALL Field_ParameterSetEnsureCreated(equationsSet%dependent%dependentField,FIELD_DELUDELN_VARIABLE_TYPE, &
+          CALL Field_ParameterSetEnsureCreated(equationsSet%dependent%dependentField,FIELD_T_VARIABLE_TYPE, &
             & FIELD_PRESSURE_VALUES_SET_TYPE,err,error,*999)
           SELECT CASE(equationsSetSubtype)
           CASE(EQUATIONS_SET_RATE_BASED_SMOOTH_MODEL_SUBTYPE, &
@@ -13136,25 +13136,25 @@ CONTAINS
             CALL Field_DecompositionSetAndLock(equationsSet%dependent%dependentField,geometricDecomposition,err,error,*999)
             CALL Field_GeometricFieldSetAndLock(equationsSet%dependent%dependentField,geometricField,err,error,*999)
             CALL Field_NumberOfVariablesSetAndLock(equationsSet%dependent%dependentField,4,err,error,*999)
-            CALL Field_VariableTypesSetAndLock(equationsSetSetup%field,[FIELD_U_VARIABLE_TYPE,FIELD_DELUDELN_VARIABLE_TYPE, &
+            CALL Field_VariableTypesSetAndLock(equationsSetSetup%field,[FIELD_U_VARIABLE_TYPE,FIELD_T_VARIABLE_TYPE, &
               & FIELD_V_VARIABLE_TYPE,FIELD_DELVDELN_VARIABLE_TYPE],err,error,*999)
             CALL Field_DimensionSetAndLock(equationsSet%dependent%dependentField,FIELD_U_VARIABLE_TYPE, &
               & FIELD_VECTOR_DIMENSION_TYPE,err,error,*999)
-            CALL Field_DimensionSetAndLock(equationsSet%dependent%dependentField,FIELD_DELUDELN_VARIABLE_TYPE, &
+            CALL Field_DimensionSetAndLock(equationsSet%dependent%dependentField,FIELD_T_VARIABLE_TYPE, &
               & FIELD_VECTOR_DIMENSION_TYPE,err,error,*999)
             CALL Field_DimensionSetAndLock(equationsSet%dependent%dependentField,FIELD_V_VARIABLE_TYPE, &
               & FIELD_VECTOR_DIMENSION_TYPE,err,error,*999)
             CALL Field_DimensionSetAndLock(equationsSet%dependent%dependentField,FIELD_DELVDELN_VARIABLE_TYPE, &
               & FIELD_VECTOR_DIMENSION_TYPE,err,error,*999)
             CALL Field_DataTypeSetAndLock(equationsSet%dependent%dependentField,FIELD_U_VARIABLE_TYPE,FIELD_DP_TYPE,err,error,*999)
-            CALL Field_DataTypeSetAndLock(equationsSet%dependent%dependentField,FIELD_DELUDELN_VARIABLE_TYPE,FIELD_DP_TYPE, &
+            CALL Field_DataTypeSetAndLock(equationsSet%dependent%dependentField,FIELD_T_VARIABLE_TYPE,FIELD_DP_TYPE, &
               & err,error,*999)
             CALL Field_DataTypeSetAndLock(equationsSet%dependent%dependentField,FIELD_V_VARIABLE_TYPE,FIELD_DP_TYPE,err,error,*999)
             CALL Field_DataTypeSetAndLock(equationsSet%dependent%dependentField,FIELD_DELVDELN_VARIABLE_TYPE,FIELD_DP_TYPE, &
               & err,error,*999)
             CALL Field_NumberOfComponentsSetAndLock(equationsSet%dependent%dependentField,FIELD_U_VARIABLE_TYPE, &
               & numberOfComponents,err,error,*999)
-            CALL Field_NumberOfComponentsSetAndLock(equationsSet%dependent%dependentField,FIELD_DELUDELN_VARIABLE_TYPE, &
+            CALL Field_NumberOfComponentsSetAndLock(equationsSet%dependent%dependentField,FIELD_T_VARIABLE_TYPE, &
               & numberOfComponents,err,error,*999)
             SELECT CASE(equationsSetSubtype)
             CASE(EQUATIONS_SET_ELASTICITY_DARCY_INRIA_MODEL_SUBTYPE)
@@ -13176,7 +13176,7 @@ CONTAINS
                 & err,error,*999)
               CALL Field_ComponentMeshComponentSet(equationsSet%dependent%dependentField,FIELD_U_VARIABLE_TYPE, &
                 & componentIdx,geometricMeshComponent,err,error,*999)
-              CALL Field_ComponentMeshComponentSet(equationsSet%dependent%dependentField,FIELD_DELUDELN_VARIABLE_TYPE, &
+              CALL Field_ComponentMeshComponentSet(equationsSet%dependent%dependentField,FIELD_T_VARIABLE_TYPE, &
                 & componentIdx,geometricMeshComponent,err,error,*999)
             ENDDO !componentIdx
 
@@ -13185,7 +13185,7 @@ CONTAINS
               CALL Field_ComponentMeshComponentGet(geometricField,FIELD_U_VARIABLE_TYPE,1,geometricMeshComponent,err,error,*999)
               CALL Field_ComponentMeshComponentSet(equationsSet%dependent%dependentField,FIELD_U_VARIABLE_TYPE, &
                 & numberOfComponents,geometricMeshComponent,err,error,*999)
-              CALL Field_ComponentMeshComponentSet(equationsSet%dependent%dependentField,FIELD_DELUDELN_VARIABLE_TYPE, &
+              CALL Field_ComponentMeshComponentSet(equationsSet%dependent%dependentField,FIELD_T_VARIABLE_TYPE, &
                 & numberOfComponents,geometricMeshComponent,err,error,*999)
               !kmith
             ENDIF
@@ -13217,7 +13217,7 @@ CONTAINS
                 CALL Field_ComponentInterpolationSetAndLock(equationsSet%dependent%dependentField,FIELD_U_VARIABLE_TYPE, &
                   & componentIdx,FIELD_NODE_BASED_INTERPOLATION,err,error,*999)
                 CALL Field_ComponentInterpolationSetAndLock(equationsSet%dependent%dependentField, &
-                  & FIELD_DELUDELN_VARIABLE_TYPE,componentIdx,FIELD_NODE_BASED_INTERPOLATION,err,error,*999)
+                  & FIELD_T_VARIABLE_TYPE,componentIdx,FIELD_NODE_BASED_INTERPOLATION,err,error,*999)
               ENDDO !componentIdx
 
               IF(equationsSetSubtype==EQUATIONS_SET_INCOMPRESSIBLE_ELASTICITY_DRIVEN_DARCY_SUBTYPE) THEN
@@ -13226,13 +13226,13 @@ CONTAINS
                 CALL Field_ComponentInterpolationSetAndLock(equationsSet%dependent%dependentField,FIELD_U_VARIABLE_TYPE, &
                   & numberOfComponents,FIELD_NODE_BASED_INTERPOLATION,err,error,*999)
                 CALL Field_ComponentInterpolationSetAndLock(equationsSet%dependent%dependentField, &
-                  & FIELD_DELUDELN_VARIABLE_TYPE,numberOfComponents,FIELD_NODE_BASED_INTERPOLATION,err,error,*999)
+                  & FIELD_T_VARIABLE_TYPE,numberOfComponents,FIELD_NODE_BASED_INTERPOLATION,err,error,*999)
               ELSE IF (isHydrostaticPressureDependentField) THEN
                 !Elasticity: Set the hydrostatic pressure component to element based interpolation
                 CALL Field_ComponentInterpolationSetAndLock(equationsSet%dependent%dependentField,FIELD_U_VARIABLE_TYPE, &
                   & numberOfComponents,FIELD_ELEMENT_BASED_INTERPOLATION,err,error,*999)
                 CALL Field_ComponentInterpolationSetAndLock(equationsSet%dependent%dependentField, &
-                  & FIELD_DELUDELN_VARIABLE_TYPE,numberOfComponents,FIELD_ELEMENT_BASED_INTERPOLATION,err,error,*999)
+                  & FIELD_T_VARIABLE_TYPE,numberOfComponents,FIELD_ELEMENT_BASED_INTERPOLATION,err,error,*999)
               ENDIF
 
               !Darcy: Set the velocity, pressure and, if present, mass increase components to node based interpolation
@@ -13265,20 +13265,20 @@ CONTAINS
             CALL Field_TypeCheck(equationsSetSetup%field,FIELD_GENERAL_TYPE,err,error,*999)
             CALL Field_DependentTypeCheck(equationsSetSetup%field,FIELD_DEPENDENT_TYPE,err,error,*999)
             CALL Field_NumberOfVariablesCheck(equationsSetSetup%field,4,err,error,*999)
-            CALL Field_VariableTypesCheck(equationsSetSetup%field,[FIELD_U_VARIABLE_TYPE,FIELD_DELUDELN_VARIABLE_TYPE,&
+            CALL Field_VariableTypesCheck(equationsSetSetup%field,[FIELD_U_VARIABLE_TYPE,FIELD_T_VARIABLE_TYPE,&
               & FIELD_V_VARIABLE_TYPE,FIELD_DELVDELN_VARIABLE_TYPE],err,error,*999)
             CALL Field_DimensionCheck(equationsSetSetup%field,FIELD_U_VARIABLE_TYPE,FIELD_VECTOR_DIMENSION_TYPE,err,error,*999)
-            CALL Field_DimensionCheck(equationsSetSetup%field,FIELD_DELUDELN_VARIABLE_TYPE,FIELD_VECTOR_DIMENSION_TYPE, &
+            CALL Field_DimensionCheck(equationsSetSetup%field,FIELD_T_VARIABLE_TYPE,FIELD_VECTOR_DIMENSION_TYPE, &
               & err,error,*999)
             CALL Field_DimensionCheck(equationsSetSetup%field,FIELD_V_VARIABLE_TYPE,FIELD_VECTOR_DIMENSION_TYPE,err,error,*999)
             CALL Field_DimensionCheck(equationsSetSetup%field,FIELD_DELVDELN_VARIABLE_TYPE,FIELD_VECTOR_DIMENSION_TYPE, &
               & err,error,*999)
             CALL Field_DataTypeCheck(equationsSetSetup%field,FIELD_U_VARIABLE_TYPE,FIELD_DP_TYPE,err,error,*999)
-            CALL Field_DataTypeCheck(equationsSetSetup%field,FIELD_DELUDELN_VARIABLE_TYPE,FIELD_DP_TYPE,err,error,*999)
+            CALL Field_DataTypeCheck(equationsSetSetup%field,FIELD_T_VARIABLE_TYPE,FIELD_DP_TYPE,err,error,*999)
             CALL Field_DataTypeCheck(equationsSetSetup%field,FIELD_V_VARIABLE_TYPE,FIELD_DP_TYPE,err,error,*999)
             CALL Field_DataTypeCheck(equationsSetSetup%field,FIELD_DELVDELN_VARIABLE_TYPE,FIELD_DP_TYPE,err,error,*999)
             CALL Field_NumberOfComponentsCheck(equationsSetSetup%field,FIELD_U_VARIABLE_TYPE,numberOfComponents,err,error,*999)
-            CALL Field_NumberOfComponentsCheck(equationsSetSetup%field,FIELD_DELUDELN_VARIABLE_TYPE,numberOfComponents, &
+            CALL Field_NumberOfComponentsCheck(equationsSetSetup%field,FIELD_T_VARIABLE_TYPE,numberOfComponents, &
               & err,error,*999)
 
             SELECT CASE(equationsSetSubtype)
@@ -13306,14 +13306,14 @@ CONTAINS
               DO componentIdx=1,numberOfDimensions
                 CALL Field_ComponentInterpolationCheck(equationsSetSetup%field,FIELD_U_VARIABLE_TYPE,componentIdx, &
                   & FIELD_NODE_BASED_INTERPOLATION,err,error,*999)
-                CALL Field_ComponentInterpolationCheck(equationsSetSetup%field,FIELD_DELUDELN_VARIABLE_TYPE,componentIdx, &
+                CALL Field_ComponentInterpolationCheck(equationsSetSetup%field,FIELD_T_VARIABLE_TYPE,componentIdx, &
                   & FIELD_NODE_BASED_INTERPOLATION,err,error,*999)
               ENDDO !componentIdx
               IF(equationsSetSubtype==EQUATIONS_SET_INCOMPRESSIBLE_ELASTICITY_DRIVEN_DARCY_SUBTYPE) THEN
                 !If solid hydrostatic pressure is driving Darcy flow, check that pressure uses node based interpolation
                 CALL Field_ComponentInterpolationCheck(equationsSetSetup%field,FIELD_U_VARIABLE_TYPE,4, &
                   & FIELD_NODE_BASED_INTERPOLATION,err,error,*999)
-                CALL Field_ComponentInterpolationCheck(equationsSetSetup%field,FIELD_DELUDELN_VARIABLE_TYPE,4, &
+                CALL Field_ComponentInterpolationCheck(equationsSetSetup%field,FIELD_T_VARIABLE_TYPE,4, &
                   & FIELD_NODE_BASED_INTERPOLATION,err,error,*999)
               ENDIF
               !Darcy:
@@ -13378,24 +13378,24 @@ CONTAINS
             CALL Field_GeometricFieldSetAndLock(equationsSet%dependent%dependentField,geometricField,err,error,*999)
             CALL Field_NumberOfVariablesSetAndLock(equationsSet%dependent%dependentField,4,err,error,*999)
             CALL Field_VariableTypesSetAndLock(equationsSet%dependent%dependentField,[FIELD_U_VARIABLE_TYPE, &
-              & FIELD_DELUDELN_VARIABLE_TYPE,FIELD_V_VARIABLE_TYPE,FIELD_DELVDELN_VARIABLE_TYPE],err,error,*999)
+              & FIELD_T_VARIABLE_TYPE,FIELD_V_VARIABLE_TYPE,FIELD_DELVDELN_VARIABLE_TYPE],err,error,*999)
             CALL Field_DimensionSetAndLock(equationsSet%dependent%dependentField,FIELD_U_VARIABLE_TYPE, &
               & FIELD_VECTOR_DIMENSION_TYPE,err,error,*999)
-            CALL Field_DimensionSetAndLock(equationsSet%dependent%dependentField,FIELD_DELUDELN_VARIABLE_TYPE, &
+            CALL Field_DimensionSetAndLock(equationsSet%dependent%dependentField,FIELD_T_VARIABLE_TYPE, &
               & FIELD_VECTOR_DIMENSION_TYPE,err,error,*999)
             CALL Field_DimensionSetAndLock(equationsSet%dependent%dependentField,FIELD_V_VARIABLE_TYPE, &
               & FIELD_VECTOR_DIMENSION_TYPE,err,error,*999)
             CALL Field_DimensionSetAndLock(equationsSet%dependent%dependentField,FIELD_DELVDELN_VARIABLE_TYPE, &
               & FIELD_VECTOR_DIMENSION_TYPE,err,error,*999)
             CALL Field_DataTypeSetAndLock(equationsSet%dependent%dependentField,FIELD_U_VARIABLE_TYPE,FIELD_DP_TYPE,err,error,*999)
-            CALL Field_DataTypeSetAndLock(equationsSet%dependent%dependentField,FIELD_DELUDELN_VARIABLE_TYPE,FIELD_DP_TYPE, &
+            CALL Field_DataTypeSetAndLock(equationsSet%dependent%dependentField,FIELD_T_VARIABLE_TYPE,FIELD_DP_TYPE, &
               & err,error,*999)
             CALL Field_DataTypeSetAndLock(equationsSet%dependent%dependentField,FIELD_V_VARIABLE_TYPE,FIELD_DP_TYPE,err,error,*999)
             CALL Field_DataTypeSetAndLock(equationsSet%dependent%dependentField,FIELD_DELVDELN_VARIABLE_TYPE,FIELD_DP_TYPE, &
               & err,error,*999)
             CALL Field_NumberOfComponentsSetAndLock(equationsSet%dependent%dependentField,FIELD_U_VARIABLE_TYPE, &
               & numberOfComponents,err,error,*999)
-            CALL Field_NumberOfComponentsSetAndLock(equationsSet%dependent%dependentField,FIELD_DELUDELN_VARIABLE_TYPE, &
+            CALL Field_NumberOfComponentsSetAndLock(equationsSet%dependent%dependentField,FIELD_T_VARIABLE_TYPE, &
               & numberOfComponents,err,error,*999)
             CALL Field_NumberOfComponentsSetAndLock(equationsSet%dependent%dependentField,FIELD_V_VARIABLE_TYPE, &
               & numberOfDarcyComponents,err,error,*999)
@@ -13404,7 +13404,7 @@ CONTAINS
 
             !Set labels
             CALL Field_VariableLabelSet(equationsSet%dependent%dependentField,FIELD_U_VARIABLE_TYPE,"U",err,error,*999)
-            CALL Field_VariableLabelSet(equationsSet%dependent%dependentField,FIELD_DELUDELN_VARIABLE_TYPE,"del U/del n", &
+            CALL Field_VariableLabelSet(equationsSet%dependent%dependentField,FIELD_T_VARIABLE_TYPE,"del U/del n", &
               & err,error,*999)
             CALL Field_VariableLabelSet(equationsSet%dependent%dependentField,FIELD_V_VARIABLE_TYPE,"V",err,error,*999)
             CALL Field_VariableLabelSet(equationsSet%dependent%dependentField,FIELD_DELVDELN_VARIABLE_TYPE,"del V/del n", &
@@ -13412,14 +13412,14 @@ CONTAINS
             CALL Field_ComponentLabelSet(equationsSet%dependent%dependentField,FIELD_U_VARIABLE_TYPE,1,"x1",err,error,*999)
             CALL Field_ComponentLabelSet(equationsSet%dependent%dependentField,FIELD_U_VARIABLE_TYPE,2,"x2",err,error,*999)
             CALL Field_ComponentLabelSet(equationsSet%dependent%dependentField,FIELD_U_VARIABLE_TYPE,3,"x3",err,error,*999)
-            CALL Field_ComponentLabelSet(equationsSet%dependent%dependentField,FIELD_DELUDELN_VARIABLE_TYPE,1,"del x1/del n", &
+            CALL Field_ComponentLabelSet(equationsSet%dependent%dependentField,FIELD_T_VARIABLE_TYPE,1,"del x1/del n", &
               & err,error,*999)
-            CALL Field_ComponentLabelSet(equationsSet%dependent%dependentField,FIELD_DELUDELN_VARIABLE_TYPE,2,"del x2/del n", &
+            CALL Field_ComponentLabelSet(equationsSet%dependent%dependentField,FIELD_T_VARIABLE_TYPE,2,"del x2/del n", &
               & err,error,*999)
-            CALL Field_ComponentLabelSet(equationsSet%dependent%dependentField,FIELD_DELUDELN_VARIABLE_TYPE,3,"del x3/del n", &
+            CALL Field_ComponentLabelSet(equationsSet%dependent%dependentField,FIELD_T_VARIABLE_TYPE,3,"del x3/del n", &
               & err,error,*999)
             CALL Field_ComponentLabelSet(equationsSet%dependent%dependentField,FIELD_U_VARIABLE_TYPE,1,"p",err,error,*999)
-            CALL Field_ComponentLabelSet(equationsSet%dependent%dependentField,FIELD_DELUDELN_VARIABLE_TYPE,1,"del p/del n", &
+            CALL Field_ComponentLabelSet(equationsSet%dependent%dependentField,FIELD_T_VARIABLE_TYPE,1,"del p/del n", &
               & err,error,*999)
 
             !Elasticity: Default to the geometric interpolation setup
@@ -13428,7 +13428,7 @@ CONTAINS
                 & err,error,*999)
               CALL Field_ComponentMeshComponentSet(equationsSet%dependent%dependentField,FIELD_U_VARIABLE_TYPE,componentIdx, &
                 & geometricMeshComponent,err,error,*999)
-              CALL Field_ComponentMeshComponentSet(equationsSet%dependent%dependentField,FIELD_DELUDELN_VARIABLE_TYPE, &
+              CALL Field_ComponentMeshComponentSet(equationsSet%dependent%dependentField,FIELD_T_VARIABLE_TYPE, &
                 & componentIdx,geometricMeshComponent,err,error,*999)
             ENDDO !componentIdx
             !Darcy: Default pressure and mass increase to the first geometric component
@@ -13448,7 +13448,7 @@ CONTAINS
                 CALL Field_ComponentInterpolationSetAndLock(equationsSet%dependent%dependentField,FIELD_U_VARIABLE_TYPE, &
                   & componentIdx,FIELD_NODE_BASED_INTERPOLATION,err,error,*999)
                 CALL Field_ComponentInterpolationSetAndLock(equationsSet%dependent%dependentField, &
-                  & FIELD_DELUDELN_VARIABLE_TYPE,componentIdx,FIELD_NODE_BASED_INTERPOLATION,err,error,*999)
+                  & FIELD_T_VARIABLE_TYPE,componentIdx,FIELD_NODE_BASED_INTERPOLATION,err,error,*999)
               ENDDO !componentIdx
               !Darcy: Set the pressure and mass increase components to node based interpolation
               DO componentIdx=1,numberOfDarcyComponents
@@ -13480,20 +13480,20 @@ CONTAINS
             CALL Field_TypeCheck(equationsSetSetup%field,FIELD_GEOMETRIC_GENERAL_TYPE,err,error,*999)
             CALL Field_DependentTypeCheck(equationsSetSetup%field,FIELD_DEPENDENT_TYPE,err,error,*999)
             CALL Field_NumberOfVariablesCheck(equationsSetSetup%field,4,err,error,*999)
-            CALL Field_VariableTypesCheck(equationsSetSetup%field,[FIELD_U_VARIABLE_TYPE,FIELD_DELUDELN_VARIABLE_TYPE, &
+            CALL Field_VariableTypesCheck(equationsSetSetup%field,[FIELD_U_VARIABLE_TYPE,FIELD_T_VARIABLE_TYPE, &
               & FIELD_V_VARIABLE_TYPE,FIELD_DELVDELN_VARIABLE_TYPE],err,error,*999)
             CALL Field_DimensionCheck(equationsSetSetup%field,FIELD_U_VARIABLE_TYPE,FIELD_VECTOR_DIMENSION_TYPE,err,error,*999)
-            CALL Field_DimensionCheck(equationsSetSetup%field,FIELD_DELUDELN_VARIABLE_TYPE,FIELD_VECTOR_DIMENSION_TYPE, &
+            CALL Field_DimensionCheck(equationsSetSetup%field,FIELD_T_VARIABLE_TYPE,FIELD_VECTOR_DIMENSION_TYPE, &
               & err,error,*999)
             CALL Field_DimensionCheck(equationsSetSetup%field,FIELD_V_VARIABLE_TYPE,FIELD_VECTOR_DIMENSION_TYPE,err,error,*999)
             CALL Field_DimensionCheck(equationsSetSetup%field,FIELD_DELVDELN_VARIABLE_TYPE,FIELD_VECTOR_DIMENSION_TYPE, &
               & err,error,*999)
             CALL Field_DataTypeCheck(equationsSetSetup%field,FIELD_U_VARIABLE_TYPE,FIELD_DP_TYPE,err,error,*999)
-            CALL Field_DataTypeCheck(equationsSetSetup%field,FIELD_DELUDELN_VARIABLE_TYPE,FIELD_DP_TYPE,err,error,*999)
+            CALL Field_DataTypeCheck(equationsSetSetup%field,FIELD_T_VARIABLE_TYPE,FIELD_DP_TYPE,err,error,*999)
             CALL Field_DataTypeCheck(equationsSetSetup%field,FIELD_V_VARIABLE_TYPE,FIELD_DP_TYPE,err,error,*999)
             CALL Field_DataTypeCheck(equationsSetSetup%field,FIELD_DELVDELN_VARIABLE_TYPE,FIELD_DP_TYPE,err,error,*999)
             CALL Field_NumberOfComponentsCheck(equationsSetSetup%field,FIELD_U_VARIABLE_TYPE,numberOfComponents,err,error,*999)
-            CALL Field_NumberOfComponentsCheck(equationsSetSetup%field,FIELD_DELUDELN_VARIABLE_TYPE,numberOfComponents, &
+            CALL Field_NumberOfComponentsCheck(equationsSetSetup%field,FIELD_T_VARIABLE_TYPE,numberOfComponents, &
               & err,error,*999)
             CALL Field_NumberOfComponentsCheck(equationsSetSetup%field,FIELD_V_VARIABLE_TYPE,numberOfDarcyComponents,err,error,*999)
             CALL Field_NumberOfComponentsCheck(equationsSetSetup%field,FIELD_DELVDELN_VARIABLE_TYPE,numberOfDarcyComponents, &
@@ -13506,7 +13506,7 @@ CONTAINS
               DO componentIdx=1,numberOfDimensions
                 CALL Field_ComponentInterpolationCheck(equationsSetSetup%field,FIELD_U_VARIABLE_TYPE,componentIdx, &
                   & FIELD_NODE_BASED_INTERPOLATION,err,error,*999)
-                CALL Field_ComponentInterpolationCheck(equationsSetSetup%field,FIELD_DELUDELN_VARIABLE_TYPE,componentIdx, &
+                CALL Field_ComponentInterpolationCheck(equationsSetSetup%field,FIELD_T_VARIABLE_TYPE,componentIdx, &
                   & FIELD_NODE_BASED_INTERPOLATION,err,error,*999)
               ENDDO !componentIdx
               !Darcy:
@@ -13570,7 +13570,7 @@ CONTAINS
             IF(err/=0) CALL FlagError("Could not allocate variable types.",err,error,*999)
             DO variableIdx=1,numberOfCompartments+1
               variableTypes(2*variableIdx-1)=FIELD_U_VARIABLE_TYPE+(FIELD_NUMBER_OF_VARIABLE_SUBTYPES*(variableIdx-1))
-              variableTypes(2*variableIdx)=FIELD_DELUDELN_VARIABLE_TYPE+(FIELD_NUMBER_OF_VARIABLE_SUBTYPES*(variableIdx-1))
+              variableTypes(2*variableIdx)=FIELD_T_VARIABLE_TYPE+(FIELD_NUMBER_OF_VARIABLE_SUBTYPES*(variableIdx-1))
             ENDDO !variableIdx
             CALL Field_VariableTypesSetAndLock(equationsSetSetup%field,variableTypes,err,error,*999)
             numberOfComponents=numberOfDimensions+1
@@ -13586,7 +13586,7 @@ CONTAINS
 
             !CALL Field_NumberOfComponentsSetAndLock(equationsSet%dependent%dependentField,FIELD_U_VARIABLE_TYPE, &
             !  & numberOfComponents,err,error,*999)
-            !CALL Field_NumberOfComponentsSetAndLock(equationsSet%dependent%dependentField,FIELD_DELUDELN_VARIABLE_TYPE, &
+            !CALL Field_NumberOfComponentsSetAndLock(equationsSet%dependent%dependentField,FIELD_T_VARIABLE_TYPE, &
             !  & numberOfComponents,err,error,*999)
             !numberOfDarcyComponents=numberOfDimensions+1 !for Darcy with pressure driven by solid: vel components and mass increase
             !CALL Field_NumberOfComponentsSetAndLock(equationsSet%dependent%dependentField,FIELD_V_VARIABLE_TYPE, &
@@ -13600,7 +13600,7 @@ CONTAINS
                 & err,error,*999)
               CALL Field_ComponentMeshComponentSet(equationsSet%dependent%dependentField,FIELD_U_VARIABLE_TYPE, &
                 & componentIdx,geometricMeshComponent,err,error,*999)
-              CALL Field_ComponentMeshComponentSet(equationsSet%dependent%dependentField,FIELD_DELUDELN_VARIABLE_TYPE, &
+              CALL Field_ComponentMeshComponentSet(equationsSet%dependent%dependentField,FIELD_T_VARIABLE_TYPE, &
                 & componentIdx,geometricMeshComponent,err,error,*999)
             ENDDO !componentIdx
 
@@ -13608,7 +13608,7 @@ CONTAINS
             CALL Field_ComponentMeshComponentGet(geometricField,FIELD_U_VARIABLE_TYPE,1,geometricMeshComponent,err,error,*999)
             CALL Field_ComponentMeshComponentSet(equationsSet%dependent%dependentField,FIELD_U_VARIABLE_TYPE, &
               & numberOfComponents,geometricMeshComponent,err,error,*999)
-            CALL Field_ComponentMeshComponentSet(equationsSet%dependent%dependentField,FIELD_DELUDELN_VARIABLE_TYPE, &
+            CALL Field_ComponentMeshComponentSet(equationsSet%dependent%dependentField,FIELD_T_VARIABLE_TYPE, &
               & numberOfComponents,geometricMeshComponent,err,error,*999)
             DO variableIdx=3,2*numberOfCompartments+2
               !Darcy: Default to the geometric interpolation setup
@@ -13634,7 +13634,7 @@ CONTAINS
                 CALL Field_ComponentInterpolationSetAndLock(equationsSet%dependent%dependentField,FIELD_U_VARIABLE_TYPE, &
                   & componentIdx,FIELD_NODE_BASED_INTERPOLATION,err,error,*999)
                 CALL Field_ComponentInterpolationSetAndLock(equationsSet%dependent%dependentField, &
-                  & FIELD_DELUDELN_VARIABLE_TYPE,componentIdx,FIELD_NODE_BASED_INTERPOLATION,err,error,*999)
+                  & FIELD_T_VARIABLE_TYPE,componentIdx,FIELD_NODE_BASED_INTERPOLATION,err,error,*999)
               ENDDO !componentIdx
 
               !IF(equationsSetSubtype==EQUATIONS_SET_INCOMPRESSIBLE_ELASTICITY_DRIVEN_DARCY_SUBTYPE) THEN
@@ -13643,13 +13643,13 @@ CONTAINS
               CALL Field_ComponentInterpolationSetAndLock(equationsSet%dependent%dependentField,FIELD_U_VARIABLE_TYPE, &
                 & numberOfComponents,FIELD_NODE_BASED_INTERPOLATION,err,error,*999)
               CALL Field_ComponentInterpolationSetAndLock(equationsSet%dependent%dependentField, &
-                & FIELD_DELUDELN_VARIABLE_TYPE,numberOfComponents,FIELD_NODE_BASED_INTERPOLATION,err,error,*999)
+                & FIELD_T_VARIABLE_TYPE,numberOfComponents,FIELD_NODE_BASED_INTERPOLATION,err,error,*999)
               !ELSE IF (isHydrostaticPressureDependentField) THEN
               !  !Elasticity: Set the hydrostatic pressure component to element based interpolation
               !  CALL Field_ComponentInterpolationSetAndLock(equationsSet%dependent%dependentField,FIELD_U_VARIABLE_TYPE, &
               !    & numberOfComponents,FIELD_ELEMENT_BASED_INTERPOLATION,err,error,*999)
               !  CALL Field_ComponentInterpolationSetAndLock(equationsSet%dependent%dependentField, &
-              !    & FIELD_DELUDELN_VARIABLE_TYPE,numberOfComponents,FIELD_ELEMENT_BASED_INTERPOLATION,err,error,*999)
+              !    & FIELD_T_VARIABLE_TYPE,numberOfComponents,FIELD_ELEMENT_BASED_INTERPOLATION,err,error,*999)
               !ENDIF
               DO variableIdx=3,2*numberOfCompartments+2
                 !Darcy: Set the velocity, pressure and, if present, mass increase components to node based interpolation
@@ -13685,7 +13685,7 @@ CONTAINS
             IF(err/=0) CALL FlagError("Could not allocate variable types.",err,error,*999)
             DO variableIdx=1,numberOfCompartments+1
               variableTypes(2*variableIdx-1)=FIELD_U_VARIABLE_TYPE+(FIELD_NUMBER_OF_VARIABLE_SUBTYPES*(variableIdx-1))
-              variableTypes(2*variableIdx)=FIELD_DELUDELN_VARIABLE_TYPE+(FIELD_NUMBER_OF_VARIABLE_SUBTYPES*(variableIdx-1))
+              variableTypes(2*variableIdx)=FIELD_T_VARIABLE_TYPE+(FIELD_NUMBER_OF_VARIABLE_SUBTYPES*(variableIdx-1))
             ENDDO !variableIdx
             CALL Field_VariableTypesCheck(equationsSetSetup%field,variableTypes,err,error,*999)
 
@@ -13707,13 +13707,13 @@ CONTAINS
               DO componentIdx=1,numberOfDimensions
                 CALL Field_ComponentInterpolationCheck(equationsSetSetup%field,FIELD_U_VARIABLE_TYPE,componentIdx, &
                   & FIELD_NODE_BASED_INTERPOLATION,err,error,*999)
-                CALL Field_ComponentInterpolationCheck(equationsSetSetup%field,FIELD_DELUDELN_VARIABLE_TYPE,componentIdx, &
+                CALL Field_ComponentInterpolationCheck(equationsSetSetup%field,FIELD_T_VARIABLE_TYPE,componentIdx, &
                   & FIELD_NODE_BASED_INTERPOLATION,err,error,*999)
               ENDDO !componentIdx
               !If solid hydrostatic pressure is driving Darcy flow, check that pressure uses node based interpolation
               CALL Field_ComponentInterpolationCheck(equationsSetSetup%field,FIELD_U_VARIABLE_TYPE,numberOfComponents, &
                 & FIELD_NODE_BASED_INTERPOLATION,err,error,*999)
-              CALL Field_ComponentInterpolationCheck(equationsSetSetup%field,FIELD_DELUDELN_VARIABLE_TYPE,numberOfComponents, &
+              CALL Field_ComponentInterpolationCheck(equationsSetSetup%field,FIELD_T_VARIABLE_TYPE,numberOfComponents, &
                 & FIELD_NODE_BASED_INTERPOLATION,err,error,*999)
 
               DO variableIdx=3,2*numberOfCompartments+2
@@ -13746,7 +13746,7 @@ CONTAINS
           IF(err/=0) CALL FlagError("Could not allocate variable types.",err,error,*999)
           DO variableIdx=1,numberOfCompartments+1
             variableTypes(2*variableIdx-1)=FIELD_U_VARIABLE_TYPE+(FIELD_NUMBER_OF_VARIABLE_SUBTYPES*(variableIdx-1))
-            variableTypes(2*variableIdx)=FIELD_DELUDELN_VARIABLE_TYPE+(FIELD_NUMBER_OF_VARIABLE_SUBTYPES*(variableIdx-1))
+            variableTypes(2*variableIdx)=FIELD_T_VARIABLE_TYPE+(FIELD_NUMBER_OF_VARIABLE_SUBTYPES*(variableIdx-1))
           ENDDO !variableIdx
           DO variableIdx=3,2*numberOfCompartments+2
             CALL Field_ParameterSetCreate(equationsSet%dependent%dependentField,variableTypes(variableIdx), &
@@ -13877,14 +13877,14 @@ CONTAINS
             CALL Field_NumberOfVariablesSetAndLock(esIndependent%independentField,2,err,error,*999)
             CALL Field_DimensionSetAndLock(esIndependent%independentField,FIELD_U_VARIABLE_TYPE,FIELD_VECTOR_DIMENSION_TYPE, &
               & err,error,*999)
-            CALL Field_DimensionSetAndLock(esIndependent%independentField,FIELD_DELUDELN_VARIABLE_TYPE, &
+            CALL Field_DimensionSetAndLock(esIndependent%independentField,FIELD_T_VARIABLE_TYPE, &
               & FIELD_VECTOR_DIMENSION_TYPE,err,error,*999)
             CALL Field_DataTypeSetAndLock(esIndependent%independentField,FIELD_U_VARIABLE_TYPE,FIELD_DP_TYPE,err,error,*999)
-            CALL Field_DataTypeSetAndLock(esIndependent%independentField,FIELD_DELUDELN_VARIABLE_TYPE,FIELD_DP_TYPE,err,error,*999)
+            CALL Field_DataTypeSetAndLock(esIndependent%independentField,FIELD_T_VARIABLE_TYPE,FIELD_DP_TYPE,err,error,*999)
             numberOfComponents=numberOfDimensions !+1 !Include hydrostatic pressure component
             CALL Field_NumberOfComponentsSetAndLock(esIndependent%independentField,FIELD_U_VARIABLE_TYPE,numberOfComponents, &
               & err,error,*999)
-            CALL Field_NumberOfComponentsSetAndLock(esIndependent%independentField,FIELD_DELUDELN_VARIABLE_TYPE, &
+            CALL Field_NumberOfComponentsSetAndLock(esIndependent%independentField,FIELD_T_VARIABLE_TYPE, &
               & numberOfComponents,err,error,*999)
             !Default to the geometric interpolation setup
             DO componentIdx=1,numberOfDimensions
@@ -13892,7 +13892,7 @@ CONTAINS
                 & err,error,*999)
               CALL Field_ComponentMeshComponentSet(esIndependent%independentField,FIELD_U_VARIABLE_TYPE,componentIdx, &
                 & geometricMeshComponent,err,error,*999)
-              CALL Field_ComponentMeshComponentSet(esIndependent%independentField,FIELD_DELUDELN_VARIABLE_TYPE,componentIdx, &
+              CALL Field_ComponentMeshComponentSet(esIndependent%independentField,FIELD_T_VARIABLE_TYPE,componentIdx, &
                 & geometricMeshComponent,err,error,*999)
             ENDDO !componentIdx
 
@@ -13900,7 +13900,7 @@ CONTAINS
             !CALL Field_ComponentMeshComponentGet(geometricField,FIELD_U_VARIABLE_TYPE,1,geometricMeshComponent,err,error,*999)
             !CALL Field_ComponentMeshComponentSet(esIndependent%independentField,FIELD_U_VARIABLE_TYPE,numberOfComponents, &
             !  & geometricMeshComponent,err,error,*999)
-            !CALL Field_ComponentMeshComponentSet(esIndependent%independentField,FIELD_DELUDELN_VARIABLE_TYPE, &
+            !CALL Field_ComponentMeshComponentSet(esIndependent%independentField,FIELD_T_VARIABLE_TYPE, &
             !  & numberOfComponents,geometricMeshComponent,err,error,*999)
 
             CALL EquationsSet_SolutionMethodGet(equationsSet,solutionMethod,err,error,*999)
@@ -13910,13 +13910,13 @@ CONTAINS
               DO componentIdx=1,numberOfDimensions
                 CALL Field_ComponentInterpolationSetAndLock(esIndependent%independentField,FIELD_U_VARIABLE_TYPE, &
                   & componentIdx,FIELD_NODE_BASED_INTERPOLATION,err,error,*999)
-                CALL Field_ComponentInterpolationSetAndLock(esIndependent%independentField,FIELD_DELUDELN_VARIABLE_TYPE, &
+                CALL Field_ComponentInterpolationSetAndLock(esIndependent%independentField,FIELD_T_VARIABLE_TYPE, &
                   & componentIdx,FIELD_NODE_BASED_INTERPOLATION,err,error,*999)
               ENDDO !componentIdx
               !Set the hydrostatic pressure component to element based interpolation
               !CALL Field_ComponentInterpolationSetAndLock(esIndependent%independentField,FIELD_U_VARIABLE_TYPE, &
               !  & numberOfComponents,FIELD_ELEMENT_BASED_INTERPOLATION,err,error,*999)
-              !CALL Field_ComponentInterpolationSetAndLock(esIndependent%independentField,FIELD_DELUDELN_VARIABLE_TYPE, &
+              !CALL Field_ComponentInterpolationSetAndLock(esIndependent%independentField,FIELD_T_VARIABLE_TYPE, &
               !  & numberOfComponents,FIELD_ELEMENT_BASED_INTERPOLATION,err,error,*999)
               !Default the scaling to the geometric field scaling
               CALL Field_ScalingTypeGet(geometricField,geometricScalingType,err,error,*999)
@@ -13941,15 +13941,15 @@ CONTAINS
             CALL Field_DependentTypeCheck(equationsSetSetup%field,FIELD_INDEPENDENT_TYPE,err,error,*999)
             !Question:Better to leave it up for the user to play around?
             CALL Field_NumberOfVariablesCheck(equationsSetSetup%field,2,err,error,*999)
-            CALL Field_VariableTypesCheck(equationsSetSetup%field,[FIELD_U_VARIABLE_TYPE,FIELD_DELUDELN_VARIABLE_TYPE], &
+            CALL Field_VariableTypesCheck(equationsSetSetup%field,[FIELD_U_VARIABLE_TYPE,FIELD_T_VARIABLE_TYPE], &
               & err,error,*999)
             CALL Field_DimensionCheck(equationsSetSetup%field,FIELD_U_VARIABLE_TYPE,FIELD_VECTOR_DIMENSION_TYPE,err,error,*999)
-            CALL Field_DimensionCheck(equationsSetSetup%field,FIELD_DELUDELN_VARIABLE_TYPE,FIELD_VECTOR_DIMENSION_TYPE, &
+            CALL Field_DimensionCheck(equationsSetSetup%field,FIELD_T_VARIABLE_TYPE,FIELD_VECTOR_DIMENSION_TYPE, &
               & err,error,*999)
             CALL Field_DataTypeCheck(equationsSetSetup%field,FIELD_U_VARIABLE_TYPE,FIELD_DP_TYPE,err,error,*999)
-            CALL Field_DataTypeCheck(equationsSetSetup%field,FIELD_DELUDELN_VARIABLE_TYPE,FIELD_DP_TYPE,err,error,*999)
+            CALL Field_DataTypeCheck(equationsSetSetup%field,FIELD_T_VARIABLE_TYPE,FIELD_DP_TYPE,err,error,*999)
             CALL Field_NumberOfComponentsCheck(equationsSetSetup%field,FIELD_U_VARIABLE_TYPE,numberOfComponents,err,error,*999)
-            CALL Field_NumberOfComponentsCheck(equationsSetSetup%field,FIELD_DELUDELN_VARIABLE_TYPE,numberOfComponents, &
+            CALL Field_NumberOfComponentsCheck(equationsSetSetup%field,FIELD_T_VARIABLE_TYPE,numberOfComponents, &
               & err,error,*999)
             CALL EquationsSet_SolutionMethodGet(equationsSet,solutionMethod,err,error,*999)
             SELECT CASE(solutionMethod)
@@ -13957,7 +13957,7 @@ CONTAINS
               !DO componentIdx=1,numberOfDimensions
               !  CALL Field_ComponentInterpolationCheck(equationsSetSetup%field,FIELD_U_VARIABLE_TYPE,componentIdx, &
               !    & FIELD_NODE_BASED_INTERPOLATION,err,error,*999)
-              !  CALL Field_ComponentInterpolationCheck(equationsSetSetup%field,FIELD_DELUDELN_VARIABLE_TYPE,componentIdx, &
+              !  CALL Field_ComponentInterpolationCheck(equationsSetSetup%field,FIELD_T_VARIABLE_TYPE,componentIdx, &
               !    & FIELD_NODE_BASED_INTERPOLATION,err,error,*999)
               !ENDDO !componentIdx
             CASE(EQUATIONS_SET_BEM_SOLUTION_METHOD)
@@ -14790,7 +14790,8 @@ CONTAINS
             CALL EquationsMappingVector_ResidualVariableTypesSet(vectorMapping,1,[FIELD_U_VARIABLE_TYPE],err,error,*999)
           END SELECT
           CALL EquationsMappingVector_NumberOfLinearMatricesSet(vectorMapping,0,err,error,*999)
-          CALL EquationsMappingVector_RHSVariableTypeSet(vectorMapping,FIELD_DELUDELN_VARIABLE_TYPE,err,error,*999)
+          CALL EquationsMappingVector_RHSVariableTypeSet(vectorMapping,FIELD_T_VARIABLE_TYPE,err,error,*999)
+          CALL EquationsMappingVector_RHSCoefficientSet(vectorMapping,-1.0_DP,err,error,*999)
           CALL EquationsMapping_VectorCreateFinish(vectorMapping,err,error,*999)
           !Create the equations matrices
           NULLIFY(vectorMatrices)
@@ -17123,7 +17124,7 @@ CONTAINS
           CALL Equations_VectorEquationsGet(equations,vectorEquations,err,error,*999)
           NULLIFY(vectorMapping)
           CALL EquationsVector_VectorMappingGet(vectorEquations,vectorMapping,err,error,*999)
-          CALL Field_VariableGet(dependentField,FIELD_DELUDELN_VARIABLE_TYPE,dependentVariable,err,error,*999)
+          CALL Field_VariableGet(dependentField,FIELD_T_VARIABLE_TYPE,dependentVariable,err,error,*999)
           CALL FieldVariable_NumberOfDOFsGet(dependentVariable,dependentNumberOfDOFs,err,error,*999)
           NULLIFY(boundaryConditionsVariable)
           CALL BoundaryConditions_VariableGet(boundaryConditions,dependentVariable,boundaryConditionsVariable,err,error,*999)
