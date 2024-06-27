@@ -52,8 +52,8 @@
 # Add Python bindings directory to PATH
 import sys, os
 
-# Intialise OpenCMISS-Iron
-from opencmiss.iron import iron
+# Intialise OpenCMISS
+from opencmiss.opencmiss import opencmiss
 
 # Set problem parameters
 
@@ -83,7 +83,7 @@ equationsSetUserNumber = 1
 problemUserNumber = 1
 
 # Set all diganostic levels on for testing
-#iron.DiagnosticsSetOn(iron.DiagnosticTypes.All,[1,2,3,4,5],"Diagnostics",["DOMAIN_MAPPINGS_LOCAL_FROM_GLOBAL_CALCULATE"])
+#opencmiss.DiagnosticsSetOn(opencmiss.DiagnosticTypes.All,[1,2,3,4,5],"Diagnostics",["DOMAIN_MAPPINGS_LOCAL_FROM_GLOBAL_CALCULATE"])
 
 numberOfLoadIncrements = 2
 numberGlobalXElements = 1
@@ -96,53 +96,53 @@ else:
     numberOfXi = 3
 
 # Get the number of computational nodes and this computational node number
-numberOfComputationalNodes = iron.ComputationalNumberOfNodesGet()
-computationalNodeNumber = iron.ComputationalNodeNumberGet()
+numberOfComputationalNodes = opencmiss.ComputationalNumberOfNodesGet()
+computationalNodeNumber = opencmiss.ComputationalNodeNumberGet()
 
 # Create a 3D rectangular cartesian coordinate system
-coordinateSystem = iron.CoordinateSystem()
+coordinateSystem = opencmiss.CoordinateSystem()
 coordinateSystem.CreateStart(coordinateSystemUserNumber)
 coordinateSystem.DimensionSet(3)
 coordinateSystem.CreateFinish()
 
 # Create a region and assign the coordinate system to the region
-region = iron.Region()
-region.CreateStart(regionUserNumber,iron.WorldRegion)
+region = opencmiss.Region()
+region.CreateStart(regionUserNumber,opencmiss.WorldRegion)
 region.LabelSet("Region")
 region.coordinateSystem = coordinateSystem
 region.CreateFinish()
 
 # Define basis
-basis = iron.Basis()
+basis = opencmiss.Basis()
 basis.CreateStart(basisUserNumber)
 if InterpolationType in (1,2,3,4):
-    basis.type = iron.BasisTypes.LAGRANGE_HERMITE_TP
+    basis.type = opencmiss.BasisTypes.LAGRANGE_HERMITE_TP
 elif InterpolationType in (7,8,9):
-    basis.type = iron.BasisTypes.SIMPLEX
+    basis.type = opencmiss.BasisTypes.SIMPLEX
 basis.numberOfXi = numberOfXi
-basis.interpolationXi = [iron.BasisInterpolationSpecifications.LINEAR_LAGRANGE]*numberOfXi
+basis.interpolationXi = [opencmiss.BasisInterpolationSpecifications.LINEAR_LAGRANGE]*numberOfXi
 if(NumberOfGaussXi>0):
     basis.quadratureNumberOfGaussXi = [NumberOfGaussXi]*numberOfXi
 basis.CreateFinish()
 
 if(UsePressureBasis):
     # Define pressure basis
-    pressureBasis = iron.Basis()
+    pressureBasis = opencmiss.Basis()
     pressureBasis.CreateStart(pressureBasisUserNumber)
     if InterpolationType in (1,2,3,4):
-        pressureBasis.type = iron.BasisTypes.LAGRANGE_HERMITE_TP
+        pressureBasis.type = opencmiss.BasisTypes.LAGRANGE_HERMITE_TP
     elif InterpolationType in (7,8,9):
-        pressureBasis.type = iron.BasisTypes.SIMPLEX
+        pressureBasis.type = opencmiss.BasisTypes.SIMPLEX
     pressureBasis.numberOfXi = numberOfXi
-    pressureBasis.interpolationXi = [iron.BasisInterpolationSpecifications.LINEAR_LAGRANGE]*numberOfXi
+    pressureBasis.interpolationXi = [opencmiss.BasisInterpolationSpecifications.LINEAR_LAGRANGE]*numberOfXi
     if(NumberOfGaussXi>0):
         pressureBasis.quadratureNumberOfGaussXi = [NumberOfGaussXi]*numberOfXi
     pressureBasis.CreateFinish()
 
 # Start the creation of a generated mesh in the region
-generatedMesh = iron.GeneratedMesh()
+generatedMesh = opencmiss.GeneratedMesh()
 generatedMesh.CreateStart(generatedMeshUserNumber,region)
-generatedMesh.type = iron.GeneratedMeshTypes.REGULAR
+generatedMesh.type = opencmiss.GeneratedMeshTypes.REGULAR
 if(UsePressureBasis):
     generatedMesh.basis = [basis,pressureBasis]
 else:
@@ -154,187 +154,187 @@ else:
     generatedMesh.extent = [width,length,height]
     generatedMesh.numberOfElements = [numberGlobalXElements,numberGlobalYElements,numberGlobalZElements]
 # Finish the creation of a generated mesh in the region
-mesh = iron.Mesh()
+mesh = opencmiss.Mesh()
 generatedMesh.CreateFinish(meshUserNumber,mesh)
 
 # Create a decomposition for the mesh
-decomposition = iron.Decomposition()
+decomposition = opencmiss.Decomposition()
 decomposition.CreateStart(decompositionUserNumber,mesh)
-decomposition.type = iron.DecompositionTypes.CALCULATED
+decomposition.type = opencmiss.DecompositionTypes.CALCULATED
 decomposition.numberOfDomains = numberOfComputationalNodes
 decomposition.CreateFinish()
 
 # Create a field for the geometry
-geometricField = iron.Field()
+geometricField = opencmiss.Field()
 geometricField.CreateStart(geometricFieldUserNumber,region)
 geometricField.DecompositionSet(decomposition)
-geometricField.TypeSet(iron.FieldTypes.GEOMETRIC)
-geometricField.VariableLabelSet(iron.FieldVariableTypes.U,"Geometry")
-geometricField.ComponentMeshComponentSet(iron.FieldVariableTypes.U,1,1)
-geometricField.ComponentMeshComponentSet(iron.FieldVariableTypes.U,2,1)
-geometricField.ComponentMeshComponentSet(iron.FieldVariableTypes.U,3,1)
+geometricField.TypeSet(opencmiss.FieldTypes.GEOMETRIC)
+geometricField.VariableLabelSet(opencmiss.FieldVariableTypes.U,"Geometry")
+geometricField.ComponentMeshComponentSet(opencmiss.FieldVariableTypes.U,1,1)
+geometricField.ComponentMeshComponentSet(opencmiss.FieldVariableTypes.U,2,1)
+geometricField.ComponentMeshComponentSet(opencmiss.FieldVariableTypes.U,3,1)
 if InterpolationType == 4:
-    geometricField.fieldScalingType = iron.FieldScalingTypes.ARITHMETIC_MEAN
+    geometricField.fieldScalingType = opencmiss.FieldScalingTypes.ARITHMETIC_MEAN
 geometricField.CreateFinish()
 
 # Update the geometric field parameters from generated mesh
 generatedMesh.GeometricParametersCalculate(geometricField)
 
 # Create a fibre field and attach it to the geometric field
-fibreField = iron.Field()
+fibreField = opencmiss.Field()
 fibreField.CreateStart(fibreFieldUserNumber,region)
-fibreField.TypeSet(iron.FieldTypes.FIBRE)
+fibreField.TypeSet(opencmiss.FieldTypes.FIBRE)
 fibreField.DecompositionSet(decomposition)
 fibreField.GeometricFieldSet(geometricField)
-fibreField.VariableLabelSet(iron.FieldVariableTypes.U,"Fibre")
+fibreField.VariableLabelSet(opencmiss.FieldVariableTypes.U,"Fibre")
 if InterpolationType == 4:
-    fibreField.fieldScalingType = iron.FieldScalingTypes.ARITHMETIC_MEAN
+    fibreField.fieldScalingType = opencmiss.FieldScalingTypes.ARITHMETIC_MEAN
 fibreField.CreateFinish()
 
 # Create the equations_set
-equationsSetField = iron.Field()
-equationsSet = iron.EquationsSet()
-equationsSetSpecification = [iron.EquationsSetClasses.ELASTICITY,
-    iron.EquationsSetTypes.FINITE_ELASTICITY,
-    iron.EquationsSetSubtypes.MOONEY_RIVLIN]
+equationsSetField = opencmiss.Field()
+equationsSet = opencmiss.EquationsSet()
+equationsSetSpecification = [opencmiss.EquationsSetClasses.ELASTICITY,
+    opencmiss.EquationsSetTypes.FINITE_ELASTICITY,
+    opencmiss.EquationsSetSubtypes.MOONEY_RIVLIN]
 equationsSet.CreateStart(equationsSetUserNumber,region,fibreField,
     equationsSetSpecification, equationsSetFieldUserNumber, equationsSetField)
 equationsSet.CreateFinish()
 
 # Create the dependent field
-dependentField = iron.Field()
+dependentField = opencmiss.Field()
 equationsSet.DependentCreateStart(dependentFieldUserNumber,dependentField)
-dependentField.VariableLabelSet(iron.FieldVariableTypes.U,"Dependent")
-dependentField.ComponentInterpolationSet(iron.FieldVariableTypes.U,4,iron.FieldInterpolationTypes.ELEMENT_BASED)
-dependentField.ComponentInterpolationSet(iron.FieldVariableTypes.DELUDELN,4,iron.FieldInterpolationTypes.ELEMENT_BASED)
+dependentField.VariableLabelSet(opencmiss.FieldVariableTypes.U,"Dependent")
+dependentField.ComponentInterpolationSet(opencmiss.FieldVariableTypes.U,4,opencmiss.FieldInterpolationTypes.ELEMENT_BASED)
+dependentField.ComponentInterpolationSet(opencmiss.FieldVariableTypes.DELUDELN,4,opencmiss.FieldInterpolationTypes.ELEMENT_BASED)
 if(UsePressureBasis):
     # Set the pressure to be nodally based and use the second mesh component
     if InterpolationType == 4:
-        dependentField.ComponentInterpolationSet(iron.FieldVariableTypes.U,4,iron.FieldInterpolationTypes.NODE_BASED)
-        dependentField.ComponentInterpolationSet(iron.FieldVariableTypes.DELUDELN,4,iron.FieldInterpolationTypes.NODE_BASED)
-    dependentField.ComponentMeshComponentSet(iron.FieldVariableTypes.U,4,2)
-    dependentField.ComponentMeshComponentSet(iron.FieldVariableTypes.DELUDELN,4,2)
+        dependentField.ComponentInterpolationSet(opencmiss.FieldVariableTypes.U,4,opencmiss.FieldInterpolationTypes.NODE_BASED)
+        dependentField.ComponentInterpolationSet(opencmiss.FieldVariableTypes.DELUDELN,4,opencmiss.FieldInterpolationTypes.NODE_BASED)
+    dependentField.ComponentMeshComponentSet(opencmiss.FieldVariableTypes.U,4,2)
+    dependentField.ComponentMeshComponentSet(opencmiss.FieldVariableTypes.DELUDELN,4,2)
 if InterpolationType == 4:
-    dependentField.fieldScalingType = iron.FieldScalingTypes.ARITHMETIC_MEAN
+    dependentField.fieldScalingType = opencmiss.FieldScalingTypes.ARITHMETIC_MEAN
 equationsSet.DependentCreateFinish()
 
 
 # Initialise dependent field from undeformed geometry and displacement bcs and set hydrostatic pressure
-iron.Field.ParametersToFieldParametersComponentCopy(
-    geometricField,iron.FieldVariableTypes.U,iron.FieldParameterSetTypes.VALUES,1,
-    dependentField,iron.FieldVariableTypes.U,iron.FieldParameterSetTypes.VALUES,1)
-iron.Field.ParametersToFieldParametersComponentCopy(
-    geometricField,iron.FieldVariableTypes.U,iron.FieldParameterSetTypes.VALUES,2,
-    dependentField,iron.FieldVariableTypes.U,iron.FieldParameterSetTypes.VALUES,2)
-iron.Field.ParametersToFieldParametersComponentCopy(
-    geometricField,iron.FieldVariableTypes.U,iron.FieldParameterSetTypes.VALUES,3,
-    dependentField,iron.FieldVariableTypes.U,iron.FieldParameterSetTypes.VALUES,3)
-iron.Field.ComponentValuesInitialiseDP(
-    dependentField,iron.FieldVariableTypes.U,iron.FieldParameterSetTypes.VALUES,4,-8.0)
+opencmiss.Field.ParametersToFieldParametersComponentCopy(
+    geometricField,opencmiss.FieldVariableTypes.U,opencmiss.FieldParameterSetTypes.VALUES,1,
+    dependentField,opencmiss.FieldVariableTypes.U,opencmiss.FieldParameterSetTypes.VALUES,1)
+opencmiss.Field.ParametersToFieldParametersComponentCopy(
+    geometricField,opencmiss.FieldVariableTypes.U,opencmiss.FieldParameterSetTypes.VALUES,2,
+    dependentField,opencmiss.FieldVariableTypes.U,opencmiss.FieldParameterSetTypes.VALUES,2)
+opencmiss.Field.ParametersToFieldParametersComponentCopy(
+    geometricField,opencmiss.FieldVariableTypes.U,opencmiss.FieldParameterSetTypes.VALUES,3,
+    dependentField,opencmiss.FieldVariableTypes.U,opencmiss.FieldParameterSetTypes.VALUES,3)
+opencmiss.Field.ComponentValuesInitialiseDP(
+    dependentField,opencmiss.FieldVariableTypes.U,opencmiss.FieldParameterSetTypes.VALUES,4,-8.0)
 
 # Create the material field
-materialField = iron.Field()
+materialField = opencmiss.Field()
 equationsSet.MaterialsCreateStart(materialFieldUserNumber,materialField)
-materialField.VariableLabelSet(iron.FieldVariableTypes.U,"Material")
-materialField.VariableLabelSet(iron.FieldVariableTypes.V,"Density")
+materialField.VariableLabelSet(opencmiss.FieldVariableTypes.U,"Material")
+materialField.VariableLabelSet(opencmiss.FieldVariableTypes.V,"Density")
 equationsSet.MaterialsCreateFinish()
 
 # Set Mooney-Rivlin constants c10 and c01 respectively.
 materialField.ComponentValuesInitialiseDP(
-    iron.FieldVariableTypes.U,iron.FieldParameterSetTypes.VALUES,1,2.0)
+    opencmiss.FieldVariableTypes.U,opencmiss.FieldParameterSetTypes.VALUES,1,2.0)
 materialField.ComponentValuesInitialiseDP(
-    iron.FieldVariableTypes.U,iron.FieldParameterSetTypes.VALUES,2,2.0)
+    opencmiss.FieldVariableTypes.U,opencmiss.FieldParameterSetTypes.VALUES,2,2.0)
 materialField.ComponentValuesInitialiseDP(
-    iron.FieldVariableTypes.V,iron.FieldParameterSetTypes.VALUES,1,density)
+    opencmiss.FieldVariableTypes.V,opencmiss.FieldParameterSetTypes.VALUES,1,density)
 
 #Create the source field with the gravity vector
-sourceField = iron.Field()
+sourceField = opencmiss.Field()
 equationsSet.SourceCreateStart(sourceFieldUserNumber,sourceField)
 if InterpolationType == 4:
-    sourceField.fieldScalingType = iron.FieldScalingTypes.ARITHMETIC_MEAN
+    sourceField.fieldScalingType = opencmiss.FieldScalingTypes.ARITHMETIC_MEAN
 else:
-    sourceField.fieldScalingType = iron.FieldScalingTypes.UNIT
+    sourceField.fieldScalingType = opencmiss.FieldScalingTypes.UNIT
 equationsSet.SourceCreateFinish()
 
 #Set the gravity vector component values
 sourceField.ComponentValuesInitialiseDP(
-    iron.FieldVariableTypes.U,iron.FieldParameterSetTypes.VALUES,1,gravity[0])
+    opencmiss.FieldVariableTypes.U,opencmiss.FieldParameterSetTypes.VALUES,1,gravity[0])
 sourceField.ComponentValuesInitialiseDP(
-    iron.FieldVariableTypes.U,iron.FieldParameterSetTypes.VALUES,2,gravity[1])
+    opencmiss.FieldVariableTypes.U,opencmiss.FieldParameterSetTypes.VALUES,2,gravity[1])
 sourceField.ComponentValuesInitialiseDP(
-    iron.FieldVariableTypes.U,iron.FieldParameterSetTypes.VALUES,3,gravity[2])
+    opencmiss.FieldVariableTypes.U,opencmiss.FieldParameterSetTypes.VALUES,3,gravity[2])
 
 # Create equations
-equations = iron.Equations()
+equations = opencmiss.Equations()
 equationsSet.EquationsCreateStart(equations)
-equations.sparsityType = iron.EquationsSparsityTypes.SPARSE
-equations.outputType = iron.EquationsOutputTypes.NONE
+equations.sparsityType = opencmiss.EquationsSparsityTypes.SPARSE
+equations.outputType = opencmiss.EquationsOutputTypes.NONE
 equationsSet.EquationsCreateFinish()
 
 # Define the problem
-problem = iron.Problem()
-problemSpecification = [iron.ProblemClasses.ELASTICITY,
-        iron.ProblemTypes.FINITE_ELASTICITY,
-        iron.ProblemSubtypes.NONE]
+problem = opencmiss.Problem()
+problemSpecification = [opencmiss.ProblemClasses.ELASTICITY,
+        opencmiss.ProblemTypes.FINITE_ELASTICITY,
+        opencmiss.ProblemSubtypes.NONE]
 problem.CreateStart(problemUserNumber, problemSpecification)
 problem.CreateFinish()
 
 # Create the problem control loop
 problem.ControlLoopCreateStart()
-controlLoop = iron.ControlLoop()
-problem.ControlLoopGet([iron.ControlLoopIdentifiers.NODE],controlLoop)
+controlLoop = opencmiss.ControlLoop()
+problem.ControlLoopGet([opencmiss.ControlLoopIdentifiers.NODE],controlLoop)
 controlLoop.MaximumIterationsSet(numberOfLoadIncrements)
 problem.ControlLoopCreateFinish()
 
 # Create problem solver
-nonLinearSolver = iron.Solver()
-linearSolver = iron.Solver()
+nonLinearSolver = opencmiss.Solver()
+linearSolver = opencmiss.Solver()
 problem.SolversCreateStart()
-problem.SolverGet([iron.ControlLoopIdentifiers.NODE],1,nonLinearSolver)
-nonLinearSolver.outputType = iron.SolverOutputTypes.PROGRESS
-nonLinearSolver.NewtonJacobianCalculationTypeSet(iron.JacobianCalculationTypes.EQUATIONS)
+problem.SolverGet([opencmiss.ControlLoopIdentifiers.NODE],1,nonLinearSolver)
+nonLinearSolver.outputType = opencmiss.SolverOutputTypes.PROGRESS
+nonLinearSolver.NewtonJacobianCalculationTypeSet(opencmiss.JacobianCalculationTypes.EQUATIONS)
 nonLinearSolver.NewtonLinearSolverGet(linearSolver)
-linearSolver.linearType = iron.LinearSolverTypes.DIRECT
-#linearSolver.libraryType = iron.SolverLibraries.LAPACK
+linearSolver.linearType = opencmiss.LinearSolverTypes.DIRECT
+#linearSolver.libraryType = opencmiss.SolverLibraries.LAPACK
 problem.SolversCreateFinish()
 
 # Create solver equations and add equations set to solver equations
-solver = iron.Solver()
-solverEquations = iron.SolverEquations()
+solver = opencmiss.Solver()
+solverEquations = opencmiss.SolverEquations()
 problem.SolverEquationsCreateStart()
-problem.SolverGet([iron.ControlLoopIdentifiers.NODE],1,solver)
+problem.SolverGet([opencmiss.ControlLoopIdentifiers.NODE],1,solver)
 solver.SolverEquationsGet(solverEquations)
-solverEquations.sparsityType = iron.SolverEquationsSparsityTypes.SPARSE
+solverEquations.sparsityType = opencmiss.SolverEquationsSparsityTypes.SPARSE
 equationsSetIndex = solverEquations.EquationsSetAdd(equationsSet)
 problem.SolverEquationsCreateFinish()
 
 # Prescribe boundary conditions (absolute nodal parameters)
-boundaryConditions = iron.BoundaryConditions()
+boundaryConditions = opencmiss.BoundaryConditions()
 solverEquations.BoundaryConditionsCreateStart(boundaryConditions)
 # Set x=0 nodes to no x displacment
-boundaryConditions.AddNode(dependentField,iron.FieldVariableTypes.U,1,1,1,1,iron.BoundaryConditionsTypes.FIXED,0.0)
-boundaryConditions.AddNode(dependentField,iron.FieldVariableTypes.U,1,1,3,1,iron.BoundaryConditionsTypes.FIXED,0.0)
-boundaryConditions.AddNode(dependentField,iron.FieldVariableTypes.U,1,1,5,1,iron.BoundaryConditionsTypes.FIXED,0.0)
-boundaryConditions.AddNode(dependentField,iron.FieldVariableTypes.U,1,1,7,1,iron.BoundaryConditionsTypes.FIXED,0.0)
+boundaryConditions.AddNode(dependentField,opencmiss.FieldVariableTypes.U,1,1,1,1,opencmiss.BoundaryConditionsTypes.FIXED,0.0)
+boundaryConditions.AddNode(dependentField,opencmiss.FieldVariableTypes.U,1,1,3,1,opencmiss.BoundaryConditionsTypes.FIXED,0.0)
+boundaryConditions.AddNode(dependentField,opencmiss.FieldVariableTypes.U,1,1,5,1,opencmiss.BoundaryConditionsTypes.FIXED,0.0)
+boundaryConditions.AddNode(dependentField,opencmiss.FieldVariableTypes.U,1,1,7,1,opencmiss.BoundaryConditionsTypes.FIXED,0.0)
 
 # Set y=0 nodes to no y displacement
-boundaryConditions.AddNode(dependentField,iron.FieldVariableTypes.U,1,1,1,2,iron.BoundaryConditionsTypes.FIXED,0.0)
-boundaryConditions.AddNode(dependentField,iron.FieldVariableTypes.U,1,1,3,2,iron.BoundaryConditionsTypes.FIXED,0.0)
-boundaryConditions.AddNode(dependentField,iron.FieldVariableTypes.U,1,1,5,2,iron.BoundaryConditionsTypes.FIXED,0.0)
-boundaryConditions.AddNode(dependentField,iron.FieldVariableTypes.U,1,1,7,2,iron.BoundaryConditionsTypes.FIXED,0.0)
+boundaryConditions.AddNode(dependentField,opencmiss.FieldVariableTypes.U,1,1,1,2,opencmiss.BoundaryConditionsTypes.FIXED,0.0)
+boundaryConditions.AddNode(dependentField,opencmiss.FieldVariableTypes.U,1,1,3,2,opencmiss.BoundaryConditionsTypes.FIXED,0.0)
+boundaryConditions.AddNode(dependentField,opencmiss.FieldVariableTypes.U,1,1,5,2,opencmiss.BoundaryConditionsTypes.FIXED,0.0)
+boundaryConditions.AddNode(dependentField,opencmiss.FieldVariableTypes.U,1,1,7,2,opencmiss.BoundaryConditionsTypes.FIXED,0.0)
 
 # Set z=0 nodes to no y displacement
-boundaryConditions.AddNode(dependentField,iron.FieldVariableTypes.U,1,1,1,3,iron.BoundaryConditionsTypes.FIXED,0.0)
-boundaryConditions.AddNode(dependentField,iron.FieldVariableTypes.U,1,1,3,3,iron.BoundaryConditionsTypes.FIXED,0.0)
-boundaryConditions.AddNode(dependentField,iron.FieldVariableTypes.U,1,1,5,3,iron.BoundaryConditionsTypes.FIXED,0.0)
-boundaryConditions.AddNode(dependentField,iron.FieldVariableTypes.U,1,1,7,3,iron.BoundaryConditionsTypes.FIXED,0.0)
+boundaryConditions.AddNode(dependentField,opencmiss.FieldVariableTypes.U,1,1,1,3,opencmiss.BoundaryConditionsTypes.FIXED,0.0)
+boundaryConditions.AddNode(dependentField,opencmiss.FieldVariableTypes.U,1,1,3,3,opencmiss.BoundaryConditionsTypes.FIXED,0.0)
+boundaryConditions.AddNode(dependentField,opencmiss.FieldVariableTypes.U,1,1,5,3,opencmiss.BoundaryConditionsTypes.FIXED,0.0)
+boundaryConditions.AddNode(dependentField,opencmiss.FieldVariableTypes.U,1,1,7,3,opencmiss.BoundaryConditionsTypes.FIXED,0.0)
 solverEquations.BoundaryConditionsCreateFinish()
 
 # Solve the problem
 problem.Solve()
 
 # Export results
-fields = iron.Fields()
+fields = opencmiss.Fields()
 fields.CreateRegion(region)
 fields.NodesExport("Cantilever","FORTRAN")
 fields.ElementsExport("Cantilever","FORTRAN")

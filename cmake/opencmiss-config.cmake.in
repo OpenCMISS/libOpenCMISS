@@ -1,0 +1,35 @@
+@PACKAGE_INIT@
+
+set(OpenCMISS_MAJOR_VERSION "@LibOpenCMISS_MAJOR_VERSION@")
+set(OpenCMISS_MINOR_VERSION "@LibOpenCMISS_MINOR_VERSION@")
+set(OpenCMISS_PATCH_VERSION "@LibOpenCMISS_PATCH_VERSION@")
+
+set(OpenCMISS_WITH_SINGLE_PRECISION "@LibOpenCMISS_WITH_SINGLE_PRECISION@")
+set(OpenCMISS_WITH_LARGE_INDICES "@LibOpenCMISS_WITH_LARGE_INDICES@")
+
+set(OpenCMISS_WITH_MPI "@LibOpenCMISS_WITH_MPI@")
+set(OpenCMISS_WITH_OpenMP "@LibOpenCMISS_WITH_OpenMP@")
+set(OpenCMISS_WITH_CUDA "@LibOpenCMISS_WITH_CUDA@")
+
+set(OpenCMISS_WITH_CellML "@LibOpenCMISS_WITH_CellML@")
+set(OpenCMISS_WITH_FieldML "@LibOpenCMISS_WITH_FieldML@")
+set(OpenCMISS_WITH_ParMETIS "@LibOpenCMISS_WITH_ParMETIS@")
+set(OpenCMISS_WITH_PETSc "@LibOpenCMISS_WITH_PETSc@")
+set(OpenCMISS_WITH_SLEPc "@LibOpenCMISS_WITH_SLEPc@")
+
+# Handle dependencies
+include(CMakeFindDependencyMacro)
+if(OpenCMISS_WITH_MPI)
+  find_dependency(MPI REQUIRED)
+endif()
+if(OpenCMISS_WITH_OpenMP)
+  find_dependency(OpenMP REQUIRED)
+endif()
+if(OpenCMISS_WITH_ParMETIS)
+  find_dependency(ParMETIS REQUIRED)
+endif()
+if(OpenCMISS_WITH_PETSc)
+  find_dependency(PETSc)
+endif()
+
+include("${CMAKE_CURRENT_LIST_DIR}/opencmiss-targets.cmake")

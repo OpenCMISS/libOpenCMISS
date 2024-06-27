@@ -43,7 +43,7 @@
 #include <stdlib.h>
 #include <stdio.h>
 
-#include "opencmiss/iron.h"
+#include "opencmiss/opencmiss.h"
 
 #define STRING_SIZE 20
 
@@ -53,39 +53,39 @@
 int main() 
 {
 
-  cmfe_ContextType context=(cmfe_ContextType)NULL;
-  cmfe_RegionType region=(cmfe_RegionType)NULL,worldRegion=(cmfe_RegionType)NULL;
+  oc_ContextType context=(oc_ContextType)NULL;
+  oc_RegionType region=(oc_RegionType)NULL,worldRegion=(oc_RegionType)NULL;
   char label[STRING_SIZE];
   int err;
 
-  err = cmfe_Initialise();
+  err = oc_Initialise();
   OPENCMISS_CHECK_ERROR(err,"Initialising OpenCMISS");
-  err = cmfe_Context_Initialise(&context);
+  err = oc_Context_Initialise(&context);
   OPENCMISS_CHECK_ERROR(err,"Initialising context");
-  err = cmfe_Context_Create(CONTEXT_USER_NUMBER,context);
+  err = oc_Context_Create(CONTEXT_USER_NUMBER,context);
   OPENCMISS_CHECK_ERROR(err,"Creating context");
-  err = cmfe_Region_Initialise(&worldRegion);
+  err = oc_Region_Initialise(&worldRegion);
   OPENCMISS_CHECK_ERROR(err,"Initialising world region");
-  err = cmfe_Context_WorldRegionGet(context,worldRegion);
+  err = oc_Context_WorldRegionGet(context,worldRegion);
   OPENCMISS_CHECK_ERROR(err,"Get world region");
   
-  err = cmfe_Region_LabelGet(worldRegion,STRING_SIZE,label);
+  err = oc_Region_LabelGet(worldRegion,STRING_SIZE,label);
   printf("The world region label is '%s'.\n",label);
   
-  err = cmfe_Region_Initialise(&region);
-  err = cmfe_Region_CreateStart(REGION_USER_NUMBER,worldRegion,region);
-  err = cmfe_Region_LabelSet(region,8,"Testing");
-  err = cmfe_Region_CreateFinish(region);
+  err = oc_Region_Initialise(&region);
+  err = oc_Region_CreateStart(REGION_USER_NUMBER,worldRegion,region);
+  err = oc_Region_LabelSet(region,8,"Testing");
+  err = oc_Region_CreateFinish(region);
   
-  err = cmfe_Region_LabelGet(region,STRING_SIZE,label);	       
+  err = oc_Region_LabelGet(region,STRING_SIZE,label);	       
   printf("The region label is '%s'.\n",label);
   
   /* Destroy the region */
-  err = cmfe_Region_Finalise(&region);
+  err = oc_Region_Finalise(&region);
   /* Destroy the context */
-  err = cmfe_Context_Destroy(context);
+  err = oc_Context_Destroy(context);
   /* Finalise OpenCMISS */
-  err = cmfe_Finalise();
+  err = oc_Finalise();
 
   return err;
 }

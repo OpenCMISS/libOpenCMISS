@@ -1,6 +1,6 @@
 function(oc_add_test TESTNAME)
     add_test(NAME ${TESTNAME} COMMAND ${ARGN})
-    add_test_path(${TESTNAME} "${Iron_BINARY_DIR}" "${BINDINGS_BIN_DIR}")
+    add_test_path(${TESTNAME} "${LibOpenCMISS_BINARY_DIR}" "${LibOpenCMISS_BINDINGS_BIN_DIR}")
 endfunction()
 
 add_executable(ComplexMesh complex_mesh.c)

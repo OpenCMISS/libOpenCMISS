@@ -3,12 +3,12 @@ set(CONF "$<CONFIG>")
 if (UNIX)
    set(CONF "")
 endif()
-file(TO_NATIVE_PATH "${BINDINGS_BIN_DIR}/${CONF}" NATIVE_PYTHON_BINDINGS_DIR)
+file(TO_NATIVE_PATH "${LibOpenCMISS_BINDINGS_BIN_DIR}/${CONF}" NATIVE_PYTHON_BINDINGS_DIR)
 
 # Add the tests
 set(PYTHONTESTS )
 add_test(NAME Python_Bindings_Import
-    COMMAND ${Python_EXECUTABLE} -c "from opencmiss.iron import iron"
+    COMMAND ${Python_EXECUTABLE} -c "from opencmiss.opencmiss import opencmiss"
 )
 list(APPEND PYTHONTESTS Python_Bindings_Import)
 
@@ -19,17 +19,17 @@ list(APPEND PYTHONTESTS Python_Bindings_Cantilever)
 
 
 add_test(NAME Python_Bindings_CellMLModelIntegration_n98_Euler
-    COMMAND ${Python_EXECUTABLE} ${CMAKE_CURRENT_SOURCE_DIR}/CellMLModelIntegration.py ${Iron_SOURCE_DIR}/tests/CellML/n98.xml euler 0.01
+    COMMAND ${Python_EXECUTABLE} ${CMAKE_CURRENT_SOURCE_DIR}/CellMLModelIntegration.py ${LibOpeCMISS_TESTS_DIR}/CellML/n98.xml euler 0.01
 )
 list(APPEND PYTHONTESTS Python_Bindings_CellMLModelIntegration_n98_Euler)
 
 add_test(NAME Python_Bindings_CellMLModelIntegration_n98_BDF
-    COMMAND ${Python_EXECUTABLE} ${CMAKE_CURRENT_SOURCE_DIR}/CellMLModelIntegration.py ${Iron_SOURCE_DIR}/tests/CellML/n98.xml bdf 0.01
+    COMMAND ${Python_EXECUTABLE} ${CMAKE_CURRENT_SOURCE_DIR}/CellMLModelIntegration.py ${LibOpeCMISS_TESTS_DIR}/CellML/n98.xml bdf 0.01
 )
 list(APPEND PYTHONTESTS Python_Bindings_CellMLModelIntegration_n98_BDF)
 
 add_test(NAME Python_Bindings_CellMLModelIntegration_n98_Euler_0.005
-    COMMAND ${Python_EXECUTABLE} ${CMAKE_CURRENT_SOURCE_DIR}/CellMLModelIntegration.py ${Iron_SOURCE_DIR}/tests/CellML/n98.xml euler 0.005
+    COMMAND ${Python_EXECUTABLE} ${CMAKE_CURRENT_SOURCE_DIR}/CellMLModelIntegration.py ${LibOpeCMISS_TESTS_DIR}/CellML/n98.xml euler 0.005
 )
 list(APPEND PYTHONTESTS Python_Bindings_CellMLModelIntegration_n98_Euler_0.005)
 
@@ -40,11 +40,11 @@ list(APPEND PYTHONTESTS Python_Bindings_Laplace)
 
 # Does not seem to converge! Needs checking
 #add_test(NAME Python_Bindings_Monodomain2DSquare
-#    COMMAND ${Python_EXECUTABLE} ${CMAKE_CURRENT_SOURCE_DIR}/Monodomain2DSquare.py ${Iron_SOURCE_DIR}/tests/CellML/n98.xml
+#    COMMAND ${Python_EXECUTABLE} ${CMAKE_CURRENT_SOURCE_DIR}/Monodomain2DSquare.py ${LibOpeCMISS_TESTS_DIR}/CellML/n98.xml
 #)
 #list(APPEND PYTHONTESTS Python_Bindings_Monodomain2DSquare)
 
-get_library_path(PATH_DEF "${Iron_BINARY_DIR}" "${BINDINGS_BIN_DIR}")
+get_library_path(PATH_DEF "${CMAKE_CURRENT_BINARY_DIR}" "${LibOpenCMISS_BINDINGS_BIN_DIR}")
 foreach(_TEST ${PYTHONTESTS})
     set_tests_properties(${_TEST} PROPERTIES
         TIMEOUT 60 

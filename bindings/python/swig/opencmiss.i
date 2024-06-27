@@ -1,8 +1,8 @@
 /* Python specific typemaps for SWIG */
-%module iron_python
+%module opencmiss_python
 %{
 #include "stdlib.h"
-#include "opencmiss/iron.h"
+#include "opencmiss/opencmiss.h"
 #define MAX_OUTPUT_STRING_SIZE 300
 %}
 
@@ -47,19 +47,19 @@
 
 /**** Macros ****/
 
-/**** cmfe_*Type typemaps ****/
+/**** oc_*Type typemaps ****/
 
-/* Typemaps for passing CMFE types to cmfe_...Type initialise routines
+/* Typemaps for passing OC types to oc_...Type initialise routines
    We don't need to pass an input value, we can create a NULL
    pointer within the C wrapper */
-%typemap(in,numinputs=0) cmfe_DummyInitialiseType *cmfe_Dummy($*1_ltype temp) {
+%typemap(in,numinputs=0) oc_DummyInitialiseType *oc_Dummy($*1_ltype temp) {
   temp = ($*1_ltype)NULL;
   $1 = &temp;
 }
 
 /* Typemap to convert the output pointer to a SWIG pointer we can then
    pass it into other routines from Python */
-%typemap(argout) cmfe_DummyInitialiseType *cmfe_Dummy {
+%typemap(argout) oc_DummyInitialiseType *oc_Dummy {
   PyObject *output_pointer;
 
   output_pointer = SWIG_NewPointerObj(*$1, $*1_descriptor, 0);
@@ -67,10 +67,10 @@
   $result = SWIG_Python_AppendOutput($result,output_pointer);
 }
 
-/* cmfe_*TypeFinalise routines. Convert SWIG pointer input. Can't modify the input pointer to nullify it though */
-%typemap(in) cmfe_DummyFinaliseType *cmfe_Dummy ($*1_ltype type_pointer) {
+/* oc_*TypeFinalise routines. Convert SWIG pointer input. Can't modify the input pointer to nullify it though */
+%typemap(in) oc_DummyFinaliseType *oc_Dummy ($*1_ltype type_pointer) {
   if (SWIG_ConvertPtr($input, (void **) (&type_pointer), $*1_descriptor, SWIG_POINTER_EXCEPTION) == -1) {
-    PyErr_SetString(PyExc_TypeError,"Input must be a SWIG pointer to the correct CMFE type.");
+    PyErr_SetString(PyExc_TypeError,"Input must be a SWIG pointer to the correct OC type.");
     return NULL;
   }
   $1 = &type_pointer;
@@ -154,15 +154,15 @@
 }
 
 /* Boolean input */
-%typemap(in) (const cmfe_Bool DummyInputBool) {
+%typemap(in) (const oc_Bool DummyInputBool) {
   $1 = PyObject_IsTrue($input);
 }
 
 /* Boolean output */
-%typemap(in,numinputs=0) (cmfe_Bool *DummyOutputScalar)(int temp) {
+%typemap(in,numinputs=0) (oc_Bool *DummyOutputScalar)(int temp) {
   $1 = &temp;
 }
-%typemap(argout) (cmfe_Bool *DummyOutputScalar) {
+%typemap(argout) (oc_Bool *DummyOutputScalar) {
   PyObject *output_bool;
 
   output_bool = PyBool_FromLong((long) *$1);
@@ -171,8 +171,8 @@
 
 /**** Arrays ****/
 
-/* Array of CMFE types */
-%typemap(in,numinputs=1) (const int ArraySize, const cmfe_DummyType *DummyTypes)(int len, int i, PyObject *o) {
+/* Array of OC types */
+%typemap(in,numinputs=1) (const int ArraySize, const oc_DummyType *DummyTypes)(int len, int i, PyObject *o) {
   if (!PySequence_Check($input)) {
     PyErr_SetString(PyExc_TypeError,"Expected a sequence");
     return NULL;
@@ -186,7 +186,7 @@
     for (i=0; i < len; i++) {
       o = PySequence_GetItem($input,i);
       if (SWIG_ConvertPtr(o, (void **) ($2+i), $*2_descriptor, SWIG_POINTER_EXCEPTION) == -1) {
-        PyErr_SetString(PyExc_TypeError,"Expected a sequence of CMFE types.");
+        PyErr_SetString(PyExc_TypeError,"Expected a sequence of OC types.");
         free($2);
         return NULL;
       }
@@ -195,7 +195,7 @@
   }
   $1 = len;
 }
-%typemap(freearg) (const int ArraySize, const cmfe_DummyType *DummyTypes) {
+%typemap(freearg) (const int ArraySize, const oc_DummyType *DummyTypes) {
     free($2);
 }
 
@@ -298,4 +298,4 @@
     free($3);
 }
 
-%include "iron_generated.i"
+%include "opencmiss_generated.i"

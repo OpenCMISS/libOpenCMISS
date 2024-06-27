@@ -170,20 +170,20 @@ class LibrarySource(object):
                             current_section = section
                             break
 
-    def __init__(self, cm_path):
+    def __init__(self, opencmiss_path):
         """Load library information from source files
 
         Arguments:
-        cm_path -- Path to OpenCMISS iron directory
+        opencmiss_path -- Path to OpenCMISS directory
         """
 
         self.lib_source = self.SourceFile(
-            os.sep.join((cm_path, 'src', 'opencmiss_iron.F90')))
-        cm_source_path = cm_path + os.sep + 'src'
+            os.sep.join((opencmiss_path, 'src', 'opencmiss.F90')))
+        opencmiss_source_path = opencmiss_path + os.sep + 'src'
         source_files = [
-                cm_source_path + os.sep + file_name
-                for file_name in os.listdir(cm_source_path)
-                if file_name.endswith('.F90') and file_name != 'opencmiss_iron.F90']
+                opencmiss_source_path + os.sep + file_name
+                for file_name in os.listdir(opencmiss_source_path)
+                if file_name.endswith('.F90') and file_name != 'opencmiss.F90']
         self.sources = [
                 self.SourceFile(source, params_only=True)
                 for source in source_files]
@@ -215,12 +215,12 @@ class LibrarySource(object):
 
         self.public_subroutines = sorted(
             self.public_subroutines, key=attrgetter('name'))
-        # Remove cmfe...TypesCopy routines, as these are only used within the
-        # C bindings.  Also remove cmfe_GeneratedMeshSurfaceGet for now as it
+        # Remove oc...TypesCopy routines, as these are only used within the
+        # C bindings.  Also remove oc_GeneratedMeshSurfaceGet for now as it
         # takes an allocatable array but will be removed soon anyways.
         self.public_subroutines = list(filter(
                 lambda r:
-                not (r.name.startswith('cmfe_GeneratedMesh_SurfaceGet') or
+                not (r.name.startswith('oc_GeneratedMesh_SurfaceGet') or
                 r.name.endswith('TypesCopy')),
                 self.public_subroutines))
 
@@ -557,9 +557,9 @@ class Subroutine(CodeObject):
             return
 
         if self.name.count('_') > 1:
-            # Type name eg. = cmfe_Basis
-            # Sometimes the type name has an extra bit at the end, eg cmfe_FieldMLIO,
-            # but routines are named cmfe_FieldML_OutputCreate, so we check if
+            # Type name eg. = oc_Basis
+            # Sometimes the type name has an extra bit at the end, eg oc_FieldMLIO,
+            # but routines are named oc_FieldML_OutputCreate, so we check if
             # the parameter type name starts with the routine type name
             routine_type_name = '_'.join(self.name.split('_')[0:2])
             # Object parameter is either first or last, it is last if this
@@ -569,7 +569,7 @@ class Subroutine(CodeObject):
                 if param_type_name.startswith(routine_type_name):
                     self.self_idx = 0
                     return param_type_name
-            # Some stuff like cmfe_FieldML_OutputCreate has the "self" object
+            # Some stuff like oc_FieldML_OutputCreate has the "self" object
             # as the last parameter, check for these here:
             if (self.parameters[-1].var_type == Parameter.CUSTOM_TYPE and
                     self.name.find('Create') > -1):

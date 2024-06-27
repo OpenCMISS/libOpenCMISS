@@ -1,18 +1,16 @@
-set(IRON_C_SRC
+set(LibOpenCMISS_C_SRC
     #binary_file_c.c
     cmiss_c.c
     external_dae_solver_routines.c
-    FieldExport.c
     timer_c.c
 )
-set(IRON_HEADERS
+set(LibOpenCMISS_HEADERS
     external_dae_solver_routines.h
-    FieldExport.h
-    FieldExportConstants.h
     macros.h
     dllexport.h
+    opencmiss_version.h
 )
-set(IRON_Fortran_SRC
+set(LibOpenCMISS_Fortran_SRC
     advection_diffusion_equation_routines.F90
     advection_equation_routines.F90
     analytic_analysis_routines.F90
@@ -147,41 +145,46 @@ set(IRON_Fortran_SRC
     util_array.F90
 )
 # Add platform dependent files
-IF(${OPERATING_SYSTEM} MATCHES linux)
-    list(APPEND IRON_Fortran_SRC machine_constants_linux.F90)
-    #list(INSERT IRON_Fortran_SRC 0 machine_constants_linux.F90)
-ELSEIF(${OPERATING_SYSTEM} MATCHES darwin)
-    list(APPEND IRON_Fortran_SRC machine_constants_linux.F90)
-ELSEIF(${OPERATING_SYSTEM} MATCHES aix)
-    list(APPEND IRON_Fortran_SRC machine_constants_aix.F90)
-ELSE(${OPERATING_SYSTEM} MATCHES windows)
-    list(APPEND IRON_Fortran_SRC machine_constants_win32.F90)
-ENDIF()
-#machine_constants_irix.F90
-#machine_constants_vms.F90
-    
-# 
-set(IRON_FIELDML_SRC)
-if (WITH_FIELDML)
-    list(APPEND IRON_Fortran_SRC
-    #set(IRON_FIELDML_SRC
-        fieldml_input_routines.F90
-        fieldml_output_routines.F90
-        fieldml_types.F90
-        fieldml_util_routines.F90
-    )
-    #list(APPEND IRON_Fortran_SRC ${IRON_FIELDML_SRC})
+if(${OPERATING_SYSTEM} MATCHES linux)
+  list(APPEND LibOpenCMISS_Fortran_SRC machine_constants_linux.F90)
+elseif(${OPERATING_SYSTEM} MATCHES darwin)
+  list(APPEND LibOpenCMISS_Fortran_SRC machine_constants_linux.F90)
+elseif(${OPERATING_SYSTEM} MATCHES aix)
+  list(APPEND LibOpenCMISS_Fortran_SRC machine_constants_aix.F90)
+elseif(${OPERATING_SYSTEM} MATCHES windows)
+  list(APPEND LibOpenCMISS_Fortran_SRC machine_constants_win32.F90)
+else()
+  message(WARNING "The operating system of '${OPERATING_SYSTEM}' is unknown.")
+endif()
+
+# Add in FieldML files
+if(LibOpenCMISS_WITH_FIELDML)
+  list(APPEND LibOpenCMISS_HEADERS
+    FieldExport.h
+    FieldExportConstants.h
+  )    
+  list(APPEND LibOpenCMISS_Fortran_SRC
+    fieldml_input_routines.F90
+    fieldml_output_routines.F90
+    fieldml_types.F90
+    fieldml_util_routines.F90
+  )
 endif()
 
 # Fix paths to files
-set(FIXPATH_VARS IRON_C_SRC IRON_Fortran_SRC)#IRON_FIELDML_SRC
+set(FIXPATH_VARS LibOpenCMISS_C_SRC LibOpenCMISS_Fortran_SRC)
 foreach(varname ${FIXPATH_VARS})
-    set(_TMP )
-    foreach(filename ${${varname}})
-        list(APPEND _TMP ${CMAKE_CURRENT_SOURCE_DIR}/src/${filename}) 
-    endforeach()
-    set(${varname} ${_TMP})
+  set(_tmp )
+  foreach(filename ${${varname}})
+    list(APPEND _tmp ${LibOpenCMISS_SRC_DIR}/${filename}) 
+  endforeach()
+  set(${varname} ${_tmp})
 endforeach()
+set(_tmp )
+foreach(filename ${LibOpenCMISS_HEADERS})
+  list(APPEND _tmp ${LibOpenCMISS_INC_DIR}/${filename}) 
+endforeach()
+set(${varname} ${_tmp})
 
 # Set combined sources variable
-set(IRON_SRC ${IRON_C_SRC} ${IRON_Fortran_SRC})
+set(LibOpenCMISS_SRC ${LibOpenCMISS_C_SRC} ${LibOpenCMISS_Fortran_SRC})

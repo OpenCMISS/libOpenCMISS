@@ -19,11 +19,11 @@ if (NOT RES EQUAL 0)
     message(FATAL_ERROR "Installing bindings package failed")
 endif()
 execute_process(
-    COMMAND ${VENV_BIN}/python -c "from opencmiss.iron import iron"
+    COMMAND ${VENV_BIN}/python -c "from opencmiss.opencmiss import opencmiss"
     RESULT_VARIABLE RES
 )
 if (NOT RES EQUAL 0)
-    message(FATAL_ERROR "Importing opencmiss iron package in virtual environment failed")
+    message(FATAL_ERROR "Importing opencmiss package in virtual environment failed")
 endif()
 # Dont forget to clean up!
 file(REMOVE_RECURSE ${WD}/test_venv)

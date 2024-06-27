@@ -115,30 +115,30 @@ input_string_array = Mock(
         required_sizes=2,
         array_spec=[':', ':'])
 
-# CMFE Types
-input_cmiss_type = Mock(
+# OC Types
+input_opencmiss_type = Mock(
         intent='IN',
         pointer=False,
         var_type=parse.Parameter.CUSTOM_TYPE,
-        type_name="cmfe_TestType",
+        type_name="oc_TestType",
         array_dims=0,
         required_sizes=0,
         array_spec=[])
 
-output_cmiss_type = Mock(
+output_opencmiss_type = Mock(
         intent='OUT',
         pointer=False,
         var_type=parse.Parameter.CUSTOM_TYPE,
-        type_name="cmfe_TestType",
+        type_name="oc_TestType",
         array_dims=0,
         required_sizes=0,
         array_spec=[])
 
-input_cmiss_type_array = Mock(
+input_opencmiss_type_array = Mock(
         intent='IN',
         pointer=False,
         var_type=parse.Parameter.CUSTOM_TYPE,
-        type_name="cmfe_TestType",
+        type_name="oc_TestType",
         array_dims=1,
         required_sizes=1,
         array_spec=[':'])

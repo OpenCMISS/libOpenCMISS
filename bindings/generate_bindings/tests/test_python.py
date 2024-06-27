@@ -12,19 +12,19 @@ class PythonTestClass(unittest.TestCase):
         """Test that get and set methods are translated to properties"""
 
         type = m.Mock(
-                name="cmfe_TestType")
+                name="oc_TestType")
         routines = [
-                "cmfe_Test_LabelGet",
-                "cmfe_Test_LabelSet",
-                "cmfe_Test_SetPropertySet",
-                "cmfe_Test_GetPropertyGet",
-                "cmfe_Test_DoSomething"]
+                "oc_Test_LabelGet",
+                "oc_Test_LabelSet",
+                "oc_Test_SetPropertySet",
+                "oc_Test_GetPropertyGet",
+                "oc_Test_DoSomething"]
         type.methods = [
                 m.Mock(name=r, comment_lines=[], parameters=[None, None])
                 for r in routines]
         type.methods.append(
                 m.Mock(
-                    name="cmfe_TestTooManyParamsGet",
+                    name="oc_TestTooManyParamsGet",
                     comment_lines=[],
                     parameters=[None, None, None]))
         properties = [p[0] for p in type_properties(type)]

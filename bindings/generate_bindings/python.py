@@ -5,19 +5,20 @@ from parse import *
 from c import subroutine_c_names
 
 PACKAGE_NAME = 'opencmiss'
-MODULE_NAME = 'iron'
+MODULE_NAME = 'opencmiss'
 
-MODULE_DOCSTRING = ("""OpenCMISS-Iron
+MODULE_DOCSTRING = ("""OpenCMISS
 
 OpenCMISS (Open Continuum Mechanics, Imaging, Signal processing and System
 identification) is a mathematical modelling environment that enables the
 application of finite element analysis techniques to a variety of complex
 bioengineering problems.
 
-OpenCMISS-Iron is the computational backend component of OpenCMISS.
-This Python module wraps the underlying OpenCMISS-Iron Fortran library.
+This Python module wraps the underlying OpenCMISS C library.
+The OpenCMISS C library, in turn, wraps the underlying OpenCMISS
+Fortran library.
 
-http://www.opencmiss.org
+http://www.opencmiss.org/
 """)
 
 #INITIALISE = """WorldCoordinateSystem = CoordinateSystem()
@@ -38,23 +39,23 @@ INITIALISE = """Initialise()
 ErrorHandlingModeSet(ErrorHandlingModes.OUTPUT_ERROR)
 """
 
-PREFIX = 'cmfe_'
+PREFIX = 'oc_'
 
-def generate(iron_source_dir, args):
-    """Generate the OpenCMISS-Iron Python module
+def generate(opencmiss_source_dir, args):
+    """Generate the OpenCMISS Python module
     This wraps the lower level extension module created by SWIG
     """
     swig_module_name = args[0]
-    iron_py_path = args[1]
-    module = open(os.sep.join((iron_py_path, 'iron.py')), 'w')
+    opencmiss_py_path = args[1]
+    module = open(os.sep.join((opencmiss_py_path, 'opencmiss.py')), 'w')
 
-    library = LibrarySource(iron_source_dir)
+    library = LibrarySource(opencmiss_source_dir)
 
     module.write('"""%s"""\n\n' % MODULE_DOCSTRING)
     module.write("from . import _%s\n" %(swig_module_name))
     module.write("import signal\n")
-    module.write("from ._utils import (CMFEError, CMFEType, Enum,\n"
-        "    wrap_cmiss_routine as _wrap_routine)\n\n\n")
+    module.write("from ._utils import (OCError, OCType, Enum,\n"
+        "    wrap_opencmiss_routine as _wrap_routine)\n\n\n")
 
     types = sorted(library.lib_source.types.values(), key=attrgetter('name'))
     for type in types:
@@ -84,7 +85,7 @@ def generate(iron_source_dir, args):
         module.write('\n')
 
     # Add any extra Python code
-    extra_content_path = os.sep.join((iron_source_dir, 'bindings', 'python',
+    extra_content_path = os.sep.join((opencmiss_source_dir, 'bindings', 'python',
         'extra_content.py'))
     with open(extra_content_path, 'r') as extra_content:
         module.write(extra_content.read())
@@ -102,9 +103,9 @@ signal.signal(signal.SIGPIPE, signal.SIG_IGN)
 
 
 def type_to_py(swig_module_name, type):
-    """Convert CMFE type to Python class"""
+    """Convert OC type to Python class"""
 
-    cmiss_type = type.name[len(PREFIX):-len('Type')]
+    opencmiss_type = type.name[len(PREFIX):-len('Type')]
     docstring = remove_doxygen_commands('\n    '.join(type.comment_lines))
 
     # Find initialise routine
@@ -119,11 +120,11 @@ def type_to_py(swig_module_name, type):
         raise RuntimeError("Couldn't find initialise routine for %s" %
                 type.name)
 
-    py_class = ["class %s(CMFEType):" % cmiss_type]
+    py_class = ["class %s(OCType):" % opencmiss_type]
     py_class.append('    """%s\n    """\n' % docstring)
     py_class.append("    def __init__(self):")
     py_class.append('        """Initialise a null %s"""\n' % type.name)
-    py_class.append("        self.cmiss_type = "
+    py_class.append("        self.opencmiss_type = "
         "_wrap_routine(_%s.%s, None)\n" % (swig_module_name, initialise_method))
 
     for method in type.methods:
@@ -194,12 +195,12 @@ def method_name(type, routine):
     c_name = subroutine_c_names(routine)[0]
     if c_name.count('_') > 1:
         name = c_name.split('_')[-1]
-    elif (c_name.startswith('cmfe_FieldML') and
-            not c_name.startswith('cmfe_FieldMLIO')):
+    elif (c_name.startswith('oc_FieldML') and
+            not c_name.startswith('oc_FieldMLIO')):
         # Special case for FieldML routines that start
-        # with FieldML but take a CMFEFieldMLIOType, although
-        # some start with CMFEFieldMLIO...
-        name = c_name[len('cmfe_FieldML'):]
+        # with FieldML but take a OCFieldMLIOType, although
+        # some start with OCFieldMLIO...
+        name = c_name[len('oc_FieldML'):]
     else:
         # Old code style, no underscore after type name
         name = c_name[len(type.name) - len('Type'):]
@@ -435,14 +436,14 @@ def remove_prefix_and_suffix(names):
     suffix_length = 0
     if len(names) == 1:
         # Special cases we have to specify
-        if names[0] == 'CMFE_CONTROL_LOOP_NODE':
-            prefix_length = len('CMFE_CONTROL_LOOP_')
-        elif names[0] == 'CMFE_EQUATIONS_SET_HELMHOLTZ_EQUATION_TWO_DIM_1':
-            prefix_length = len('CMFE_EQUATIONS_SET_HELMHOLTZ_EQUATION_')
-        elif names[0] == 'CMFE_EQUATIONS_SET_POISEUILLE_EQUATION_TWO_DIM_1':
-            prefix_length = len('CMFE_EQUATIONS_SET_POISEUILLE_EQUATION_')
-        elif names[0] == 'CMFE_EQUATIONS_SET_FINITE_ELASTICITY_CYLINDER':
-            prefix_length = len('CMFE_EQUATIONS_SET_FINITE_ELASTICITY_')
+        if names[0] == 'OC_CONTROL_LOOP_NODE':
+            prefix_length = len('OC_CONTROL_LOOP_')
+        elif names[0] == 'OC_EQUATIONS_SET_HELMHOLTZ_EQUATION_TWO_DIM_1':
+            prefix_length = len('OC_EQUATIONS_SET_HELMHOLTZ_EQUATION_')
+        elif names[0] == 'OC_EQUATIONS_SET_POISEUILLE_EQUATION_TWO_DIM_1':
+            prefix_length = len('OC_EQUATIONS_SET_POISEUILLE_EQUATION_')
+        elif names[0] == 'OC_EQUATIONS_SET_FINITE_ELASTICITY_CYLINDER':
+            prefix_length = len('OC_EQUATIONS_SET_FINITE_ELASTICITY_')
         else:
             sys.stderr.write("Warning: Found an unknown enum "
                     "group with only one name: %s.\n" % names[0])
