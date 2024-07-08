@@ -42,13 +42,17 @@
 !>
 
 !> This module contains OpenCMISS MPI routines.
-MODULE CmissMPI
+MODULE OpenCMISSMPI
   
   USE BaseRoutines
   USE Constants
   USE Kinds
-#ifndef NOMPIMOD
+#ifdef WITH_MPI  
+#ifdef WITH_F08_MPI
+  USE MPI_F08
+#elif WITH_F90_MPI  
   USE MPI
+#endif  
 #endif
   USE ISO_VARYING_STRING
   USE Strings
@@ -59,9 +63,11 @@ MODULE CmissMPI
 
   PRIVATE
 
-#ifdef NOMPIMOD
+#ifdef WITH_MPI  
+#ifdef WITH_F77_MPI
 #include "mpif.h"
 #endif
+#endif  
 
   !Module parameters
 
@@ -88,18 +94,37 @@ CONTAINS
     INTEGER(INTG), INTENT(OUT) :: err !<The error code.
     TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
     !Local Variables
+#ifdef WITH_MPI    
     INTEGER(INTG) :: MPIIerror, MPIErrStrLength
+#ifdef WITH_F08_MPI
+    CHARACTER(LEN=MPI_MAX_ERROR_STRING) :: MPIErrStr
+#else    
     CHARACTER(LEN=MAXSTRLEN) :: MPIErrStr
+#endif    
     TYPE(VARYING_STRING) :: localError
+#endif    
 
     ENTERS("MPI_ErrorCheck",err,error,*999)
 
+    ASSERT_WITH_MPI()
+    
+#ifdef WITH_MPI   
     IF(MPIErrCode/=MPI_SUCCESS) THEN
+#ifdef WITH_F08_MPI
+      CALL MPI_Error_string(MPIErrCode,MPIErrStr,MPIErrStrLength,MPIIerror)
+#else      
       CALL MPI_ERROR_STRING(MPIErrCode,MPIErrStr,MPIErrStrLength,MPIIerror)
+#endif      
       localError="MPI error "//TRIM(NumberToVString(MPIErrCode,"*",err,error))//" ("// &
         & MPIErrStr(1:MPIErrStrLength)//") in "//routine(1:LEN_TRIM(routine))
       CALL FlagError(localError,err,error,*999)
     ENDIF
+#else
+    IF(MPIErrCode /= 0) THEN
+      err = MPIErrCode
+      GOTO 999
+    ENDIF
+#endif
 
     EXITS("MPI_ErrorCheck")
     RETURN
@@ -112,4 +137,4 @@ CONTAINS
   !================================================================================================================================
   !
     
-END MODULE CmissMPI
+END MODULE OpenCMISSMPI

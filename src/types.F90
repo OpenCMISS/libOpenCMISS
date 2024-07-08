@@ -44,7 +44,7 @@
 !###  Description:
 !###    Index label for a element.
 !#### Index: ng
-!###  Description:
+!###  Description
 !###    Index label for a gauss point.
 !#### Index: ni
 !###  Description:
@@ -68,14 +68,18 @@
 !> This module contains all type definitions in order to avoid cyclic module references.
 MODULE Types
 
-  USE CMISSPETScTypes, ONLY : PetscISColoringType,PetscKspType,PetscMatType,PetscMatColoringType,PetscMatFDColoringType, &
+  USE OpenCMISSPETScTypes, ONLY : PetscISColoringType,PetscKspType,PetscMatType,PetscMatColoringType,PetscMatFDColoringType, &
     & PetscPCType,PetscSnesType,PetscSnesLineSearchType,PetscTaoType,PetscVecType
   USE Constants
   USE Kinds
-  USE ISO_C_BINDING
-  USE ISO_VARYING_STRING
-#ifndef NOMPIMOD
+  USE ISO_C_BINDING, ONLY : C_INT,C_PTR
+  USE ISO_VARYING_STRING, ONLY : VARYING_STRING
+#ifdef WITH_MPI
+#ifdef WITH_F08_MPI
+  USE MPI_F08
+#elif WITH_F90_MPI
   USE MPI
+#endif 
 #endif
   USE Trees
   use linkedlist_routines
@@ -84,9 +88,11 @@ MODULE Types
 
   PRIVATE
 
-#ifdef NOMPIMOD
+#ifdef WITH_MPI  
+#ifdef WITH_F77_MPI
 #include "mpif.h"
 #endif
+#endif  
   
   
   !  
@@ -852,8 +858,15 @@ END TYPE GeneratedMeshEllipsoidType
     INTEGER(INTG) :: receiveBufferSize !<The size of the buffer to receive distributed vector data from the adjacent domain to the current domain.
     INTEGER(INTG) :: sendTagNumber !<The MPI tag number for the data sending from the current domain to the adjacent domain. It is calculated as an offset from the base tag number of the distribued vector.
     INTEGER(INTG) :: receiveTagNumber !<The MPI tag number for the data receiving from the adjacent domain to the current domain. It is calculated as an offset from the base tag number of the distribued vector.
+#ifdef WITH_MPI
+#ifdef WITH_F08_MPI
+    TYPE(MPI_Request) :: mpiSendRequest !<The MPI request pointer for sending data from the current domain to the adjacent domain.
+    TYPE(MPI_Request) :: mpiReceiveRequest !<The MPI request pointer for sending data from the adjacent domain to the current domain.
+#else    
     INTEGER(INTG) :: mpiSendRequest !<The MPI request pointer for sending data from the current domain to the adjacent domain.
     INTEGER(INTG) :: mpiReceiveRequest !<The MPI request pointer for sending data from the adjacent domain to the current domain.
+#endif    
+#endif    
     INTEGER(INTG), ALLOCATABLE :: sendBufferIntg(:) !<The integer buffer for sending the distributed integer vector data from the current domain to the adjacent domain.
     REAL(DP), ALLOCATABLE :: sendBufferDP(:) !<The double precision real buffer for sending the distributed real vector data from the current domain to the adjacent domain.
     REAL(SP), ALLOCATABLE :: sendBufferSP(:) !<The single precision real buffer for sending the distributed real vector data from the current domain to the adjacent domain.
@@ -885,8 +898,10 @@ END TYPE GeneratedMeshEllipsoidType
     INTEGER(INTG) :: dataSize  !<The size of the distributed vector that is held locally by the domain.
     INTEGER(INTG), ALLOCATABLE :: globalNumbers(:) !<globalNumbers(i). The PETSc global number corresponding to the i'th local number.
     LOGICAL :: useOverrideVector !<Is .TRUE. if the override vector is used instead of the standard vector
+#ifdef WITH_PETSC    
     TYPE(PetscVecType) :: vector !<The PETSc vector
     TYPE(PetscVecType) :: overrideVector !<The PETSc override vector
+#endif    
   END TYPE DistributedVectorPETScType
   
   !>Contains the information for a vector that is distributed across a number of domains.
@@ -929,8 +944,10 @@ END TYPE GeneratedMeshEllipsoidType
     INTEGER(INTG), ALLOCATABLE :: globalRowNumbers(:) !<globalRowNumbers(i). The PETSc global row number corresponding to the i'th local row number.
     REAL(DP), POINTER :: dataDP(:) !<dataDP(i). The real data for the matrix. \todo Is this used???
     LOGICAL :: useOverrideMatrix !<Is .TRUE. if the override matrix is to be used instead of the standard matrix
+#ifdef WITH_PETSC    
     TYPE(PetscMatType) :: matrix !<The PETSc matrix
     TYPE(PetscMatType) :: overrideMatrix !<The PETSc override matrix
+#endif    
   END TYPE DistributedMatrixPETScType
   
   !>Contains the information for a matrix that is distributed across a number of domains.
@@ -3445,8 +3462,10 @@ END TYPE GeneratedMeshEllipsoidType
     TYPE(LinearSolverType), POINTER :: linearSolver !<A pointer to the linear solver
     INTEGER(INTG) :: solverLibrary !<The library type for the linear direct solver \see SolverRoutines_SolverLibraries,SolverRoutines
     INTEGER(INTG) :: directSolverType !<The type of direct linear solver
+#ifdef WITH_PETSC    
     TYPE(PetscPCType) :: pc !<The PETSc preconditioner object
     TYPE(PetscKspType) :: ksp !<The PETSc solver object
+#endif    
   END TYPE LinearDirectSolverType
 
   !>Contains information for an iterative linear solver
@@ -3461,8 +3480,10 @@ END TYPE GeneratedMeshEllipsoidType
     REAL(DP) :: absoluteTolerance !<The absolute tolerance of the residual norm
     REAL(DP) :: divergenceTolerance !<The absolute tolerance of the residual norm
     INTEGER(INTG) :: gmresRestart !<The GMRES restart iterations size
+#ifdef WITH_PETSC    
     TYPE(PetscPCType) :: pc !<The PETSc preconditioner object
     TYPE(PetscKspType) :: ksp !<The PETSc solver object
+#endif    
   END TYPE LinearIterativeSolverType
   
   !>Contains information for a linear solver
@@ -3482,11 +3503,13 @@ END TYPE GeneratedMeshEllipsoidType
     REAL(DP) :: linesearchAlpha !<The line search alpha
     REAL(DP) :: linesearchMaxstep !<The line search maximum step
     REAL(DP) :: linesearchStepTolerance !<The line search step tolerance
+#ifdef WITH_PETSC    
     TYPE(PetscMatColoringType) :: jacobianMatColoring !<The Jacobian matrix colouring
     TYPE(PetscISColoringType) :: jacobianISColoring !<The Jacobian matrix index set colouring
     TYPE(PetscMatFDColoringType) :: jacobianMatFDColoring !<The Jacobian matrix finite difference colouring
     TYPE(PetscSnesType) :: snes !<The PETSc nonlinear solver object
     TYPE(PetscSnesLineSearchType) :: snesLineSearch !<The PETSc SNES line search object
+#endif    
     LOGICAL :: linesearchMonitorOutput !<Flag to determine whether to enable/disable linesearch monitor output.
   END TYPE NewtonLinesearchSolverType
   
@@ -3496,7 +3519,9 @@ END TYPE GeneratedMeshEllipsoidType
     INTEGER(INTG) :: solverLibrary !<The library type for the nonlinear solver \see SolverRoutines_SolverLibraries,SolverRoutines
     REAL(DP) :: trustregionTolerance !<The trust region tolerance
     REAL(DP) :: trustregionDelta0 !<The trust region delta0
+#ifdef WITH_PETSC    
     TYPE(PetscSnesType) :: snes !<The PETSc nonlinear solver object
+#endif    
   END TYPE NewtonTrustregionSolverType
 
   !>Contains information about the convergence test for a newton solver
@@ -3533,11 +3558,13 @@ END TYPE GeneratedMeshEllipsoidType
     INTEGER(INTG) :: linesearchType !<The line search type \see SolverRoutines_NonlinearLineSearchTypes,SolverRoutines
     REAL(DP) :: linesearchMaxstep !<The line search maximum step
     REAL(DP) :: linesearchStepTolerance !<The line search step tolerance
+#ifdef WITH_PETSC    
     TYPE(PetscMatColoringType) :: jacobianMatColoring !<The Jacobian matrix colouring
     TYPE(PetscISColoringType) :: jacobianISColoring !<The Jacobian matrix index set colouring
     TYPE(PetscMatFDColoringType) :: jacobianMatFDColoring !<The Jacobian matrix finite difference colouring
     TYPE(PetscSnesType) :: snes !<The PETSc nonlinear solver object
     TYPE(PetscSnesLineSearchType) :: snesLineSearch !<The PETSc SNES line search object
+#endif    
     LOGICAL :: linesearchMonitorOutput !<Flag to determine whether to enable/disable linesearch monitor output.
   END TYPE QuasiNewtonLinesearchSolverType
   
@@ -3547,7 +3574,9 @@ END TYPE GeneratedMeshEllipsoidType
     INTEGER(INTG) :: solverLibrary !<The library type for the nonlinear solver \see SolverRoutines_SolverLibraries,SolverRoutines
     REAL(DP) :: trustregionTolerance !<The trust region tolerance
     REAL(DP) :: trustregionDelta0 !<The trust region delta0
+#ifdef WITH_PETSC    
     TYPE(PetscSnesType) :: snes !<The PETSc nonlinear solver object
+#endif    
   END TYPE QuasiNewtonTrustregionSolverType
   
   !>Contains information for a Quasi-Newton nonlinear solver
@@ -3600,7 +3629,9 @@ END TYPE GeneratedMeshEllipsoidType
     INTEGER(INTG) :: gradientCalculationType !The type of calculation to obtain the gradient for the optimiser solver \see SolverRoutines_OptimiserGradientCalculationTypes,SolverRoutines
     INTEGER(INTG) :: hessianCalculationType !The type of calculation to obtain the Hessian for the optimiser solver \see SolverRoutines_OptimiserHessianCalculationTypes,SolverRoutines
     INTEGER(INTG) :: totalNumberOfObjectiveEvaluations !<The total number of objective evaluations for the optimiser solver.
+#ifdef WITH_PETSC    
     TYPE(PetscTaoType) :: tao !<The PETSc tao optimiser object
+#endif    
   END TYPE OptimiserSolverType
 
   !>Contains information for a CellML evaluation solver
@@ -4360,8 +4391,15 @@ END TYPE GeneratedMeshEllipsoidType
     INTEGER(INTG) :: numberOfSubGroups !<The number of sub work groups
     TYPE(WorkGroupPtrType), ALLOCATABLE:: subGroups(:) !<subGroups(subgg365GroupIdx). A pointer to the subGroupIdx'th sub work group.
     TYPE(ComputationEnvironmentType), POINTER :: computationEnvironment !<A pointer to the computational environment
+#ifdef WITH_MPI
+#ifdef WITH_F08_MPI
+    TYPE(MPI_Comm) :: mpiGroupCommunicator !<The MPI communicator for this work group
+    TYPE(MPI_Group) :: mpiGroup !<The MPI communicator for this work group
+#else    
     INTEGER(INTG) :: mpiGroupCommunicator !<The MPI communicator for this work group
     INTEGER(INTG) :: mpiGroup !<The MPI communicator for this work group
+#endif    
+#endif    
     INTEGER(INTG) :: myGroupComputationNodeNumber !<The rank number in the group communicator
     INTEGER(INTG) :: myWorldComputationNodeNumber !<The rank number in the world communicator
   END TYPE WorkGroupType
@@ -4378,16 +4416,27 @@ END TYPE GeneratedMeshEllipsoidType
     INTEGER(INTG) :: rank !<The MPI rank of this computation node in the world communicator
     TYPE(ComputationCacheType) :: cache !<Information about the caches of this computational node (not currently used).
     INTEGER(INTG) :: nodeNameLength !<The length of the name of the computation node
+#ifdef WITH_MPI
     CHARACTER(LEN=MPI_MAX_PROCESSOR_NAME) :: nodeName !<The name of the computation node
+#endif    
   END TYPE ComputationNodeType
 
   !>Contains information on the MPI type to transfer information about a computation node
   TYPE MPIComputationNodeType
+#ifdef WITH_MPI
+#ifdef WITH_F08_MPI
+    TYPE(MPI_Datatype) :: mpiType !<The MPI data type
+    TYPE(MPI_Datatype) :: types(4) !<The data types of each block.
+#else
     INTEGER(INTG) :: mpiType !<The MPI data type
+    INTEGER(INTG) :: types(4) !<The data types of each block.
+#endif     
+#endif    
     INTEGER(INTG) :: numberOfBlocks !<The number of blocks in the MPI data type. This will be equal to 4.
     INTEGER(INTG) :: blockLengths(4) !<The length of each block.
-    INTEGER(INTG) :: types(4) !<The data types of each block.
+#ifdef WITH_MPI    
     INTEGER(MPI_ADDRESS_KIND) :: displacements(4) !<The address displacements to each block.
+#endif    
   END TYPE MPIComputationNodeType
 
   !>Contains information on the computation environment the program is running in.
@@ -4395,8 +4444,15 @@ END TYPE GeneratedMeshEllipsoidType
     TYPE(ContextType), POINTER :: context !<A pointer back to the context for the compuation environment
     INTEGER(INTG) :: mpiVersion !<The version of MPI that we are running with
     INTEGER(INTG) :: mpiSubVersion !<The sub-version of MPI that we are running with
+#ifdef WITH_MPI
+#ifdef WITH_F08_MPI
+    TYPE(MPI_Comm) :: mpiCommWorld !<The clone of the MPI world communicator for OpenCMISS
+    TYPE(MPI_Group) :: mpiGroupWorld !<The group of the cloned MPI world communicator for OpenCMISS
+#else 
     INTEGER(INTG) :: mpiCommWorld !<The clone of the MPI world communicator for OpenCMISS
     INTEGER(INTG) :: mpiGroupWorld !<The group of the cloned MPI world communicator for OpenCMISS
+#endif    
+#endif    
     INTEGER(INTG) :: numberOfWorldComputationNodes !<The number of computation nodes in the world communicator
     INTEGER(INTG) :: myWorldComputationNodeNumber !<The rank of the running process in the world communicator
     TYPE(ComputationNodeType), ALLOCATABLE :: computationNodes(:) !<computationNodes(node_idx). Contains information on the node_idx'th computation node.

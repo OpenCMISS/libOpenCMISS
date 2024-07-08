@@ -45,18 +45,18 @@ def routine_swig_lines(routine):
     start_lines = []
     end_lines = []
 
-    if routine.name.endswith('_Initialise') and routine.name != 'oc_Initialise':
+    if routine.name.endswith('_Initialise') and routine.name != 'OC_Initialise':
         type = routine.name[0:-len('_Initialise')] + 'Type'
         name = routine.parameters[0].name
         start_lines.append(
-            '%%apply oc_DummyInitialiseType *oc_Dummy{%s *%s};' %
+            '%%apply OC_DummyInitialiseType *OC_Dummy{%s *%s};' %
             (type, name))
         end_lines.append('%%clear %s *%s;' % (type, name))
-    elif routine.name.endswith('_Finalise') and routine.name != 'oc_Finalise':
+    elif routine.name.endswith('_Finalise') and routine.name != 'OC_Finalise':
         type = routine.name[0:-len('_Finalise')] + 'Type'
         name = routine.parameters[0].name
         start_lines.append(
-            '%%apply oc_DummyFinaliseType *oc_Dummy{%s *%s};'
+            '%%apply OC_DummyFinaliseType *OC_Dummy{%s *%s};'
             % (type, name))
         end_lines.append('%%clear %s *%s;' % (type, name))
 
@@ -142,7 +142,7 @@ def parameter_swig_lines(parameter):
             if parameter.var_type == Parameter.CUSTOM_TYPE:
                 properties.update({"type_name": parameter.type_name})
                 typemap = ('const int ArraySize, '
-                    'const oc_DummyType *DummyTypes')
+                    'const OC_DummyType *DummyTypes')
                 apply_to = ('const int %(name)sSize, '
                     'const %(type_name)s *%(name)s' % properties)
             else:
@@ -167,8 +167,8 @@ def parameter_swig_lines(parameter):
             sys.stderr.write("Error: Input of array with dimensions > 1 not "
                 "implemented\n")
         elif parameter.var_type == Parameter.LOGICAL:
-            typemap = 'const oc_Bool DummyInputBool'
-            apply_to = 'const oc_Bool *%(name)s' % properties
+            typemap = 'const OC_Bool DummyInputBool'
+            apply_to = 'const OC_Bool *%(name)s' % properties
     if typemap:
         return ('%%apply (%s){(%s)};' % (typemap, apply_to),
             '%%clear (%s);' % apply_to)

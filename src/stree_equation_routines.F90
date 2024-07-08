@@ -55,7 +55,6 @@ MODULE StreeEquationsRoutines
   USE Constants
   USE ControlLoopRoutines
   USE ControlLoopAccessRoutines
-  USE CmissMPI
   USE ComputationRoutines
   USE ComputationAccessRoutines
   USE CoordinateSystemRoutines
@@ -79,6 +78,7 @@ MODULE StreeEquationsRoutines
   USE Maths
   USE MatrixVector
   USE MeshRoutines
+  USE OpenCMISSMPI
   USE ProblemAccessRoutines
   USE Strings
   USE SolverRoutines

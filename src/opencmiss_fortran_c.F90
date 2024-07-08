@@ -45,7 +45,7 @@
 
 #include "dllexport.h"
 
-MODULE CMISSFortranC
+MODULE OpenCMISSFortranC
 
   USE ISO_C_BINDING
  
@@ -61,11 +61,11 @@ MODULE CMISSFortranC
 
   !Interfaces
 
-  PUBLIC CMISSC2FString
+  PUBLIC OpenCMISSC2FString
 
-  PUBLIC CMISSF2CString
+  PUBLIC OpenCMISSF2CString
 
-  PUBLIC CMISSC2FStrings
+  PUBLIC OpenCMISSC2FStrings
 
 CONTAINS
 
@@ -74,8 +74,8 @@ CONTAINS
   !
 
   !>Copys/converts a C string (array of characters) to a Fortran String (length of characters)
-  SUBROUTINE CMISSC2FString(Cstring,Fstring)
-  	!DLLEXPORT(CMISSC2FString)
+  SUBROUTINE OpenCMISSC2FString(Cstring,Fstring)
+    !DLLEXPORT(OpenCMISSC2FString)
     !Argument variables
     CHARACTER(LEN=1,KIND=C_CHAR), INTENT(IN) :: Cstring(:)
     CHARACTER(LEN=*), INTENT(OUT) :: Fstring
@@ -98,15 +98,15 @@ CONTAINS
     
     RETURN
     
-  END SUBROUTINE CMISSC2FSTRING
+  END SUBROUTINE OpenCMISSC2FSTRING
    
   !
   !================================================================================================================================
   !
 
   !>Copys/converts a Fortran String (length of characters) to a C string (array of characters)
-  SUBROUTINE CMISSF2CString(Fstring,Cstring)
-  	!DLLEXPORT(CMISSF2CString)
+  SUBROUTINE OpenCMISSF2CString(Fstring,Cstring)
+    !DLLEXPORT(OpenCMISSF2CString)
     !Argument variables
     CHARACTER(LEN=*), INTENT(IN) :: Fstring
     CHARACTER(LEN=1,KIND=C_CHAR), INTENT(OUT) :: Cstring(:)
@@ -126,15 +126,15 @@ CONTAINS
     
     RETURN
     
-  END SUBROUTINE CMISSF2CSTRING
+  END SUBROUTINE OpenCMISSF2CSTRING
    
   !
   !================================================================================================================================
   !
 
   !>Copys/converts a list of C strings (2D array of characters) to an array of Fortran Strings
-  SUBROUTINE CMISSC2FStrings(Cstrings,Fstrings)
-  	!DLLEXPORT(CMISSC2FStrings)
+  SUBROUTINE OpenCMISSC2FStrings(Cstrings,Fstrings)
+    !DLLEXPORT(OpenCMISSC2FStrings)
     !Argument variables
     CHARACTER(LEN=1,KIND=C_CHAR), INTENT(IN) :: Cstrings(:,:)
     CHARACTER(LEN=*), INTENT(INOUT) :: Fstrings(:)
@@ -161,10 +161,10 @@ CONTAINS
 
     RETURN
 
-  END SUBROUTINE CMISSC2FStrings
+  END SUBROUTINE OpenCMISSC2FStrings
 
   !
   !=================================================================================================================================
   !
 
-END MODULE CMISSFortranC
+END MODULE OpenCMISSFortranC

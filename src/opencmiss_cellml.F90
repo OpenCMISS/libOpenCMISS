@@ -43,7 +43,7 @@
 
 !> \defgroup OpenCMISS_CellML OpenCMISS::Iron::CellML
 !> This module is a OpenCMISS buffer module to CellML.
-MODULE CmissCellML
+MODULE OpenCMISSCellML
 
   !Module imports
   USE ISO_C_BINDING
@@ -60,8 +60,6 @@ MODULE CmissCellML
   ! This fixes problems with the CMAKE FORTRAN parser. Its not detecting
   ! the file (=module) dependency correctly and hence breaks the build
   ! on some platforms.
-  USE CMISSFortranC
-  USE CmissMPI
   USE ComputationRoutines
   USE ComputationAccessRoutines
   USE Constants
@@ -72,9 +70,15 @@ MODULE CmissCellML
   USE InputOutput
   USE Kinds
   USE MeshAccessRoutines
-#ifndef NOMPIMOD
+#ifdef WITH_MPI  
+#ifdef WITH_F08_MPI
+  USE MPI_F08
+#elif WITH_F90_MPI 
   USE MPI
 #endif
+  USE OpenCMISSMPI
+#endif
+  USE OpenCMISSFortranC
   USE RegionAccessRoutines
   USE Strings
   USE Types
@@ -85,9 +89,11 @@ MODULE CmissCellML
 
   PRIVATE
 
-#ifdef NOMPIMOD
+#ifdef WITH_MPI  
+#ifdef WITH_F77_MPI
 #include "mpif.h"
 #endif
+#endif  
 
   !Module parameters
 
@@ -2255,7 +2261,15 @@ CONTAINS
     INTEGER(INTG), INTENT(OUT) :: err !<The error code
     TYPE(VARYING_STRING), INTENT(OUT) :: error !< The error string
     !Local variables
-    INTEGER(INTG) :: modelIdx,sourceDOFIdx,firstDOFIdx,mpiIError,onlyOneModelIndex,groupCommunicator
+    INTEGER(INTG) :: modelIdx,sourceDOFIdx,firstDOFIdx,onlyOneModelIndex
+#ifdef WITH_F08_MPI
+    TYPE(MPI_Comm) :: groupCommunicator
+#else
+    INTEGER(INTG) :: groupCommunicator
+#endif
+#ifdef WITH_MPI
+    INTEGER(INTG) :: mpiIError
+#endif    
     INTEGER(INTG), POINTER :: modelsData(:)
     TYPE(CellMLType), POINTER :: cellML
     TYPE(DecompositionType), POINTER :: decomposition
@@ -2322,8 +2336,17 @@ CONTAINS
         ENDIF
       ENDDO !sourceDOFIdx
       onlyOneModelIndex=0
+#ifdef WITH_MPI
+#ifdef WITH_F08_MPI
+      CALL MPI_Allreduce(cellMLModelsField%onlyOneModelIndex,onlyOneModelIndex,1,MPI_INTEGER,MPI_MAX,groupCommunicator,mpiIerror)
+      CALL MPI_ErrorCheck("MPI_Allreduce",mpiIerror,err,error,*999)
+#else      
       CALL MPI_ALLREDUCE(cellMLModelsField%onlyOneModelIndex,onlyOneModelIndex,1,MPI_INTEGER,MPI_MAX,groupCommunicator,mpiIerror)
       CALL MPI_ErrorCheck("MPI_ALLREDUCE",mpiIerror,err,error,*999)
+#endif      
+#else
+      onlyOneModelIndex=cellMLModelsField%onlyOneModelIndex
+#endif      
       IF(onlyOneModelIndex==0) CALL FlagError("Models field does not have any models set.",err,error,*999)
 !!TODO: Do we need to make sure it is the same model number on different ranks? The only one model optimisation is to ensure
 !!that we don't have to reference the models field inside dof loops on the rank??? 
@@ -3815,4 +3838,4 @@ CONTAINS
 
   END FUNCTION CellML_MapCellMLFieldTypeToVariableType
 
-END MODULE CmissCellML
+END MODULE OpenCMISSCellML

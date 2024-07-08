@@ -74,9 +74,6 @@ MODULE ReactionDiffusionEquationsRoutines
   USE Kinds
   USE Maths
   USE MatrixVector
-#ifndef NOMPIMOD
-  USE MPI
-#endif
   USE ProblemAccessRoutines
   USE Strings
   USE SolverRoutines
@@ -92,10 +89,6 @@ MODULE ReactionDiffusionEquationsRoutines
   IMPLICIT NONE
 
   PRIVATE
-
-#ifdef NOMPIMOD
-#include "mpif.h"
-#endif
 
   !Module parameters
 

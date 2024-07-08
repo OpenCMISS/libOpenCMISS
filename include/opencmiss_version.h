@@ -10,7 +10,7 @@
  *
  */
 
-#define LibOpenCMISS_MAJOR_VERSION 1
-#define LibOpenCMISS_MINOR_VERSION 0
-#define LibOpenCMISS_PATCH_VERSION 0
+#define OpenCMISS_MAJOR_VERSION 1
+#define OpenCMISS_MINOR_VERSION 0
+#define OpenCMISS_PATCH_VERSION 0
 

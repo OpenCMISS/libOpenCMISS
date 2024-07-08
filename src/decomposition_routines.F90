@@ -47,8 +47,6 @@ MODULE DecompositionRoutines
   USE BaseRoutines
   USE BasisRoutines
   USE BasisAccessRoutines
-  USE CmissMPI
-  USE CmissParMETIS
   USE ComputationRoutines
   USE ComputationAccessRoutines
   USE Constants
@@ -61,8 +59,16 @@ MODULE DecompositionRoutines
   USE Kinds
   USE Lists
   USE MeshAccessRoutines
-#ifndef NOMPIMOD
+#ifdef WITH_MPI  
+#ifdef WITH_F08_MPI
+  USE MPI_F08
+#elif WITH_F90_MPI
   USE MPI
+#endif
+  USE OpenCMISSMPI
+#endif  
+#ifdef WITH_PARMETIS  
+  USE OpenCMISSParMETIS
 #endif
   USE RegionAccessRoutines
   USE Strings
@@ -73,9 +79,11 @@ MODULE DecompositionRoutines
 
   IMPLICIT NONE
 
-#ifdef NOMPIMOD
+#ifdef WITH_MPI 
+#ifdef WITH_F77_MPI
 #include "mpif.h"
 #endif
+#endif  
 
    PRIVATE
 
@@ -380,13 +388,20 @@ CONTAINS
     !Local Variables
     INTEGER(INTG) :: adjacentElementIdx,adjacentElementNodeNumber,adjacentElementNumber,adjacencyWeights(1), &
       & adjacentVertexNumber,computationNodeIdx,domainNumber,edgeNumber,elementIdx,elementNodeNumber,elementNumber, &
-      & elementStart,elementStop,graphElement,graphNodeElement,groupCommunicator,insertStatus,interfaceElementIdx, &
+      & elementStart,elementStop,graphElement,graphNodeElement,insertStatus,interfaceElementIdx, &
       & linkedElement,linkedNodeElement,maxNumberOfElementsPerNode,maxNumberOfVerticesPerNode,mpiIError, &
       & myComputationNodeNumber,myTotalNumberOfEdges,myVertexStart,myVertexStop,myNumberOfVertices,numberFlag, &
       & numberOfComputationNodes,numberOfConstraints,numberOfEdges,numberOfGraphNodes,numberOfInterfaceElements, &
       & numberOfMeshElements,numberOfNodeElements,numberOfNodeVertices,numberOfVertices,oldSuperVertexNumber, &
       & parmetisOptions(0:2),randomSeedsSize,sumEdges,superVertexNumber,totalNumberOfElements,totalNumberOfVertices, &
       & vertexIdx,vertexNumber,vertexStart,vertexStop,vertexRankNumber,weightFlag,xicIdx
+#ifdef WITH_MPI
+#ifdef WITH_F08_MPI
+    TYPE(MPI_Comm) :: groupCommunicator
+#else
+    INTEGER(INTG) :: groupCommunicator
+#endif    
+#endif    
     INTEGER(INTG), ALLOCATABLE :: adjacency(:),elementCounts(:),elementDisplacements(:),elementOffset(:),element2VertexMap(:), &
       & elementStarts(:),elementStops(:),numberOfElements(:),myNumberOfEdges(:),vertexDomain(:), &
       & randomSeeds(:),elementReceiveCounts(:),vertexDisplacements(:),vertexDistance(:),vertexReceiveCounts(:), &
@@ -782,13 +797,21 @@ CONTAINS
       & numberOfConstraints,decomposer%numberOfPartitions,tpwgts,ubvec,parmetisOptions,decomposer%numberOfEdgesCut, &
       & vertexDomain(vertexDisplacements(myComputationNodeNumber)+1:),groupCommunicator,err,error,*999)
 
+#ifdef WITH_MPI    
     !Transfer all the vertex domain information to the other computation nodes so that each rank has all the info
     IF(numberOfComputationNodes>1) THEN
       !This should work on a single processor but doesn't for mpich2 under windows. Maybe a bug? Avoid for now.
+#ifdef WITH_F08_MPI
+      CALL MPI_Allgatherv(MPI_IN_PLACE,maxNumberOfVerticesPerNode,MPI_INTEGER,vertexDomain, &
+        & vertexReceiveCounts,vertexDisplacements,MPI_INTEGER,groupCommunicator,mpiIError)
+      CALL MPI_ErrorCheck("MPI_Allgatherv",mpiIError,err,error,*999)
+#else      
       CALL MPI_ALLGATHERV(MPI_IN_PLACE,maxNumberOfVerticesPerNode,MPI_INTEGER,vertexDomain, &
         & vertexReceiveCounts,vertexDisplacements,MPI_INTEGER,groupCommunicator,mpiIError)
       CALL MPI_ErrorCheck("MPI_ALLGATHERV",mpiIError,err,error,*999)
+#endif      
     ENDIF
+#endif    
 
     !Now set the element domain information in all the decompositions in the decomposer graph and
     !check the decompositions to ensure that each domain has an element in it.
@@ -2727,10 +2750,16 @@ CONTAINS
     INTEGER(INTG), INTENT(OUT) :: err !<The error code
     TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
     !Local Variables
-    INTEGER(INTG) :: localElementIdx,globalElement,globalElementIdx,dataPointIdx,localData,meshComponentNumber, &
-      & groupCommunicator
-    INTEGER(INTG) :: insertStatus,mpiIError,numberOfComputationNodes,myGroupComputationNodeNumber,numberOfGhostData, &
-      & numberOfLocalData
+    INTEGER(INTG) :: dataPointIdx,globalElement,globalElementIdx,insertStatus,localData,localElementIdx,meshComponentNumber, &
+      & myGroupComputationNodeNumber,numberOfComputationNodes,numberOfGhostData,numberOfLocalData
+#ifdef WITH_MPI
+#ifdef WITH_F08_MPI
+    TYPE(MPI_Comm) :: groupCommunicator
+#else
+    INTEGER(INTG) :: groupCommunicator
+#endif
+    INTEGER(INTG) :: mpiIError
+#endif    
     TYPE(DecompositionType), POINTER :: decomposition
     TYPE(DecompositionElementsType), POINTER :: decompositionElements
     TYPE(DecompositionDataPointsType), POINTER :: decompositionData
@@ -2812,6 +2841,17 @@ CONTAINS
     !Calculate number of ghost data points on the current computation domain
     numberOfLocalData=decompositionData%numberOfDataPoints
     numberOfGhostData=decompositionData%totalNumberOfDataPoints-decompositionData%numberOfDataPoints
+#ifdef WITH_MPI
+#ifdef WITH_F08_MPI
+    !Gather number of local data points on all computation nodes
+    CALL MPI_Allgather(numberOfLocalData,1,MPI_INTEGER,decompositionData% &
+      & numberOfDomainLocal,1,MPI_INTEGER,groupCommunicator,mpiIError)
+    CALL MPI_ErrorCheck("MPI_Allgather",mpiIError,err,error,*999)
+    !Gather number of ghost data points on all computation nodes
+    CALL MPI_Allgather(numberOfGhostData,1,MPI_INTEGER,decompositionData% &
+      & numberOfDomainGhost,1,MPI_INTEGER,groupCommunicator,mpiIError)
+    CALL MPI_ErrorCheck("MPI_Allgather",mpiIError,err,error,*999)
+#else    
     !Gather number of local data points on all computation nodes
     CALL MPI_ALLGATHER(numberOfLocalData,1,MPI_INTEGER,decompositionData% &
       & numberOfDomainLocal,1,MPI_INTEGER,groupCommunicator,mpiIError)
@@ -2820,6 +2860,8 @@ CONTAINS
     CALL MPI_ALLGATHER(numberOfGhostData,1,MPI_INTEGER,decompositionData% &
       & numberOfDomainGhost,1,MPI_INTEGER,groupCommunicator,mpiIError)
     CALL MPI_ErrorCheck("MPI_ALLGATHER",mpiIError,err,error,*999)
+#endif    
+#endif    
 
     EXITS("DecompositionTopology_DataPointsCalculate")
     RETURN

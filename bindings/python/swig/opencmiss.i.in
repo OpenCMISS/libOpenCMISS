@@ -1,5 +1,5 @@
 /* Python specific typemaps for SWIG */
-%module opencmiss_python
+%module @OpenCMISS_Python_MODULE_NAME@
 %{
 #include "stdlib.h"
 #include "opencmiss/opencmiss.h"
@@ -7,7 +7,8 @@
 %}
 
 /* Use numpy for input/output of arrays
-   This means that arrays are contiguous
+   This means that arrays are contigu
+   ous
    memory chunks so we don't need to do
    expensive copying to/from Python lists
 */
@@ -47,19 +48,19 @@
 
 /**** Macros ****/
 
-/**** oc_*Type typemaps ****/
+/**** OC_*Type typemaps ****/
 
-/* Typemaps for passing OC types to oc_...Type initialise routines
+/* Typemaps for passing OC types to OC_...Type initialise routines
    We don't need to pass an input value, we can create a NULL
    pointer within the C wrapper */
-%typemap(in,numinputs=0) oc_DummyInitialiseType *oc_Dummy($*1_ltype temp) {
+%typemap(in,numinputs=0) OC_DummyInitialiseType *OC_Dummy($*1_ltype temp) {
   temp = ($*1_ltype)NULL;
   $1 = &temp;
 }
 
 /* Typemap to convert the output pointer to a SWIG pointer we can then
    pass it into other routines from Python */
-%typemap(argout) oc_DummyInitialiseType *oc_Dummy {
+%typemap(argout) OC_DummyInitialiseType *OC_Dummy {
   PyObject *output_pointer;
 
   output_pointer = SWIG_NewPointerObj(*$1, $*1_descriptor, 0);
@@ -67,8 +68,8 @@
   $result = SWIG_Python_AppendOutput($result,output_pointer);
 }
 
-/* oc_*TypeFinalise routines. Convert SWIG pointer input. Can't modify the input pointer to nullify it though */
-%typemap(in) oc_DummyFinaliseType *oc_Dummy ($*1_ltype type_pointer) {
+/* OC_*TypeFinalise routines. Convert SWIG pointer input. Can't modify the input pointer to nullify it though */
+%typemap(in) OC_DummyFinaliseType *OC_Dummy ($*1_ltype type_pointer) {
   if (SWIG_ConvertPtr($input, (void **) (&type_pointer), $*1_descriptor, SWIG_POINTER_EXCEPTION) == -1) {
     PyErr_SetString(PyExc_TypeError,"Input must be a SWIG pointer to the correct OC type.");
     return NULL;
@@ -154,15 +155,15 @@
 }
 
 /* Boolean input */
-%typemap(in) (const oc_Bool DummyInputBool) {
+%typemap(in) (const OC_Bool DummyInputBool) {
   $1 = PyObject_IsTrue($input);
 }
 
 /* Boolean output */
-%typemap(in,numinputs=0) (oc_Bool *DummyOutputScalar)(int temp) {
+%typemap(in,numinputs=0) (OC_Bool *DummyOutputScalar)(int temp) {
   $1 = &temp;
 }
-%typemap(argout) (oc_Bool *DummyOutputScalar) {
+%typemap(argout) (OC_Bool *DummyOutputScalar) {
   PyObject *output_bool;
 
   output_bool = PyBool_FromLong((long) *$1);
@@ -172,7 +173,7 @@
 /**** Arrays ****/
 
 /* Array of OC types */
-%typemap(in,numinputs=1) (const int ArraySize, const oc_DummyType *DummyTypes)(int len, int i, PyObject *o) {
+%typemap(in,numinputs=1) (const int ArraySize, const OC_DummyType *DummyTypes)(int len, int i, PyObject *o) {
   if (!PySequence_Check($input)) {
     PyErr_SetString(PyExc_TypeError,"Expected a sequence");
     return NULL;
@@ -195,7 +196,7 @@
   }
   $1 = len;
 }
-%typemap(freearg) (const int ArraySize, const oc_DummyType *DummyTypes) {
+%typemap(freearg) (const int ArraySize, const OC_DummyType *DummyTypes) {
     free($2);
 }
 

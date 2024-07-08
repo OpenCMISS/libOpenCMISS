@@ -35,10 +35,10 @@ C_DEFINES = ('\n/*\n * Defines\n */\n\n'
         'const int OC_POINTER_NOT_NULL = -3;\n'
         'const int OC_COULD_NOT_ALLOCATE_POINTER = -4;\n'
         'const int OC_ERROR_CONVERTING_POINTER = -5;\n\n'
-        'typedef %s oc_Bool;\n'
-        'const oc_Bool oc_True = 1;\n'
-        'const oc_Bool oc_False = 0;\n\n'
-        'typedef int oc_Error;\n\n' % _logical_type())
+        'typedef %s OC_Bool;\n'
+        'const OC_Bool OC_True = 1;\n'
+        'const OC_Bool OC_False = 0;\n\n'
+        'typedef int OC_Error;\n\n' % _logical_type())
 
 
 def write_c_header(library, output):
@@ -107,11 +107,11 @@ def write_c_f90(library, output):
         '  USE ISO_C_BINDING\n'
         '  USE ISO_VARYING_STRING\n'
         '  USE OpenCMISS\n'
-        '  USE CMISSFortranC\n\n'
+        '  USE OpenCMISSFortranC\n\n'
         '  IMPLICIT NONE\n\n'
         '  PRIVATE\n\n'
-        '  INTEGER(C_INT), PARAMETER :: oc_True = 1\n'
-        '  INTEGER(C_INT), PARAMETER :: oc_False = 0\n'
+        '  INTEGER(C_INT), PARAMETER :: OC_True = 1\n'
+        '  INTEGER(C_INT), PARAMETER :: OC_False = 0\n'
         '  INTEGER(C_INT), PARAMETER :: OC_NO_ERROR = 0\n'
         '  INTEGER(C_INT), PARAMETER :: OC_FORCE_ERROR = -1\n'
         '  INTEGER(C_INT), PARAMETER :: OC_POINTER_IS_NULL = -2\n'
@@ -135,7 +135,7 @@ PARAMETER_CTYPES = {
     Parameter.FLOAT: 'float',
     Parameter.DOUBLE: 'double',
     Parameter.CHARACTER: 'char',
-    Parameter.LOGICAL: 'oc_Bool',
+    Parameter.LOGICAL: 'OC_Bool',
     Parameter.CUSTOM_TYPE: None}
 
 
@@ -193,7 +193,7 @@ def subroutine_to_c_header(subroutine, export=True):
     output = ['\n/*>']
     output.append('\n *>'.join(subroutine.comment_lines))
     output.append(' */\n')
-    output.append('{0}oc_Error {1}('.format('OPENCMISS_C_EXPORT ' if export else '', subroutine_c_names(subroutine)[0]))
+    output.append('{0}OC_Error {1}('.format('OPENCMISS_C_EXPORT ' if export else '', subroutine_c_names(subroutine)[0]))
 
     c_parameters = _chain_iterable([parameter_to_c(p)
             for p in subroutine.parameters])
@@ -369,18 +369,18 @@ def parameter_conversion(parameter):
                 ','.join(reversed(size_list))))
             if parameter.array_dims > 1:
                 char_sizes = '(%s)' % ','.join(size_list[:-1])
-                pre_call.append('CALL CMISSC2FStrings(%sCChars,Fortran%s)' %
+                pre_call.append('CALL OpenCMISSC2FStrings(%sCChars,Fortran%s)' %
                     (parameter.name, parameter.name))
             else:
                 char_sizes = ''
-                pre_call.append('CALL CMISSC2FString(%sCChars,Fortran%s)' %
+                pre_call.append('CALL OpenCMISSC2FString(%sCChars,Fortran%s)' %
                     (parameter.name, parameter.name))
         else:
             if parameter.array_dims > 1:
                 raise ValueError("output of strings >1D not implemented")
             post_call.append('CALL C_F_POINTER(%s,%sCChars,[%s])' %
                 (parameter.name, parameter.name, size_list[0]))
-            post_call.append('CALL CMISSF2CString(Fortran%s,%sCChars)' %
+            post_call.append('CALL OpenCMISSF2CString(Fortran%s,%sCChars)' %
                 (parameter.name, parameter.name))
 
     # Arrays of floats, integers or logicals

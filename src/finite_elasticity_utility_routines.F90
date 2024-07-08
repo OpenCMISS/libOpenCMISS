@@ -58,10 +58,6 @@ MODULE FiniteElasticityUtilityRoutines
 
   IMPLICIT NONE
 
-#ifdef NOMPIMOD
-#include "mpif.h"
-#endif
-
   PRIVATE
 
   !Module parameters

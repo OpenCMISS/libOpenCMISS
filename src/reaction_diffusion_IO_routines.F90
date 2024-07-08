@@ -64,19 +64,11 @@ MODULE ReactionDiffusionIORoutines
  USE RegionAccessRoutines
  USE Types
 
-#ifndef NOMPIMOD
-  USE MPI
-#endif
-
 #include "macros.h"
 
   IMPLICIT NONE
 
   PRIVATE
-
-#ifdef NOMPIMOD
-#include "mpif.h"
-#endif
 
   PUBLIC ReactionDiffusion_IOWriteCMGUI
 

@@ -1,5 +1,5 @@
 file(COPY input/ DESTINATION input)
 add_executable(FieldML_IO fieldml_io.F90 cube.F90 fieldml_arguments.F90 ../Utilities/testframework.F90)
 set_target_properties(FieldML_IO PROPERTIES LINKER_LANGUAGE Fortran)
-target_link_libraries(FieldML_IO iron)
+target_link_libraries(FieldML_IO ${OpenCMISS_SHARED_Fortran_TARGET})
 oc_add_test(FieldML_IO FieldML_IO)

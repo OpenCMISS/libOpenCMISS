@@ -59,20 +59,6 @@
 	  CALL Errors(routinename,err,error)
 #endif
 
-#ifdef WITH_CELLML
-#  define ASSERT_WITH_CELLML() !Do nothing
-#else
-#  define ASSERT_WITH_CELLML() \
-   CALL FlagError("Must compile with WITH_CELLML ON to use CellML functionality.",err,error,*999)
-#endif
-
-#ifdef WITH_FIELDML
-#  define ASSERT_WITH_FIELDML() !Do nothing
-#else
-#  define ASSERT_WITH_FIELDML() \
-   CALL FlagError("Must compile with WITH_FIELDML ON to use FieldML functionality.",err,error,*999)
-#endif
-
 #ifdef WITH_NO_CHECKS
 #  define WITH_NO_PRECHECKS
 #  define WITH_NO_POSTCHECKS
@@ -89,3 +75,32 @@
 #if defined WITH_PRECHECKS || defined WITH_POSTCHECKS
 #  define WITH_CHECKS
 #endif
+
+#ifdef WITH_MPI
+#  define ASSERT_WITH_MPI() !Do nothing
+#else
+#  define ASSERT_WITH_MPI() \
+   CALL FlagError("Must compile with WITH_MPI ON to use MPI functionality.",err,error,*999)
+#endif
+
+#ifdef WITH_CELLML
+#  define ASSERT_WITH_CELLML() !Do nothing
+#else
+#  define ASSERT_WITH_CELLML() \
+   CALL FlagError("Must compile with WITH_CELLML ON to use CellML functionality.",err,error,*999)
+#endif
+
+#ifdef WITH_FIELDML
+#  define ASSERT_WITH_FIELDML() !Do nothing
+#else
+#  define ASSERT_WITH_FIELDML() \
+   CALL FlagError("Must compile with WITH_FIELDML ON to use FieldML functionality.",err,error,*999)
+#endif
+
+#ifdef WITH_PETSC
+#  define ASSERT_WITH_PETSC() !Do nothing
+#else
+#  define ASSERT_WITH_PETSC() \
+   CALL FlagError("Must compile with WITH_PETSC ON to use PETSc functionality.",err,error,*999)
+#endif
+

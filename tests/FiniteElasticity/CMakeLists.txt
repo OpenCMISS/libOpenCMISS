@@ -1,6 +1,6 @@
 add_executable(Cantilever Cantilever.F90)
 set_target_properties(Cantilever PROPERTIES LINKER_LANGUAGE Fortran)
-target_link_libraries(Cantilever iron)
+target_link_libraries(Cantilever ${OpenCMISS_SHARED_Fortran_TARGET})
 # This is reading the default settings that should apply to the file
 # - however not giving it any arguments assumes type 9 interpolation opposite to the 
 # DisplacementInterpolationType=CMFE_BASIS_LINEAR_LAGRANGE_INTERPOLATION in line 150. Needs checking.
@@ -14,5 +14,5 @@ endforeach()
 
 add_executable(SimpleShear SimpleShear.F90)
 set_target_properties(SimpleShear PROPERTIES LINKER_LANGUAGE Fortran)
-target_link_libraries(SimpleShear iron)
+target_link_libraries(SimpleShear ${OpenCMISS_SHARED_Fortran_TARGET})
 oc_add_test(FiniteElasticity_SimpleShear SimpleShear)

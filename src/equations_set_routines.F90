@@ -51,7 +51,6 @@ MODULE EquationsSetRoutines
   USE BoundaryConditionsRoutines
   USE BoundaryConditionAccessRoutines
   USE ClassicalFieldRoutines
-  USE CmissMPI
   USE ComputationRoutines
   USE ComputationAccessRoutines
   USE Constants
@@ -78,9 +77,6 @@ MODULE EquationsSetRoutines
   USE MatrixVector
   USE MeshAccessRoutines
   USE MonodomainEquationsRoutines
-#ifndef NOMPIMOD
-  USE MPI
-#endif
   USE MultiPhysicsRoutines
   USE ProfilingRoutines
   USE RegionAccessRoutines
@@ -91,10 +87,6 @@ MODULE EquationsSetRoutines
 #include "macros.h"  
 
   IMPLICIT NONE
-
-#ifdef NOMPIMOD
-#include "mpif.h"
-#endif
 
   PRIVATE
 

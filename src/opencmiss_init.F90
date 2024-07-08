@@ -48,23 +48,29 @@
 !>
 !>
 
-!> \defgroup OpenCMISS_CMISS OpenCMISS::Iron::CMISS
+!> \defgroup OpenCMISS_Init OpenCMISS::OpenCMISSInit
 !> The top level cmiss module.
-MODULE Cmiss
+MODULE OpenCMISSInit
 
   USE ISO_C_BINDING
   
   USE BaseRoutines
-  USE CMISSMPI
-  USE CMISSPETSc
   USE Constants
   USE ContextRoutines
   USE ComputationAccessRoutines
   USE ISO_VARYING_STRING
   USE Kinds
-#ifndef NOMPIMOD
+#ifdef WITH_MPI  
+#ifdef WITH_F08_MPI
+  USE MPI_F08
+#elif WITH_F90_MPI
   USE MPI
 #endif
+  USE OpenCMISSMPI
+#endif
+#ifdef WITH_PETSC  
+  USE OpenCMISSPETSc
+#endif  
   USE Strings
   USE Types
 
@@ -74,69 +80,55 @@ MODULE Cmiss
 
   PRIVATE
 
-#ifdef NOMPIMOD
+#ifdef WITH_MPI  
+#ifdef WITH_F77_MPI
 #include "mpif.h"
 #endif
+#endif  
 
   !Module parameters
 
-  !> \addtogroup CMISS_Constants OpenCMISS::Iron::CMISS::Constants
-  !> \brief OpenCMISS CMISS constants
-  !>@{
-  
-  !> \addtogroup CMISS_Versions OpenCMISS::Iron::CMISS::Constants::Versions
-  !> \brief CMISS version parameters
-  !>@{
-  INTEGER(INTG), PARAMETER :: CMFE_MAJOR_VERSION = 0
-  INTEGER(INTG), PARAMETER :: CMFE_MINOR_VERSION = 4
-  INTEGER(INTG), PARAMETER :: CMFE_REVISION_VERSION = 0
-
-  CHARACTER(LEN=MAXSTRLEN), PARAMETER :: CMFE_BUILD_VERSION = "$Rev"
-
-  !> \addtogroup CMFE_ErrorHandlingModes OpenCMISS::Iron::CMISS::Constants::ErrorHandlingModes
+  !> \addtogroup OC_ErrorHandlingModes OpenCMISS::Constants::ErrorHandlingModes
   !> \brief Error handling mode parameters
   !> \see OpenCMISS
   !>@{
-  INTEGER(INTG), PARAMETER :: CMFE_RETURN_ERROR_CODE = 0 !<Just return the error code \see cmfe_ErrorHandlingModes,OpenCMISS
-  INTEGER(INTG), PARAMETER :: CMFE_OUTPUT_ERROR = 1 !<Output the error traceback and return the error code \see cmfe_ErrorHandlingModes,OpenCMISS
-  INTEGER(INTG), PARAMETER :: CMFE_TRAP_ERROR = 2 !<Trap the error by outputing the error traceback and stopping the program \see cmfe_ErrorHandlingModes,OpenCMISS
-  !>@}
+  INTEGER(INTG), PARAMETER :: OC_RETURN_ERROR_CODE = 0 !<Just return the error code \see OC_ErrorHandlingModes,OpenCMISS
+  INTEGER(INTG), PARAMETER :: OC_OUTPUT_ERROR = 1 !<Output the error traceback and return the error code \see OC_ErrorHandlingModes,OpenCMISS
+  INTEGER(INTG), PARAMETER :: OC_TRAP_ERROR = 2 !<Trap the error by outputing the error traceback and stopping the program \see OC_ErrorHandlingModes,OpenCMISS
   !>@}
   
   !Module types
 
   !Module variables
 
-  LOGICAL, SAVE :: cmfeFirstInit = .FALSE. !<cmfeFirstInit will be .TRUE. if cmfe has ever been initialised, .FALSE. if not.
+  LOGICAL, SAVE :: ocFirstInit = .FALSE. !<ocFirstInit will be .TRUE. if oc has ever been initialised, .FALSE. if not.
 
-  INTEGER(INTG), SAVE :: cmfe_ErrorHandlingMode !<The current error handling mode for OpenCMISS \see cmfe_ErrorHandlingModes
+  INTEGER(INTG), SAVE :: oc_ErrorHandlingMode !<The current error handling mode for OpenCMISS \see OC_ErrorHandlingModes
 
-  LOGICAL, SAVE :: cmissMPIInitialised=.FALSE. !<Is .TRUE. if OpenCMISS has initialised MPI
+  LOGICAL, SAVE :: openCMISSMPIInitialised=.FALSE. !<Is .TRUE. if OpenCMISS has initialised MPI
 
   !Interfaces
 
   INTERFACE
 
-    SUBROUTINE cmfe_InitFatalHandler() BIND(C,NAME="cmfe_InitFatalHandler")
-    END SUBROUTINE cmfe_InitFatalHandler
+    SUBROUTINE OC_InitFatalHandler() BIND(C,NAME="OC_InitFatalHandler")
+    END SUBROUTINE OC_InitFatalHandler
 
-    SUBROUTINE cmfe_ResetFatalHandler() BIND(C,NAME="cmfe_ResetFatalHandler")
-    END SUBROUTINE cmfe_ResetFatalHandler
+    SUBROUTINE OC_ResetFatalHandler() BIND(C,NAME="OC_ResetFatalHandler")
+    END SUBROUTINE OC_ResetFatalHandler
     
-    SUBROUTINE cmfe_SetFatalHandler() BIND(C,NAME="cmfe_SetFatalHandler")
-    END SUBROUTINE cmfe_SetFatalHandler
+    SUBROUTINE OC_SetFatalHandler() BIND(C,NAME="OC_SetFatalHandler")
+    END SUBROUTINE OC_SetFatalHandler
 
   END INTERFACE
 
-  PUBLIC CMFE_MAJOR_VERSION,CMFE_MINOR_VERSION,CMFE_REVISION_VERSION,CMFE_BUILD_VERSION
+  PUBLIC OC_RETURN_ERROR_CODE,OC_OUTPUT_ERROR,OC_TRAP_ERROR
 
-  PUBLIC CMFE_RETURN_ERROR_CODE,CMFE_OUTPUT_ERROR,CMFE_TRAP_ERROR
-
-  PUBLIC cmfe_ErrorHandlingModeGet_,cmfe_ErrorHandlingModeSet_
+  PUBLIC OC_ErrorHandlingModeGet_,OC_ErrorHandlingModeSet_
   
-  PUBLIC cmfe_HandleError
+  PUBLIC OC_HandleError
   
-  PUBLIC cmfe_Finalise_,cmfe_Initialise_
+  PUBLIC OC_Finalise_,OC_Initialise_
 
 CONTAINS
 
@@ -146,25 +138,25 @@ CONTAINS
 
 !!TODO Underscore to avoid name clash. Can be removed upon prefix rename.
 
-  !>Returns the error handling mode for OpenCMISS \see OpenCMISS::Iron::cmfe_ErrorHandlingModeGet
-  SUBROUTINE cmfe_ErrorHandlingModeGet_(errorHandlingMode,err,error,*)
+  !>Returns the error handling mode for OpenCMISS \see OpenCMISS::OC_ErrorHandlingModeGet
+  SUBROUTINE OC_ErrorHandlingModeGet_(errorHandlingMode,err,error,*)
   
     !Argument variables
-    INTEGER(INTG), INTENT(OUT) :: errorHandlingMode !<On return, the error handling mode. \see cmfe_ErrorHandlingModes,OpenCMISS
+    INTEGER(INTG), INTENT(OUT) :: errorHandlingMode !<On return, the error handling mode. \see OC_ErrorHandlingModes,OpenCMISS
     INTEGER(INTG), INTENT(INOUT) :: err !<The error string
     TYPE(VARYING_STRING), INTENT(INOUT) :: error !<The error code
     !Local Variables
 
-    ENTERS("cmfe_ErrorHandlingModeGet_",err,error,*999)
+    ENTERS("OC_ErrorHandlingModeGet_",err,error,*999)
 
-    errorHandlingMode=cmfe_ErrorHandlingMode
+    errorHandlingMode=OC_ErrorHandlingMode
     
-    EXITS("cmfe_ErrorHandlingModeGet_")
+    EXITS("OC_ErrorHandlingModeGet_")
     RETURN
-999 ERRORSEXITS("cmfe_ErrorHandlingModeGet_",err,error)
+999 ERRORSEXITS("OC_ErrorHandlingModeGet_",err,error)
     RETURN 1
     
-  END SUBROUTINE cmfe_ErrorHandlingModeGet_
+  END SUBROUTINE OC_ErrorHandlingModeGet_
 
   !
   !================================================================================================================================
@@ -172,37 +164,37 @@ CONTAINS
 
 !!TODO Underscore to avoid name clash. Can be removed upon prefix rename.
 
-  !>Sets the error handling mode for cmiss \see OpenCMISS::Iron::cmfe_ErrorHandlingModeSet
-  SUBROUTINE cmfe_ErrorHandlingModeSet_(errorHandlingMode,err,error,*)
+  !>Sets the error handling mode for cmiss \see OpenCMISS::OC_ErrorHandlingModeSet
+  SUBROUTINE OC_ErrorHandlingModeSet_(errorHandlingMode,err,error,*)
   
     !Argument variables
-    INTEGER(INTG), INTENT(IN) :: errorHandlingMode !<The error handling mode to set. \see cmfe_ErrorHandlingModes,OpenCMISS
+    INTEGER(INTG), INTENT(IN) :: errorHandlingMode !<The error handling mode to set. \see OC_ErrorHandlingModes,OpenCMISS
     INTEGER(INTG), INTENT(INOUT) :: err !<The error string
     TYPE(VARYING_STRING), INTENT(INOUT) :: error !<The error code
     !Local Variables
     TYPE(VARYING_STRING) :: localError
     
-    ENTERS("cmfe_ErrorHandlingModeSet_",err,error,*999)
+    ENTERS("OC_ErrorHandlingModeSet_",err,error,*999)
 
     SELECT CASE(errorHandlingMode)
-    CASE(CMFE_RETURN_ERROR_CODE)
-      cmfe_ErrorHandlingMode=CMFE_RETURN_ERROR_CODE
-    CASE(CMFE_OUTPUT_ERROR)
-      cmfe_ErrorHandlingMode=CMFE_OUTPUT_ERROR
-    CASE(CMFE_TRAP_ERROR)
-      cmfe_ErrorHandlingMode=CMFE_TRAP_ERROR
+    CASE(OC_RETURN_ERROR_CODE)
+      OC_ErrorHandlingMode=OC_RETURN_ERROR_CODE
+    CASE(OC_OUTPUT_ERROR)
+      OC_ErrorHandlingMode=OC_OUTPUT_ERROR
+    CASE(OC_TRAP_ERROR)
+      OC_ErrorHandlingMode=OC_TRAP_ERROR
     CASE DEFAULT
       localError="The supplied error handling mode of "//TRIM(NumberToVString(errorHandlingMode,"*",err,error))// &
         & " is invalid."
       CALL FlagError(localError,err,error,*999)
     END SELECT
 
-    EXITS("cmfe_ErrorHandlingModeSet_")
+    EXITS("OC_ErrorHandlingModeSet_")
     RETURN
-999 ERRORSEXITS("cmfe_ErrorHandlingModeSet_",err,error)
+999 ERRORSEXITS("OC_ErrorHandlingModeSet_",err,error)
     RETURN 1
     
-  END SUBROUTINE cmfe_ErrorHandlingModeSet_
+  END SUBROUTINE OC_ErrorHandlingModeSet_
 
   !
   !================================================================================================================================
@@ -210,8 +202,8 @@ CONTAINS
 
 !!TODO Underscore to avoid name clash. Can be removed upon prefix rename.
   
-  !>Finalises OpenCMISS. \see OpenCMISS::Iron::cmfe_Finalise
-  SUBROUTINE cmfe_Finalise_(err,error,*)
+  !>Finalises OpenCMISS. \see OpenCMISS::OC_Finalise
+  SUBROUTINE OC_Finalise_(err,error,*)
   
     !Argument variables
     INTEGER(INTG), INTENT(INOUT) :: err !<The error string
@@ -220,17 +212,20 @@ CONTAINS
     INTEGER(INTG) :: mpiIError
     LOGICAL :: mpiFinalised
 
-    IF(cmfeFirstInit) THEN
+    IF(ocFirstInit) THEN
       !Reset the signal handler
-      CALL cmfe_ResetFatalHandler()
+      CALL OC_ResetFatalHandler()
       !Finalise contexts
       CALL Contexts_Finalise(err,error,*999)
+#ifdef WITH_PETSC      
       !Finalise PETSc
       !Call this after MPI_COMM_FREE as PETSc routines are called when some MPI comm attributes are freed.
       !CALL Petsc_LogView(PETSC_COMM_WORLD,"OpenCMISSTest.petsc",err,error,*999)
       CALL Petsc_Finalise(err,error,*999)
+#endif
+#ifdef WITH_MPI      
       !Finalise MPI
-      IF(cmissMPIInitialised) THEN
+      IF(openCMISSMPIInitialised) THEN
         !Check if MPI has been finalised
         CALL MPI_FINALIZED(mpiFinalised,mpiIError)
         CALL MPI_ErrorCheck("MPI_FINALIZED",mpiIError,err,error,*999)
@@ -239,16 +234,17 @@ CONTAINS
           CALL MPI_ErrorCheck("MPI_FINALIZE",mpiIError,err,error,*999)
         ENDIF
       ENDIF
+#endif      
       !Finalise the base routines
       CALL BaseRoutines_Finalise(err,error,*999)
       !Reset first init
-      cmfeFirstInit=.FALSE.
+      ocFirstInit=.FALSE.
     ENDIF
      
     RETURN
 999 RETURN 1
     
-  END SUBROUTINE cmfe_Finalise_
+  END SUBROUTINE OC_Finalise_
 
   !
   !================================================================================================================================
@@ -256,10 +252,13 @@ CONTAINS
 
 !!TODO Underscore to avoid name clash. Can be removed upon prefix rename.
 
-  !>Initialises OpenCMISS. \see OpenCMISS::Iron::cmfe_Initialise
-  SUBROUTINE cmfe_Initialise_(err,error,*)
+  !>Initialises OpenCMISS. \see OpenCMISS::OC_Initialise
+  SUBROUTINE OC_Initialise_(majorVersion,minorVersion,patchVersion,err,error,*)
   
     !Argument variables
+    INTEGER(INTG), INTENT(IN) :: majorVersion !<OpenCMISS major version number
+    INTEGER(INTG), INTENT(IN) :: minorVersion !<OpenCMISS minor version number
+    INTEGER(INTG), INTENT(IN) :: patchVersion !<OpenCMISS patch version number
     INTEGER(INTG), INTENT(INOUT) :: err !<The error code
     TYPE(VARYING_STRING), INTENT(INOUT) :: error !<The error string
     !Local Variables
@@ -267,58 +266,59 @@ CONTAINS
     LOGICAL :: mpiInitialised    
     TYPE(VARYING_STRING) :: versionString
 
-    IF(.NOT.cmfeFirstInit) THEN
+    IF(.NOT.ocFirstInit) THEN
       !Initialise error mode
-      cmfe_ErrorHandlingMode = CMFE_OUTPUT_ERROR !Default for now, maybe make CMFE_RETURN_ERROR_CODE the default
+      OC_ErrorHandlingMode = OC_OUTPUT_ERROR !Default for now, maybe make OC_RETURN_ERROR_CODE the default
       !Initialise the base routines
       CALL BaseRoutines_Initialise(err,error,*999)
+#ifdef WITH_MPI      
       !Initialise MPI
-      cmissMPIInitialised=.FALSE.
+      openCMISSMPIInitialised=.FALSE.
       CALL MPI_INITIALIZED(mpiInitialised,mpiIError)
       CALL MPI_ErrorCheck("MPI_INITIALIZED",mpiIError,err,error,*999)
       IF(.NOT.mpiInitialised) THEN
         !Initialise the MPI environment
         CALL MPI_INIT(mpiIError)
         CALL MPI_ErrorCheck("MPI_INIT",mpiIError,err,error,*999)
-        cmissMPIInitialised=.TRUE.
+        openCMISSMPIInitialised=.TRUE.
       ENDIF
-      !Initialise contexts
-      CALL Contexts_Initialise(err,error,*999)
+#endif      
+#ifdef WITH_PETSC      
       !Initialise PETSc
       CALL Petsc_Initialise(PETSC_NULL_CHARACTER,err,error,*999)
+#endif      
+      !Initialise contexts
+      CALL Contexts_Initialise(err,error,*999)
       !Setup signal handling
-      CALL cmfe_InitFatalHandler()
-      CALL cmfe_SetFatalHandler()
+      CALL OC_InitFatalHandler()
+      CALL OC_SetFatalHandler()
 
       !Write out the OpenCMISS version???
       IF(.FALSE.) THEN
-        versionString="OpenCMISS version "//TRIM(NumberToVString(CMFE_MAJOR_VERSION,"*",err,error))
+        versionString="OpenCMISS version "//TRIM(NumberToVString(majorVersion,"*",err,error))
         versionString=versionString//"."
-        versionString=versionString//TRIM(NumberToVString(CMFE_MINOR_VERSION,"*",err,error))
+        versionString=versionString//TRIM(NumberToVString(minorVersion,"*",err,error))
         versionString=versionString//"."
-        versionString=versionString//TRIM(NumberToVString(CMFE_REVISION_VERSION,"*",err,error))
-        !versionString=versionString//" ("
-        !versionString=versionString//TRIM(CMFE_BUILD_VERSION(6:))
-        !versionString=versionString//" )"        
-        !WRITE(*,'(A)') CHAR(versionString)
+        versionString=versionString//TRIM(NumberToVString(patchVersion,"*",err,error))
+       !WRITE(*,'(A)') CHAR(versionString)
         versionString=""
       ENDIF
 
       !Set first initalised
-      cmfeFirstInit = .TRUE.
+      ocFirstInit = .TRUE.
     ENDIF
     
     RETURN
 999 RETURN 1
     
-  END SUBROUTINE cmfe_Initialise_
+  END SUBROUTINE OC_Initialise_
 
   !
   !================================================================================================================================
   !
 
   !>Handle an error condition
-  SUBROUTINE cmfe_HandleError(err,error)
+  SUBROUTINE OC_HandleError(err,error)
   
     !Argument variables
     INTEGER(INTG), INTENT(INOUT) :: err !<The error code
@@ -326,14 +326,16 @@ CONTAINS
     !Local Variables
     INTEGER(INTG) :: mpiError
     
-    SELECT CASE(cmfe_ErrorHandlingMode)
-    CASE(CMFE_RETURN_ERROR_CODE)
+    SELECT CASE(OC_ErrorHandlingMode)
+    CASE(OC_RETURN_ERROR_CODE)
       !Do nothing
-    CASE(CMFE_OUTPUT_ERROR)
+    CASE(OC_OUTPUT_ERROR)
       CALL WriteError(err,error,*999)
-    CASE(CMFE_TRAP_ERROR)
+    CASE(OC_TRAP_ERROR)
       CALL WriteError(err,error,*999)
+#ifdef WITH_MPI      
       CALL MPI_ABORT(MPI_COMM_WORLD,err,mpiError)
+#endif      
       STOP
     CASE DEFAULT
       !Do nothing
@@ -342,10 +344,10 @@ CONTAINS
     RETURN
 999 RETURN
 
-  END SUBROUTINE cmfe_HandleError
+  END SUBROUTINE OC_HandleError
   
   !
   !================================================================================================================================
   !
 
-END MODULE Cmiss
+END MODULE OpenCMISSInit

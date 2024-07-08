@@ -49,9 +49,12 @@
 PROGRAM LaplaceExample
 
   USE OpenCMISS
-  USE OpenCMISS_Iron
-#ifndef NOMPIMOD
+#ifdef WITH_MPI
+#ifdef WITH_F08_MPI
+  USE MPI_F08
+#elif WITH_F90_MPI 
   USE MPI
+#endif  
 #endif
 
 
@@ -61,61 +64,63 @@ PROGRAM LaplaceExample
 
   IMPLICIT NONE
 
-#ifdef NOMPIMOD
+#ifdef WITH_MPI  
+#ifdef WITH_F77_MPI
 #include "mpif.h"
 #endif
+#endif  
 
 
   !Test program parameters
 
-  REAL(CMISSRP), PARAMETER :: HEIGHT=1.0_CMISSRP
-  REAL(CMISSRP), PARAMETER :: WIDTH=1.0_CMISSRP
-  REAL(CMISSRP), PARAMETER :: LENGTH=1.0_CMISSRP
+  REAL(OCRP), PARAMETER :: HEIGHT=1.0_OCRP
+  REAL(OCRP), PARAMETER :: WIDTH=1.0_OCRP
+  REAL(OCRP), PARAMETER :: LENGTH=1.0_OCRP
 
-  INTEGER(CMISSIntg), PARAMETER :: ContextUserNumber=1
-  INTEGER(CMISSIntg), PARAMETER :: CoordinateSystemUserNumber=2
-  INTEGER(CMISSIntg), PARAMETER :: RegionUserNumber=3
-  INTEGER(CMISSIntg), PARAMETER :: BasisUserNumber=4
-  INTEGER(CMISSIntg), PARAMETER :: GeneratedMeshUserNumber=5
-  INTEGER(CMISSIntg), PARAMETER :: MeshUserNumber=6
-  INTEGER(CMISSIntg), PARAMETER :: DecompositionUserNumber=7
-  INTEGER(CMISSIntg), PARAMETER :: DecomposerUserNumber=8
-  INTEGER(CMISSIntg), PARAMETER :: GeometricFieldUserNumber=9
-  INTEGER(CMISSIntg), PARAMETER :: EquationsSetFieldUserNumber=10
-  INTEGER(CMISSIntg), PARAMETER :: DependentFieldUserNumber=11
-  INTEGER(CMISSIntg), PARAMETER :: EquationsSetUserNumber=12
-  INTEGER(CMISSIntg), PARAMETER :: ProblemUserNumber=13
+  INTEGER(OCIntg), PARAMETER :: ContextUserNumber=1
+  INTEGER(OCIntg), PARAMETER :: CoordinateSystemUserNumber=2
+  INTEGER(OCIntg), PARAMETER :: RegionUserNumber=3
+  INTEGER(OCIntg), PARAMETER :: BasisUserNumber=4
+  INTEGER(OCIntg), PARAMETER :: GeneratedMeshUserNumber=5
+  INTEGER(OCIntg), PARAMETER :: MeshUserNumber=6
+  INTEGER(OCIntg), PARAMETER :: DecompositionUserNumber=7
+  INTEGER(OCIntg), PARAMETER :: DecomposerUserNumber=8
+  INTEGER(OCIntg), PARAMETER :: GeometricFieldUserNumber=9
+  INTEGER(OCIntg), PARAMETER :: EquationsSetFieldUserNumber=10
+  INTEGER(OCIntg), PARAMETER :: DependentFieldUserNumber=11
+  INTEGER(OCIntg), PARAMETER :: EquationsSetUserNumber=12
+  INTEGER(OCIntg), PARAMETER :: ProblemUserNumber=13
  
   !Program types
   
   !Program variables
 
-  INTEGER(CMISSIntg) :: NUMBER_OF_ARGUMENTS,ARGUMENT_LENGTH,STATUS
-  INTEGER(CMISSIntg) :: NUMBER_GLOBAL_X_ELEMENTS,NUMBER_GLOBAL_Y_ELEMENTS,NUMBER_GLOBAL_Z_ELEMENTS, &
+  INTEGER(OCIntg) :: NUMBER_OF_ARGUMENTS,ARGUMENT_LENGTH,STATUS
+  INTEGER(OCIntg) :: NUMBER_GLOBAL_X_ELEMENTS,NUMBER_GLOBAL_Y_ELEMENTS,NUMBER_GLOBAL_Z_ELEMENTS, &
     & INTERPOLATION_TYPE,NUMBER_OF_GAUSS_XI
   CHARACTER(LEN=255) :: COMMAND_ARGUMENT,Filename
 
-  !CMISS variables
+  !OpenCMISS variables
 
-  TYPE(cmfe_BasisType) :: Basis
-  TYPE(cmfe_BoundaryConditionsType) :: BoundaryConditions
-  TYPE(cmfe_ComputationEnvironmentType) :: ComputationEnvironment
-  TYPE(cmfe_ContextType) :: context
-  TYPE(cmfe_CoordinateSystemType) :: CoordinateSystem
-  TYPE(cmfe_DecompositionType) :: Decomposition
-  TYPE(cmfe_DecomposerType) :: Decomposer
-  TYPE(cmfe_EquationsType) :: Equations
-  TYPE(cmfe_EquationsSetType) :: EquationsSet
-  TYPE(cmfe_FieldType) :: GeometricField,EquationsSetField,DependentField
-  TYPE(cmfe_FieldsType) :: Fields
-  TYPE(cmfe_GeneratedMeshType) :: GeneratedMesh  
-  TYPE(cmfe_MeshType) :: Mesh
-  TYPE(cmfe_NodesType) :: Nodes
-  TYPE(cmfe_ProblemType) :: Problem
-  TYPE(cmfe_RegionType) :: Region,WorldRegion
-  TYPE(cmfe_SolverType) :: Solver
-  TYPE(cmfe_SolverEquationsType) :: SolverEquations
-  TYPE(cmfe_WorkGroupType) :: worldWorkGroup
+  TYPE(OC_BasisType) :: Basis
+  TYPE(OC_BoundaryConditionsType) :: BoundaryConditions
+  TYPE(OC_ComputationEnvironmentType) :: ComputationEnvironment
+  TYPE(OC_ContextType) :: context
+  TYPE(OC_CoordinateSystemType) :: CoordinateSystem
+  TYPE(OC_DecompositionType) :: Decomposition
+  TYPE(OC_DecomposerType) :: Decomposer
+  TYPE(OC_EquationsType) :: Equations
+  TYPE(OC_EquationsSetType) :: EquationsSet
+  TYPE(OC_FieldType) :: GeometricField,EquationsSetField,DependentField
+  TYPE(OC_FieldsType) :: Fields
+  TYPE(OC_GeneratedMeshType) :: GeneratedMesh  
+  TYPE(OC_MeshType) :: Mesh
+  TYPE(OC_NodesType) :: Nodes
+  TYPE(OC_ProblemType) :: Problem
+  TYPE(OC_RegionType) :: Region,WorldRegion
+  TYPE(OC_SolverType) :: Solver
+  TYPE(OC_SolverEquationsType) :: SolverEquations
+  TYPE(OC_WorkGroupType) :: worldWorkGroup
 
 #ifdef WIN32
   !Quickwin type
@@ -123,13 +128,13 @@ PROGRAM LaplaceExample
   TYPE(WINDOWCONFIG) :: QUICKWIN_WINDOW_CONFIG
 #endif
   
-  !Generic CMISS variables
+  !Generic OpenOC variables
   
-  INTEGER(CMISSIntg) :: NumberOfComputationNodes,ComputationNodeNumber
-  INTEGER(CMISSIntg) :: decompositionIndex,EquationsSetIndex
-  INTEGER(CMISSIntg) :: FirstNodeNumber,LastNodeNumber
-  INTEGER(CMISSIntg) :: FirstNodeDomain,LastNodeDomain
-  INTEGER(CMISSIntg) :: Err
+  INTEGER(OCIntg) :: NumberOfComputationNodes,ComputationNodeNumber
+  INTEGER(OCIntg) :: decompositionIndex,EquationsSetIndex
+  INTEGER(OCIntg) :: FirstNodeNumber,LastNodeNumber
+  INTEGER(OCIntg) :: FirstNodeDomain,LastNodeDomain
+  INTEGER(OCIntg) :: Err
   
 #ifdef WIN32
   !Initialise QuickWin
@@ -169,67 +174,67 @@ PROGRAM LaplaceExample
     NUMBER_GLOBAL_Z_ELEMENTS=1
 !    INTERPOLATION_TYPE=1
     
-    INTERPOLATION_TYPE=CMFE_BASIS_LINEAR_LAGRANGE_INTERPOLATION
-!    INTERPOLATION_TYPE=CMFE_BASIS_QUADRATIC_LAGRANGE_INTERPOLATION
-!    INTERPOLATION_TYPE=CMFE_BASIS_CUBIC_LAGRANGE_INTERPOLATION    
+    INTERPOLATION_TYPE=OC_BASIS_LINEAR_LAGRANGE_INTERPOLATION
+!    INTERPOLATION_TYPE=OC_BASIS_QUADRATIC_LAGRANGE_INTERPOLATION
+!    INTERPOLATION_TYPE=OC_BASIS_CUBIC_LAGRANGE_INTERPOLATION    
     
   ENDIF
   
   !Intialise OpenCMISS
-  CALL cmfe_Initialise(Err)
-  CALL cmfe_ErrorHandlingModeSet(CMFE_ERRORS_TRAP_ERROR,Err)
-  CALL cmfe_DiagnosticsSetOn(CMFE_IN_DIAG_TYPE,[1,2,3,4,5],"Diagnostics",["DOMAIN_MAPPINGS_LOCAL_FROM_GLOBAL_CALCULATE"],Err)
+  CALL OC_Initialise(Err)
+  CALL OC_ErrorHandlingModeSet(OC_ERRORS_TRAP_ERROR,Err)
+  CALL OC_DiagnosticsSetOn(OC_IN_DIAG_TYPE,[1,2,3,4,5],"Diagnostics",["DOMAIN_MAPPINGS_LOCAL_FROM_GLOBAL_CALCULATE"],Err)
   WRITE(Filename,'(A,"_",I0,"x",I0,"x",I0,"_",I0)') "Laplace",NUMBER_GLOBAL_X_ELEMENTS,NUMBER_GLOBAL_Y_ELEMENTS, &
     & NUMBER_GLOBAL_Z_ELEMENTS,INTERPOLATION_TYPE  
-  CALL cmfe_OutputSetOn(Filename,Err)
+  CALL OC_OutputSetOn(Filename,Err)
   !Create a context
-  CALL cmfe_Context_Initialise(context,err)
-  CALL cmfe_Context_Create(ContextUserNumber,context,Err)
+  CALL OC_Context_Initialise(context,err)
+  CALL OC_Context_Create(ContextUserNumber,context,Err)
   
-  CALL cmfe_Region_Initialise(worldRegion,err)
-  CALL cmfe_Context_WorldRegionGet(context,worldRegion,err)
+  CALL OC_Region_Initialise(worldRegion,err)
+  CALL OC_Context_WorldRegionGet(context,worldRegion,err)
   
-  CALL cmfe_Context_RandomSeedsSet(context,9999,Err)
+  CALL OC_Context_RandomSeedsSet(context,9999,Err)
   
   !Get the computation nodes information
-  CALL cmfe_ComputationEnvironment_Initialise(ComputationEnvironment,Err)
-  CALL cmfe_Context_ComputationEnvironmentGet(context,computationEnvironment,err)
+  CALL OC_ComputationEnvironment_Initialise(ComputationEnvironment,Err)
+  CALL OC_Context_ComputationEnvironmentGet(context,computationEnvironment,err)
   
-  CALL cmfe_WorkGroup_Initialise(worldWorkGroup,err)
-  CALL cmfe_ComputationEnvironment_WorldWorkGroupGet(computationEnvironment,worldWorkGroup,err)
-  CALL cmfe_WorkGroup_NumberOfGroupNodesGet(worldWorkGroup,numberOfComputationNodes,err)
-  CALL cmfe_WorkGroup_GroupNodeNumberGet(worldWorkGroup,computationNodeNumber,err)
+  CALL OC_WorkGroup_Initialise(worldWorkGroup,err)
+  CALL OC_ComputationEnvironment_WorldWorkGroupGet(computationEnvironment,worldWorkGroup,err)
+  CALL OC_WorkGroup_NumberOfGroupNodesGet(worldWorkGroup,numberOfComputationNodes,err)
+  CALL OC_WorkGroup_GroupNodeNumberGet(worldWorkGroup,computationNodeNumber,err)
     
   !Start the creation of a new RC coordinate system
-  CALL cmfe_CoordinateSystem_Initialise(CoordinateSystem,Err)
-  CALL cmfe_CoordinateSystem_CreateStart(CoordinateSystemUserNumber,context,CoordinateSystem,Err)
+  CALL OC_CoordinateSystem_Initialise(CoordinateSystem,Err)
+  CALL OC_CoordinateSystem_CreateStart(CoordinateSystemUserNumber,context,CoordinateSystem,Err)
   IF(NUMBER_GLOBAL_Z_ELEMENTS==0) THEN
     !Set the coordinate system to be 2D
-    CALL cmfe_CoordinateSystem_DimensionSet(CoordinateSystem,2,Err)
+    CALL OC_CoordinateSystem_DimensionSet(CoordinateSystem,2,Err)
   ELSE
     !Set the coordinate system to be 3D
-    CALL cmfe_CoordinateSystem_DimensionSet(CoordinateSystem,3,Err)
+    CALL OC_CoordinateSystem_DimensionSet(CoordinateSystem,3,Err)
   ENDIF
   !Finish the creation of the coordinate system
-  CALL cmfe_CoordinateSystem_CreateFinish(CoordinateSystem,Err)
+  CALL OC_CoordinateSystem_CreateFinish(CoordinateSystem,Err)
 
   !Start the creation of the region
-  CALL cmfe_Region_Initialise(Region,Err)
-  CALL cmfe_Region_CreateStart(RegionUserNumber,WorldRegion,Region,Err)
-  CALL cmfe_Region_LabelSet(Region,"LaplaceRegion",Err)
+  CALL OC_Region_Initialise(Region,Err)
+  CALL OC_Region_CreateStart(RegionUserNumber,WorldRegion,Region,Err)
+  CALL OC_Region_LabelSet(Region,"LaplaceRegion",Err)
   !Set the regions coordinate system to the 2D RC coordinate system that we have created
-  CALL cmfe_Region_CoordinateSystemSet(Region,CoordinateSystem,Err)
+  CALL OC_Region_CoordinateSystemSet(Region,CoordinateSystem,Err)
   !Finish the creation of the region
-  CALL cmfe_Region_CreateFinish(Region,Err)
+  CALL OC_Region_CreateFinish(Region,Err)
 
   !Start the creation of a basis (default is trilinear lagrange)
-  CALL cmfe_Basis_Initialise(Basis,Err)
-  CALL cmfe_Basis_CreateStart(BasisUserNumber,context,Basis,Err)
+  CALL OC_Basis_Initialise(Basis,Err)
+  CALL OC_Basis_CreateStart(BasisUserNumber,context,Basis,Err)
   SELECT CASE(INTERPOLATION_TYPE)
   CASE(1,2,3,4)
-    CALL cmfe_Basis_TypeSet(Basis,CMFE_BASIS_LAGRANGE_HERMITE_TP_TYPE,Err)
+    CALL OC_Basis_TypeSet(Basis,OC_BASIS_LAGRANGE_HERMITE_TP_TYPE,Err)
   CASE(7,8,9)
-    CALL cmfe_Basis_TypeSet(Basis,CMFE_BASIS_SIMPLEX_TYPE,Err)
+    CALL OC_Basis_TypeSet(Basis,OC_BASIS_SIMPLEX_TYPE,Err)
   CASE DEFAULT
     CALL HandleError("Invalid interpolation type.")
   END SELECT
@@ -245,198 +250,197 @@ PROGRAM LaplaceExample
   END SELECT
   IF(NUMBER_GLOBAL_Z_ELEMENTS==0) THEN
     !Set the basis to be a bi-interpolation basis
-    CALL cmfe_Basis_NumberOfXiSet(Basis,2,Err)
-    CALL cmfe_Basis_InterpolationXiSet(Basis,[INTERPOLATION_TYPE,INTERPOLATION_TYPE],Err)
+    CALL OC_Basis_NumberOfXiSet(Basis,2,Err)
+    CALL OC_Basis_InterpolationXiSet(Basis,[INTERPOLATION_TYPE,INTERPOLATION_TYPE],Err)
     IF(NUMBER_OF_GAUSS_XI>0) THEN
-      CALL cmfe_Basis_QuadratureNumberOfGaussXiSet(Basis,[NUMBER_OF_GAUSS_XI,NUMBER_OF_GAUSS_XI],Err)
+      CALL OC_Basis_QuadratureNumberOfGaussXiSet(Basis,[NUMBER_OF_GAUSS_XI,NUMBER_OF_GAUSS_XI],Err)
     ENDIF
   ELSE
     !Set the basis to be a tri-interpolation basis
-    CALL cmfe_Basis_NumberOfXiSet(Basis,3,Err)
-    CALL cmfe_Basis_InterpolationXiSet(Basis,[INTERPOLATION_TYPE,INTERPOLATION_TYPE,INTERPOLATION_TYPE],Err)
+    CALL OC_Basis_NumberOfXiSet(Basis,3,Err)
+    CALL OC_Basis_InterpolationXiSet(Basis,[INTERPOLATION_TYPE,INTERPOLATION_TYPE,INTERPOLATION_TYPE],Err)
     IF(NUMBER_OF_GAUSS_XI>0) THEN
-      CALL cmfe_Basis_QuadratureNumberOfGaussXiSet(Basis,[NUMBER_OF_GAUSS_XI,NUMBER_OF_GAUSS_XI,NUMBER_OF_GAUSS_XI],Err)
+      CALL OC_Basis_QuadratureNumberOfGaussXiSet(Basis,[NUMBER_OF_GAUSS_XI,NUMBER_OF_GAUSS_XI,NUMBER_OF_GAUSS_XI],Err)
     ENDIF
   ENDIF
   !Finish the creation of the basis
-  CALL cmfe_Basis_CreateFinish(Basis,Err)
+  CALL OC_Basis_CreateFinish(Basis,Err)
    
   !Start the creation of a generated mesh in the region
-  CALL cmfe_GeneratedMesh_Initialise(GeneratedMesh,Err)
-  CALL cmfe_GeneratedMesh_CreateStart(GeneratedMeshUserNumber,Region,GeneratedMesh,Err)
+  CALL OC_GeneratedMesh_Initialise(GeneratedMesh,Err)
+  CALL OC_GeneratedMesh_CreateStart(GeneratedMeshUserNumber,Region,GeneratedMesh,Err)
   !Set up a regular x*y*z mesh
-  CALL cmfe_GeneratedMesh_TypeSet(GeneratedMesh,CMFE_GENERATED_MESH_REGULAR_MESH_TYPE,Err)
+  CALL OC_GeneratedMesh_TypeSet(GeneratedMesh,OC_GENERATED_MESH_REGULAR_MESH_TYPE,Err)
   !Set the default basis
-  CALL cmfe_GeneratedMesh_BasisSet(GeneratedMesh,Basis,Err)   
+  CALL OC_GeneratedMesh_BasisSet(GeneratedMesh,Basis,Err)   
   !Define the mesh on the region
   IF(NUMBER_GLOBAL_Z_ELEMENTS==0) THEN
-    CALL cmfe_GeneratedMesh_ExtentSet(GeneratedMesh,[WIDTH,HEIGHT],Err)
-    CALL cmfe_GeneratedMesh_NumberOfElementsSet(GeneratedMesh,[NUMBER_GLOBAL_X_ELEMENTS,NUMBER_GLOBAL_Y_ELEMENTS],Err)
+    CALL OC_GeneratedMesh_ExtentSet(GeneratedMesh,[WIDTH,HEIGHT],Err)
+    CALL OC_GeneratedMesh_NumberOfElementsSet(GeneratedMesh,[NUMBER_GLOBAL_X_ELEMENTS,NUMBER_GLOBAL_Y_ELEMENTS],Err)
   ELSE
-    CALL cmfe_GeneratedMesh_ExtentSet(GeneratedMesh,[WIDTH,HEIGHT,LENGTH],Err)
-    CALL cmfe_GeneratedMesh_NumberOfElementsSet(GeneratedMesh,[NUMBER_GLOBAL_X_ELEMENTS,NUMBER_GLOBAL_Y_ELEMENTS, &
+    CALL OC_GeneratedMesh_ExtentSet(GeneratedMesh,[WIDTH,HEIGHT,LENGTH],Err)
+    CALL OC_GeneratedMesh_NumberOfElementsSet(GeneratedMesh,[NUMBER_GLOBAL_X_ELEMENTS,NUMBER_GLOBAL_Y_ELEMENTS, &
       & NUMBER_GLOBAL_Z_ELEMENTS],Err)
   ENDIF    
   !Finish the creation of a generated mesh in the region
-  CALL cmfe_Mesh_Initialise(Mesh,Err)
-  CALL cmfe_GeneratedMesh_CreateFinish(GeneratedMesh,MeshUserNumber,Mesh,Err)
+  CALL OC_Mesh_Initialise(Mesh,Err)
+  CALL OC_GeneratedMesh_CreateFinish(GeneratedMesh,MeshUserNumber,Mesh,Err)
 
   !Create a decomposition
-  CALL cmfe_Decomposition_Initialise(Decomposition,Err)
-  CALL cmfe_Decomposition_CreateStart(DecompositionUserNumber,Mesh,Decomposition,Err)
+  CALL OC_Decomposition_Initialise(Decomposition,Err)
+  CALL OC_Decomposition_CreateStart(DecompositionUserNumber,Mesh,Decomposition,Err)
   !Finish the decomposition
-  CALL cmfe_Decomposition_CreateFinish(Decomposition,Err)
+  CALL OC_Decomposition_CreateFinish(Decomposition,Err)
  
   !Decompose
-  CALL cmfe_Decomposer_Initialise(decomposer,err)
-  CALL cmfe_Decomposer_CreateStart(decomposerUserNumber,region,worldWorkGroup,decomposer,err)
+  CALL OC_Decomposer_Initialise(decomposer,err)
+  CALL OC_Decomposer_CreateStart(decomposerUserNumber,region,worldWorkGroup,decomposer,err)
   !Add in the decomposition
-  CALL cmfe_Decomposer_DecompositionAdd(decomposer,decomposition,decompositionIndex,err)
+  CALL OC_Decomposer_DecompositionAdd(decomposer,decomposition,decompositionIndex,err)
   !Finish the decomposer
-  CALL cmfe_Decomposer_CreateFinish(decomposer,err)
+  CALL OC_Decomposer_CreateFinish(decomposer,err)
   
   !Destory the mesh now that we have decomposed it
-  !CALL cmfe_Mesh_Destroy(Mesh,Err)
+  !CALL OC_Mesh_Destroy(Mesh,Err)
  
   !Start to create a default (geometric) field on the region
-  CALL cmfe_Field_Initialise(GeometricField,Err)
-  CALL cmfe_Field_CreateStart(GeometricFieldUserNumber,Region,GeometricField,Err)
+  CALL OC_Field_Initialise(GeometricField,Err)
+  CALL OC_Field_CreateStart(GeometricFieldUserNumber,Region,GeometricField,Err)
   !Set the decomposition to use
-  CALL cmfe_Field_DecompositionSet(GeometricField,Decomposition,Err)
+  CALL OC_Field_DecompositionSet(GeometricField,Decomposition,Err)
   !Set the domain to be used by the field components.
-  CALL cmfe_Field_ComponentMeshComponentSet(GeometricField,CMFE_FIELD_U_VARIABLE_TYPE,1,1,Err)
-  CALL cmfe_Field_ComponentMeshComponentSet(GeometricField,CMFE_FIELD_U_VARIABLE_TYPE,2,1,Err)
+  CALL OC_Field_ComponentMeshComponentSet(GeometricField,OC_FIELD_U_VARIABLE_TYPE,1,1,Err)
+  CALL OC_Field_ComponentMeshComponentSet(GeometricField,OC_FIELD_U_VARIABLE_TYPE,2,1,Err)
   IF(NUMBER_GLOBAL_Z_ELEMENTS/=0) THEN
-    CALL cmfe_Field_ComponentMeshComponentSet(GeometricField,CMFE_FIELD_U_VARIABLE_TYPE,3,1,Err)
+    CALL OC_Field_ComponentMeshComponentSet(GeometricField,OC_FIELD_U_VARIABLE_TYPE,3,1,Err)
   ENDIF
   !Finish creating the field
-  CALL cmfe_Field_CreateFinish(GeometricField,Err)
+  CALL OC_Field_CreateFinish(GeometricField,Err)
 
   !Update the geometric field parameters
-  CALL cmfe_GeneratedMesh_GeometricParametersCalculate(GeneratedMesh,GeometricField,Err)
+  CALL OC_GeneratedMesh_GeometricParametersCalculate(GeneratedMesh,GeometricField,Err)
   
   !Create the Standard Laplace Equations set
-  CALL cmfe_EquationsSet_Initialise(EquationsSet,Err)
-  CALL cmfe_Field_Initialise(EquationsSetField,Err)
-  CALL cmfe_EquationsSet_CreateStart(EquationsSetUserNumber,Region,GeometricField,[CMFE_EQUATIONS_SET_CLASSICAL_FIELD_CLASS, &
-    & CMFE_EQUATIONS_SET_LAPLACE_EQUATION_TYPE,CMFE_EQUATIONS_SET_STANDARD_LAPLACE_SUBTYPE],EquationsSetFieldUserNumber, &
+  CALL OC_EquationsSet_Initialise(EquationsSet,Err)
+  CALL OC_Field_Initialise(EquationsSetField,Err)
+  CALL OC_EquationsSet_CreateStart(EquationsSetUserNumber,Region,GeometricField,[OC_EQUATIONS_SET_CLASSICAL_FIELD_CLASS, &
+    & OC_EQUATIONS_SET_LAPLACE_EQUATION_TYPE,OC_EQUATIONS_SET_STANDARD_LAPLACE_SUBTYPE],EquationsSetFieldUserNumber, &
     & EquationsSetField,EquationsSet,Err)
   !Finish creating the equations set
-  CALL cmfe_EquationsSet_CreateFinish(EquationsSet,Err)
+  CALL OC_EquationsSet_CreateFinish(EquationsSet,Err)
 
   !Create the equations set dependent field variables
-  CALL cmfe_Field_Initialise(DependentField,Err)
-  CALL cmfe_EquationsSet_DependentCreateStart(EquationsSet,DependentFieldUserNumber,DependentField,Err)
+  CALL OC_Field_Initialise(DependentField,Err)
+  CALL OC_EquationsSet_DependentCreateStart(EquationsSet,DependentFieldUserNumber,DependentField,Err)
   !Set the DOFs to be contiguous across components
-  CALL cmfe_Field_DOFOrderTypeSet(DependentField,CMFE_FIELD_U_VARIABLE_TYPE,CMFE_FIELD_SEPARATED_COMPONENT_DOF_ORDER,Err)
-  CALL cmfe_Field_DOFOrderTypeSet(DependentField,CMFE_FIELD_DELUDELN_VARIABLE_TYPE,CMFE_FIELD_SEPARATED_COMPONENT_DOF_ORDER,Err)
+  CALL OC_Field_DOFOrderTypeSet(DependentField,OC_FIELD_U_VARIABLE_TYPE,OC_FIELD_SEPARATED_COMPONENT_DOF_ORDER,Err)
+  CALL OC_Field_DOFOrderTypeSet(DependentField,OC_FIELD_DELUDELN_VARIABLE_TYPE,OC_FIELD_SEPARATED_COMPONENT_DOF_ORDER,Err)
   !Finish the equations set dependent field variables
-  CALL cmfe_EquationsSet_DependentCreateFinish(EquationsSet,Err)
+  CALL OC_EquationsSet_DependentCreateFinish(EquationsSet,Err)
 
   !Initialise the field with an initial guess
-  CALL cmfe_Field_ComponentValuesInitialise(DependentField,CMFE_FIELD_U_VARIABLE_TYPE,CMFE_FIELD_VALUES_SET_TYPE,1,0.5_CMISSRP, &
+  CALL OC_Field_ComponentValuesInitialise(DependentField,OC_FIELD_U_VARIABLE_TYPE,OC_FIELD_VALUES_SET_TYPE,1,0.5_OCRP, &
     & Err)
 
   !Create the equations set equations
-  CALL cmfe_Equations_Initialise(Equations,Err)
-  CALL cmfe_EquationsSet_EquationsCreateStart(EquationsSet,Equations,Err)
+  CALL OC_Equations_Initialise(Equations,Err)
+  CALL OC_EquationsSet_EquationsCreateStart(EquationsSet,Equations,Err)
   !Set the equations matrices sparsity type
-  CALL cmfe_Equations_SparsityTypeSet(Equations,CMFE_EQUATIONS_SPARSE_MATRICES,Err)
-  !CALL cmfe_Equations_SparsityTypeSet(Equations,CMFE_EQUATIONS_FULL_MATRICES,Err)
+  CALL OC_Equations_SparsityTypeSet(Equations,OC_EQUATIONS_SPARSE_MATRICES,Err)
+  !CALL OC_Equations_SparsityTypeSet(Equations,OC_EQUATIONS_FULL_MATRICES,Err)
   !Set the equations set output
-  CALL cmfe_Equations_OutputTypeSet(Equations,CMFE_EQUATIONS_NO_OUTPUT,Err)
-  !CALL cmfe_Equations_OutputTypeSet(Equations,CMFE_EQUATIONS_TIMING_OUTPUT,Err)
-  !CALL cmfe_Equations_OutputTypeSet(Equations,CMFE_EQUATIONS_MATRIX_OUTPUT,Err)
-  !CALL cmfe_Equations_OutputTypeSet(Equations,CMFE_EQUATIONS_ELEMENT_MATRIX_OUTPUT,Err)
+  CALL OC_Equations_OutputTypeSet(Equations,OC_EQUATIONS_NO_OUTPUT,Err)
+  !CALL OC_Equations_OutputTypeSet(Equations,OC_EQUATIONS_TIMING_OUTPUT,Err)
+  !CALL OC_Equations_OutputTypeSet(Equations,OC_EQUATIONS_MATRIX_OUTPUT,Err)
+  !CALL OC_Equations_OutputTypeSet(Equations,OC_EQUATIONS_ELEMENT_MATRIX_OUTPUT,Err)
   !Finish the equations set equations
-  CALL cmfe_EquationsSet_EquationsCreateFinish(EquationsSet,Err)
+  CALL OC_EquationsSet_EquationsCreateFinish(EquationsSet,Err)
   
   !Start the creation of a problem.
-  CALL cmfe_Problem_Initialise(Problem,Err)
-  CALL cmfe_Problem_CreateStart(ProblemUserNumber,context,[CMFE_PROBLEM_CLASSICAL_FIELD_CLASS,CMFE_PROBLEM_LAPLACE_EQUATION_TYPE, &
-    & CMFE_PROBLEM_STANDARD_LAPLACE_SUBTYPE],Problem,Err)
+  CALL OC_Problem_Initialise(Problem,Err)
+  CALL OC_Problem_CreateStart(ProblemUserNumber,context,[OC_PROBLEM_CLASSICAL_FIELD_CLASS,OC_PROBLEM_LAPLACE_EQUATION_TYPE, &
+    & OC_PROBLEM_STANDARD_LAPLACE_SUBTYPE],Problem,Err)
   !Finish the creation of a problem.
-  CALL cmfe_Problem_CreateFinish(Problem,Err)
+  CALL OC_Problem_CreateFinish(Problem,Err)
 
   !Start the creation of the problem control loop
-  CALL cmfe_Problem_ControlLoopCreateStart(Problem,Err)
+  CALL OC_Problem_ControlLoopCreateStart(Problem,Err)
   !Finish creating the problem control loop
-  CALL cmfe_Problem_ControlLoopCreateFinish(Problem,Err)
+  CALL OC_Problem_ControlLoopCreateFinish(Problem,Err)
  
   !Start the creation of the problem solvers
-  CALL cmfe_Solver_Initialise(Solver,Err)
-  CALL cmfe_Problem_SolversCreateStart(Problem,Err)
-  CALL cmfe_Problem_SolverGet(Problem,CMFE_CONTROL_LOOP_NODE,1,Solver,Err)
-  CALL cmfe_Solver_OutputTypeSet(Solver,CMFE_SOLVER_NO_OUTPUT,Err)
-  !CALL cmfe_Solver_OutputTypeSet(Solver,CMFE_SOLVER_PROGRESS_OUTPUT,Err)
-  !CALL cmfe_Solver_OutputTypeSet(Solver,CMFE_SOLVER_TIMING_OUTPUT,Err)
-  !CALL cmfe_Solver_OutputTypeSet(Solver,CMFE_SOLVER_SOLVER_OUTPUT,Err)
-  !CALL cmfe_Solver_OutputTypeSet(Solver,CMFE_SOLVER_MATRIX_OUTPUT,Err)
+  CALL OC_Solver_Initialise(Solver,Err)
+  CALL OC_Problem_SolversCreateStart(Problem,Err)
+  CALL OC_Problem_SolverGet(Problem,OC_CONTROL_LOOP_NODE,1,Solver,Err)
+  CALL OC_Solver_OutputTypeSet(Solver,OC_SOLVER_NO_OUTPUT,Err)
+  !CALL OC_Solver_OutputTypeSet(Solver,OC_SOLVER_PROGRESS_OUTPUT,Err)
+  !CALL OC_Solver_OutputTypeSet(Solver,OC_SOLVER_TIMING_OUTPUT,Err)
+  !CALL OC_Solver_OutputTypeSet(Solver,OC_SOLVER_SOLVER_OUTPUT,Err)
+  !CALL OC_Solver_OutputTypeSet(Solver,OC_SOLVER_MATRIX_OUTPUT,Err)
   
-!  CALL cmfe_Solver_LinearTypeSet(Solver,CMFE_SOLVER_LINEAR_ITERATIVE_SOLVE_TYPE,Err)
-!  CALL cmfe_Solver_LinearIterativeAbsoluteToleranceSet(Solver,1.0E-12_CMISSRP,Err)
-!  CALL cmfe_Solver_LinearIterativeRelativeToleranceSet(Solver,1.0E-12_CMISSRP,Err)
+  CALL OC_Solver_LinearTypeSet(Solver,OC_SOLVER_LINEAR_ITERATIVE_SOLVE_TYPE,Err)
+  CALL OC_Solver_LinearIterativeAbsoluteToleranceSet(Solver,1.0E-12_OCRP,Err)
+  CALL OC_Solver_LinearIterativeRelativeToleranceSet(Solver,1.0E-12_OCRP,Err)
 
-  CALL cmfe_Solver_LinearTypeSet(Solver,CMFE_SOLVER_LINEAR_DIRECT_SOLVE_TYPE,Err)
-  
-  !CALL cmfe_Solver_LinearTypeSet(Solver,CMFE_SOLVER_LINEAR_DIRECT_SOLVE_TYPE,Err)
-  !CALL cmfe_Solver_LibraryTypeSet(Solver,CMFE_SOLVER_MUMPS_LIBRARY,Err)
-  !CALL cmfe_Solver_LibraryTypeSet(Solver,CMFE_SOLVER_LAPACK_LIBRARY,Err)
-  !CALL cmfe_Solver_LibraryTypeSet(Solver,CMFE_SOLVER_SUPERLU_LIBRARY,Err)
-  !CALL cmfe_Solver_LibraryTypeSet(Solver,CMFE_SOLVER_PASTIX_LIBRARY,Err)
+  !CALL OC_Solver_LinearTypeSet(Solver,OC_SOLVER_LINEAR_DIRECT_SOLVE_TYPE,Err)  
+  !CALL OC_Solver_LinearTypeSet(Solver,OC_SOLVER_LINEAR_DIRECT_SOLVE_TYPE,Err)
+  !CALL OC_Solver_LibraryTypeSet(Solver,OC_SOLVER_MUMPS_LIBRARY,Err)
+  !CALL OC_Solver_LibraryTypeSet(Solver,OC_SOLVER_LAPACK_LIBRARY,Err)
+  !CALL OC_Solver_LibraryTypeSet(Solver,OC_SOLVER_SUPERLU_LIBRARY,Err)
+  !CALL OC_Solver_LibraryTypeSet(Solver,OC_SOLVER_PASTIX_LIBRARY,Err)
   !Finish the creation of the problem solver
-  CALL cmfe_Problem_SolversCreateFinish(Problem,Err)
+  CALL OC_Problem_SolversCreateFinish(Problem,Err)
 
   !Start the creation of the problem solver equations
-  CALL cmfe_Solver_Initialise(Solver,Err)
-  CALL cmfe_SolverEquations_Initialise(SolverEquations,Err)
-  CALL cmfe_Problem_SolverEquationsCreateStart(Problem,Err)
+  CALL OC_Solver_Initialise(Solver,Err)
+  CALL OC_SolverEquations_Initialise(SolverEquations,Err)
+  CALL OC_Problem_SolverEquationsCreateStart(Problem,Err)
   !Get the solve equations
-  CALL cmfe_Problem_SolverGet(Problem,CMFE_CONTROL_LOOP_NODE,1,Solver,Err)
-  CALL cmfe_Solver_SolverEquationsGet(Solver,SolverEquations,Err)
+  CALL OC_Problem_SolverGet(Problem,OC_CONTROL_LOOP_NODE,1,Solver,Err)
+  CALL OC_Solver_SolverEquationsGet(Solver,SolverEquations,Err)
   !Set the solver equations sparsity
-  CALL cmfe_SolverEquations_SparsityTypeSet(SolverEquations,CMFE_SOLVER_SPARSE_MATRICES,Err)
-  !CALL cmfe_SolverEquations_SparsityTypeSet(SolverEquations,CMFE_SOLVER_FULL_MATRICES,Err)  
+  CALL OC_SolverEquations_SparsityTypeSet(SolverEquations,OC_SOLVER_SPARSE_MATRICES,Err)
+  !CALL OC_SolverEquations_SparsityTypeSet(SolverEquations,OC_SOLVER_FULL_MATRICES,Err)  
   !Add in the equations set
-  CALL cmfe_SolverEquations_EquationsSetAdd(SolverEquations,EquationsSet,EquationsSetIndex,Err)
+  CALL OC_SolverEquations_EquationsSetAdd(SolverEquations,EquationsSet,EquationsSetIndex,Err)
   !Finish the creation of the problem solver equations
-  CALL cmfe_Problem_SolverEquationsCreateFinish(Problem,Err)
+  CALL OC_Problem_SolverEquationsCreateFinish(Problem,Err)
 
   !Start the creation of the equations set boundary conditions
-  CALL cmfe_BoundaryConditions_Initialise(BoundaryConditions,Err)
-  CALL cmfe_SolverEquations_BoundaryConditionsCreateStart(SolverEquations,BoundaryConditions,Err)
+  CALL OC_BoundaryConditions_Initialise(BoundaryConditions,Err)
+  CALL OC_SolverEquations_BoundaryConditionsCreateStart(SolverEquations,BoundaryConditions,Err)
   !Set the first node to 0.0 and the last node to 1.0
   FirstNodeNumber=1
-  CALL cmfe_Nodes_Initialise(Nodes,Err)
-  CALL cmfe_Region_NodesGet(Region,Nodes,Err)
-  CALL cmfe_Nodes_NumberOfNodesGet(Nodes,LastNodeNumber,Err)
-  CALL cmfe_Decomposition_NodeDomainGet(Decomposition,FirstNodeNumber,1,FirstNodeDomain,Err)
-  CALL cmfe_Decomposition_NodeDomainGet(Decomposition,LastNodeNumber,1,LastNodeDomain,Err)
+  CALL OC_Nodes_Initialise(Nodes,Err)
+  CALL OC_Region_NodesGet(Region,Nodes,Err)
+  CALL OC_Nodes_NumberOfNodesGet(Nodes,LastNodeNumber,Err)
+  CALL OC_Decomposition_NodeDomainGet(Decomposition,FirstNodeNumber,1,FirstNodeDomain,Err)
+  CALL OC_Decomposition_NodeDomainGet(Decomposition,LastNodeNumber,1,LastNodeDomain,Err)
   IF(FirstNodeDomain==ComputationNodeNumber) THEN
-    CALL cmfe_BoundaryConditions_SetNode(BoundaryConditions,DependentField,CMFE_FIELD_U_VARIABLE_TYPE,1,1,FirstNodeNumber,1, &
-      & CMFE_BOUNDARY_CONDITION_FIXED,0.0_CMISSRP,Err)
+    CALL OC_BoundaryConditions_SetNode(BoundaryConditions,DependentField,OC_FIELD_U_VARIABLE_TYPE,1,1,FirstNodeNumber,1, &
+      & OC_BOUNDARY_CONDITION_FIXED,0.0_OCRP,Err)
   ENDIF
   IF(LastNodeDomain==ComputationNodeNumber) THEN
-    CALL cmfe_BoundaryConditions_SetNode(BoundaryConditions,DependentField,CMFE_FIELD_U_VARIABLE_TYPE,1,1,LastNodeNumber,1, &
-      & CMFE_BOUNDARY_CONDITION_FIXED,1.0_CMISSRP,Err)
+    CALL OC_BoundaryConditions_SetNode(BoundaryConditions,DependentField,OC_FIELD_U_VARIABLE_TYPE,1,1,LastNodeNumber,1, &
+      & OC_BOUNDARY_CONDITION_FIXED,1.0_OCRP,Err)
   ENDIF
   !Finish the creation of the equations set boundary conditions
-  CALL cmfe_SolverEquations_BoundaryConditionsCreateFinish(SolverEquations,Err)
+  CALL OC_SolverEquations_BoundaryConditionsCreateFinish(SolverEquations,Err)
 
   !Solve the problem
-  CALL cmfe_Problem_Solve(Problem,Err)
+  CALL OC_Problem_Solve(Problem,Err)
 
   !Export results
-  CALL cmfe_Fields_Initialise(Fields,Err)
-  CALL cmfe_Fields_Create(Region,Fields,Err)
-  CALL cmfe_Fields_NodesExport(Fields,"Laplace","FORTRAN",Err)
-  CALL cmfe_Fields_ElementsExport(Fields,"Laplace","FORTRAN",Err)
-  CALL cmfe_Fields_Finalise(Fields,Err)
+  CALL OC_Fields_Initialise(Fields,Err)
+  CALL OC_Fields_Create(Region,Fields,Err)
+  CALL OC_Fields_NodesExport(Fields,"Laplace","FORTRAN",Err)
+  CALL OC_Fields_ElementsExport(Fields,"Laplace","FORTRAN",Err)
+  CALL OC_Fields_Finalise(Fields,Err)
   
   !Destroy the context
-  CALL cmfe_Context_Destroy(context,Err)
+  CALL OC_Context_Destroy(context,Err)
   !Finialise OpenCMISS
-  CALL cmfe_Finalise(Err)
+  CALL OC_Finalise(Err)
 
   WRITE(*,'(A)') "Program successfully completed."
   

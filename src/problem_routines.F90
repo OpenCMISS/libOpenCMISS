@@ -3724,10 +3724,10 @@ END MODULE ProblemRoutines
 SUBROUTINE Problem_SolverJacobianEvaluatePetsc(snes,x,A,B,ctx,err)
 
   USE BaseRoutines
-  USE CmissPetscTypes
   USE DistributedMatrixVector
   USE ISO_VARYING_STRING
   USE Kinds
+  USE OpenCMISSPETScTypes
   USE ProblemRoutines
   USE SolverRoutines
   USE SolverAccessRoutines
@@ -3816,11 +3816,11 @@ END SUBROUTINE Problem_SolverJacobianEvaluatePetsc
 SUBROUTINE Problem_SolverJacobianFDCalculatePetsc(snes,x,A,B,ctx,err)
 
   USE BaseRoutines
-  USE CmissPetsc
-  USE CmissPetscTypes
   USE DistributedMatrixVector
   USE ISO_VARYING_STRING
   USE Kinds
+  USE OpenCMISSPETSc
+  USE OpenCMISSPETScTypes
   USE ProblemRoutines
   USE SolverRoutines
   USE SolverAccessRoutines
@@ -3921,10 +3921,10 @@ END SUBROUTINE Problem_SolverJacobianFDCalculatePetsc
 SUBROUTINE Problem_SolverObjectiveEvaluatePetsc(tao,x,f,ctx,err)
 
   USE BaseRoutines
-  USE CmissPetscTypes
   USE DistributedMatrixVector
   USE ISO_VARYING_STRING
   USE Kinds
+  USE OpenCMISSPETScTypes
   USE ProblemRoutines
   USE SolverRoutines
   USE SolverAccessRoutines
@@ -3992,10 +3992,10 @@ END SUBROUTINE Problem_SolverObjectiveEvaluatePetsc
 SUBROUTINE Problem_SolverResidualEvaluatePetsc(snes,x,f,ctx,err)
 
   USE BaseRoutines
-  USE CmissPetscTypes
   USE DistributedMatrixVector
   USE ISO_VARYING_STRING
   USE Kinds
+  USE OpenCMISSPETScTypes
   USE ProblemRoutines
   USE SolverRoutines
   USE SolverAccessRoutines
@@ -4091,13 +4091,13 @@ END SUBROUTINE Problem_SolverResidualEvaluatePetsc
 SUBROUTINE Problem_SolverConvergenceTestPetsc(snes,iterationNumber,xnorm,gnorm,fnorm,reason,ctx,err)
 
   USE BaseRoutines
-  USE CmissPetsc
-  USE CmissPetscTypes
   USE Constants
   USE DistributedMatrixVector
   USE InputOutput
   USE ISO_VARYING_STRING
   USE Kinds
+  USE OpenCMISSPETSc
+  USE OpenCMISSPETScTypes
   USE ProblemRoutines
   USE SolverRoutines
   USE SolverAccessRoutines
@@ -4242,10 +4242,10 @@ END SUBROUTINE Problem_SolverConvergenceTestPetsc
 SUBROUTINE Problem_SolverDAECellMLRHSPetsc(ts,time,states,rates,ctx,err)
 
   USE BaseRoutines
-  USE CmissPetscTypes
-  USE CmissPetsc
   USE ISO_VARYING_STRING
   USE Kinds
+  USE OpenCMISSPETSc
+  USE OpenCMISSPETScTypes
   USE ProblemRoutines
   USE Types
 
@@ -4302,10 +4302,10 @@ END SUBROUTINE Problem_SolverDAECellMLRHSPetsc
 SUBROUTINE Problem_SolverNonlinearMonitorPETSC(snes,iterationNumber,residualNorm,context,err)
 
   USE BaseRoutines
-  USE CmissPetscTypes
   USE DistributedMatrixVector
   USE ISO_VARYING_STRING
   USE Kinds
+  USE OpenCMISSPETScTypes
   USE ProblemRoutines
   USE SolverAccessRoutines
   USE Strings
@@ -4342,9 +4342,9 @@ END SUBROUTINE Problem_SolverNonlinearMonitorPETSC
 SUBROUTINE Problem_SolverOptimiserMonitorPETSC(tao,context,err)
 
   USE BaseRoutines
-  USE CmissPetscTypes
   USE ISO_VARYING_STRING
   USE Kinds
+  USE OpenCMISSPETScTypes
   USE ProblemRoutines
   USE SolverAccessRoutines
   USE Types

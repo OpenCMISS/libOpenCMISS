@@ -52,7 +52,6 @@ MODULE FieldRoutines
   USE Constants
   USE CoordinateSystemRoutines
   USE CoordinateSystemAccessRoutines
-  USE CmissMPI
   USE DecompositionRoutines
   USE DecompositionAccessRoutines
   USE DistributedMatrixVector
@@ -65,8 +64,13 @@ MODULE FieldRoutines
   USE ISO_VARYING_STRING
   USE Lists
   USE Maths
-#ifndef NOMPIMOD
+#ifdef WITH_MPI  
+#ifdef WITH_F08_MPI
+  USE MPI_F08
+#elif WITH_F90_MPI 
   USE MPI
+#endif  
+  USE OpenCMISSMPI
 #endif
   USE Strings
   USE Types
@@ -75,9 +79,11 @@ MODULE FieldRoutines
 
   IMPLICIT NONE
 
-#ifdef NOMPIMOD
+#ifdef WITH_MPI  
+#ifdef WITH_F77_MPI
 #include "mpif.h"
 #endif
+#endif  
 
   PRIVATE
 
@@ -6933,8 +6939,16 @@ CONTAINS
       & variableLocalDOFIdx,domainIdx,domainNumber,constantDOFIdx,elementDOF,elementDOFIdx,nodeDOF,nodeDOFIdx,gridPointDOFIdx, &
       & gaussPointDOFIdx,versionIdx,dofIdx,numberOfGroupComputationNodes, &
       & myGroupComputationNodeNumber,domainTypeStop,startIdx,stopIdx,elementIdx,nodeIdx,numberOfLocal,numberOfGauss, &
-      & maxNumberOfGauss,mpiIError,numberOfGlobalDofs,gaussPointIdx,numberOfDataPointDOFs,dataPointDOFIdx,dataPointIdx, &
-      & localDataNumber,globalElementNumber,groupCommunicator,variableType,derivativeIdx
+      & maxNumberOfGauss,numberOfGlobalDofs,gaussPointIdx,numberOfDataPointDOFs,dataPointDOFIdx,dataPointIdx, &
+      & localDataNumber,globalElementNumber,variableType,derivativeIdx
+#ifdef WITH_MPI
+#ifdef WITH_F08_MPI
+    TYPE(MPI_Comm) :: groupCommunicator
+#else
+    INTEGER(INTG) :: groupCommunicator
+#endif    
+    INTEGER(INTG) :: mpiIError
+#endif    
     INTEGER(INTG), ALLOCATABLE :: variableLocalDOFSOffsets(:),variableGhostDOFSOffsets(:), &
       & localDataParamCount(:),ghostDataParamCount(:)
     TYPE(BasisType), POINTER :: basis
@@ -7028,8 +7042,15 @@ CONTAINS
             numberOfGauss=quadratureScheme%numberOfGauss
             maxNumberOfGauss=MAX(maxNumberOfGauss,numberOfGauss)
           ENDDO !elementIdx
+#ifdef WITH_MPI
+#ifdef WITH_F08_MPI
+          CALL MPI_Allreduce(MPI_IN_PLACE,maxNumberOfGauss,1,MPI_INTEGER,MPI_MAX,groupCommunicator,mpiIError)
+          CALL MPI_ErrorCheck("MPI_Allreduce",mpiIError,err,error,*999)
+#else          
           CALL MPI_ALLREDUCE(MPI_IN_PLACE,maxNumberOfGauss,1,MPI_INTEGER,MPI_MAX,groupCommunicator,mpiIError)
-          CALL MPI_ErrorCheck("MPI_ALLREDUCE",mpiIError,err,error,*999)             
+          CALL MPI_ErrorCheck("MPI_ALLREDUCE",mpiIError,err,error,*999)
+#endif          
+#endif          
           numberOfGaussPointDOFs=numberOfGaussPointDOFs+domainElements%totalNumberOfElements*maxNumberOfGauss
           numberOfLocalVariableDOFS=numberOfLocalVariableDOFS+domainElements%numberOfElements*maxNumberOfGauss
           totalNumberOfVariableDOFS=totalNumberOfVariableDOFS+domainElements%totalNumberOfElements*maxNumberOfGauss

@@ -1,6 +1,6 @@
 #!/usr/bin/env python
 """
-Update OpenCMISS Fortran code to use the new cmfe_ prefix.
+Update OpenCMISS Fortran code to use the new oc_ prefix.
 Also use an array to set the equation set and problem specifications.
 """
 

@@ -168,7 +168,7 @@ CONTAINS
   SUBROUTINE Interface_AssertIsFinished(interface,err,error,*)
 
     !Argument Variables
-    TYPE(InterfaceType), POINTER, INTENT(INOUT) :: interface !<The work group to assert the finished status for
+    TYPE(InterfaceType), POINTER, INTENT(IN) :: interface !<The work group to assert the finished status for
     INTEGER(INTG), INTENT(OUT) :: err !<The error code
     TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
     !Local Variables
@@ -347,7 +347,7 @@ CONTAINS
   SUBROUTINE Interface_DataPointsGet(interface,userNumber,dataPoints,err,error,*)
 
     !Argument variables
-    TYPE(InterfaceType), POINTER :: interface !<A pointer to the interface to get the data points for
+    TYPE(InterfaceType), INTENT(IN), POINTER :: INTERFACE !<A pointer to the interface to get the data points for
     INTEGER(INTG), INTENT(IN) :: userNumber !<The user number of the data points to get.
     TYPE(DataPointsType), POINTER :: dataPoints !<On exit, a pointer to the data points for the interface. Must not be associated on entry.
     INTEGER(INTG), INTENT(OUT) :: err !<The error code
@@ -1492,7 +1492,7 @@ CONTAINS
   SUBROUTINE InterfaceMeshConnectivity_InterfaceGet(interfaceMeshConnectivity,interface,err,error,*)
 
     !Argument Variables
-    TYPE(InterfaceMeshConnectivityType), POINTER, INTENT(INOUT) :: interfaceMeshConnectivity !<The interface mesh connectivity to get the interface for
+    TYPE(InterfaceMeshConnectivityType), POINTER, INTENT(IN) :: interfaceMeshConnectivity !<The interface mesh connectivity to get the interface for
     TYPE(InterfaceType), POINTER, INTENT(OUT) :: INTERFACE !<On return, the interface for the interface mesh connectivity. Must not be associated on entry.
     INTEGER(INTG), INTENT(OUT) :: err !<The error code
     TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
@@ -1969,7 +1969,7 @@ CONTAINS
     & pointConnectivity,err,error,*)
 
     !Argument Variables
-    TYPE(InterfacePointsConnectivityType), POINTER, INTENT(INOUT) :: interfacePointsConnectivity !<The interface points connectivity to get the point connectivity for
+    TYPE(InterfacePointsConnectivityType), POINTER, INTENT(IN) :: interfacePointsConnectivity !<The interface points connectivity to get the point connectivity for
     INTEGER(INTG), INTENT(IN) :: dataPointIdx !<The data point index to get the coupled point connectivity for.
     INTEGER(INTG), INTENT(IN) :: coupledMeshIdx !<The coupled mesh index to get the coupled point connectivity for.
     TYPE(InterfacePointConnectivityType), POINTER :: pointConnectivity !<On return, the point connectivity for the interface points connectivity. Must not be associated on entry
@@ -2044,7 +2044,7 @@ CONTAINS
   SUBROUTINE InterfacePointsConnectivity_DataPointsGet(interfacePointsConnectivity,dataPoints,err,error,*)
 
     !Argument Variables
-    TYPE(InterfacePointsConnectivityType), POINTER, INTENT(INOUT) :: interfacePointsConnectivity !<The interface points connectivity to get the data points for
+    TYPE(InterfacePointsConnectivityType), POINTER, INTENT(IN) :: interfacePointsConnectivity !<The interface points connectivity to get the data points for
     TYPE(DataPointsType), POINTER, INTENT(OUT) :: dataPoints !<On return, the data points for the interface points connectivity. Must not be associated on entry.
     INTEGER(INTG), INTENT(OUT) :: err !<The error code
     TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
@@ -2081,7 +2081,7 @@ CONTAINS
   SUBROUTINE InterfacePointsConnectivity_InterfaceGet(interfacePointsConnectivity,interface,err,error,*)
 
     !Argument Variables
-    TYPE(InterfacePointsConnectivityType), POINTER, INTENT(INOUT) :: interfacePointsConnectivity !<The interface points connectivity to get the interface for
+    TYPE(InterfacePointsConnectivityType), POINTER, INTENT(IN) :: interfacePointsConnectivity !<The interface points connectivity to get the interface for
     TYPE(InterfaceType), POINTER, INTENT(OUT) :: INTERFACE !<On return, the interface for the interface points connectivity. Must not be associated on entry.
     INTEGER(INTG), INTENT(OUT) :: err !<The error code
     TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string

@@ -48,7 +48,6 @@ MODULE RegionRoutines
   USE ContextAccessRoutines
   USE CoordinateSystemRoutines
   USE CoordinateSystemAccessRoutines
-  USE CmissCellML
   USE DataPointRoutines
   USE DecompositionRoutines
   USE EquationsSetRoutines
@@ -60,6 +59,7 @@ MODULE RegionRoutines
   USE KINDS
   USE MeshRoutines
   USE NodeRoutines
+  USE OpenCMISSCellML
   USE RegionAccessRoutines
   USE STRINGS
   USE TYPES

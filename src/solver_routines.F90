@@ -50,10 +50,7 @@ MODULE SolverRoutines
 #ifdef WITH_CELLML
   USE CELLML_MODEL_DEFINITION
 #endif
-  USE CmissCellML
   USE CellMLAccessRoutines
-  USE CmissPetsc
-  USE CmissPetscTypes
   USE ComputationRoutines
   USE ComputationAccessRoutines
   USE Constants
@@ -76,6 +73,14 @@ MODULE SolverRoutines
   USE interfaceMatricesAccessRoutines
   USE ISO_VARYING_STRING
   USE Maths
+#ifdef WITH_F08_MPI
+  USE MPI_F08
+#endif  
+  USE OpenCMISSCellML
+#ifdef WITH_PETSC  
+  USE OpenCMISSPETSc
+  USE OpenCMISSPETScTypes
+#endif  
   USE ProblemAccessRoutines
   USE ProfilingRoutines
   USE SolverAccessRoutines
@@ -2965,9 +2970,10 @@ CONTAINS
               CALL PETSc_TSSetSolution(ts,petscCurrentStates,err,error,*999)
               
               !set up the time data
-              CALL PETSc_TSSetInitialTimeStep(ts,startTime,timeIncrement,err,error,*999)
-              CALL PETSc_TSSetDuration(ts,5000,endTime,err,error,*999)
-              CALL PETSc_TSSetExactFinalTime(ts,.TRUE.,err,error,*999)
+              CALL PETSc_TSSetTime(ts,startTime,err,error,*999)
+              CALL PETSc_TSSetTimeStep(ts,timeIncrement,err,error,*999)
+              CALL PETSc_TSSetMaxTime(ts,endTime,err,error,*999)
+              CALL PETSc_TSSetExactFinalTime(ts,PETSC_TS_EXACTFINALTIME_MATCHSTEP,err,error,*999)
               
               IF(diagnostics1) THEN
                 CALL WriteStringValue(DIAGNOSTIC_OUTPUT_TYPE,"  DAE start time = ",startTime,err,error,*999)
@@ -2978,7 +2984,7 @@ CONTAINS
               CALL Solver_DAECellMLPETScContextSet(ctx,bdfSolver%DAESolver%solver,cellML,dofIdx,err,error,*999)
               CALL PETSc_TSSetRHSFunction(ts,petscRates,Problem_SolverDAECellMLRHSPetsc,ctx,err,error,*999)
                       
-              CALL PETSc_TSSolve(ts,petscCurrentStates,finalSolvedTime,err,error,*999)
+              CALL PETSc_TSSolve(ts,petscCurrentStates,err,error,*999)
               
               IF(diagnostics1) &
                 & CALL WriteStringValue(DIAGNOSTIC_OUTPUT_TYPE,"  Final solved time = ",finalSolvedTime,err,error,*999)
@@ -7564,7 +7570,12 @@ CONTAINS
     INTEGER(INTG), INTENT(OUT) :: err !<The error code
     TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
     !Local Variables
-    INTEGER(INTG) :: groupCommunicator,numberOfMatrices,sparsityType,symmetryType
+    INTEGER(INTG) :: numberOfMatrices,sparsityType,symmetryType
+#ifdef WITH_F08_MPI
+    TYPE(MPI_Comm) :: groupCommunicator
+#else
+    INTEGER(INTG) :: groupCommunicator
+#endif    
     TYPE(LinearSolverType), POINTER :: linearSolver
     TYPE(DistributedMatrixType), POINTER :: distributedMatrix
     TYPE(DistributedMatrixPETScType), POINTER :: petscMatrix
@@ -7651,8 +7662,11 @@ CONTAINS
         !Nothing else to do
       CASE(SOLVER_MUMPS_LIBRARY,SOLVER_SUPERLU_LIBRARY,SOLVER_PASTIX_LIBRARY,SOLVER_LAPACK_LIBRARY)
         !Set up solver through PETSc
+#ifdef WITH_F08_MPI
+        CALL PETSc_KSPCreate(groupCommunicator%MPI_VAL,directSolver%ksp,err,error,*999)
+#else        
         CALL PETSc_KSPCreate(groupCommunicator,directSolver%ksp,err,error,*999)
-        
+#endif        
         !Set any further KSP options from the command line options
         CALL PETSc_KSPSetFromOptions(directSolver%ksp,err,error,*999)
         !Set the solver matrix to be the KSP matrix
@@ -7680,24 +7694,25 @@ CONTAINS
           CALL FlagError(localError,err,error,*999)
         END SELECT
         !Set the KSP type to preonly
-        CALL PETSc_KSPSetType(directSolver%ksp,PETSC_KSPPREONLY,err,error,*999)
+        CALL PETSc_KSPSetType(directSolver%ksp,PETSC_KSP_PREONLY,err,error,*999)
         !Get the pre-conditioner
         CALL PETSc_KSPGetPC(directSolver%ksp,directSolver%pc,err,error,*999)
         !Set the PC type to LU
-        CALL PETSc_PCSetType(directSolver%pc,PETSC_PCLU,err,error,*999)
+        CALL PETSc_PCSetType(directSolver%pc,PETSC_PC_LU,err,error,*999)
         SELECT CASE(directSolver%solverLibrary)
         CASE(SOLVER_MUMPS_LIBRARY)
           !Set the PC factorisation package to MUMPS
-          CALL PETSc_PCFactorSetMatSolverPackage(directSolver%pc,PETSC_MAT_SOLVER_MUMPS,err,error,*999)
+          CALL PETSc_PCFactorSetMatSolverType(directSolver%pc,PETSC_MAT_SOLVER_MUMPS,err,error,*999)
         CASE(SOLVER_SUPERLU_LIBRARY)
           !Set the PC factorisation package to SuperLU_DIST
-          CALL PETSc_PCFactorSetMatSolverPackage(directSolver%pc,PETSC_MAT_SOLVER_SUPERLU_DIST,err,error,*999)
+          CALL PETSc_PCFactorSetMatSolverType(directSolver%pc,PETSC_MAT_SOLVER_SUPERLU_DIST,err,error,*999)
         CASE(SOLVER_LAPACK_LIBRARY)
           CALL FlagError("LAPACK not available in this version of PETSc.",err,error,*999)
         CASE(SOLVER_PASTIX_LIBRARY)
           !Set the PC factorisation package to PaStiX
-          CALL PETSc_PCFactorSetMatSolverPackage(directSolver%pc,PETSC_MAT_SOLVER_PASTIX,err,error,*999)
+          CALL PETSc_PCFactorSetMatSolverType(directSolver%pc,PETSC_MAT_SOLVER_PASTIX,err,error,*999)
         END SELECT
+        CALL PETSc_PCFactorSetUpMatSolverType(directSolver%pc,err,error,*999)
       CASE(SOLVER_SPOOLES_LIBRARY)
         CALL FlagError("Not implemented.",err,error,*999)
       CASE(SOLVER_UMFPACK_LIBRARY)
@@ -8013,7 +8028,6 @@ CONTAINS
         NULLIFY(petscMatrix)
         CALL DistributedMatrix_PETScMatrixGet(distributedMatrix,petscMatrix,err,error,*999)
         !Call MatGetFactor to create matrix petscFactoredMatrix from preconditioner context
-        CALL PETSc_PCFactorSetUpMatSolverPackage(directSolver%pc,err,error,*999)
         CALL PETSc_PCFactorGetMatrix(directSolver%pc,petscFactoredMatrix,err,error,*999)
         !Set ICNTL(icntl)=ivalue
         CALL PETSc_MatMumpsSetIcntl(petscFactoredMatrix,icntl,ivalue,err,error,*999)
@@ -8106,7 +8120,6 @@ CONTAINS
         NULLIFY(petscMatrix)
         CALL DistributedMatrix_PETScMatrixGet(distributedMatrix,petscMatrix,err,error,*999)
         !Call MatGetFactor to create matrix petscFactoredMatrix from preconditioner context
-        CALL PETSc_PCFactorSetUpMatSolverPackage(directSolver%pc,err,error,*999)
         CALL PETSc_PCFactorGetMatrix(directSolver%pc,petscFactoredMatrix,err,error,*999)
         !Set CNTL(icntl)=val
         CALL PETSc_MatMumpsSetCntl(petscFactoredMatrix,icntl,val,err,error,*999)
@@ -8536,7 +8549,12 @@ CONTAINS
     INTEGER(INTG), INTENT(OUT) :: err !<The error code
     TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
     !Local Variables
-    INTEGER(INTG) :: groupCommunicator,sparsityType,symmetryType
+    INTEGER(INTG) :: sparsityType,symmetryType
+#ifdef WITH_F08_MPI
+    TYPE(MPI_Comm) :: groupCommunicator
+#else
+    INTEGER(INTG) :: groupCommunicator
+#endif    
     TYPE(DistributedMatrixType), POINTER :: distributedMatrix
     TYPE(DistributedMatrixPETScType), POINTER :: petscMatrix
     TYPE(LinearSolverType), POINTER :: linearSolver
@@ -8650,25 +8668,29 @@ CONTAINS
           END SELECT
         ENDIF
       ELSE
+#ifdef WITH_F08_MPI
+        CALL PETSc_KSPCreate(groupCommunicator%MPI_VAL,iterativeSolver%ksp,err,error,*999)
+#else        
         CALL PETSc_KSPCreate(groupCommunicator,iterativeSolver%ksp,err,error,*999)
+#endif        
       ENDIF
       !Set the iterative solver type
       SELECT CASE(iterativeSolver%iterativeSolverType)
       CASE(SOLVER_ITERATIVE_RICHARDSON)
-        CALL PETSc_KSPSetType(iterativeSolver%ksp,PETSC_KSPRICHARDSON,err,error,*999)
+        CALL PETSc_KSPSetType(iterativeSolver%ksp,PETSC_KSP_RICHARDSON,err,error,*999)
       CASE(SOLVER_ITERATIVE_CHEBYSHEV)
-        CALL PETSc_KSPSetType(iterativeSolver%ksp,PETSC_KSPCHEBYSHEV,err,error,*999)
+        CALL PETSc_KSPSetType(iterativeSolver%ksp,PETSC_KSP_CHEBYSHEV,err,error,*999)
       CASE(SOLVER_ITERATIVE_CONJUGATE_GRADIENT)
-        CALL PETSc_KSPSetType(iterativeSolver%ksp,PETSC_KSPCG,err,error,*999)
+        CALL PETSc_KSPSetType(iterativeSolver%ksp,PETSC_KSP_CG,err,error,*999)
       CASE(SOLVER_ITERATIVE_BICONJUGATE_GRADIENT)
-        CALL PETSc_KSPSetType(iterativeSolver%ksp,PETSC_KSPBICG,err,error,*999)
+        CALL PETSc_KSPSetType(iterativeSolver%ksp,PETSC_KSP_BICG,err,error,*999)
       CASE(SOLVER_ITERATIVE_GMRES)
-        CALL PETSc_KSPSetType(iterativeSolver%ksp,PETSC_KSPGMRES,err,error,*999)
+        CALL PETSc_KSPSetType(iterativeSolver%ksp,PETSC_KSP_GMRES,err,error,*999)
         CALL PETSc_KSPGMRESSetRestart(iterativeSolver%ksp,iterativeSolver%gmresRestart,err,error,*999)
       CASE(SOLVER_ITERATIVE_BiCGSTAB)
-        CALL PETSc_KSPSetType(iterativeSolver%ksp,PETSC_KSPBCGS,err,error,*999)
+        CALL PETSc_KSPSetType(iterativeSolver%ksp,PETSC_KSP_BCGS,err,error,*999)
       CASE(SOLVER_ITERATIVE_CONJGRAD_SQUARED)
-        CALL PETSc_KSPSetType(iterativeSolver%ksp,PETSC_KSPCGS,err,error,*999)
+        CALL PETSc_KSPSetType(iterativeSolver%ksp,PETSC_KSP_CGS,err,error,*999)
       CASE DEFAULT
         localError="The iterative solver type of "// &
           & TRIM(NumberToVString(iterativeSolver%iterativeSolverType,"*",err,error))//" is invalid."
@@ -8679,19 +8701,19 @@ CONTAINS
       !Set the pre-conditioner type
       SELECT CASE(iterativeSolver%iterativePreconditionerType)
       CASE(SOLVER_ITERATIVE_NO_PRECONDITIONER)
-        CALL PETSc_PCSetType(iterativeSolver%pc,PETSC_PCNONE,err,error,*999)
+        CALL PETSc_PCSetType(iterativeSolver%pc,PETSC_PC_NONE,err,error,*999)
       CASE(SOLVER_ITERATIVE_JACOBI_PRECONDITIONER)
-        CALL PETSc_PCSetType(iterativeSolver%pc,PETSC_PCJACOBI,err,error,*999)
+        CALL PETSc_PCSetType(iterativeSolver%pc,PETSC_PC_JACOBI,err,error,*999)
       CASE(SOLVER_ITERATIVE_BLOCK_JACOBI_PRECONDITIONER)
-        CALL PETSc_PCSetType(iterativeSolver%pc,PETSC_PCBJACOBI,err,error,*999)
+        CALL PETSc_PCSetType(iterativeSolver%pc,PETSC_PC_BJACOBI,err,error,*999)
       CASE(SOLVER_ITERATIVE_SOR_PRECONDITIONER)
-        CALL PETSc_PCSetType(iterativeSolver%pc,PETSC_PCSOR,err,error,*999)
+        CALL PETSc_PCSetType(iterativeSolver%pc,PETSC_PC_SOR,err,error,*999)
       CASE(SOLVER_ITERATIVE_INCOMPLETE_CHOLESKY_PRECONDITIONER)
-        CALL PETSc_PCSetType(iterativeSolver%pc,PETSC_PCICC,err,error,*999)
+        CALL PETSc_PCSetType(iterativeSolver%pc,PETSC_PC_ICC,err,error,*999)
       CASE(SOLVER_ITERATIVE_INCOMPLETE_LU_PRECONDITIONER)
-        CALL PETSc_PCSetType(iterativeSolver%pc,PETSC_PCILU,err,error,*999)
+        CALL PETSc_PCSetType(iterativeSolver%pc,PETSC_PC_ILU,err,error,*999)
       CASE(SOLVER_ITERATIVE_ADDITIVE_SCHWARZ_PRECONDITIONER)
-        CALL PETSc_PCSetType(iterativeSolver%pc,PETSC_PCASM,err,error,*999)
+        CALL PETSc_PCSetType(iterativeSolver%pc,PETSC_PC_ASM,err,error,*999)
       CASE DEFAULT
         localError="The iterative preconditioner type of "// &
           & TRIM(NumberToVString(iterativeSolver%iterativePreconditionerType,"*",err,error))//" is invalid."
@@ -9322,16 +9344,12 @@ CONTAINS
             CALL WriteString(GENERAL_OUTPUT_TYPE,"Converged Reason = PETSc converged ATol",err,error,*999)
           CASE(PETSC_KSP_CONVERGED_ITS)
             CALL WriteString(GENERAL_OUTPUT_TYPE,"Converged Reason = PETSc converged its",err,error,*999)
-          CASE(PETSC_KSP_CONVERGED_CG_NEG_CURVE)
-            CALL WriteString(GENERAL_OUTPUT_TYPE,"Converged Reason = PETSc converged CG neg curve",err,error,*999)
-          CASE(PETSC_KSP_CONVERGED_CG_CONSTRAINED)
-            CALL WriteString(GENERAL_OUTPUT_TYPE,"Converged Reason = PETSc converged CG constrained",err,error,*999)
+          CASE(PETSC_KSP_CONVERGED_NEG_CURVE)
+            CALL WriteString(GENERAL_OUTPUT_TYPE,"Converged Reason = PETSc converged neg curve",err,error,*999)
           CASE(PETSC_KSP_CONVERGED_STEP_LENGTH)
             CALL WriteString(GENERAL_OUTPUT_TYPE,"Converged Reason = PETSc converged step length",err,error,*999)
           CASE(PETSC_KSP_CONVERGED_HAPPY_BREAKDOWN)
             CALL WriteString(GENERAL_OUTPUT_TYPE,"Converged Reason = PETSc converged happy breakdown",err,error,*999)
-          CASE(PETSC_KSP_CONVERGED_ITERATING)
-            CALL WriteString(GENERAL_OUTPUT_TYPE,"Converged Reason = PETSc converged iterating",err,error,*999)
           END SELECT
         ENDIF
       CASE DEFAULT
@@ -12674,14 +12692,20 @@ CONTAINS
     INTEGER(INTG), INTENT(OUT) :: err !<The error code
     TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
     !Local Variables
-    INTEGER(INTG) :: equationsMatrixIdx,equationsSetIdx,interfaceConditionIdx,interfaceMatrixIdx,groupCommunicator, &
-      & numberOfEquationsSets,numberOfInterfaceConditions,numberOfInterfaceMatrices,numberOfLinearMatrices,sparsityType, &
-      & symmetryType
+    INTEGER(INTG) :: equationsMatrixIdx,equationsSetIdx,interfaceConditionIdx,interfaceMatrixIdx,numberOfEquationsSets, &
+      & numberOfInterfaceConditions,numberOfInterfaceMatrices,numberOfLinearMatrices,sparsityType,symmetryType
+#ifdef WITH_F08_MPI 
+    TYPE(MPI_Comm) :: groupCommunicator
+#else
+    INTEGER(INTG) :: groupCommunicator
+#endif
+#ifdef WITH_PETSC    
     EXTERNAL :: Problem_SolverJacobianEvaluatePetsc
     EXTERNAL :: Problem_SolverJacobianFDCalculatePetsc
     EXTERNAL :: Problem_SolverResidualEvaluatePetsc
     EXTERNAL :: Problem_SolverConvergenceTestPetsc
     EXTERNAL :: Problem_SolverNonlinearMonitorPETSC
+#endif
     TYPE(DistributedMatrixType), POINTER :: jacobianMatrix
     TYPE(DistributedMatrixPETScType), POINTER :: jacobianPETScMatrix
     TYPE(DistributedVectorType), POINTER :: matrixTempVector,residualVector
@@ -12817,10 +12841,15 @@ CONTAINS
           ENDIF
         ENDDO !interfaceMatrixIdx
       ENDDO !interfaceConiditionIdx
+#ifdef WITH_PETSC      
       !Create the PETSc SNES solver
+#ifdef WITH_F08_MPI
+      CALL PETSc_SNESCreate(groupCommunicator%MPI_VAL,linesearchSolver%snes,err,error,*999)
+#else      
       CALL PETSc_SNESCreate(groupCommunicator,linesearchSolver%snes,err,error,*999)
+#endif      
       !Set the nonlinear solver type to be a Quasi-Newton line search solver
-      CALL PETSc_SNESSetType(linesearchSolver%snes,PETSC_SNESQN,err,error,*999)
+      CALL PETSc_SNESSetType(linesearchSolver%snes,PETSC_SNES_QN,err,error,*999)
       !Following routines don't work for petsc version < 3.5.
       !Set the nonlinear Quasi-Newton type
       SELECT CASE(quasiNewtonSolver%quasiNewtonType)
@@ -12863,6 +12892,7 @@ CONTAINS
           & TRIM(NumberToVString(quasiNewtonSolver%scaleType,"*",err,error))//" is invalid."
         CALL FlagError(localError,err,error,*999)
       END SELECT
+#endif      
       !Set the Quasi-Newton restart
       !Not implemented yet, as there is currently no routine in PETSc for this. If need be, this can be set in your petscrc file.
       !Create the solver matrices and vectors
@@ -12901,6 +12931,7 @@ CONTAINS
       linkedLinearSolver%solverEquations=>solver%solverEquations
       !Finish the creation of the linear solver
       CALL SolverLinear_CreateFinish(linkedLinearSolver%linearSolver,err,error,*999)
+#ifdef WITH_PETSC      
       !Associate linear solver's KSP to nonlinear solver's SNES
       NULLIFY(linearSolver)
       CALL Solver_LinearSolverGet(linkedLinearSolver,linearSolver,err,error,*999)
@@ -12918,9 +12949,11 @@ CONTAINS
           & " is invalid."
         CALL FlagError(localError,err,error,*999)
       END SELECT
+#endif      
       !Set the nonlinear function
       NULLIFY(residualVector)
       CALL SolverMatrices_ResidualDistributedVectorGet(solverMatrices,residualVector,err,error,*999)
+#ifdef WITH_PETSC      
       NULLIFY(residualPETScVector)
       CALL DistributedVector_PETScVectorGet(residualVector,residualPETScVector,err,error,*999)
       !Pass the linesearch solver object rather than the temporary solver
@@ -13015,17 +13048,19 @@ CONTAINS
       CALL PETSc_SNESLineSearchSetTolerances(linesearchSolver%snesLineSearch,linesearchSolver%linesearchStepTolerance, &
         & linesearchSolver%linesearchMaxstep,PETSC_DEFAULT_REAL,PETSC_DEFAULT_REAL,PETSC_DEFAULT_REAL,PETSC_DEFAULT_INTEGER, &
         & err,error,*999)
-      IF(linesearchSolver%linesearchMonitorOutput) THEN
-        CALL PETSc_SNESLineSearchSetMonitor(linesearchSolver%snesLineSearch,PETSC_TRUE,err,error,*999)
-      ELSE
-        CALL PETSc_SNESLineSearchSetMonitor(linesearchSolver%snesLineSearch,PETSC_FALSE,err,error,*999)
-      ENDIF
+!!TODO: WRITE LINEASEARCH MONITOR ROUTINE
+      ! IF(linesearchSolver%linesearchMonitorOutput) THEN
+      !   CALL PETSc_SNESLineSearchSetMonitor(linesearchSolver%snesLineSearch,PETSC_TRUE,err,error,*999)
+      ! ELSE
+      !   CALL PETSc_SNESLineSearchSetMonitor(linesearchSolver%snesLineSearch,PETSC_FALSE,err,error,*999)
+      ! ENDIF
       !Set the tolerances for the SNES solver
       CALL PETSc_SNESSetTolerances(linesearchSolver%snes,quasiNewtonSolver%absoluteTolerance, &
         & quasiNewtonSolver%relativeTolerance,quasiNewtonSolver%solutionTolerance, &
         & quasiNewtonSolver%maximumNumberOfIterations,quasiNewtonSolver%maximumNumberOfFunctionEvaluations,err,error,*999)
       !Set any further SNES options from the command line options
       CALL PETSc_SNESSetFromOptions(linesearchSolver%snes,err,error,*999)
+#endif      
     CASE DEFAULT
       localError="The solver library type of "// &
         & TRIM(NumberToVString(linesearchSolver%solverLibrary,"*",err,error))//" is invalid."
@@ -13637,8 +13672,15 @@ CONTAINS
     INTEGER(INTG), INTENT(OUT) :: err !<The error code
     TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
     !Local Variables
-    INTEGER(INTG) :: equationsMatrixIdx,equationsSetIdx,groupCommunicator,numberOfEquationsSets,numberOfLinearMatrices,symmetryType
+    INTEGER(INTG) :: equationsMatrixIdx,equationsSetIdx,numberOfEquationsSets,numberOfLinearMatrices,symmetryType
+#ifdef WITH_F08_MPI
+    TYPE(MPI_Comm) :: groupCommunicator
+#else
+    INTEGER(INTG) :: groupCommunicator
+#endif
+#ifdef WITH_PETSC    
     EXTERNAL :: Problem_SolverResidualEvaluatePetsc
+#endif    
     TYPE(DistributedVectorType), POINTER :: residualVector
     TYPE(DistributedVectorPETScType), POINTER :: residualPETScVector
     TYPE(DomainMappingType), POINTER :: domainMapping
@@ -13726,26 +13768,31 @@ CONTAINS
       NULLIFY(solverMatrices)
       CALL SolverEquations_SolverMatricesExists(solverEquations,solverMatrices,err,error,*999)
       IF(.NOT.ASSOCIATED(solverMatrices)) THEN
-      CALL SolverMatrices_CreateStart(solverEquations,solverMatrices,err,error,*999)
-      CALL SolverMatrices_LibraryTypeSet(solverMatrices,SOLVER_PETSC_LIBRARY,err,error,*999)
+        CALL SolverMatrices_CreateStart(solverEquations,solverMatrices,err,error,*999)
+        CALL SolverMatrices_LibraryTypeSet(solverMatrices,SOLVER_PETSC_LIBRARY,err,error,*999)
 !!TODO: set up the matrix structure if using an analytic Jacobian
-      CALL SolverEquations_SymmetryTypeGet(solverEquations,symmetryType,err,error,*999)
-      SELECT CASE(symmetryType)
-      CASE(SOLVER_SYMMETRIC_MATRICES)
-        CALL SolverMatrices_SymmetryTypesSet(solverMatrices,DISTRIBUTED_MATRIX_SYMMETRIC_TYPE,err,error,*999)
-      CASE(SOLVER_UNSYMMETRIC_MATRICES)
-        CALL SolverMatrices_SymmetryTypesSet(solverMatrices,DISTRIBUTED_MATRIX_UNSYMMETRIC_TYPE,err,error,*999)
-      CASE DEFAULT
-        localError="The specified solver equations symmetry type of "//TRIM(NumberToVString(symmetryType,"*",err,error))// &
-          & " is invalid."
-        CALL FlagError(localError,err,error,*999)
-      END SELECT
-      CALL SolverMatrices_CreateFinish(solverMatrices,err,error,*999)
-    ENDIF
+        CALL SolverEquations_SymmetryTypeGet(solverEquations,symmetryType,err,error,*999)
+        SELECT CASE(symmetryType)
+        CASE(SOLVER_SYMMETRIC_MATRICES)
+          CALL SolverMatrices_SymmetryTypesSet(solverMatrices,DISTRIBUTED_MATRIX_SYMMETRIC_TYPE,err,error,*999)
+        CASE(SOLVER_UNSYMMETRIC_MATRICES)
+          CALL SolverMatrices_SymmetryTypesSet(solverMatrices,DISTRIBUTED_MATRIX_UNSYMMETRIC_TYPE,err,error,*999)
+        CASE DEFAULT
+          localError="The specified solver equations symmetry type of "//TRIM(NumberToVString(symmetryType,"*",err,error))// &
+            & " is invalid."
+          CALL FlagError(localError,err,error,*999)
+        END SELECT
+        CALL SolverMatrices_CreateFinish(solverMatrices,err,error,*999)
+      ENDIF
+#ifdef WITH_PETSC      
       !Create the PETSc SNES solver
+#ifdef WITH_F08_MPI
+      CALL PETSc_SNESCreate(groupCommunicator%MPI_VAL,trustregionSolver%snes,err,error,*999)
+#else    
       CALL PETSc_SNESCreate(groupCommunicator,trustregionSolver%snes,err,error,*999)
+#endif    
       !Set the nonlinear solver type to be a Quasi-Newton trust region solver
-      CALL PETSc_SNESSetType(trustregionSolver%snes,PETSC_SNESNEWTONTR,err,error,*999)
+      CALL PETSc_SNESSetType(trustregionSolver%snes,PETSC_SNES_NEWTONTR,err,error,*999)
       !Set the nonlinear function
       NULLIFY(residualVector)
       CALL SolverMatrices_ResidualDistributedVectorGet(solverMatrices,residualVector,err,error,*999)
@@ -13755,7 +13802,7 @@ CONTAINS
         & Problem_SolverResidualEvaluatePetsc,trustregionSolver%quasiNewtonSolver%nonlinearSolver%solver,err,error,*999)
       !Set the Jacobian if necessary
       !Set the trust region delta ???
-                  
+
       !Set the trust region tolerance
       CALL PETSc_SNESSetTrustRegionTolerance(trustregionSolver%snes,trustregionSolver%trustregionTolerance, &
         & err,error,*999)
@@ -13766,12 +13813,13 @@ CONTAINS
         & err,error,*999)
       !Set any further SNES options from the command line options
       CALL PETSc_SNESSetFromOptions(trustregionSolver%snes,err,error,*999)
+#endif      
     CASE DEFAULT
       localError="The solver library type of "// &
         & TRIM(NumberToVString(trustregionSolver%solverLibrary,"*",err,error))//" is invalid."
       CALL FlagError(localError,err,error,*999)
     END SELECT
-        
+
     EXITS("SolverNonlinearQuasiNewtonTrustregion_CreateFinish")
     RETURN
 999 ERRORSEXITS("SolverNonlinearQuasiNewtonTrustregion_CreateFinish",err,error)
@@ -14647,14 +14695,21 @@ CONTAINS
     INTEGER(INTG), INTENT(OUT) :: err !<The error code
     TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
     !Local Variables
-    INTEGER(INTG) :: equationsMatrixIdx,equationsSetIdx,interfaceConditionIdx,interfaceMatrixIdx,groupCommunicator, &
+    INTEGER(INTG) :: equationsMatrixIdx,equationsSetIdx,interfaceConditionIdx,interfaceMatrixIdx, &
       & numberOfEquationsSets,numberOfInterfaceConditions,numberOfInterfaceMatrices,numberOfLinearMatrices, &
       & numberOfSolverMatrices,sparsityType,symmetryType
+#ifdef WITH_F08_MPI
+    TYPE(MPI_Comm) :: groupCommunicator
+#else
+    INTEGER(INTG) :: groupCommunicator
+#endif    
+#ifdef WITH_PETSC    
     EXTERNAL :: Problem_SolverJacobianEvaluatePetsc
     EXTERNAL :: Problem_SolverJacobianFDCalculatePetsc
     EXTERNAL :: Problem_SolverResidualEvaluatePetsc
     EXTERNAL :: Problem_SolverConvergenceTestPetsc
     EXTERNAL :: Problem_SolverNonlinearMonitorPetsc
+#endif    
     TYPE(DistributedMatrixType), POINTER :: jacobianMatrix
     TYPE(DistributedMatrixPETScType), POINTER :: jacobianPETScMatrix
     TYPE(DistributedVectorType), POINTER :: residualVector
@@ -14789,10 +14844,16 @@ CONTAINS
           ENDIF
         ENDDO !interfaceMatrixIdx
       ENDDO !interfaceConiditionIdx
+#ifdef WITH_PETSC      
       !Create the PETSc SNES solver
+#ifdef WITH_F08_MPI
+      CALL PETSc_SNESCreate(groupCommunicator%MPI_VAL,linesearchSolver%snes,err,error,*999)
+#else      
       CALL PETSc_SNESCreate(groupCommunicator,linesearchSolver%snes,err,error,*999)
+#endif      
       !Set the nonlinear solver type to be a Newton line search solver
-      CALL PETSc_SNESSetType(linesearchSolver%snes,PETSC_SNESNEWTONLS,err,error,*999)
+      CALL PETSc_SNESSetType(linesearchSolver%snes,PETSC_SNES_NEWTONLS,err,error,*999)
+#endif      
       !Create the solver matrices and vectors
       NULLIFY(linkedLinearSolver)
       CALL SolverNonlinearNewton_LinkedLinearSolverGet(newtonSolver,linkedLinearSolver,err,error,*999)
@@ -14955,11 +15016,12 @@ CONTAINS
       CALL PETSc_SNESLineSearchSetTolerances(linesearchSolver%snesLineSearch,linesearchSolver%linesearchStepTolerance, &
         & linesearchSolver%linesearchMaxstep,PETSC_DEFAULT_REAL,PETSC_DEFAULT_REAL,PETSC_DEFAULT_REAL,PETSC_DEFAULT_INTEGER, &
         & err,error,*999)
-      IF(linesearchSolver%linesearchMonitorOutput) THEN
-        CALL PETSc_SNESLineSearchSetMonitor(linesearchSolver%snesLineSearch,PETSC_TRUE,err,error,*999)
-      ELSE
-        CALL PETSc_SNESLineSearchSetMonitor(linesearchSolver%snesLineSearch,PETSC_FALSE,err,error,*999)
-      ENDIF
+!TODO: WRITE LINEASEARCH MONITOR ROUTINE
+      ! IF(linesearchSolver%linesearchMonitorOutput) THEN
+      !   CALL PETSc_SNESLineSearchSetMonitor(linesearchSolver%snesLineSearch,PETSC_TRUE,err,error,*999)
+      ! ELSE
+      !   CALL PETSc_SNESLineSearchSetMonitor(linesearchSolver%snesLineSearch,PETSC_FALSE,err,error,*999)
+      ! ENDIF
       !Set the tolerances for the SNES solver
       CALL PETSc_SNESSetTolerances(linesearchSolver%snes,newtonSolver%absoluteTolerance,newtonSolver%relativeTolerance, &
         & newtonSolver%solutionTolerance,newtonSolver%maximumNumberOfIterations,newtonSolver%maximumNumberOfFunctionEvaluations, &
@@ -15582,8 +15644,15 @@ CONTAINS
     INTEGER(INTG), INTENT(OUT) :: err !<The error code
     TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
     !Local Variables
+#ifdef WITH_PETSC    
     EXTERNAL :: Problem_SolverResidualEvaluatePetsc
-    INTEGER(INTG) :: equationsMatrixIdx,equationsSetIdx,groupCommunicator
+#endif    
+    INTEGER(INTG) :: equationsMatrixIdx,equationsSetIdx
+#ifdef WITH_F08_MPI
+    TYPE(MPI_Comm) :: groupCommunicator
+#else
+    INTEGER(INTG) :: groupCommunicator
+#endif
     TYPE(DistributedVectorType), POINTER :: residualVector
     TYPE(DistributedVectorPETScType), POINTER :: residualPETScVector
     TYPE(DomainMappingType), POINTER :: domainMapping
@@ -15666,29 +15735,35 @@ CONTAINS
       NULLIFY(solverMatrices)
       CALL SolverEquations_SolverMatricesExists(solverEquations,solverMatrices,err,error,*999)
       IF(.NOT.ASSOCIATED(solverMatrices)) THEN
-      CALL SolverMatrices_CreateStart(solverEquations,solverMatrices,err,error,*999)
-      CALL SolverMatrices_LibraryTypeSet(solverMatrices,SOLVER_PETSC_LIBRARY,err,error,*999)
+        CALL SolverMatrices_CreateStart(solverEquations,solverMatrices,err,error,*999)
+        CALL SolverMatrices_LibraryTypeSet(solverMatrices,SOLVER_PETSC_LIBRARY,err,error,*999)
 !!TODO: set up the matrix structure if using an analytic Jacobian
-      SELECT CASE(solverEquations%symmetryType)
-      CASE(SOLVER_SYMMETRIC_MATRICES)
-        CALL SolverMatrices_SymmetryTypesSet(solverMatrices,DISTRIBUTED_MATRIX_SYMMETRIC_TYPE,err,error,*999)
-      CASE(SOLVER_UNSYMMETRIC_MATRICES)
-        CALL SolverMatrices_SymmetryTypesSet(solverMatrices,DISTRIBUTED_MATRIX_UNSYMMETRIC_TYPE,err,error,*999)
-      CASE DEFAULT
-        localError="The specified solver equations symmetry type of "// &
-          & TRIM(NumberToVString(solverEquations%symmetryType,"*",err,error))// &
-          & " is invalid."
-        CALL FlagError(localError,err,error,*999)
-      END SELECT
-      CALL SolverMatrices_CreateFinish(solverMatrices,err,error,*999)
-    ENDIF
+        SELECT CASE(solverEquations%symmetryType)
+        CASE(SOLVER_SYMMETRIC_MATRICES)
+          CALL SolverMatrices_SymmetryTypesSet(solverMatrices,DISTRIBUTED_MATRIX_SYMMETRIC_TYPE,err,error,*999)
+        CASE(SOLVER_UNSYMMETRIC_MATRICES)
+          CALL SolverMatrices_SymmetryTypesSet(solverMatrices,DISTRIBUTED_MATRIX_UNSYMMETRIC_TYPE,err,error,*999)
+        CASE DEFAULT
+          localError="The specified solver equations symmetry type of "// &
+            & TRIM(NumberToVString(solverEquations%symmetryType,"*",err,error))// &
+            & " is invalid."
+          CALL FlagError(localError,err,error,*999)
+        END SELECT
+        CALL SolverMatrices_CreateFinish(solverMatrices,err,error,*999)
+      ENDIF
+#ifdef WITH_PETSC      
       !Create the PETSc SNES solver
+#ifdef WITH_F08_MPI
+      CALL PETSc_SNESCreate(groupCommunicator%MPI_VAL,trustregionSolver%snes,err,error,*999)
+#else 
       CALL PETSc_SNESCreate(groupCommunicator,trustregionSolver%snes,err,error,*999)
+#endif
       !Set the nonlinear solver type to be a Newton trust region solver
-      CALL PETSc_SNESSetType(trustregionSolver%snes,PETSC_SNESNEWTONTR,err,error,*999)
+      CALL PETSc_SNESSetType(trustregionSolver%snes,PETSC_SNES_NEWTONTR,err,error,*999)
       !Set the solver as the SNES application context
       CALL PETSc_SNESSetApplicationContext(trustregionSolver%snes, &
         & trustregionSolver%newtonSolver%nonlinearSolver%solver,err,error,*999)
+#endif      
       !Set the nonlinear function
       NULLIFY(residualVector)
       CALL SolverMatrices_ResidualDistributedVectorGet(solverMatrices,residualVector,err,error,*999)
@@ -18368,13 +18443,15 @@ END MODULE SolverRoutines
 !================================================================================================================================
 !
 
+#ifdef WITH_PETSC
+
 !>Called from the PETSc TS solvers to monitor the dynamic solver
 SUBROUTINE Solver_TimeSteppingMonitorPETSc(ts,steps,time,X,ctx,err)
 
   USE BaseRoutines
-  USE CmissPetscTypes
   USE ISO_VARYING_STRING
   USE Kinds
+  USE OpenCMISSPETScTypes
   USE SolverRoutines
   USE SolverAccessRoutines
   USE Strings
@@ -18419,9 +18496,9 @@ END SUBROUTINE Solver_TimeSteppingMonitorPETSc
 SUBROUTINE Solver_NonlinearMonitorPETSc(snes,its,norm,ctx,err)
 
   USE BaseRoutines
-  USE CmissPetscTypes
   USE ISO_VARYING_STRING
   USE Kinds
+  USE OpenCMISSPETScTypes
   USE SolverRoutines
   USE SolverAccessRoutines
   USE Strings
@@ -18456,3 +18533,5 @@ SUBROUTINE Solver_NonlinearMonitorPETSc(snes,its,norm,ctx,err)
 997 RETURN
   
 END SUBROUTINE Solver_NonlinearMonitorPETSc
+
+#endif

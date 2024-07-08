@@ -48,20 +48,20 @@
 #include <stdio.h>
 #include <stdlib.h>
 
-#include "cmiss.h"
+#include "opencmiss_init.h"
 
 /* Type definitions */
 
 /* Function prototypes */
 
-void cmfe_ResetFatalHandler(void);
+void OC_ResetFatalHandler(void);
 
-void cmfe_SetFatalHandler(void);
+void OC_SetFatalHandler(void);
 
-void cmfe_InitFatalHandler(void);
+void OC_InitFatalHandler(void);
 
 /* Internal functions */
-static void cmfe_FatalHandler(int sig
+static void OC_FatalHandler(int sig
 #if defined (sun)
              ,siginfo_t *sip,
              ucontext_t *uap
@@ -90,7 +90,7 @@ static struct sigaction old_SIGABRT_action;
 static struct sigaction old_SIGSEGV_action;
 static struct sigaction old_SIGTRAP_action;
 
-void cmfe_ResetFatalHandler()
+void OC_ResetFatalHandler()
 {
 #if defined (SIGBUS)
   if( 0 != sigaction(SIGBUS,&old_SIGBUS_action,NULL) )
@@ -132,7 +132,7 @@ void cmfe_ResetFatalHandler()
 #endif /* defined (SIGTRAP) */
 }
 
-void cmfe_SetFatalHandler(void)
+void OC_SetFatalHandler(void)
 {
 #if (defined (unix) || defined (_AIX)) && !defined(__MINGW32__)
 #if defined (SIGBUS)
@@ -176,7 +176,7 @@ void cmfe_SetFatalHandler(void)
 #endif /* defined (unix) || defined (_AIX) */
 }
 
-static void cmfe_FatalHandler(int sig
+static void OC_FatalHandler(int sig
 #if defined (sun)
              ,siginfo_t *sip,
              ucontext_t *uap
@@ -258,13 +258,13 @@ static void cmfe_FatalHandler(int sig
   exit(sig);
 }
 
-void cmfe_InitFatalHandler(void)
+void OC_InitFatalHandler(void)
 {
   fatal_sigaction.sa_flags = SA_NODEFER;
-  fatal_sigaction.sa_handler = (void (*)(int))cmfe_FatalHandler;
+  fatal_sigaction.sa_handler = (void (*)(int))OC_FatalHandler;
   if( 0 != sigemptyset(&fatal_sigaction.sa_mask) )
     {
-      fprintf(stderr,">>WARNING: sigemptyset failed in CMISSInitFatalHandler.\n");
+      fprintf(stderr,">>WARNING: sigemptyset failed in OC_InitFatalHandler.\n");
     }
 
 #if defined (SIGBUS)

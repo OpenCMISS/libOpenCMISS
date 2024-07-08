@@ -5,16 +5,16 @@ from sys import platform
 from setuptools import setup
 
 requires = []#['numpy']
-package_data = {'opencmiss.opencmiss': ['$<TARGET_FILE_NAME:@LibOpenCMISS_PYTHON_MODULE@>']}
+package_data = {'opencmiss.opencmiss': ['$<TARGET_FILE_NAME:@OpenCMISS_Python_MODULE@>']}
 
 #try:
     #if platform == 'darwin':
-    #    os.symlink('@LibOpenCMISS_TARGET_FILE@', 'opencmiss/opencmiss/libiron.dylib')
-    #    package_data['opencmiss.opencmiss'].append('libopencmiss.dylib')
+    #    os.symlink('@OpenCMISS_TARGET_FILE@', 'opencmiss/opencmiss/libOpenCMISS.dylib')
+    #    package_data['opencmiss.opencmiss'].append('libOpenCMISS.dylib')
 
 setup(
     name='OpenCMISS',
-    version='@LibOpenCMISS_VERSION@',
+    version='@OpenCMISS_VERSION@',
     description=('Python bindings for the OpenCMISS computational '
             'modelling library.'),
     long_description=('Python bindings to OpenCMISS. '
@@ -26,7 +26,7 @@ setup(
     author='Chris Bradley',
     license='Mozilla Tri-license',
     author_email='users@opencmiss.org',
-    url='http://www.opencmiss.org/',
+    url='https://www.opencmiss.org/',
     install_requires=requires,
     packages=['opencmiss', 'opencmiss.opencmiss'],
     package_data=package_data
@@ -34,4 +34,4 @@ setup(
 #finally:
     
 #    if platform == 'darwin':
-#        os.unlink('opencmiss/opencmiss/libopencmiss.dylib')
+#        os.unlink('opencmiss/opencmiss/libOpenCMISS.dylib')

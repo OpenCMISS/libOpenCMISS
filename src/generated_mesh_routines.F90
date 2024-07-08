@@ -1443,7 +1443,7 @@ CONTAINS
                             elementNodes(7)=nodeNumber+1+totalNumberOfNodesXi(1)+totalNumberOfNodesXi(1)*totalNumberOfNodesXi(2)
                             elementNodes(8)=nodeNumber+2+2*totalNumberOfNodesXi(1)+2*totalNumberOfNodesXi(1)*totalNumberOfNodesXi(2)
                             elementNodes(9)=nodeNumber+1+totalNumberOfNodesXi(1)*totalNumberOfNodesXi(2)
-                            elementNodes(10)=nodeNumber+2++2*totalNumberOfNodesXi(1)*totalNumberOfNodesXi(2)
+                            elementNodes(10)=nodeNumber+2+2*totalNumberOfNodesXi(1)*totalNumberOfNodesXi(2)
                             elementNodes(11)=nodeNumber+3+totalNumberOfNodesXi(1)+totalNumberOfNodesXi(1)*totalNumberOfNodesXi(2)
                             elementNodes(12)=nodeNumber+3+2*totalNumberOfNodesXi(1)+2*totalNumberOfNodesXi(1)*totalNumberOfNodesXi(2)
                             elementNodes(13)=nodeNumber+3+2*totalNumberOfNodesXi(1)+2*totalNumberOfNodesXi(1)*totalNumberOfNodesXi(2)

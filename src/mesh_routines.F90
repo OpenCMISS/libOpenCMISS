@@ -59,9 +59,6 @@ MODULE MeshRoutines
   USE ISO_VARYING_STRING
   USE Lists
   USE MeshAccessRoutines
-#ifndef NOMPIMOD
-  USE MPI
-#endif
   USE NodeAccessRoutines
   USE RegionAccessRoutines
   USE Strings
@@ -71,10 +68,6 @@ MODULE MeshRoutines
 #include "macros.h"  
 
   IMPLICIT NONE
-
-#ifdef NOMPIMOD
-#include "mpif.h"
-#endif
 
   PRIVATE
 

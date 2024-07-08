@@ -1,9 +1,9 @@
 add_executable(CantileverBeam CantileverBeam.F90)
 set_target_properties(CantileverBeam PROPERTIES LINKER_LANGUAGE Fortran)
-target_link_libraries(CantileverBeam PRIVATE iron)
+target_link_libraries(CantileverBeam PRIVATE ${OpenCMISS_SHARED_Fortran_TARGET})
 oc_add_test(LinearElasticity_CantileverBeam CantileverBeam)
 
 add_executable(Extension Extension.F90)
 set_target_properties(Extension PROPERTIES LINKER_LANGUAGE Fortran)
-target_link_libraries(Extension PRIVATE iron)
+target_link_libraries(Extension PRIVATE ${OpenCMISS_SHARED_Fortran_TARGET})
 oc_add_test(LinearElasticity_Extension Extension)

@@ -32,9 +32,6 @@ MODULE OpenCMISS
   USE BoundaryConditionsRoutines
   USE BoundaryConditionAccessRoutines
   USE CellMLAccessRoutines
-  USE Cmiss
-  USE CmissPetsc
-  USE CmissCellML
   USE ComputationRoutines
   USE ComputationAccessRoutines
   USE Constants
@@ -84,7 +81,17 @@ MODULE OpenCMISS
   USE Kinds
   USE MeshRoutines
   USE MeshAccessRoutines
+#ifdef WITH_MPI
+#ifdef WITH_F08_MPI
+  USE MPI_F08
+#endif
+#endif  
   USE NodeRoutines
+  USE OpenCMISSCellML
+  USE OpenCMISSInit
+#ifdef WITH_PETSC  
+  USE OpenCMISSPETSc
+#endif  
   USE ProblemRoutines
   USE ProblemAccessRoutines
   USE RegionRoutines
@@ -111,9 +118,9 @@ MODULE OpenCMISS
   !> \brief Version constants.
   !> \see OpenCMISS::Constants::Kinds,OpenCMISS
   !>@{
-  INTEGER, PARAMETER :: OC_MAJOR_VERSON = LibOpenCMISS_MAJOR_VERSION !<OpenCMISS major version number. \see OpenCMISS_VersionContants
-  INTEGER, PARAMETER :: OC_MINOR_VERSION = LibOpenCMISS_MINOR_VERSION !<OpenCMISS minor version number. \see OpenCMISS_VersionContants
-  INTEGER, PARAMETER :: OC_PATCH_VERSION = LibOpenCMISS_PATCH_VERSION !<OpenCMISS patch version number. \see OpenCMISS_VersionContants
+  INTEGER(INTG), PARAMETER :: OC_MAJOR_VERSION = OpenCMISS_MAJOR_VERSION !<OpenCMISS major version number. \see OpenCMISS_VersionContants
+  INTEGER(INTG), PARAMETER :: OC_MINOR_VERSION = OpenCMISS_MINOR_VERSION !<OpenCMISS minor version number. \see OpenCMISS_VersionContants
+  INTEGER(INTG), PARAMETER :: OC_PATCH_VERSION = OpenCMISS_PATCH_VERSION !<OpenCMISS patch version number. \see OpenCMISS_VersionContants
   !>@}
   !> \addtogroup OpenCMISS_KindConstants OpenCMISS::Constants::Kinds
   !> \brief Kind constants.
@@ -371,7 +378,7 @@ MODULE OpenCMISS
 
   TYPE(VARYING_STRING) :: error
 
-  PUBLIC OC_MAJOR_VERSION,OC_MINOR_VERSION,OC_PATCH_VERSON
+  PUBLIC OC_MAJOR_VERSION,OC_MINOR_VERSION,OC_PATCH_VERSION
 
   PUBLIC OCIntg,OCSIntg,OCLIntg,OCPtr,OCIdx,OCLIdx
 
@@ -8438,7 +8445,7 @@ CONTAINS
     INTEGER(INTG), INTENT(OUT) :: err !<The error code.
     !Local variables
 
-    CALL OC_Initialise_(err,error,*999)
+    CALL OC_Initialise_(OC_MAJOR_VERSION,OC_MINOR_VERSION,OC_PATCH_VERSION,err,error,*999)
 
     RETURN
 999 CALL OC_HandleError(err,error)
@@ -8829,7 +8836,7 @@ CONTAINS
 
   !>Initialises a OC_ContextType object.
   SUBROUTINE OC_Context_Initialise(OC_Context,err)
-    !DLLEXPORT(OC_ControlLoop_Initialise)
+    !DLLEXPORT(OC_Context_Initialise)
 
     !Argument variables
     TYPE(OC_ContextType), INTENT(OUT) :: OC_Context !<The OC_ContextType object to initialise.
@@ -9316,6 +9323,7 @@ CONTAINS
     TYPE(OC_FieldType), INTENT(OUT) :: OC_Field !<The OC_FieldType object to finalise.
     INTEGER(INTG), INTENT(OUT) :: err !<The error code.
     !Local variables
+
 
     ENTERS("OC_Field_Finalise",err,error,*999)
 
@@ -15682,6 +15690,10 @@ CONTAINS
     CALL Region_CellMLGet(region,cellMLUserNumber,cellml,err,error,*999)
     CALL CellML_ModelImport(cellml,URI,modelIndex,err,error,*999)
 
+#else
+
+    modelIndex = -1
+
 #endif
 
     EXITS("OC_CellML_ModelImportNumberC")
@@ -15714,6 +15726,10 @@ CONTAINS
 #ifdef WITH_CELLML
 
     CALL CellML_ModelImport(cellML%cellML,URI,modelIndex,err,error,*999)
+
+#else
+
+    modelIndex = -1
 
 #endif
 
@@ -15762,6 +15778,10 @@ CONTAINS
     CALL Region_CellMLGet(region,cellMLUserNumber,cellml,err,error,*999)
     CALL CellML_ModelImport(cellml,URI,modelIndex,err,error,*999)
 
+#else
+
+    modelIndex = -1
+
 #endif
 
     EXITS("OC_CellML_ModelImportNumberVS")
@@ -15795,6 +15815,10 @@ CONTAINS
 
     CALL CellML_ModelImport(cellML%cellML,URI,modelIndex,err,error,*999)
 
+#else
+
+    modelIndex = -1
+    
 #endif
 
     EXITS("OC_CellML_ModelImportObjVS")
@@ -17122,11 +17146,14 @@ CONTAINS
 
     !Argument variables
     INTEGER(INTG), INTENT(IN) :: contextUserNumber !<The user number of the context with the computation environment.
-    INTEGER(INTG), INTENT(OUT) :: worldCommunicator !<On return, the current world communicator.
+    INTEGER(INTG), INTENT(OUT) :: worldCommunicator !<On return, the current world communicator.    
     INTEGER(INTG), INTENT(OUT) :: err !<The error code.
     !Local variables
     TYPE(ComputationEnvironmentType), POINTER :: computationEnvironment
     TYPE(ContextType), POINTER :: context
+#ifdef WITH_F08_MPI
+    TYPE(MPI_Comm) :: dummyCommunicator
+#endif    
 
     ENTERS("OC_ComputationEnvironment_WorldCommunicatorGetNumber",err,error,*999)
 
@@ -17134,7 +17161,12 @@ CONTAINS
     NULLIFY(computationEnvironment)
     CALL Context_Get(contexts,contextUserNumber,context,err,error,*999)
     CALL Context_ComputationEnvironmentGet(context,computationEnvironment,err,error,*999)
+#ifdef WITH_F08_MPI
+    CALL ComputationEnvironment_WorldCommunicatorGet(computationEnvironment,dummyCommunicator,err,error,*999)
+    worldCommunicator = dummyCommunicator%MPI_VAL
+#else    
     CALL ComputationEnvironment_WorldCommunicatorGet(computationEnvironment,worldCommunicator,err,error,*999)
+#endif    
 
     EXITS("OC_ComputationEnvironment_WorldCommunicatorGetNumber")
     RETURN
@@ -17158,11 +17190,20 @@ CONTAINS
     INTEGER(INTG), INTENT(OUT) :: worldCommunicator !<On return, the current world communicator.
     INTEGER(INTG), INTENT(OUT) :: err !<The error code.
     !Local variables
+#ifdef WITH_F08_MPI
+    TYPE(MPI_Comm) :: dummyCommunicator
+#endif    
 
     ENTERS("OC_ComputationEnvironment_WorldCommunicatorGetObj",err,error,*999)
 
+#ifdef WITH_F08_MPI
+    CALL ComputationEnvironment_WorldCommunicatorGet(computationEnvironment%computationEnvironment,dummyCommunicator, &
+      & err,error,*999)
+    worldCommunicator = dummyCommunicator%MPI_VAL
+#else    
     CALL ComputationEnvironment_WorldCommunicatorGet(computationEnvironment%computationEnvironment,worldCommunicator, &
       & err,error,*999)
+#endif    
 
     EXITS("OC_ComputationEnvironment_WorldCommunicatorGetObj")
     RETURN
@@ -17495,7 +17536,10 @@ CONTAINS
     !Local Variables
     TYPE(ComputationEnvironmentType), POINTER :: computationEnvironment
     TYPE(ContextType), POINTER :: context
-    TYPE(WorkGroupType), POINTER :: workGroup 
+    TYPE(WorkGroupType), POINTER :: workGroup
+#ifdef WITH_F08_MPI
+    TYPE(MPI_Comm) :: dummyCommunicator
+#endif    
 
     ENTERS("OC_WorkGroup_GroupCommunicatorGetNumber",err,error,*999)
 
@@ -17505,7 +17549,12 @@ CONTAINS
     CALL Context_Get(contexts,contextUserNumber,context,err,error,*999)
     CALL Context_ComputationEnvironmentGet(context,computationEnvironment,err,error,*999)
     CALL WorkGroup_Get(computationEnvironment,workGroupUserNumber,workGroup,err,error,*999)
+#ifdef WITH_F08_MPI
+    CALL WorkGroup_GroupCommunicatorGet(workGroup,dummyCommunicator,err,error,*999)
+    groupCommunicator = dummyCommunicator%MPI_VAL
+#else    
     CALL WorkGroup_GroupCommunicatorGet(workGroup,groupCommunicator,err,error,*999)
+#endif    
 
     EXITS("OC_WorkGroup_GroupCommunicatorGetNumber")
     RETURN
@@ -17527,10 +17576,19 @@ CONTAINS
     TYPE(OC_WorkGroupType), INTENT(INOUT) :: workGroup !<The work group to get the group communicator for
     INTEGER(INTG), INTENT(OUT) :: groupCommunicator !<On return, the group communicator for the work group.
     INTEGER(INTG), INTENT(OUT) :: err !<The error code
+    !Local Variables
+#ifdef WITH_F08_MPI
+    TYPE(MPI_Comm) :: dummyCommunicator
+#endif    
 
     ENTERS("OC_WorkGroup_GroupCommunicatorGetObj",err,error,*999)
 
+#ifdef WITH_F08_MPI
+    CALL WorkGroup_GroupCommunicatorGet(workGroup%workGroup,dummyCommunicator,err,error,*999)
+    groupCommunicator = dummyCommunicator%MPI_VAL
+#else    
     CALL WorkGroup_GroupCommunicatorGet(workGroup%workGroup,groupCommunicator,err,error,*999)
+#endif    
 
     EXITS("OC_WorkGroup_GroupCommunicatorGetObj")
     RETURN
@@ -38319,7 +38377,7 @@ CONTAINS
 
     EXITS("OC_Field_NumberOfGlobalDOFsGetNumber")
     RETURN
-999 ERRORSEXITS("OC_Field_NumberOfGLobalDOFsGetNumber",err,error)
+999 ERRORSEXITS("OC_Field_NumberOfGlobalDOFsGetNumber",err,error)
     CALL OC_HandleError(err,error)
     RETURN
 
@@ -38344,7 +38402,7 @@ CONTAINS
 
     CALL Field_NumberOfGlobalDOFsGet(field%field,variableType,numberOfGlobalDOFs,err,error,*999)
 
-    EXITS("OC_Field_NumberOfDOFsGlobalGetObj")
+    EXITS("OC_Field_NumberOfGlobalDOFsGetObj")
     RETURN
 999 ERRORSEXITS("OC_Field_NumberOfGlobalDOFsGetObj",err,error)
     CALL OC_HandleError(err,error)

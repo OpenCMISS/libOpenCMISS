@@ -46,7 +46,6 @@ MODULE FSIRoutines
 
   USE BaseRoutines
   USE BasisRoutines
-  USE CmissCellML
   USE Constants
   USE ControlLoopRoutines
   USE ControlLoopAccessRoutines
@@ -63,6 +62,7 @@ MODULE FSIRoutines
   USE InterfaceConditionAccessRoutines
   USE ISO_VARYING_STRING
   USE Kinds
+  USE OpenCMISSCellML
   USE NavierStokesEquationsRoutines
   USE ProblemAccessRoutines
   USE RegionAccessRoutines

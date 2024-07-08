@@ -1,17 +1,20 @@
-cmake_path(SET _DIRECTORY_PATH "${OpenCMISS_OPENCMISS_PYTHON_PY}")
+cmake_path(SET _DIRECTORY_PATH "${OpenCMISS_OPENCMISS_GENERATED_I}")
 cmake_path(REMOVE_FILENAME _DIRECTORY_PATH)
 file(MAKE_DIRECTORY "${_DIRECTORY_PATH}")
 unset(_DIRECTORY_PATH)
 execute_process(
-  COMMAND "${OpenCMISS_Python_EXECUTABLE}" generate_bindings "${OpenCMISS_ROOT}" Python "${OpenCMISS_Python_MODULE_NAME}" "${OpenCMISS_OPENCMISS_PYTHON_PY}" 
+  COMMAND "${OpenCMISS_Python_EXECUTABLE}" generate_bindings "${OpenCMISS_ROOT}" SWIG "${OpenCMISS_OPENCMISS_GENERATED_I}"
   RESULT_VARIABLE OpenCMISS_Python_RESULT_VAR
   OUTPUT_VARIABLE OpenCMISS_Python_OUTPUT_VAR
   ERROR_VARIABLE OpenCMISS_Python_ERROR_VAR
   WORKING_DIRECTORY ${OpenCMISS_BINDINGS_DIR}
 )
 if(NOT OpenCMISS_Python_RESULT_VAR EQUAL 0)
-  message(STATUS "Generate Python module file failed.")
+  message(STATUS "Generate SWIG file failed.")
   message(STATUS "  Result: '${OpenCMISS_Python_RESULT_VAR}'")
   message(STATUS "  Output: '${OpenCMISS_Python_OUTPUT_VAR}'")
   message(STATUS "  Error: '${OpenCMISS_Python_ERROR_VAR}'")
 endif()
+configure_file(${OpenCMISS_BINDINGS_Python_SWIG_DIR}/opencmiss.i.in ${OpenCMISS_OPENCMISS_I})
+set_property(SOURCE "${OpenCMISS_OPENCMISS_I}" PROPERTY SWIG_MODULE_NAME "${OpenCMISS_Python_MODULE_NAME}")
+set_property(SOURCE "${OpenCMISS_OPENCMISS_GENERATED_I}" PROPERTY CPLUSPLUS ON)

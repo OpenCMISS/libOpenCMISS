@@ -4536,7 +4536,7 @@ CONTAINS
       x=MATMUL(AInv,b)
     CASE DEFAULT
       !Use LAPACK LU
-      CALL DGETRF(SIZE(A,1),SIZE(A,2),A,SIZE(A,1),iPivot,info)
+      CALL SGETRF(SIZE(A,1),SIZE(A,2),A,SIZE(A,1),iPivot,info)
       IF(info/=0) THEN
         IF(info<0) THEN
           localError="Parameter number "//TRIM(NumberToVString(-info,"*",err,error))//" is illegal."
@@ -4547,7 +4547,7 @@ CONTAINS
         CALL FlagError(localError,err,error,*999)
       ENDIF
       !Solve the LU problem
-      CALL DGETRS('N',1,A,SIZE(A,1),iPivot,b,SIZE(b,1),info)
+      CALL SGETRS('N',1,A,SIZE(A,1),iPivot,b,SIZE(b,1),info)
       IF(info/=0) THEN
         localError="Parameter number "//TRIM(NumberToVString(-info,"*",err,error))//" is illegal."
         CALL FlagError(localError,err,error,*999)

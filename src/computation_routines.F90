@@ -46,16 +46,25 @@
 MODULE ComputationRoutines
 
   USE BaseRoutines
-  USE CmissMPI
-  USE CmissPetsc
   USE ComputationAccessRoutines
   USE Constants
   USE Kinds
-#ifndef NOMPIMOD
+#ifdef WITH_MPI  
+#ifdef WITH_F08_MPI
+  USE MPI_F08
+#elif WITH_F90_MPI  
   USE MPI
+#endif  
 #endif
   USE InputOutput
+  USE ISO_C_BINDING, ONLY : C_LOC
   USE ISO_VARYING_STRING
+#ifdef WITH_MPI  
+  USE OpenCMISSMPI
+#endif
+#ifdef WITH_PETSC  
+  USE OpenCMISSPETSc
+#endif  
   USE Sorting
   USE Strings
   USE Types
@@ -65,10 +74,12 @@ MODULE ComputationRoutines
   IMPLICIT NONE
 
   PRIVATE
-  
-#ifdef NOMPIMOD
+
+#ifdef WITH_MPI  
+#ifdef WITH_F77_MPI
 #include "mpif.h"
 #endif
+#endif  
 
   !Module parameters  
 
@@ -136,14 +147,23 @@ CONTAINS
     INTEGER(INTG), INTENT(OUT) :: err !<The error code
     TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
     !Local Variables
+#ifdef WITH_MPI    
     INTEGER(INTG) :: mpiIError
-
+#endif
+    
     ENTERS("Computation_ComputationNodeInitialise",err,error,*999)
 
     computationNode%numberOfProcessors=1
     computationNode%rank=rank
+#ifdef WITH_MPI
+#ifdef WITH_F08_MPI
+    CALL MPI_Get_processor_name(computationNode%nodeName,computationNode%nodeNameLength,mpiIError)
+    CALL MPI_ErrorCheck("MPI_Get_processor_name",mpiIError,err,error,*999)
+#else
     CALL MPI_GET_PROCESSOR_NAME(computationNode%nodeName,computationNode%nodeNameLength,mpiIError)
     CALL MPI_ErrorCheck("MPI_GET_PROCESSOR_NAME",mpiIError,err,error,*999)
+#endif    
+#endif    
     
     EXITS("Computation_ComputationNodeInitialise")
     RETURN
@@ -165,21 +185,35 @@ CONTAINS
     INTEGER(INTG), INTENT(OUT) :: err !<The error code
     TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
     !Local Variables
-    INTEGER(INTG) :: blockIdx,mpiIError
+    INTEGER(INTG) :: blockIdx
+#ifdef WITH_MPI    
+    INTEGER(INTG) :: mpiIError
+#endif    
 
     ENTERS("Computation_MPIComputationNodeFinalise",err,error,*999)
 
     DO blockIdx=1,mpiComputationNode%numberOfBlocks
-      mpiComputationNode%types(blockIdx)=0
+#ifdef WITH_MPI      
+      mpiComputationNode%types(blockIdx)=MPI_DATATYPE_NULL
+#endif      
       mpiComputationNode%blockLengths(blockIdx)=0
       mpiComputationNode%displacements(blockIdx)=0
     ENDDO !blockIdx
     mpiComputationNode%numberOfBlocks=0
 
+#ifdef WITH_MPI
+#ifdef WITH_F08_MPI
+    IF(mpiComputationNode%mpiType/=MPI_DATATYPE_NULL) THEN
+      CALL MPI_Type_free(mpiComputationNode%mpiType,mpiIError)
+      CALL MPI_ErrorCheck("MPI_Type_free",mpiIError,err,error,*999)
+    ENDIF
+#else
     IF(mpiComputationNode%mpiType/=MPI_DATATYPE_NULL) THEN
       CALL MPI_TYPE_FREE(mpiComputationNode%mpiType,mpiIError)
       CALL MPI_ErrorCheck("MPI_TYPE_FREE",mpiIError,err,error,*999)
     ENDIF
+#endif    
+#endif    
 
     EXITS("Computation_MPIComputationNodeFinalise")
     RETURN
@@ -202,7 +236,10 @@ CONTAINS
     INTEGER(INTG), INTENT(OUT) :: err !<The error code
     TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
     !Local Variables
-    INTEGER(INTG) :: blockIdx,dummyErr,mpiIError
+    INTEGER(INTG) :: blockIdx,dummyErr
+#ifdef WITH_MPI
+    INTEGER(INTG) :: mpiIError
+#endif    
     TYPE(VARYING_STRING) :: dummyError,localError
 
     ENTERS("Computation_MPIComputationNodeInitialise",err,error,*998)
@@ -217,26 +254,44 @@ CONTAINS
       CALL FlagError(localError,err,error,*999)
     ENDIF
 
+#ifdef WITH_MPI    
     computationEnvironment%mpiComputationNode%mpiType=MPI_DATATYPE_NULL
     
     computationEnvironment%mpiComputationNode%numberOfBlocks=4
     computationEnvironment%mpiComputationNode%types=[MPI_INTEGER,MPI_INTEGER,MPI_INTEGER,MPI_CHARACTER]
     computationEnvironment%mpiComputationNode%blockLengths=[1,1,1,MPI_MAX_PROCESSOR_NAME]
-		
-    CALL MPI_GET_ADDRESS(computationEnvironment%computationNodes(rank)%numberOfProcessors, &
+
+#ifdef WITH_F08_MPI
+    CALL MPI_Get_address(computationEnvironment%computationNodes(rank)%numberOfProcessors, &
+      & computationEnvironment%mpiComputationNode%displacements(1),mpiIError)
+    CALL MPI_ErrorCheck("MPI_Get_address",mpiIError,err,error,*999)
+    CALL MPI_Get_address(computationEnvironment%computationNodes(rank)%rank, &
+      & computationEnvironment%mpiComputationNode%displacements(2),mpiIError)
+    CALL MPI_ErrorCheck("MPI_Get_address",mpiIError,err,error,*999)
+    CALL MPI_Get_address(computationEnvironment%computationNodes(rank)%nodeNameLength, &
+      & computationEnvironment%mpiComputationNode%displacements(3),mpiIError)
+    CALL MPI_ErrorCheck("MPI_Get_address",mpiIError,err,error,*999)
+    CALL MPI_Get_address(computationEnvironment%computationNodes(rank)%nodeName, &
+      & computationEnvironment%mpiComputationNode%displacements(4),mpiIError)
+    CALL MPI_ErrorCheck("MPI_Get_address",mpiIError,err,error,*999)
+#else
+    ! NOTE: WRAP FIRST ARGUMENT IN MPI_GET_ADDRESS IN C_LOC TO GET AROUND TYPE MATCHING PROBLEMS
+    CALL MPI_GET_ADDRESS(C_LOC(computationEnvironment%computationNodes(rank)%numberOfProcessors), &
       & computationEnvironment%mpiComputationNode%displacements(1),mpiIError)
     CALL MPI_ErrorCheck("MPI_GET_ADDRESS",mpiIError,err,error,*999)
-    CALL MPI_GET_ADDRESS(computationEnvironment%computationNodes(rank)%rank, &
+    CALL MPI_GET_ADDRESS(C_LOC(computationEnvironment%computationNodes(rank)%rank), &
       & computationEnvironment%mpiComputationNode%displacements(2),mpiIError)
     CALL MPI_ErrorCheck("MPI_GET_ADDRESS",mpiIError,err,error,*999)
-    CALL MPI_GET_ADDRESS(computationEnvironment%computationNodes(rank)%nodeNameLength, &
+    CALL MPI_GET_ADDRESS(C_LOC(computationEnvironment%computationNodes(rank)%nodeNameLength), &
       & computationEnvironment%mpiComputationNode%displacements(3),mpiIError)
     CALL MPI_ErrorCheck("MPI_GET_ADDRESS",mpiIError,err,error,*999)
     !CPB 19/02/07 AIX compiler complains about the type of the first parameter i.e., the previous 3 have been integers
     !and this one is not so cast the type.
-    CALL MPI_GET_ADDRESS(computationEnvironment%computationNodes(rank)%nodeName, &
+    CALL MPI_GET_ADDRESS(C_LOC(computationEnvironment%computationNodes(rank)%nodeName), &
       & computationEnvironment%mpiComputationNode%displacements(4),mpiIError)
     CALL MPI_ErrorCheck("MPI_GET_ADDRESS",mpiIError,err,error,*999)
+#endif
+#endif    
 
     DO blockIdx=4,1,-1
       computationEnvironment%mpiComputationNode%displacements(blockIdx)= &
@@ -244,6 +299,18 @@ CONTAINS
         & computationEnvironment%mpiComputationNode%displacements(1)
     ENDDO !blockIdx
 
+#ifdef WITH_MPI
+#ifdef WITH_F08_MPI
+    CALL MPI_Type_create_struct(computationEnvironment%mpiComputationNode%numberOfBlocks, &
+      & computationEnvironment%mpiComputationNode%blockLengths, &
+      & computationEnvironment%mpiComputationNode%displacements, &
+      & computationEnvironment%mpiComputationNode%types, &
+      & computationEnvironment%mpiComputationNode%mpiType,mpiIError)
+    CALL MPI_ErrorCheck("MPI_Type_create_struct",mpiIError,err,error,*999)
+
+    CALL MPI_Type_commit(computationEnvironment%mpiComputationNode%mpiType,mpiIError)
+    CALL MPI_ErrorCheck("MPI_Type_Commit",mpiIError,err,error,*999)
+#else
     CALL MPI_TYPE_CREATE_STRUCT(computationEnvironment%mpiComputationNode%numberOfBlocks, &
       & computationEnvironment%mpiComputationNode%blockLengths, &
       & computationEnvironment%mpiComputationNode%displacements, &
@@ -253,19 +320,33 @@ CONTAINS
 
     CALL MPI_TYPE_COMMIT(computationEnvironment%mpiComputationNode%mpiType,mpiIError)
     CALL MPI_ErrorCheck("MPI_TYPE_COMMIT",mpiIError,err,error,*999)
+#endif    
+#endif
     
     IF(diagnostics1) THEN
       CALL WriteString(DIAGNOSTIC_OUTPUT_TYPE,"MPI Computation Node Type Data:",err,error,*999)
+#ifdef WITH_MPI
+#ifndef WITH_F08_MPI      
       CALL WriteStringValue(DIAGNOSTIC_OUTPUT_TYPE,"  MPI type = ", &
         & computationEnvironment%mpiComputationNode%mpiType,err,error,*999)
+#endif      
+#endif      
       CALL WriteStringValue(DIAGNOSTIC_OUTPUT_TYPE,"  Number of blocks  = ", &
         & computationEnvironment%mpiComputationNode%numberOfBlocks,err,error,*999)
+#ifdef WITH_MPI
+#ifndef WITH_F08_MPI      
       CALL WriteStringVector(DIAGNOSTIC_OUTPUT_TYPE,1,1,computationEnvironment%mpiComputationNode%numberOfBlocks,4,4, &
         & computationEnvironment%mpiComputationNode%types,'("  Block types =",4(X,I15))','(15X,4(X,I15))',err,error,*999)
+#endif      
+#endif      
       CALL WriteStringVector(DIAGNOSTIC_OUTPUT_TYPE,1,1,computationEnvironment%mpiComputationNode%numberOfBlocks,8,8, &
         & computationEnvironment%mpiComputationNode%blockLengths,'("  Block lengths =",8(X,I5))','(17X,8(X,I5))',err,error,*999)
+#ifdef WITH_MPI
+#ifndef WITH_F08_MPI      
       CALL WriteStringVector(DIAGNOSTIC_OUTPUT_TYPE,1,1,computationEnvironment%mpiComputationNode%numberOfBlocks,8,8, &
         & computationEnvironment%mpiComputationNode%displacements,'("  Displacements =",8(X,I5))','(17X,8(X,I5))',err,error,*999)
+#endif      
+#endif      
     ENDIF
 
     EXITS("Computation_MPIComputationNodeInitialise")
@@ -354,7 +435,10 @@ CONTAINS
     INTEGER(INTG), INTENT(OUT) :: err !<The error code
     TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
     !Local Variables
-    INTEGER(INTG) :: computationNodeIdx,mpiIError
+    INTEGER(INTG) :: computationNodeIdx
+#ifdef WITH_MPI
+    INTEGER(INTG) :: mpiIError
+#endif    
 
     ENTERS("Computation_EnvironmentFinalise",err,error,*999)
 
@@ -369,7 +453,18 @@ CONTAINS
       computationEnvironment%numberOfWorldComputationNodes=0
       
       CALL Computation_MPIComputationNodeFinalise(computationEnvironment%mpiComputationNode,err,error,*999)
-      
+
+#ifdef WITH_MPI
+#ifdef WITH_F08_MPI
+      IF(computationEnvironment%mpiGroupWorld /= MPI_GROUP_NULL) THEN
+        CALL MPI_Group_free(computationEnvironment%mpiGroupWorld,mpiIError)
+        CALL MPI_ErrorCheck("MPI_Group_free",mpiIError,err,error,*999)
+      ENDIF
+      IF(computationEnvironment%mpiCommWorld /= MPI_COMM_NULL) THEN
+        CALL MPI_Comm_free(computationEnvironment%mpiCommWorld,mpiIError)
+        CALL MPI_ErrorCheck("MPI_Comm_free",mpiIError,err,error,*999)
+      ENDIF
+#else      
       IF(computationEnvironment%mpiGroupWorld /= MPI_GROUP_NULL) THEN
         CALL MPI_GROUP_FREE(computationEnvironment%mpiGroupWorld,mpiIError)
         CALL MPI_ErrorCheck("MPI_GROUP_FREE",mpiIError,err,error,*999)
@@ -378,6 +473,8 @@ CONTAINS
         CALL MPI_COMM_FREE(computationEnvironment%mpiCommWorld,mpiIError)
         CALL MPI_ErrorCheck("MPI_COMM_FREE",mpiIError,err,error,*999)
       ENDIF
+#endif      
+#endif      
     
       DEALLOCATE(computationEnvironment)
     ENDIF
@@ -417,12 +514,34 @@ CONTAINS
     context%computationEnvironment%context=>context
     context%computationEnvironment%mpiVersion=0
     context%computationEnvironment%mpiSubversion=0
+#ifdef WITH_MPI    
     context%computationEnvironment%mpiCommWorld=MPI_COMM_NULL
     context%computationEnvironment%mpiGroupWorld=MPI_GROUP_NULL
+#endif    
     context%computationEnvironment%numberOfWorldComputationNodes=0
     context%computationEnvironment%myWorldComputationNodeNumber=-1
     NULLIFY(context%computationEnvironment%worldWorkGroup)
 
+#ifdef WITH_MPI
+#ifdef WITH_F08_MPI
+    !Get the version of MPI that we are running with
+    CALL MPI_Get_version(context%computationEnvironment%mpiVersion,context%computationEnvironment%mpiSubversion,mpiIError)
+    CALL MPI_ErrorCheck("MPI_Get_versoni",mpiIError,err,error,*999)
+    
+    !Create a (private) communicator for OpenCMISS as a duplicate MPI_COMM_WORLD
+    CALL MPI_Comm_dup(MPI_COMM_WORLD,context%computationEnvironment%mpiCommWorld,mpiIError)
+    CALL MPI_ErrorCheck("MPI_Comm_dup",mpiIError,err,error,*999)
+    !Get the default MPI_COMM_GROUP for the world communicator
+    CALL MPI_Comm_group(context%computationEnvironment%mpiCommWorld,context%computationEnvironment%mpiGroupWorld,mpiIError)
+    CALL MPI_ErrorCheck("MPI_Comm_group",mpiIError,err,error,*999)
+    !Set the default MPI world communicator to be the cloned communicator
+    context%computationEnvironment%mpiCommWorld=context%computationEnvironment%mpiCommWorld
+    
+    !Determine the number of ranks/computation nodes we have in our world computation environment
+    CALL MPI_Comm_size(context%computationEnvironment%mpiCommWorld,context%computationEnvironment%numberOfWorldComputationNodes, &
+      & mpiIError)
+    CALL MPI_ErrorCheck("MPI_Comm_size",mpiIError,err,error,*999)
+#else    
     !Get the version of MPI that we are running with
     CALL MPI_GET_VERSION(context%computationEnvironment%mpiVersion,context%computationEnvironment%mpiSubversion,mpiIError)
     CALL MPI_ErrorCheck("MPI_GET_VERSION",mpiIError,err,error,*999)
@@ -440,33 +559,47 @@ CONTAINS
     CALL MPI_COMM_SIZE(context%computationEnvironment%mpiCommWorld,context%computationEnvironment%numberOfWorldComputationNodes, &
       & mpiIError)
     CALL MPI_ErrorCheck("MPI_COMM_SIZE",mpiIError,err,error,*999)
-
+#endif    
+#endif
+    
     !Allocate the computation node data structures
     ALLOCATE(context%computationEnvironment%computationNodes(0:context%computationEnvironment%numberOfWorldComputationNodes-1), &
       & STAT=err)
     IF(err/=0) CALL FlagError("Could not allocate computation environment computation nodes.",err,error,*999)
 
+#ifdef WITH_MPI
     !Determine my processes rank in the world communicator
+#ifdef WITH_F08_MPI
+    CALL MPI_Comm_rank(context%computationEnvironment%mpiCommWorld,rank,mpiIError)
+    CALL MPI_ErrorCheck("MPI_Comm_rank",mpiIError,err,error,*999)
+#else    
     CALL MPI_COMM_RANK(context%computationEnvironment%mpiCommWorld,rank,mpiIError)
     CALL MPI_ErrorCheck("MPI_COMM_RANK",mpiIError,err,error,*999)
+#endif    
     context%computationEnvironment%myWorldComputationNodeNumber=rank
-    
-#ifdef TAUPROF
-    CALL TAU_PROFILE_SET_NODE(rank)
-#endif
-    
+#endif    
+   
     !Create the MPI type information for the ComputationNodeType
     CALL Computation_MPIComputationNodeInitialise(context%computationEnvironment,rank,err,error,*999)
     !Fill in all the computation node data structures for this rank at the root position (will be changed later with an
     !allgather call)
     CALL Computation_ComputationNodeInitialise(context%computationEnvironment%computationNodes(0),rank,err,error,*999)
 
+#ifdef WITH_MPI    
     !Now transfer all the computation node information to the other computation nodes so that each rank has all the
     !information.
+#ifdef WITH_F08_MPI
+    CALL MPI_Allgather(MPI_IN_PLACE,1,context%computationEnvironment%mpiComputationNode%mpiType, &
+      & context%computationEnvironment%computationNodes(0),1,context%computationEnvironment%mpiComputationNode%mpiType, &
+      & context%computationEnvironment%mpiCommWorld,mpiIError)
+    CALL MPI_ErrorCheck("MPI_Allgather",mpiIError,err,error,*999)
+#else    
     CALL MPI_ALLGATHER(MPI_IN_PLACE,1,context%computationEnvironment%mpiComputationNode%mpiType, &
       & context%computationEnvironment%computationNodes(0),1,context%computationEnvironment%mpiComputationNode%mpiType, &
       & context%computationEnvironment%mpiCommWorld,mpiIError)
     CALL MPI_ErrorCheck("MPI_ALLGATHER",mpiIError,err,error,*999)
+#endif    
+#endif    
     
     !Setup the world work group.
     !Initialise
@@ -490,6 +623,25 @@ CONTAINS
     ENDDO !rankIdx
     context%computationEnvironment%worldWorkGroup%numberOfAvailableRanks= &
       & context%computationEnvironment%numberOfWorldComputationNodes
+#ifdef WITH_MPI
+#ifdef WITH_F08_MPI
+    !Create a new MPI group
+    CALL MPI_Group_incl(context%computationEnvironment%mpiGroupWorld, &
+      & context%computationEnvironment%worldWorkGroup%numberOfGroupComputationNodes, &
+      & context%computationEnvironment%worldWorkGroup%worldRanks, &
+      & context%computationEnvironment%worldWorkGroup%mpiGroup,mpiIError)
+    CALL MPI_ErrorCheck("MPI_Group_incl",mpiIError,err,error,*999)    
+    CALL MPI_Comm_create(context%computationEnvironment%mpiCommWorld, &
+      & context%computationEnvironment%worldWorkGroup%mpiGroup, &
+      & context%computationEnvironment%worldWorkGroup%mpiGroupCommunicator,mpiIError)
+    CALL MPI_ErrorCheck("MPI_Comm_create",mpiIError,err,error,*999)
+    !Determine ranks
+    CALL MPI_Comm_rank(context%computationEnvironment%mpiCommWorld,rank,mpiIError)
+    CALL MPI_ErrorCheck("MPI_Comm_rank",mpiIError,err,error,*999)
+    context%computationEnvironment%worldWorkGroup%myWorldComputationNodeNumber=rank
+    CALL MPI_Comm_rank(context%computationEnvironment%worldWorkGroup%mpiGroupCommunicator,rank,mpiIError)
+    CALL MPI_ErrorCheck("MPI_Comm_rank",mpiIError,err,error,*999)
+#else    
     !Create a new MPI group
     CALL MPI_GROUP_INCL(context%computationEnvironment%mpiGroupWorld, &
       & context%computationEnvironment%worldWorkGroup%numberOfGroupComputationNodes, &
@@ -506,7 +658,9 @@ CONTAINS
     context%computationEnvironment%worldWorkGroup%myWorldComputationNodeNumber=rank
     CALL MPI_COMM_RANK(context%computationEnvironment%worldWorkGroup%mpiGroupCommunicator,rank,mpiIError)
     CALL MPI_ErrorCheck("MPI_COMM_RANK",mpiIError,err,error,*999)
+#endif    
     context%computationEnvironment%worldWorkGroup%myGroupComputationNodeNumber=rank
+#endif    
     
     context%computationEnvironment%worldWorkGroup%workGroupFinished=.TRUE.
     
@@ -518,10 +672,14 @@ CONTAINS
           & context%computationEnvironment%mpiVersion,err,error,*999)
         CALL WriteStringValue(DIAGNOSTIC_OUTPUT_TYPE,"  MPI subversion = ", &
           & context%computationEnvironment%mpiSubversion,err,error,*999)
+#ifdef WITH_MPI
+#ifndef WITH_F08_MPI        
         CALL WriteStringValue(DIAGNOSTIC_OUTPUT_TYPE,"  MPI world communicator = ", &
           & context%computationEnvironment%mpiCommWorld,err,error,*999)
         CALL WriteStringValue(DIAGNOSTIC_OUTPUT_TYPE,"  MPI world group = ", &
           & context%computationEnvironment%mpiGroupWorld,err,error,*999)
+#endif        
+#endif        
         CALL WriteStringValue(DIAGNOSTIC_OUTPUT_TYPE,"  Number of world computation nodes = ", &
           & context%computationEnvironment%numberOfWorldComputationNodes,err,error,*999)
         CALL WriteStringValue(DIAGNOSTIC_OUTPUT_TYPE,"  My world computation node number = ", &
@@ -663,6 +821,28 @@ CONTAINS
 
     NULLIFY(computationEnvironment)
     CALL WorkGroup_ComputationEnvironmentGet(workGroup,computationEnvironment,err,error,*999)
+#ifdef WITH_MPI
+#ifdef WITH_F08_MPI
+    !Create a new MPI group
+    CALL MPI_Group_incl(workGroup%computationEnvironment%mpiGroupWorld,workGroup%numberOfGroupComputationNodes, &
+      & workGroup%worldRanks,workGroup%mpiGroup,mpiIError)
+    CALL MPI_ErrorCheck("MPI_Group_incl",mpiIError,err,error,*999)    
+    CALL MPI_Comm_create(computationEnvironment%mpiCommWorld,workGroup%mpiGroup,workGroup%mpiGroupCommunicator,mpiIError)
+    CALL MPI_ErrorCheck("MPI_Comm_create",mpiIError,err,error,*999)
+    
+    !Determine my processes rank in the group communicator
+    IF(workGroup%mpiGroupCommunicator /= MPI_COMM_NULL) THEN
+      CALL MPI_Comm_rank(workGroup%mpiGroupCommunicator,groupRank,mpiIError)
+      CALL MPI_ErrorCheck("MPI_Comm_rank",mpiIError,err,error,*999)
+      workGroup%myGroupComputationNodeNumber=groupRank
+    ELSE
+      workGroup%myGroupComputationNodeNumber=-1
+    ENDIF
+    !Determine my process rank in the world communicator
+    CALL MPI_Comm_rank(computationEnvironment%mpiCommWorld,worldRank,mpiIError)
+    CALL MPI_ErrorCheck("MPI_Comm_rank",mpiIError,err,error,*999)
+    workGroup%myWorldComputationNodeNumber=worldRank
+#else    
     !Create a new MPI group
     CALL MPI_GROUP_INCL(workGroup%computationEnvironment%mpiGroupWorld,workGroup%numberOfGroupComputationNodes, &
       & workGroup%worldRanks,workGroup%mpiGroup,mpiIError)
@@ -682,7 +862,8 @@ CONTAINS
     CALL MPI_COMM_RANK(computationEnvironment%mpiCommWorld,worldRank,mpiIError)
     CALL MPI_ErrorCheck("MPI_COMM_RANK",mpiIError,err,error,*999)
     workGroup%myWorldComputationNodeNumber=worldRank
-
+#endif    
+#endif
 
     workGroup%workGroupFinished=.TRUE.
     
@@ -844,6 +1025,17 @@ CONTAINS
         ENDDO !subGroupIdx
         DEALLOCATE(workGroup%subGroups)
       ENDIF
+#ifdef WITH_MPI
+#ifdef WITH_F08_MPI
+      IF(workGroup%mpiGroupCommunicator/=MPI_COMM_NULL) THEN
+        CALL MPI_Comm_free(workGroup%mpiGroupCommunicator,mpiIError) 
+        CALL MPI_ErrorCheck("MPI_Comm_free",mpiIError,err,error,*999)
+      ENDIF
+      IF(workGroup%mpiGroup/=MPI_GROUP_NULL) THEN
+        CALL MPI_Group_free(workGroup%mpiGroup,mpiIError) 
+        CALL MPI_ErrorCheck("MPI_Group_free",mpiIError,err,error,*999)
+      ENDIF
+#else      
       IF(workGroup%mpiGroupCommunicator/=MPI_COMM_NULL) THEN
         CALL MPI_COMM_FREE(workGroup%mpiGroupCommunicator,mpiIError) 
         CALL MPI_ErrorCheck("MPI_COMM_FREE",mpiIError,err,error,*999)
@@ -852,6 +1044,8 @@ CONTAINS
         CALL MPI_GROUP_FREE(workGroup%mpiGroup,mpiIError) 
         CALL MPI_ErrorCheck("MPI_GROUP_FREE",mpiIError,err,error,*999)
       ENDIF
+#endif      
+#endif      
       DEALLOCATE(workGroup)
     ENDIF
     
@@ -891,8 +1085,10 @@ CONTAINS
     workGroup%numberOfAvailableRanks=0
     workGroup%numberOfSubGroups=0
     NULLIFY(workGroup%computationEnvironment)
+#ifdef WITH_MPI    
     workGroup%mpiGroupCommunicator=MPI_COMM_NULL
     workGroup%mpiGroup=MPI_GROUP_NULL
+#endif    
     workGroup%myGroupComputationNodeNumber=0
     workGroup%myWorldComputationNodeNumber=0
     
@@ -998,5 +1194,5 @@ CONTAINS
   !
   !=================================================================================================================================
   !
-
+ 
 END MODULE ComputationRoutines

@@ -1,7 +1,7 @@
 #!/usr/bin/env python
 
 """
-Find problems with the diagnostics enters, exits and errors or DLLEXPORT statemtnts in OpenCMISS Fortran source.
+Find problems with the diagnostics enters, exits and errors or DLLEXPORT statements in OpenCMISS Fortran source.
 This script will read all *.F90 source files in a given source path and check the following
 for subroutines and functions:
  - That the names in DLLEXPORT statements match the routine name.
@@ -71,9 +71,13 @@ ignore_routines = ["Enters","Exits","Errors","ExtractErrorMessageVS","ExtractErr
 		"WriteStringVectorLIntg","WriteStringVectorL","WriteStringVectorSP","WriteStringIdxVectorDP",
 		"WriteStringIdxVectorIntg","WriteStringIdxVectorLIntg","WriteStringIdxVectorL",
 		"WriteStringIdxVectorSP","WriteStringMatrixDP","WriteStringMatrixIntg","WriteStringMatrixLIntg",
-		"WriteStringMatrixL","WriteStringMatrixSP","cmfe_FinaliseNumber","cmfe_FinaliseObj","cmfe_InitialiseNumber",
-		"cmfe_InitialiseObj","cmfe_ExtractErrorMessageC","cmfe_ExtractErrorMessageVS","cmfe_ExtractErrorStackC",
-		"cmfe_ExtractErrorStackVS","cmfe_Finalise_","cmfe_Initialise_","cmfe_HandleError","CMISSC2FString",
+		"WriteStringMatrixL","WriteStringMatrixSP","WriteStringMatrixFourDP","WriteStringMatrixFourIntg",
+                "WriteStringMatrixFourLIntg","WriteStringMatrixFourL","WriteStringMatrixFourSP",
+                "WriteStringMatrixTransposeDP","WriteStringMatrixTransposeIntg",
+                "WriteStringMatrixTransposeLIntg","WriteStringMatrixTransposeL","WriteStringMatrixTransposeSP",
+                "OC_FinaliseNumber","OC_FinaliseObj","OC_InitialiseNumber",
+		"OC_InitialiseObj","OC_ExtractErrorMessageC","OC_ExtractErrorMessageVS","OC_ExtractErrorStackC",
+		"OC_ExtractErrorStackVS","OC_Finalise_","OC_Initialise_","OC_HandleError","CMISSC2FString",
 		"CMISSF2CString","CMISSC2FStrings",
 		"clooping","ElasticDil","StateVarsIntegrator","deviatorBepr","UpdateFibersHomeo","nonlinearfuncs",
 		"alpha1B","ElasticMeasures","Constitutive","umat","SmoothMultiPhase","ElasticTrialDist","EquivStrain",

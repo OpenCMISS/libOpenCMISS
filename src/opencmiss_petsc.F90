@@ -1,6 +1,6 @@
 !> \file
 !> \author Chris Bradley
-!> \brief This module is a CMISS buffer module to the PETSc library.
+!> \brief This module is a OpenCMISS buffer module to the PETSc library.
 !>
 !> \section LICENSE
 !>
@@ -41,99 +41,132 @@
 !> the terms of any one of the MPL, the GPL or the LGPL.
 !>
 
-!> \defgroup OpenCMISS_PETSc OpenCMISS::Iron::PETSc
-!> This module is a CMISS buffer module to the PETSc library.
-MODULE CMISSPetsc
+!> \defgroup OpenCMISS_PETSc OpenCMISS::PETSc
+!> This module is an OpenCMISS buffer module to the PETSc library.
+MODULE OpenCMISSPETSc
   
   USE BaseRoutines
-  USE CMISSPetscTypes
+  USE OpenCMISSPetscTypes
   USE Kinds
   USE ISO_VARYING_STRING
+#ifdef WITH_MPI
+#ifdef WITH_F08_MPI
+  USE MPI_F08
+#endif  
+#endif  
   USE Strings
   USE Types
   
 #include "macros.h"
-
+  
+#include "petscversion.h"
+#include "petsc/finclude/petsc.h"
+  USE petsc
+#include "petsc/finclude/petsctao.h"
+  USE petsctao
+  
   IMPLICIT NONE
  
   PRIVATE
-
-#include "petscversion.h"
-#include "petsc/finclude/petsc.h"
   
   !Module parameters
 
-  !> \addtogroup PETSc_PetscMatInsertModes OpenCMISS::Iron::PETSc::Constants
+  !> \addtogroup PETSc_PetscMatInsertModes OpenCMISS::PETSc::Constants
   !> \brief OpenCMISS PETSc constants
-  !> \see CMISSPetsc
+  !> \see OpenCMISSPETSc
   !>@{
   
   !Insert mode types
-  !> \addtogroup CMISSPetsc_PetscMatInsertModes OpenCMISS::Iron::PETSc::Constants::PetscMatInsertModes
+  !> \addtogroup OpenCMISSPETSc_PetscMatInsertModes OpenCMISS::PETSc::Constants::PetscMatInsertModes
   !> \brief Types of PETSc matrix insert modes
-  !> \see CMISSPetsc
+  !> \see OpenCMISSPETSc
   !>@{
+  InsertMode, PARAMETER :: PETSC_NOT_SET_VALUES = NOT_SET_VALUES !<Do not actually use the values
   InsertMode, PARAMETER :: PETSC_INSERT_VALUES = INSERT_VALUES !<Values set in a matrix will overwrite any previous values
   InsertMode, PARAMETER :: PETSC_ADD_VALUES = ADD_VALUES !<Values set in a matrix will add to any previous values
+  InsertMode, PARAMETER :: PETSC_MAX_VALUES = MAX_VALUES !<Use the maximum of each current value and the provided value
+  InsertMode, PARAMETER :: PETSC_MIN_VALUES = MIN_VALUES !<Use the minimum of each current value and the provided value
+  InsertMode, PARAMETER :: PETSC_INSERT_ALL_VALUES = INSERT_ALL_VALUES !<Insert, even if indices that are not marked as constrained by the PetscSection
+  InsertMode, PARAMETER :: PETSC_ADD_ALL_VALUES = ADD_ALL_VALUES !<Add, even if indices that are not marked as constrained by the PetscSection
+  InsertMode, PARAMETER :: PETSC_INSERT_BC_VALUES = INSERT_BC_VALUES !<Insert, but ignore indices that are marked as constrained by the PetscSection
+  InsertMode, PARAMETER :: PETSC_ADD_BC_VALUES = ADD_BC_VALUES !<Add, but ignore indices that are marked as constrained by the PetscSection
   !>@}
   
   !Scatter mode types
-  !> \addtogroup CMISSPetsc_PetscScatterModes OpenCMISS::Iron::PETSc::Constants::PetscScatterModes
+  !> \addtogroup OpenCMISSPETSc_PetscScatterModes OpenCMISS::PETSc::Constants::PetscScatterModes
   !> \brief Types of PETSc matrix insert modes
-  !> \see CMISSPetsc
+  !> \see OpenCMISSPETSc
   !>@{
-  ScatterMode, PARAMETER :: PETSC_SCATTER_FORWARD = SCATTER_FORWARD
-  ScatterMode, PARAMETER :: PETSC_SCATTER_REVERSE = SCATTER_REVERSE
+  ScatterMode, PARAMETER :: PETSC_SCATTER_FORWARD = SCATTER_FORWARD !<Scatters the values as dictated by the VecScatterCreate call
+  ScatterMode, PARAMETER :: PETSC_SCATTER_REVERSE = SCATTER_REVERSE !<Moves the values in the opposite direction than the directions indicated in the VecScatterCreate call
+  ScatterMode, PARAMETER :: PETSC_SCATTER_FORWARD_LOCAL = SCATTER_FORWARD_LOCAL !<Scatters the values as dictated by the VecScatterCreate call except NO MPI communication is done
+  ScatterMode, PARAMETER :: PETSC_SCATTER_REVERSE_LOCAL = SCATTER_REVERSE_LOCAL !<Moves the values in the opposite direction than the directions indicated in the VecScatterCreate call except NO MPI communication is done.
   !>@}
   
-  !KSP types
-  !> \addtogroup CMISSPetsc_PetscKSPTypes OpenCMISS::Iron::PETSc::Constants::PetscKSPTypes
-  !> \brief Types of PETSc KSP (Krylov Subspace) solvers
-  !> \see CMISSPetsc
+  !> \addtogroup OpenCMISSPETSc_PetscKSP OpenCMISS::PETSc::Constants::KSP
+  !> \brief Constants for PETSc KSP (Krylov Subspace) objects
+  !> \see OpenCMISSPETSc
   !>@{
-  KSPType, PARAMETER :: PETSC_KSPRICHARDSON = KSPRICHARDSON !<Preconditioned Richardson iterative solver
-  KSPType, PARAMETER :: PETSC_KSPCHEBYSHEV = KSPCHEBYSHEV !<Preconditioned Chebyshev iterative solver
-  KSPType, PARAMETER :: PETSC_KSPCG = KSPCG !<Preconditioned conjugate gradient (PCG) solver
-  KSPType, PARAMETER :: PETSC_KSPCGNE = KSPCGNE !<Pipelined conjugate gradient to the normal equations with explicitly forming A^t.A
-  KSPType, PARAMETER :: PETSC_KSPNASH = KSPNASH
-  KSPType, PARAMETER :: PETSC_KSPSTCG = KSPSTCG
-  KSPType, PARAMETER :: PETSC_KSPGLTR = KSPGLTR
-  KSPType, PARAMETER :: PETSC_KSPGMRES = KSPGMRES !<Generalised Minimal Residual solver
-  KSPType, PARAMETER :: PETSC_KSPFGMRES = KSPFGMRES !<Flexible Generalised Minimal Residual solver
-  KSPType, PARAMETER :: PETSC_KSPLGMRES = KSPLGMRES
-  KSPType, PARAMETER :: PETSC_KSPDGMRES = KSPDGMRES
-  KSPType, PARAMETER :: PETSC_KSPPGMRES = KSPPGMRES
-  KSPType, PARAMETER :: PETSC_KSPTCQMR = KSPTCQMR !<Tony Chan's Quasi Minimal Residual solver
-  KSPType, PARAMETER :: PETSC_KSPBCGS = KSPBCGS !<Stablised BiConjugate Gradient Squared solver
-  KSPType, PARAMETER :: PETSC_KSPIBCGS = KSPIBCGS
-  KSPType, PARAMETER :: PETSC_KSPFBCGS = KSPFBCGS
-  KSPType, PARAMETER :: PETSC_KSPFBCGSR = KSPFBCGSR
-  KSPType, PARAMETER :: PETSC_KSPBCGSL = KSPBCGSL
-  KSPType, PARAMETER :: PETSC_KSPCGS = KSPCGS !<Conjugate Gradient Squared solver
-  KSPType, PARAMETER :: PETSC_KSPTFQMR = KSPTFQMR !<Transpose Free Quasi Minimum Residual solver
-  KSPType, PARAMETER :: PETSC_KSPCR = KSPCR !<Preconditioned Conjugate Residuals method
-  KSPType, PARAMETER :: PETSC_KSPLSQR = KSPLSQR
-  KSPType, PARAMETER :: PETSC_KSPPREONLY = KSPPREONLY !<Stub solver that only applies the preconditioner.
-  KSPType, PARAMETER :: PETSC_KSPQCG = KSPQCG
-  KSPType, PARAMETER :: PETSC_KSPBICG = KSPBICG !<BiConjugate Gradient solver
-  KSPType, PARAMETER :: PETSC_KSPMINRES = KSPMINRES !<Minimum Residual solver
-  KSPType, PARAMETER :: PETSC_KSPSYMMLQ = KSPSYMMLQ
-  KSPType, PARAMETER :: PETSC_KSPLCD = KSPLCD !<Left Conjugate Direction solver
-  KSPType, PARAMETER :: PETSC_KSPPYTHON = KSPPYTHON
-  KSPType, PARAMETER :: PETSC_KSPGCR = KSPGCR !<Preconditioned Generalised Conjugate Resdiuals solver
+  !KSP types
+  !> \addtogroup OpenCMISSPETSc_PetscKSPTypes OpenCMISS::PETSc::Constants::KSP::KSPType
+  !> \brief Types of PETSc KSP (Krylov Subspace) solvers
+  !> \see OpenCMISSPETSc
+  !>@{
+  KSPType, PARAMETER :: PETSC_KSP_RICHARDSON = KSPRICHARDSON !<Preconditioned Richardson iterative solver
+  KSPType, PARAMETER :: PETSC_KSP_CHEBYSHEV = KSPCHEBYSHEV !<Preconditioned Chebyshev iterative solver
+  KSPType, PARAMETER :: PETSC_KSP_CG = KSPCG !<Preconditioned conjugate gradient (PCG) solver
+  KSPType, PARAMETER :: PETSC_KSP_GROPPCG = KSPGROPPCG !<Gropp's overlapped reduction conjugate gradient
+  KSPType, PARAMETER :: PETSC_KSP_PIPECG = KSPPIPECG !<Pipelined conjugate gradient
+  KSPType, PARAMETER :: PETSC_KSP_PIPECGRR = KSPPIPECGRR !<Pipelined conjugate gradient with residual replacement
+  KSPType, PARAMETER :: PETSC_KSP_PIPELCG = KSPPIPELCG !<Pipelined depth l conjugate gradient
+  KSPType, PARAMETER :: PETSC_KSP_PIPECG2 = KSPPIPECG2 !<Pipelined conjugate gradient over iteration pairs
+  KSPType, PARAMETER :: PETSC_KSP_CGNE = KSPCGNE !<Conjugate gradient on normal equations
+  KSPType, PARAMETER :: PETSC_KSP_NASH = KSPNASH !<Nash conjugate gradient with trust region constraint
+  KSPType, PARAMETER :: PETSC_KSP_STCG = KSPSTCG !<Conjugate graident with trust region constraint
+  KSPType, PARAMETER :: PETSC_KSP_GLTR = KSPGLTR !<Gould et al conjugate gradient with trust region constraint
+  KSPType, PARAMETER :: PETSC_KSP_FCG = KSPFCG !<Flexiable conjugate gradient
+  KSPType, PARAMETER :: PETSC_KSP_PIPEFCG = KSPPIPEFCG !<Pipelined flexiable conjugate gradient
+  KSPType, PARAMETER :: PETSC_KSP_GMRES = KSPGMRES !<Generalised Minimal Residual solver (GMRES)
+  KSPType, PARAMETER :: PETSC_KSP_PIPEFGMRES = KSPPIPEFGMRES !<Pipelined flexiable GMRES
+  KSPType, PARAMETER :: PETSC_KSP_FGMRES = KSPFGMRES !<Flexible GMRES
+  KSPType, PARAMETER :: PETSC_KSP_LGMRES = KSPLGMRES !<LGMRES
+  KSPType, PARAMETER :: PETSC_KSP_DGMRES = KSPDGMRES !<Deflated GMRES
+  KSPType, PARAMETER :: PETSC_KSP_PGMRES = KSPPGMRES !<Piplined GMRES
+  KSPType, PARAMETER :: PETSC_KSP_TCQMR = KSPTCQMR !<Tony Chan's Quasi Minimal Residual solver
+  KSPType, PARAMETER :: PETSC_KSP_BCGS = KSPBCGS !<Stablised BiConjugate Gradient Squared solver
+  KSPType, PARAMETER :: PETSC_KSP_IBCGS = KSPIBCGS !<Improved stabilised bi-conjugate gradient
+  KSPType, PARAMETER :: PETSC_KSP_QMRCGS = KSPQMRCGS !<QMR stabilised BiCGStab
+  KSPType, PARAMETER :: PETSC_KSP_FBCGS = KSPFBCGS !<Flexible stabilised bi-conjugate gradient
+  KSPType, PARAMETER :: PETSC_KSP_FBCGSR = KSPFBCGSR !<Flexible stabilised bi-conjugate gradient with fewer reductions
+  KSPType, PARAMETER :: PETSC_KSP_BCGSL = KSPBCGSL !<Stabilised bi-conjugate gradients with lenght l recurrence
+  KSPType, PARAMETER :: PETSC_KSP_PIPEBCGS = KSPPIPEBCGS !<Pipelined stabilised bi-conjugate gradients
+  KSPType, PARAMETER :: PETSC_KSP_CGS = KSPCGS !<Conjugate Gradient Squared solver
+  KSPType, PARAMETER :: PETSC_KSP_TFQMR = KSPTFQMR !<Transpose Free Quasi Minimum Residual solver
+  KSPType, PARAMETER :: PETSC_KSP_CR = KSPCR !<Conjugate Residuals
+  KSPType, PARAMETER :: PETSC_KSP_LSQR = KSPLSQR !LSQR
+  KSPType, PARAMETER :: PETSC_KSP_PREONLY = KSPPREONLY !<Stub solver that only applies the preconditioner.
+  KSPType, PARAMETER :: PETSC_KSP_QCG = KSPQCG !<Steinhaug conjugate gradient with trust region constraint
+  KSPType, PARAMETER :: PETSC_KSP_BICG = KSPBICG !<BiConjugate Gradient solver
+  KSPType, PARAMETER :: PETSC_KSP_MINRES = KSPMINRES !<Minimum Residual solver
+  KSPType, PARAMETER :: PETSC_KSP_SYMMLQ = KSPSYMMLQ !<SYMMLQ
+  KSPType, PARAMETER :: PETSC_KSP_LCD = KSPLCD !<Left Conjugate Direction solver
+  KSPType, PARAMETER :: PETSC_KSP_GCR = KSPGCR !<Generalised Conjugate Resdiuals solver
+  KSPType, PARAMETER :: PETSC_KSP_PIPEGCR = KSPPIPEGCR !<Pipelined generalised Conjugate Resdiuals solver
+  KSPType, PARAMETER :: PETSC_KSP_TSIRM = KSPTSIRM !<Two-stage with least squares residual minimisation
+  KSPType, PARAMETER :: PETSC_KSP_CGLS = KSPCGLS !<Conjugate gradient for least squares
+  KSPType, PARAMETER :: PETSC_KSP_FETIDP = KSPFETIDP !<FETI-DP (reduction to dual-primal sub-problem)
+  KSPType, PARAMETER :: PETSC_KSP_HPDDM = KSPHPDDM !<Generalised conjugate resiudal (with inner normalisation and deflated restarts)
   !>@}
   
   !KSPConvergedReason types
-  !> \addtogroup CMISSPetsc_PetscKSPConvergedReasons OpenCMISS::Iron::PETSc::Constants::PetscKSPConvergedReasons
+  !> \addtogroup OpenCMISSPETSc_PetscKSPConvergedReasons OpenCMISS::PETSc::Constants::KSP::KSPConvergedReason
   !> \brief Types of KSP converged reasons for PETSc KSP solvers
-  !> \see CMISSPetsc
+  !> \see OpenCMISSPETSc
   !>@{
   KSPConvergedReason, PARAMETER :: PETSC_KSP_CONVERGED_RTOL = KSP_CONVERGED_RTOL
   KSPConvergedReason, PARAMETER :: PETSC_KSP_CONVERGED_ATOL = KSP_CONVERGED_ATOL
   KSPConvergedReason, PARAMETER :: PETSC_KSP_CONVERGED_ITS = KSP_CONVERGED_ITS
-  KSPConvergedReason, PARAMETER :: PETSC_KSP_CONVERGED_ITERATING = KSP_CONVERGED_ITERATING
-  KSPConvergedReason, PARAMETER :: PETSC_KSP_CONVERGED_CG_NEG_CURVE = KSP_CONVERGED_CG_NEG_CURVE
-  KSPConvergedReason, PARAMETER :: PETSC_KSP_CONVERGED_CG_CONSTRAINED = KSP_CONVERGED_CG_CONSTRAINED
+  KSPConvergedReason, PARAMETER :: PETSC_KSP_CONVERGED_NEG_CURVE = KSP_CONVERGED_NEG_CURVE
   KSPConvergedReason, PARAMETER :: PETSC_KSP_CONVERGED_STEP_LENGTH = KSP_CONVERGED_STEP_LENGTH
   KSPConvergedReason, PARAMETER :: PETSC_KSP_CONVERGED_HAPPY_BREAKDOWN = KSP_CONVERGED_HAPPY_BREAKDOWN
   KSPConvergedReason, PARAMETER :: PETSC_KSP_DIVERGED_NULL = KSP_DIVERGED_NULL
@@ -148,51 +181,58 @@ MODULE CMISSPetsc
   !>@}
 
   !KSPNorm types
-  !> \addtogroup CMISSPetsc_PetscKSPNormTypes OpenCMISS::Iron::PETSc::Constants::PetscKSPNormTypes
+  !> \addtogroup OpenCMISSPETSc_PetscKSPNormTypes OpenCMISS::PETSc::Constants::KSP::KSPNormType
   !> \brief Types of KSP norm parameters for PETSc KSP solvers
-  !> \see CMISSPetsc
+  !> \see OpenCMISSPETSc
   !>@{
   KSPNormType, PARAMETER :: PETSC_KSP_NORM_NONE = KSP_NORM_NONE
   KSPNormType, PARAMETER :: PETSC_KSP_NORM_PRECONDITIONED = KSP_NORM_PRECONDITIONED
   KSPNormType, PARAMETER :: PETSC_KSP_NORM_UNPRECONDITIONED = KSP_NORM_UNPRECONDITIONED
   KSPNormType, PARAMETER :: PETSC_KSP_NORM_NATURAL = KSP_NORM_NATURAL
   !>@}
+  !>@}
 
-  !MatAssembly types
-  !> \addtogroup CMISSPetsc_PetscMatAssemblyTypes OpenCMISS::Iron::PETSc::Constants::PetscMatAssemblyTypes
-  !> \brief Types of Matrix assembly parameters for PETSc matrices
-  !> \see CMISSPetsc
+  !> \addtogroup OpenCMISSPETSc_PetscMatConstants OpenCMISS::PETSc::Constants::Mat
+  !> \brief Constants for PETSc matrices
+  !> \see OpenCMISSPETSc
   !>@{
-  MatAssemblyType, PARAMETER :: PETSC_MAT_FLUSH_ASSEMBLY = MAT_FLUSH_ASSEMBLY
-  MatAssemblyType, PARAMETER :: PETSC_MAT_FINAL_ASSEMBLY = MAT_FINAL_ASSEMBLY
+  !MatAssembly types
+  !> \addtogroup OpenCMISSPETSc_PetscMatAssemblyTypes OpenCMISS::PETSc::Constants::Mat::MatAssemblyType
+  !> \brief Types of Matrix assembly parameters for PETSc matrices
+  !> \see OpenCMISSPETSc
+  !>@{
+  MatAssemblyType, PARAMETER :: PETSC_MAT_FLUSH_ASSEMBLY = MAT_FLUSH_ASSEMBLY !<Continue to put values into the matrix
+  MatAssemblyType, PARAMETER :: PETSC_MAT_FINAL_ASSEMBLY = MAT_FINAL_ASSEMBLY !<Wish to use the matrix with the values currently in the matrix
   !>@}
 
   !MatDuplicate types
-  !> \addtogroup CMISSPetsc_PetscMatFactorTypes OpenCMISS::Iron::PETSc::Constants::PetscMatFactorTypes
-  !> \brief Types of Matrix factor parameters for PETSc matrices
-  !> \see CMISSPetsc
+  !> \addtogroup OpenCMISSPETSc_PetscMatDuplicateOptions OpenCMISS::PETSc::Constants::Mat::MatDuplicateOption
+  !> \brief Types of Matrix duplicate options
+  !> \see OpenCMISSPETSc
   !>@{
-  MatDuplicateOption, PARAMETER :: PETSC_MAT_DO_NOT_COPY_VALUES = MAT_DO_NOT_COPY_VALUES
-  MatDuplicateOption, PARAMETER :: PETSC_MAT_COPY_VALUES = MAT_COPY_VALUES
-  MatDuplicateOption, PARAMETER :: PETSC_MAT_SHARE_NONZERO_PATTERN = MAT_SHARE_NONZERO_PATTERN
+  MatDuplicateOption, PARAMETER :: PETSC_MAT_DO_NOT_COPY_VALUES = MAT_DO_NOT_COPY_VALUES !<Create matrix using the same nonzero pattern but use zero for the numerical values
+  MatDuplicateOption, PARAMETER :: PETSC_MAT_COPY_VALUES = MAT_COPY_VALUES !<Create the matrix with the same nonzero pattern and the same numerical values
+  MatDuplicateOption, PARAMETER :: PETSC_MAT_SHARE_NONZERO_PATTERN = MAT_SHARE_NONZERO_PATTERN !<Create matrix with the same non-zero pattern but do not copy the values.
   !>@}
 
-  !MatFactor types
-  !> \addtogroup CMISSPetsc_PetscMatFactorTypes OpenCMISS::Iron::PETSc::Constants::PetscMatFactorTypes
+  !MatFactor types,
+  !> \addtogroup OpenCMISSPETSc_PetscMatFactorTypes OpenCMISS::PETSc::Constants::Mat::MatFactorType
   !> \brief Types of Matrix factor parameters for PETSc matrices
-  !> \see CMISSPetsc
+  !> \see OpenCMISSPETSc
   !>@{
-  MatFactorType, PARAMETER :: PETSC_MAT_FACTOR_NONE = MAT_FACTOR_NONE
-  MatFactorType, PARAMETER :: PETSC_MAT_FACTOR_LU = MAT_FACTOR_LU
-  MatFactorType, PARAMETER :: PETSC_MAT_FACTOR_CHOLESKY = MAT_FACTOR_CHOLESKY
-  MatFactorType, PARAMETER :: PETSC_MAT_FACTOR_ILU = MAT_FACTOR_ILU
-  MatFactorType, PARAMETER :: PETSC_MAT_FACTOR_ICC = MAT_FACTOR_ICC
+  MatFactorType, PARAMETER :: PETSC_MAT_FACTOR_NONE = MAT_FACTOR_NONE !<No matrix factor 
+  MatFactorType, PARAMETER :: PETSC_MAT_FACTOR_LU = MAT_FACTOR_LU !<LU factorisation
+  MatFactorType, PARAMETER :: PETSC_MAT_FACTOR_CHOLESKY = MAT_FACTOR_CHOLESKY !<Cholesky factorisation
+  MatFactorType, PARAMETER :: PETSC_MAT_FACTOR_ILU = MAT_FACTOR_ILU !<ILU factorisation
+  MatFactorType, PARAMETER :: PETSC_MAT_FACTOR_ICC = MAT_FACTOR_ICC !<Incomplete Cholesky factorisation
+  MatFactorType, PARAMETER :: PETSC_MAT_FACTOR_ILUDT = MAT_FACTOR_ILUDT !<ILU factorisation with drop tolerances
+  MatFactorType, PARAMETER :: PETSC_MAT_FACTOR_QR = MAT_FACTOR_QR !<QR factorisation
   !>@}
 
   !MatInfo types
-  !> \addtogroup CMISSPetsc_PetscMatInfos OpenCMISS::Iron::PETSc::Constants::PetscMatInfos
+  !> \addtogroup OpenCMISSPETSc_PetscMatInfos OpenCMISS::PETSc::Constants::Mat::MatInfo
   !> \brief Matrix info parameters for PETSc matrices
-  !> \see CMISSPetsc
+  !> \see OpenCMISSPETSc
   !>@{
   MatInfo, PARAMETER :: PETSC_MAT_INFO_SIZE = MAT_INFO_SIZE
   MatInfo, PARAMETER :: PETSC_MAT_INFO_BLOCK_SIZE = MAT_INFO_BLOCK_SIZE
@@ -208,187 +248,224 @@ MODULE CMISSPetsc
   !>@}
 
   !MatInfoType types
-  !> \addtogroup CMISSPetsc_PetscMatInfoTypes OpenCMISS::Iron::PETSc::Constants::PetscMatInfoTypes
+  !> \addtogroup OpenCMISSPETSc_PetscMatInfoTypes OpenCMISS::PETSc::Constants::Mat::MatInfoType
   !> \brief Types of matrix info for PETSc matrices
-  !> \see CMISSPetsc
+  !> \see OpenCMISSPETSc
   !>@{
-  MatInfoType, PARAMETER :: PETSC_MAT_LOCAL = MAT_LOCAL
-  MatInfoType, PARAMETER :: PETSC_MAT_GLOBAL_MAX = MAT_GLOBAL_MAX
-  MatInfoType, PARAMETER :: PETSC_MAT_GLOBAL_SUM = MAT_GLOBAL_SUM
+  MatInfoType, PARAMETER :: PETSC_MAT_LOCAL = MAT_LOCAL !<Values for each MPI process part of the matrix
+  MatInfoType, PARAMETER :: PETSC_MAT_GLOBAL_MAX = MAT_GLOBAL_MAX !<Maximum of each value over all MPI processes
+  MatInfoType, PARAMETER :: PETSC_MAT_GLOBAL_SUM = MAT_GLOBAL_SUM !<Sum of each value over all MPI processes
   !>@}
   
   !MatOption types
-  !> \addtogroup CMISSPetsc_PetscMatOptions OpenCMISS::Iron::PETSc::Constants::PetscMatOptions
+  !> \addtogroup OpenCMISSPETSc_PetscMatOptions OpenCMISS::PETSc::Constants::Mat::MatOption
   !> \brief Types of matrix options for PETSc matrices
-  !> \see CMISSPetsc
+  !> \see OpenCMISSPETSc
   !>@{
-  MatOption, PARAMETER :: PETSC_MAT_ROW_ORIENTED = MAT_ROW_ORIENTED !<Matrix will be stored in a row orientated fashion.
-  MatOption, PARAMETER :: PETSC_MAT_NEW_NONZERO_LOCATIONS = MAT_NEW_NONZERO_LOCATIONS !<Any additions or insertions that would generate a new nonzero location are ignored.
+  MatOption, PARAMETER :: PETSC_MAT_SPD = MAT_SPD !<Matrix is symmetric and positive definite
   MatOption, PARAMETER :: PETSC_MAT_SYMMETRIC = MAT_SYMMETRIC !<Matrix is symmetric in terms of both structure and values.
   MatOption, PARAMETER :: PETSC_MAT_STRUCTURALLY_SYMMETRIC = MAT_STRUCTURALLY_SYMMETRIC !<Matrix has symmetric nonzero structure
-  MatOption, PARAMETER :: PETSC_MAT_NEW_DIAGONALS = MAT_NEW_DIAGONALS
+  MatOption, PARAMETER :: PETSC_MAT_HERMITIAN = MAT_HERMITIAN !<Hermitian matrix, the transpose is the complex conjugation
+  MatOption, PARAMETER :: PETSC_MAT_SYMMETRY_ETERNAL = MAT_SYMMETRY_ETERNAL !<Indicates the symmetry (or Hermitian structure) or its absense will persist through any changes to the matrix
+  MatOption, PARAMETER :: PETSC_MAT_STRUCTURAL_SYMMETRY_ETERNAL = MAT_STRUCTURAL_SYMMETRY_ETERNAL !<Indicates the structural symmetry or its absence will persist through any changes to the matrix
+  MatOption, PARAMETER :: PETSC_MAT_SPD_ETERNAL = MAT_SPD_ETERNAL !<Indicates the value of MAT_SPD (true or false) will persist through any changes to the matrix
+  
+  MatOption, PARAMETER :: PETSC_MAT_ROW_ORIENTED = MAT_ROW_ORIENTED !<Matrix will be stored in a row orientated fashion.
+  
+  MatOption, PARAMETER :: PETSC_MAT_NEW_NONZERO_LOCATIONS = MAT_NEW_NONZERO_LOCATIONS !<Any additions or insertions that would generate a new nonzero location are ignored.
+  MatOption, PARAMETER :: PETSC_MAT_FORCE_DIAGONAL_ENTRIES = MAT_FORCE_DIAGONAL_ENTRIES
   MatOption, PARAMETER :: PETSC_MAT_IGNORE_OFF_PROC_ENTRIES = MAT_IGNORE_OFF_PROC_ENTRIES !<Any entries that are for other processors will be dropped
   MatOption, PARAMETER :: PETSC_MAT_NEW_NONZERO_LOCATION_ERR = MAT_NEW_NONZERO_LOCATION_ERR !<Any addition or insertion that will generate a new nonzero location will produce an error
-  MatOption, PARAMETER :: PETSC_MAT_NEW_NONZERO_ALLOCATION_ERR = MAT_NEW_NONZERO_ALLOCATION_ERR !<Any addition or insertion tat would generate a new entry that has not been preallocated will produce an error
   MatOption, PARAMETER :: PETSC_MAT_USE_HASH_TABLE = MAT_USE_HASH_TABLE !<Use a hash table for matrix assembly in order to improve matrix searches
+  MatOption, PARAMETER :: PETSC_MAT_NO_OFF_PROC_ENTRIES = MAT_NO_OFF_PROC_ENTRIES !<Each process will only set values for its own rows.
+  MatOption, PARAMETER :: PETSC_SUBSET_OFF_PROC_ENTRIES = MAT_SUBSET_OFF_PROC_ENTRIES !<you know that the first assembly after setting this flag will set a superset of the off-process entries required for all subsequent assemblies.
+  
+  MatOption, PARAMETER :: PETSC_MAT_NEW_NONZERO_ALLOCATION_ERR = MAT_NEW_NONZERO_ALLOCATION_ERR !<Any addition or insertion tat would generate a new entry that has not been preallocated will produce an error
   MatOption, PARAMETER :: PETSC_MAT_KEEP_NONZERO_PATTERN = MAT_KEEP_NONZERO_PATTERN !<When MatZeroRows is called the zeroed entries are kept in the nonzero strucutre
   MatOption, PARAMETER :: PETSC_MAT_IGNORE_ZERO_ENTRIES = MAT_IGNORE_ZERO_ENTRIES !<Stop zero values from creating a zero location in the matrix 
   MatOption, PARAMETER :: PETSC_MAT_USE_INODES = MAT_USE_INODES !<Matrix will using an inode version of code
-  MatOption, PARAMETER :: PETSC_MAT_HERMITIAN = MAT_HERMITIAN !<Hermitian matrix, the transpose is the complex conjugation
-  MatOption, PARAMETER :: PETSC_MAT_SYMMETRY_ETERNAL = MAT_SYMMETRY_ETERNAL !<Matrix will always be symmetric
-  MatOption, PARAMETER :: PETSC_MAT_DUMMY = MAT_DUMMY
   MatOption, PARAMETER :: PETSC_MAT_IGNORE_LOWER_TRIANGULAR = MAT_IGNORE_LOWER_TRIANGULAR !<Ignore any additions or insertions in the lower triangular part of the matrix
   MatOption, PARAMETER :: PETSC_MAT_ERROR_LOWER_TRIANGULAR = MAT_ERROR_LOWER_TRIANGULAR
   MatOption, PARAMETER :: PETSC_MAT_GETROW_UPPERTRIANGULAR = MAT_GETROW_UPPERTRIANGULAR
   MatOption, PARAMETER :: PETSC_MAT_UNUSED_NONZERO_LOCATION_ERR = MAT_UNUSED_NONZERO_LOCATION_ERR
-  MatOption, PARAMETER :: PETSC_NUM_MAT_OPTIONS = MAT_OPTION_MAX
-  MatOption, PARAMETER :: PETSC_MAT_SPD = MAT_SPD !<Matrix is symmetric and positive definite
-  MatOption, PARAMETER :: PETSC_MAT_NO_OFF_PROC_ENTRIES = MAT_NO_OFF_PROC_ENTRIES
+  MatOption, PARAMETER :: PETSC_MAT_OPTION_MAX = MAT_OPTION_MAX
+  MatOption, PARAMETER :: PETSC_MAT_OPTION_MIN = MAT_OPTION_MIN
   MatOption, PARAMETER :: PETSC_MAT_NO_OFF_PROC_ZERO_ROWS = MAT_NO_OFF_PROC_ZERO_ROWS
   !>@}
   
-  !Matrix Solver Package types
-  !> \addtogroup CMISSPetsc_PetscMatSolverPackages OpenCMISS::Iron::PETSc::Constants::PetscMatSolverPackages
-  !> \brief Types of matrix solver packages for PETSc matrices
-  !> \see CMISSPetsc
+  !Matrix solver types
+  !> \addtogroup OpenCMISSPETSc_PetscMatSolverTypes OpenCMISS::PETSc::Constants::Mat::MatSolverType
+  !> \brief Types of matrix solver for PETSc matrices
+  !> \see OpenCMISSPETSc
   !>@{
-  MatSolverPackage, PARAMETER :: PETSC_MAT_SOLVER_SUPERLU = MATSOLVERSUPERLU
-  MatSolverPackage, PARAMETER :: PETSC_MAT_SOLVER_SUPERLU_DIST = MATSOLVERSUPERLU_DIST
-  MatSolverPackage, PARAMETER :: PETSC_MAT_SOLVER_UMFPACK = MATSOLVERUMFPACK
-  MatSolverPackage, PARAMETER :: PETSC_MAT_SOLVER_CHOLMOD = MATSOLVERCHOLMOD
-  MatSolverPackage, PARAMETER :: PETSC_MAT_SOLVER_ESSL = MATSOLVERESSL
-  MatSolverPackage, PARAMETER :: PETSC_MAT_SOLVER_LUSOL = MATSOLVERLUSOL
-  MatSolverPackage, PARAMETER :: PETSC_MAT_SOLVER_MUMPS = MATSOLVERMUMPS
-  MatSolverPackage, PARAMETER :: PETSC_MAT_SOLVER_PASTIX = MATSOLVERPASTIX
-  MatSolverPackage, PARAMETER :: PETSC_MAT_SOLVER_MATLAB = MATSOLVERMATLAB
-  MatSolverPackage, PARAMETER :: PETSC_MAT_SOLVER_PETSC = MATSOLVERPETSC
-  MatSolverPackage, PARAMETER :: PETSC_MAT_SOLVER_BAS = MATSOLVERBAS
-  MatSolverPackage, PARAMETER :: PETSC_MAT_SOLVER_CUSPARSE = MATSOLVERCUSPARSE
-  MatSolverPackage, PARAMETER :: PETSC_MAT_SOLVER_BSTRM = MATSOLVERBSTRM
-  MatSolverPackage, PARAMETER :: PETSC_MAT_SOLVER_SBSTRM = MATSOLVERSBSTRM
+  MatSolverType, PARAMETER :: PETSC_MAT_SOLVER_SUPERLU = MATSOLVERSUPERLU !<SuperLU matrix solver
+  MatSolverType, PARAMETER :: PETSC_MAT_SOLVER_SUPERLU_DIST = MATSOLVERSUPERLU_DIST !<SuperLU_DIST matrix solver
+  MatSolverType, PARAMETER :: PETSC_MAT_SOLVER_STRUMPACK = MATSOLVERSTRUMPACK !<Strumpack matrix solver
+  MatSolverType, PARAMETER :: PETSC_MAT_SOLVER_UMFPACK = MATSOLVERUMFPACK !<UMFPack matrix solver
+  MatSolverType, PARAMETER :: PETSC_MAT_SOLVER_CHOLMOD = MATSOLVERCHOLMOD !<CHOLmod matrix solver
+  MatSolverType, PARAMETER :: PETSC_MAT_SOLVER_KLU = MATSOLVERKLU !<klu matrix solver
+  MatSolverType, PARAMETER :: PETSC_MAT_SOLVER_ELEMENTAL = MATSOLVERELEMENTAL !<Elemental matrix solver
+  MatSolverType, PARAMETER :: PETSC_MAT_SOLVER_SCALAPACK = MATSOLVERSCALAPACK !<ScaLAPACK matrix solver
+  MatSolverType, PARAMETER :: PETSC_MAT_SOLVER_ESSL = MATSOLVERESSL !<ESSL matrix solver
+  MatSolverType, PARAMETER :: PETSC_MAT_SOLVER_LUSOL = MATSOLVERLUSOL !LUSol matrix solver
+  MatSolverType, PARAMETER :: PETSC_MAT_SOLVER_MUMPS = MATSOLVERMUMPS !<MUMPS matrix solver
+  MatSolverType, PARAMETER :: PETSC_MAT_SOLVER_MKL_PARDISO = MATSOLVERMKL_PARDISO !<MKL Pardiso matrix solver
+  MatSolverType, PARAMETER :: PETSC_MAT_SOLVER_MKL_CPARDISO = MATSOLVERMKL_CPARDISO !<MKL CPardiso matrix solver
+  MatSolverType, PARAMETER :: PETSC_MAT_SOLVER_PASTIX = MATSOLVERPASTIX !PaStiX matrix solver
+  MatSolverType, PARAMETER :: PETSC_MAT_SOLVER_MATLAB = MATSOLVERMATLAB !<Matlab matrix solver
+  MatSolverType, PARAMETER :: PETSC_MAT_SOLVER_PETSC = MATSOLVERPETSC !PETSc matrix solver
+  MatSolverType, PARAMETER :: PETSC_MAT_SOLVER_BAS = MATSOLVERBAS !BAS matrix solver
+  MatSolverType, PARAMETER :: PETSC_MAT_SOLVER_CUSPARSE = MATSOLVERCUSPARSE !<CUDA Sparse matrix solver
+  MatSolverType, PARAMETER :: PETSC_MAT_SOLVER_CUDA = MATSOLVERCUDA !<CUDA matrix solver
+  MatSolverType, PARAMETER :: PETSC_MAT_SOLVER_HIPSPARSE = MATSOLVERHIPSPARSE !<HIP Sparse matrix solver
+  MatSolverType, PARAMETER :: PETSC_MAT_SOLVER_HIP = MATSOLVERHIP !<HIP matrix solver
+  MatSolverType, PARAMETER :: PETSC_MAT_SOLVER_KOKKOS = MATSOLVERKOKKOS !<KOKKOS matrix solver
+  MatSolverType, PARAMETER :: PETSC_MAT_SOLVER_SPQR = MATSOLVERSPQR !<SPQR matrix solver
   !>@}
   
   !MatStructure types
-  !> \addtogroup CMISSPetsc_PetscMatStructures OpenCMISS::Iron::PETSc::Constants::PetscMatStructures
+  !> \addtogroup OpenCMISSPETSc_PetscMatStructures OpenCMISS::PETSc::Constants::Mat::MatStructure
   !> \brief The matrix structure parameters for PETSc matrices
-  !> \see CMISSPetsc
+  !> \see OpenCMISSPETSc
   !>@{
-  MatStructure, PARAMETER :: PETSC_DIFFERENT_NONZERO_PATTERN = DIFFERENT_NONZERO_PATTERN
-  MatStructure, PARAMETER :: PETSC_SUBSET_NONZERO_PATTERN = SUBSET_NONZERO_PATTERN
-  MatStructure, PARAMETER :: PETSC_SAME_NONZERO_PATTERN = SAME_NONZERO_PATTERN
+  MatStructure, PARAMETER :: PETSC_SAME_NONZERO_PATTERN = SAME_NONZERO_PATTERN !<Two matrices have identical nonzero patterns
+  MatStructure, PARAMETER :: PETSC_DIFFERENT_NONZERO_PATTERN = DIFFERENT_NONZERO_PATTERN !<Two matrices may have different nonzero patterns
+  MatStructure, PARAMETER :: PETSC_SUBSET_NONZERO_PATTERN = SUBSET_NONZERO_PATTERN !<The nonzero pattern of the second matrix is a subset of the first matrix
+  MatStructure, PARAMETER :: PETSC_UNKNOWN_NONZERO_PATTERN = UNKNOWN_NONZERO_PATTERN !<There is no known relattionship between the nonzero patterns
   !>@}
 
   !MatReuse types
-  !> \addtogroup CMISSPetsc_PetscMatReuses OpenCMISS::Iron::PETSc::Constants::PetscMatReuses
+  !> \addtogroup OpenCMISSPETSc_PetscMatReuses OpenCMISS::PETSc::Constants::Mat::MatReuse
   !> \brief The matrix reuse parameters for PETSc matrices
-  !> \see CMISSPetsc
+  !> \see OpenCMISSPETSc
   !>@{
-  MatReuse, PARAMETER :: PETSC_MAT_INITIAL_MATRIX = MAT_INITIAL_MATRIX
-  MatReuse, PARAMETER :: PETSC_MAT_REUSE_MATRIX = MAT_REUSE_MATRIX
-  MatReuse, PARAMETER :: PETSC_MAT_IGNORE_MATRIX = MAT_IGNORE_MATRIX
+  MatReuse, PARAMETER :: PETSC_MAT_INITIAL_MATRIX = MAT_INITIAL_MATRIX !<Create a new matrix
+  MatReuse, PARAMETER :: PETSC_MAT_REUSE_MATRIX = MAT_REUSE_MATRIX !<Reuse the matrix created with a previous call
+  MatReuse, PARAMETER :: PETSC_MAT_IGNORE_MATRIX = MAT_IGNORE_MATRIX !<Replace the first matrix with the new matrix
+  MatReuse, PARAMETER :: PETSC_MAT_INPLACE_MATRIX = MAT_INPLACE_MATRIX !<Do not create a new matrix or reuse a given matrix
   !>@}
 
   !MatColoring types
-  !> \addtogroup CMISSPetsc_PetscMatColoringTypes OpenCMISS::Iron::PETSc::Constants::PetscMatColoringTypes
+  !> \addtogroup OpenCMISSPETSc_PetscMatColoringTypes OpenCMISS::PETSc::Constants::Mat::MatColoringType
   !> \brief The matrix colouring types for PETSc matrices
-  !> \see CMISSPetsc
+  !> \see OpenCMISSPETSc
   !>@{
+  MatColoringType, PARAMETER :: PETSC_MATCOLORING_JP = MATCOLORINGJP
+  MatColoringType, PARAMETER :: PETSC_MATCOLORING_POWER = MATCOLORINGPOWER
   MatColoringType, PARAMETER :: PETSC_MATCOLORING_NATURAL = MATCOLORINGNATURAL
   MatColoringType, PARAMETER :: PETSC_MATCOLORING_SL = MATCOLORINGSL
   MatColoringType, PARAMETER :: PETSC_MATCOLORING_LF = MATCOLORINGLF
   MatColoringType, PARAMETER :: PETSC_MATCOLORING_ID = MATCOLORINGID
   MatColoringType, PARAMETER :: PETSC_MATCOLORING_GREEDY = MATCOLORINGGREEDY
-  MatColoringType, PARAMETER :: PETSC_MATCOLORING_JP = MATCOLORINGJP
+  !>@}
   !>@}
 
   !Norm types
-  !> \addtogroup CMISSPetsc_PetscNormTypes OpenCMISS::Iron::PETSc::Constants::PetscNormTypes
+  !> \addtogroup OpenCMISSPETSc_PetscNormTypes OpenCMISS::PETSc::Constants::NormType
   !> \brief Types of norms for PETSc
-  !> \see CMISSPetsc
+  !> \see OpenCMISSPETSc
   !>@{
-  NormType, PARAMETER :: PETSC_NORM_1 = NORM_1
-  NormType, PARAMETER :: PETSC_NORM_2 = NORM_2
-  NormType, PARAMETER :: PETSC_NORM_INFINITY = NORM_INFINITY
+  NormType, PARAMETER :: PETSC_NORM_1 = NORM_1 !<One norm
+  NormType, PARAMETER :: PETSC_NORM_2 = NORM_2 !<Two norm
+  NormType, PARAMETER :: PETSC_NORM_FROBENIUS = NORM_FROBENIUS !<Frobenius norm
+  NormType, PARAMETER :: PETSC_NORM_INFINITY = NORM_INFINITY !<Infinity norm
+  NormType, PARAMETER :: PETSC_NORM_1_AND_2 = NORM_1_AND_2 !<Computes both the one and two norm
   !>@}
   
   !PC types
-  !> \addtogroup CMISSPetsc_PetscPCypes OpenCMISS::Iron::PETSc::Constants::PetscPCTypes
+  !> \addtogroup OpenCMISSPETSc_PetscPCypes OpenCMISS::PETSc::Constants::PetscPCTypes
   !> \brief Types of preconditioners for PETSc KSP solvers.
-  !> \see CMISSPetsc
+  !> \see OpenCMISSPETSc
   !>@{
-  PCType, PARAMETER ::  PETSC_PCNONE = PCNONE
-  PCType, PARAMETER ::  PETSC_PCJACOBI = PCJACOBI
-  PCType, PARAMETER ::  PETSC_PCSOR = PCSOR
-  PCType, PARAMETER ::  PETSC_PCLU = PCLU
-  PCType, PARAMETER ::  PETSC_PCSHELL = PCSHELL
-  PCType, PARAMETER ::  PETSC_PCBJACOBI = PCBJACOBI
-  PCType, PARAMETER ::  PETSC_PCMG = PCMG
-  PCType, PARAMETER ::  PETSC_PCEISENSTAT = PCEISENSTAT
-  PCType, PARAMETER ::  PETSC_PCILU = PCILU
-  PCType, PARAMETER ::  PETSC_PCICC = PCICC
-  PCType, PARAMETER ::  PETSC_PCASM = PCASM
-  PCType, PARAMETER ::  PETSC_PCKSP = PCKSP
-  PCType, PARAMETER ::  PETSC_PCCOMPOSITE = PCCOMPOSITE
-  PCType, PARAMETER ::  PETSC_PCREDUNDANT = PCREDUNDANT
-  PCType, PARAMETER ::  PETSC_PCSPAI = PCSPAI
-  PCType, PARAMETER ::  PETSC_PCNN = PCNN
-  PCType, PARAMETER ::  PETSC_PCCHOLESKY = PCCHOLESKY
-  PCType, PARAMETER ::  PETSC_PCPBJACOBI = PCPBJACOBI
-  PCType, PARAMETER ::  PETSC_PCMAT = PCMAT
-  PCType, PARAMETER ::  PETSC_PCHYPRE = PCHYPRE
-  PCType, PARAMETER ::  PETSC_PCPARMS = PCPARMS
-  PCType, PARAMETER ::  PETSC_PCFIELDSPLIT = PCFIELDSPLIT
-  PCType, PARAMETER ::  PETSC_PCTFS = PCTFS
-  PCType, PARAMETER ::  PETSC_PCML = PCML
-  PCType, PARAMETER ::  PETSC_PCGALERKIN = PCGALERKIN
-  PCType, PARAMETER ::  PETSC_PCEXOTIC = PCEXOTIC
-  PCType, PARAMETER ::  PETSC_PCSUPPORTGRAPH = PCSUPPORTGRAPH
-  PCType, PARAMETER ::  PETSC_PCCP = PCCP
-  PCType, PARAMETER ::  PETSC_PCBFBT = PCBFBT
-  PCType, PARAMETER ::  PETSC_PCLSC = PCLSC
-  PCType, PARAMETER ::  PETSC_PCPYTHON = PCPYTHON
-  PCType, PARAMETER ::  PETSC_PCPFMG = PCPFMG
-  PCType, PARAMETER ::  PETSC_PCSYSPFMG = PCSYSPFMG
-  PCType, PARAMETER ::  PETSC_PCREDISTRIBUTE = PCREDISTRIBUTE
-  PCType, PARAMETER ::  PETSC_PCSVD = PCSVD
-  PCType, PARAMETER ::  PETSC_PCGAMG = PCGAMG
-  PCType, PARAMETER ::  PETSC_PCGASM = PCGASM
-  PCType, PARAMETER ::  PETSC_PCSACUSP = PCSACUSP
-  PCType, PARAMETER ::  PETSC_PCSACUSPPOLY = PCSACUSPPOLY
-  PCType, PARAMETER ::  PETSC_PCBICGSTABCUSP = PCBICGSTABCUSP
-  PCType, PARAMETER ::  PETSC_PCAINVCUSP = PCAINVCUSP
-  PCType, PARAMETER ::  PETSC_PCBDDC = PCBDDC
+  PCType, PARAMETER ::  PETSC_PC_NONE = PCNONE !<No preconditioning
+  PCType, PARAMETER ::  PETSC_PC_JACOBI = PCJACOBI !<Jacobi preconditioner
+  PCType, PARAMETER ::  PETSC_PC_SOR = PCSOR !<SOR (and SSOR) preconditioner
+  PCType, PARAMETER ::  PETSC_PC_LU = PCLU !<LU preconditioner
+  PCType, PARAMETER ::  PETSC_PC_QR = PCQR
+  PCType, PARAMETER ::  PETSC_PC_SHELL = PCSHELL !<Shell for user defined preconditioner
+  PCType, PARAMETER ::  PETSC_PC_AMGX = PCAMGX
+  PCType, PARAMETER ::  PETSC_PC_BJACOBI = PCBJACOBI !<Block Jacobi preconditioner
+  PCType, PARAMETER ::  PETSC_PC_MG = PCMG
+  PCType, PARAMETER ::  PETSC_PC_EISENSTAT = PCEISENSTAT !<SOR with Eisenstat trick
+  PCType, PARAMETER ::  PETSC_PC_ILU = PCILU !<Incomplete LU preconditioner
+  PCType, PARAMETER ::  PETSC_PC_ICC = PCICC !<Incomplete Cholesky preconditioner
+  PCType, PARAMETER ::  PETSC_PC_ASM = PCASM !<Additive Schwarz preconditioner
+  PCType, PARAMETER ::  PETSC_PC_GASM = PCGASM !<Generalised additive Schwarz
+  PCType, PARAMETER ::  PETSC_PC_KSP = PCKSP !<Linear solver
+  PCType, PARAMETER ::  PETSC_PC_COMPOSITE = PCCOMPOSITE !<Combination of preconditioners
+  PCType, PARAMETER ::  PETSC_PC_REDUNDANT = PCREDUNDANT
+  PCType, PARAMETER ::  PETSC_PC_SPAI = PCSPAI
+  PCType, PARAMETER ::  PETSC_PC_NN = PCNN
+  PCType, PARAMETER ::  PETSC_PC_CHOLESKY = PCCHOLESKY !<Cholesky preconditioner
+  PCType, PARAMETER ::  PETSC_PC_PBJACOBI = PCPBJACOBI
+  PCType, PARAMETER ::  PETSC_PC_VPBJACOBI = PCVPBJACOBI
+  PCType, PARAMETER ::  PETSC_PC_MAT = PCMAT
+  PCType, PARAMETER ::  PETSC_PC_HYPRE = PCHYPRE
+  PCType, PARAMETER ::  PETSC_PC_PARMS = PCPARMS
+  PCType, PARAMETER ::  PETSC_PC_FIELDSPLIT = PCFIELDSPLIT
+  PCType, PARAMETER ::  PETSC_PC_TFS = PCTFS
+  PCType, PARAMETER ::  PETSC_PC_ML = PCML
+  PCType, PARAMETER ::  PETSC_PC_GALERKIN = PCGALERKIN
+  PCType, PARAMETER ::  PETSC_PC_EXOTIC = PCEXOTIC
+  PCType, PARAMETER ::  PETSC_PC_CP = PCCP
+  PCType, PARAMETER ::  PETSC_PC_BFBT = PCBFBT
+  PCType, PARAMETER ::  PETSC_PC_LSC = PCLSC
+  PCType, PARAMETER ::  PETSC_PC_PYTHON = PCPYTHON
+  PCType, PARAMETER ::  PETSC_PC_PFMG = PCPFMG
+  PCType, PARAMETER ::  PETSC_PC_SYSPFMG = PCSYSPFMG
+  PCType, PARAMETER ::  PETSC_PC_REDISTRIBUTE = PCREDISTRIBUTE
+  PCType, PARAMETER ::  PETSC_PC_SVD = PCSVD
+  PCType, PARAMETER ::  PETSC_PC_GAMG = PCGAMG
+  PCType, PARAMETER ::  PETSC_PC_CHOWILUVIENNACL = PCCHOWILUVIENNACL
+  PCType, PARAMETER ::  PETSC_PC_ROWSCALINGVIENNACL = PCROWSCALINGVIENNACL
+  PCType, PARAMETER ::  PETSC_PC_SAVIENNACL = PCSAVIENNACL
+  PCType, PARAMETER ::  PETSC_PC_BDDC = PCBDDC
+  PCType, PARAMETER ::  PETSC_PC_KACZMARZ = PCKACZMARZ
+  PCType, PARAMETER ::  PETSC_PC_TELESCOPE = PCTELESCOPE
+  PCType, PARAMETER ::  PETSC_PC_PATCJ = PCPATCH
+  PCType, PARAMETER ::  PETSC_PC_LMVM = PCLMVM
+  PCType, PARAMETER ::  PETSC_PC_HMG = PCHMG
+  PCType, PARAMETER ::  PETSC_PC_DEFLATION = PCDEFLATION
+  PCType, PARAMETER ::  PETSC_PC_HPDDM = PCHPDDM
+  PCType, PARAMETER ::  PETSC_PC_H2OPUS = PCH2OPUS
+  PCType, PARAMETER ::  PETSC_PC_MPI = PCMPI
   !>@}
 
   !SNES types
-  SNESType, PARAMETER :: PETSC_SNESNEWTONLS = SNESNEWTONLS
-  SNESType, PARAMETER :: PETSC_SNESNEWTONTR = SNESNEWTONTR
-  SNESType, PARAMETER :: PETSC_SNESPYTHON = SNESPYTHON
-  SNESType, PARAMETER :: PETSC_SNESTEST = SNESTEST
-  SNESType, PARAMETER :: PETSC_SNESNRICHARDSON = SNESNRICHARDSON
-  SNESType, PARAMETER :: PETSC_SNESKSPONLY = SNESKSPONLY
-  SNESType, PARAMETER :: PETSC_SNESVINEWTONRSLS = SNESVINEWTONRSLS
-  SNESType, PARAMETER :: PETSC_SNESVINEWTONSSLS = SNESVINEWTONSSLS
-  SNESType, PARAMETER :: PETSC_SNESNGMRES = SNESNGMRES
-  SNESType, PARAMETER :: PETSC_SNESQN = SNESQN
-  SNESType, PARAMETER :: PETSC_SNESSHELL = SNESSHELL
-  SNESType, PARAMETER :: PETSC_SNESNCG = SNESNCG
-  SNESType, PARAMETER :: PETSC_SNESFAS = SNESFAS
-  SNESType, PARAMETER :: PETSC_SNESMS = SNESMS
+  SNESType, PARAMETER :: PETSC_SNES_NEWTONLS = SNESNEWTONLS !<Newton's method
+  SNESType, PARAMETER :: PETSC_SNES_NEWTONTR = SNESNEWTONTR !<Newton's method with trust region
+  SNESType, PARAMETER :: PETSC_SNES_NRICHARDSON = SNESNRICHARDSON !<Nonlinear Richardson
+  !SNESType, PARAMETER :: PETSC_SNES_ANDERSON = SNESANDERSON !<Anderson mixing
+  SNESType, PARAMETER :: PETSC_SNES_KSPONLY = SNESKSPONLY !<Single linearisation
+  SNESType, PARAMETER :: PETSC_SNES_VINEWTONRSLS = SNESVINEWTONRSLS
+  SNESType, PARAMETER :: PETSC_SNES_VINEWTONSSLS = SNESVINEWTONSSLS
+  SNESType, PARAMETER :: PETSC_SNES_NGMRES = SNESNGMRES !<Nonlinear GMRES
+  SNESType, PARAMETER :: PETSC_SNES_QN = SNESQN !<Quasi-Newton (BFGS)
+  SNESType, PARAMETER :: PETSC_SNES_SHELL = SNESSHELL !<Shell (user defined)
+  SNESType, PARAMETER :: PETSC_SNES_NCG = SNESNCG !<Nonlinear CG
+  SNESType, PARAMETER :: PETSC_SNES_FAS = SNESFAS !<Full Approximation Scheme (nonlinear multigrid)
+  !SNESType, PARAMETER :: PETSC_SNES_NGS = SNESNGS !<Nonlinear Gauss-Siedel
+  !SNESType, PARAMETER :: PETSC_SNES_NASM = SNESNASM !<Nonlinear additive Schwarz
+  !SNESType, PARAMETER :: PETSC_SNES_ASPIN = SNESASPIN !<Nonlinear additive Schwarz preconditioned inexact Newton (ASPIN) method
+  !SNESType, PARAMETER :: PETSC_SNES_COMPOSITE = SNESCOMPOSITE !<Composite (comine several nonlinear solvers)
 
   !SNES converged types
   SNESConvergedReason, PARAMETER :: PETSC_SNES_CONVERGED_FNORM_ABS = SNES_CONVERGED_FNORM_ABS
   SNESConvergedReason, PARAMETER :: PETSC_SNES_CONVERGED_FNORM_RELATIVE = SNES_CONVERGED_FNORM_RELATIVE
   SNESConvergedReason, PARAMETER :: PETSC_SNES_CONVERGED_SNORM_RELATIVE = SNES_CONVERGED_SNORM_RELATIVE
   SNESConvergedReason, PARAMETER :: PETSC_SNES_CONVERGED_ITS = SNES_CONVERGED_ITS
-  SNESConvergedReason, PARAMETER :: PETSC_SNES_CONVERGED_TR_DELTA = SNES_CONVERGED_TR_DELTA
+  !SNESConvergedReason, PARAMETER :: PETSC_SNES_CONVERGED_INNER_ITER = SNES_CONVERGED_INNER_ITER
   SNESConvergedReason, PARAMETER :: PETSC_SNES_DIVERGED_FUNCTION_DOMAIN = SNES_DIVERGED_FUNCTION_DOMAIN
   SNESConvergedReason, PARAMETER :: PETSC_SNES_DIVERGED_FUNCTION_COUNT = SNES_DIVERGED_FUNCTION_COUNT
   SNESConvergedReason, PARAMETER :: PETSC_SNES_DIVERGED_LINEAR_SOLVE = SNES_DIVERGED_LINEAR_SOLVE
   SNESConvergedReason, PARAMETER :: PETSC_SNES_DIVERGED_FNORM_NAN = SNES_DIVERGED_FNORM_NAN
   SNESConvergedReason, PARAMETER :: PETSC_SNES_DIVERGED_MAX_IT = SNES_DIVERGED_MAX_IT
   SNESConvergedReason, PARAMETER :: PETSC_SNES_DIVERGED_LINE_SEARCH = SNES_DIVERGED_LINE_SEARCH
+  SNESConvergedReason, PARAMETER :: PETSC_SNES_DIVERGED_INNER = SNES_DIVERGED_INNER
   SNESConvergedReason, PARAMETER :: PETSC_SNES_DIVERGED_LOCAL_MIN = SNES_DIVERGED_LOCAL_MIN
+  SNESConvergedReason, PARAMETER :: PETSC_SNES_DIVERGED_DTOL = SNES_DIVERGED_DTOL
+  SNESConvergedReason, PARAMETER :: PETSC_SNES_DIVERGED_JACOBIAN_DOMAIN = SNES_DIVERGED_JACOBIAN_DOMAIN
+  SNESConvergedReason, PARAMETER :: PETSC_SNES_DIVERGED_TR_DELTA = SNES_DIVERGED_TR_DELTA
   SNESConvergedReason, PARAMETER :: PETSC_SNES_CONVERGED_ITERATING = SNES_CONVERGED_ITERATING
   
   !SNES line search type
@@ -397,11 +474,23 @@ MODULE CMISSPetsc
   SNESLineSearchType, PARAMETER :: PETSC_SNES_LINESEARCH_L2 = SNESLINESEARCHL2
   SNESLineSearchType, PARAMETER :: PETSC_SNES_LINESEARCH_CP = SNESLINESEARCHCP
   SNESLineSearchType, PARAMETER :: PETSC_SNES_LINESEARCH_SHELL = SNESLINESEARCHSHELL
+  SNESLineSearchType, PARAMETER :: PETSC_SNES_LINESEARCH_NCGLINEAR = SNESLINESEARCHNCGLINEAR
   
   !SNES line search order  
   SNESLineSearchOrder, PARAMETER :: PETSC_SNES_LINESEARCH_ORDER_LINEAR = SNES_LINESEARCH_ORDER_LINEAR
   SNESLineSearchOrder, PARAMETER :: PETSC_SNES_LINESEARCH_ORDER_QUADRATIC = SNES_LINESEARCH_ORDER_QUADRATIC
   SNESLineSearchOrder, PARAMETER :: PETSC_SNES_LINESEARCH_ORDER_CUBIC = SNES_LINESEARCH_ORDER_CUBIC
+
+  !SNES multi-stage smoother type 
+  SNESMSType, PARAMETER :: PETSC_SNESMS_M62 = SNESMSM62
+  SNESMSType, PARAMETER :: PETSC_SNESMS_EULER = SNESMSEULER
+  SNESMSType, PARAMETER :: PETSC_SNESMS_JAMESON83 = SNESMSJAMESON83
+  SNESMSType, PARAMETER :: PETSC_SNESMS_VLTP11 = SNESMSVLTP11
+  SNESMSType, PARAMETER :: PETSC_SNESMS_VLTP21 = SNESMSVLTP21
+  SNESMSType, PARAMETER :: PETSC_SNESMS_VLTP31 = SNESMSVLTP31
+  SNESMSType, PARAMETER :: PETSC_SNESMS_VLTP41 = SNESMSVLTP41
+  SNESMSType, PARAMETER :: PETSC_SNESMS_VLTP51 = SNESMSVLTP51
+  SNESMSType, PARAMETER :: PETSC_SNESMS_VLTP61 = SNESMSVLTP61
 
   !SNES norm schedules
   SNESNormSchedule, PARAMETER :: PETSC_SNES_NORM_DEFAULT = SNES_NORM_DEFAULT
@@ -430,23 +519,23 @@ MODULE CMISSPetsc
   SNESQNScaleType, PARAMETER :: PETSC_SNES_QN_SCALE_JACOBIAN = SNES_QN_SCALE_JACOBIAN
 
 !Temporary until we have a bug fix in PETSc  
-#define TaoType character*(80)
+!#define TaoType character*(80)
   
   !TAO types
-  TaoType, PARAMETER :: PETSC_TAO_LMVM = TAOLMVM !Limited Memory Variable Metric (quasi-Newton method)
   TaoType, PARAMETER :: PETSC_TAO_NLS = TAONLS !Newton's method with linesearch
   TaoType, PARAMETER :: PETSC_TAO_NTR = TAONTR !Newton's method with trust region
-  TaoType, PARAMETER :: PETSC_TAO_NTL = TAONTL
+  TaoType, PARAMETER :: PETSC_TAO_NTL = TAONTL !Newton's method with trust region, lineasearch
+  TaoType, PARAMETER :: PETSC_TAO_LMVM = TAOLMVM !Limited Memory Variable Metric (quasi-Newton method)
   TaoType, PARAMETER :: PETSC_TAO_CG = TAOCG !Nonlinear conjugate gradient
-  TaoType, PARAMETER :: PETSC_TAO_TRON = TAOTRON !TRON active-set Newton trust region algorithm
-  TaoType, PARAMETER :: PETSC_TAO_OWLQN = TAOOWLQN !Orthant-wise Limited Memory (quasi-Newton method)
-  TaoType, PARAMETER :: PETSC_TAO_BMRM = TAOBMRM !Bundle method for regularized risk minimisation
-  TaoType, PARAMETER :: PETSC_TAO_BLMVM = TAOBLMVM !Bounded limited memory variable metric (quasi-Newton method)
-  TaoType, PARAMETER :: PETSC_TAO_BQPIP = TAOBQPIP !Bounded quadratic interior point alofrith for quadratic optimisation
-  TaoType, PARAMETER :: PETSC_TAO_GPCG = TAOGPCG !Gradient projected conjugate gradient algorithm
   TaoType, PARAMETER :: PETSC_TAO_NM = TAONM !Nelder-Mead solver
-  TaoType, PARAMETER :: PETSC_TAO_POUNDERS = TAOPOUNDERS !POUNDERS algorithm for nonlinear least squares
+  TaoType, PARAMETER :: PETSC_TAO_TRON = TAOTRON !TRON active-set Newton trust region algorithm
+  TaoType, PARAMETER :: PETSC_TAO_GPCG = TAOGPCG !Gradient projected conjugate gradient algorithm
+  TaoType, PARAMETER :: PETSC_TAO_BLMVM = TAOBLMVM !Bounded limited memory variable metric (quasi-Newton method)
+  TaoType, PARAMETER :: PETSC_TAO_OWLQN = TAOOWLQN !Orthant-wise Limited Memory (quasi-Newton method)
   TaoType, PARAMETER :: PETSC_TAO_LCL = TAOLCL !Linearly constrained Lagrangian method for PDE-constrained optimisation
+  TaoType, PARAMETER :: PETSC_TAO_POUNDERS = TAOPOUNDERS !POUNDERS algorithm for nonlinear least squares
+  TaoType, PARAMETER :: PETSC_TAO_BMRM = TAOBMRM !Bundle method for regularized risk minimisation
+  TaoType, PARAMETER :: PETSC_TAO_BQPIP = TAOBQPIP !Bounded quadratic interior point alofrith for quadratic optimisation
   TaoType, PARAMETER :: PETSC_TAO_SSILS = TAOSSILS !Semi-smooth infeasible linesearch algorithm
   TaoType, PARAMETER :: PETSC_TAO_SSFLS = TAOSSFLS !Semi-smooth feasible linesearch algorithm
   TaoType, PARAMETER :: PETSC_TAO_ASILS = TAOASILS !Active-set infeasible linesearch algorithm
@@ -454,56 +543,97 @@ MODULE CMISSPetsc
   TaoType, PARAMETER :: PETSC_TAO_IPM = TAOIPM !Interior point algorithm
 
   !TAO converged reasons
-  TaoConvergedReason, PARAMETER :: PETSC_TAO_CONVERGED_FATOL = TAO_CONVERGED_FATOL !f(X)-f(X*) <= fatol 
-  TaoConvergedReason, PARAMETER :: PETSC_TAO_CONVERGED_FRTOL = TAO_CONVERGED_FRTOL !|F(X) - f(X*)|/|f(X)| < frtol
-  TaoConvergedReason, PARAMETER :: PETSC_TAO_CONVERGED_GATOL = TAO_CONVERGED_GATOL !||g(X)|| < gatol
-  TaoConvergedReason, PARAMETER :: PETSC_TAO_CONVERGED_GRTOL = TAO_CONVERGED_GRTOL !||g(X)|| / f(X)  < grtol 
-  TaoConvergedReason, PARAMETER :: PETSC_TAO_CONVERGED_GTTOL = TAO_CONVERGED_GTTOL !||g(X)|| / ||g(X0)|| < gttol 
-  TaoConvergedReason, PARAMETER :: PETSC_TAO_CONVERGED_STEPTOL = TAO_CONVERGED_STEPTOL  !step size small
-  TaoConvergedReason, PARAMETER :: PETSC_TAO_CONVERGED_MINF = TAO_CONVERGED_MINF !F < F_min
-  TaoConvergedReason, PARAMETER :: PETSC_TAO_CONVERGED_USER = TAO_CONVERGED_USER !User defined
-  TaoConvergedReason, PARAMETER :: PETSC_TAO_DIVERGED_MAXITS = TAO_DIVERGED_MAXITS
-  TaoConvergedReason, PARAMETER :: PETSC_TAO_DIVERGED_MAXFCN = TAO_DIVERGED_MAXFCN
-  TaoConvergedReason, PARAMETER :: PETSC_TAO_DIVERGED_LS_FAILURE = TAO_DIVERGED_LS_FAILURE
-  TaoConvergedReason, PARAMETER :: PETSC_TAO_DIVERGED_TR_REDUCTION = TAO_DIVERGED_TR_REDUCTION
-  TaoConvergedReason, PARAMETER :: PETSC_TAO_DIVERGED_USER = TAO_DIVERGED_USER !User defined
-  TaoConvergedReason, PARAMETER :: PETSC_TAO_CONTINUE_ITERATING = TAO_CONTINUE_ITERATING
+  TaoConvergedReason, PARAMETER :: PETSC_TAO_CONVERGED_GATOL = TAO_CONVERGED_GATOL !<||g(X)|| < gatol
+  TaoConvergedReason, PARAMETER :: PETSC_TAO_CONVERGED_GRTOL = TAO_CONVERGED_GRTOL !<||g(X)|| / f(X)  < grtol 
+  TaoConvergedReason, PARAMETER :: PETSC_TAO_CONVERGED_GTTOL = TAO_CONVERGED_GTTOL !<||g(X)|| / ||g(X0)|| < gttol 
+  TaoConvergedReason, PARAMETER :: PETSC_TAO_CONVERGED_STEPTOL = TAO_CONVERGED_STEPTOL  !<Step size small
+  TaoConvergedReason, PARAMETER :: PETSC_TAO_CONVERGED_MINF = TAO_CONVERGED_MINF !<F < F_min
+  TaoConvergedReason, PARAMETER :: PETSC_TAO_CONVERGED_USER = TAO_CONVERGED_USER !<User defined
+  TaoConvergedReason, PARAMETER :: PETSC_TAO_DIVERGED_MAXITS = TAO_DIVERGED_MAXITS !<Maximum number of iterations reached
+  TaoConvergedReason, PARAMETER :: PETSC_TAO_DIVERGED_NAN = TAO_DIVERGED_NAN !<NaN appeared in the computations
+  TaoConvergedReason, PARAMETER :: PETSC_TAO_DIVERGED_MAXFCN = TAO_DIVERGED_MAXFCN !<Maximum number of function evaluations reached
+  TaoConvergedReason, PARAMETER :: PETSC_TAO_DIVERGED_LS_FAILURE = TAO_DIVERGED_LS_FAILURE !<Line-search failure
+  TaoConvergedReason, PARAMETER :: PETSC_TAO_DIVERGED_TR_REDUCTION = TAO_DIVERGED_TR_REDUCTION !<Trust-region failure
+  TaoConvergedReason, PARAMETER :: PETSC_TAO_DIVERGED_USER = TAO_DIVERGED_USER !<User defined
+  TaoConvergedReason, PARAMETER :: PETSC_TAO_CONTINUE_ITERATING = TAO_CONTINUE_ITERATING !<The optimisation is still running
+
+  !TS constants
+  !> \addtogroup OpenCMISSPETSc_PetscTSConstants OpenCMISS::PETSc::Constants::TS
+  !> \brief Constants of PETSc time stepping (TS) objects
+  !> \see OpenCMISSPETSc
+  !>@{
+  
+  !TS exact final time options
+  !> \addtogroup OpenCMISSPETSc_PetscTSExactFinalTimeOptions OpenCMISS::PETSc::Constants::TS::TSExactFinalTimeOptions
+  !> \brief Constants for the handling of the final time step for PETSc TS objects.
+  !> \see OpenCMISSPETSc
+  !>@{
+  TSExactFinalTimeOption, PARAMETER :: PETSC_TS_EXACTFINALTIME_STEPOVER = TS_EXACTFINALTIME_STEPOVER !<Don't do anything if requested final time is exeeded
+  TSExactFinalTimeOption, PARAMETER :: PETSC_TS_EXACTFINALTIME_INTERPOLATE = TS_EXACTFINALTIME_INTERPOLATE !<Interpolate back to the final time
+  TSExactFinalTimeOption, PARAMETER :: PETSC_TS_EXACTFINALTIME_MATCHSTEP = TS_EXACTFINALTIME_MATCHSTEP !<Adapt the final time step to match the final time requested 
+  !>@}
   
   !TS types
-  TSType, PARAMETER :: PETSC_TS_EULER = TSEULER
-  TSType, PARAMETER :: PETSC_TS_BEULER = TSBEULER
-  TSType, PARAMETER :: PETSC_TS_PSEUDO = TSPSEUDO
-  TSType, PARAMETER :: PETSC_TS_CN = TSCN
+  !> \addtogroup OpenCMISSPETSc_PetscTSTypes OpenCMISS::PETSc::Constants::TS::TSType
+  !> \brief The types of PETSc time stepping (TS) methods
+  !> \see OpenCMISSPETSc
+  !>@{
+  TSType, PARAMETER :: PETSC_TS_EULER = TSEULER !<Forward Euler time integrator
+  TSType, PARAMETER :: PETSC_TS_BEULER = TSBEULER !<Backward Euler time integrator
+  TSType, PARAMETER :: PETSC_TS_PSEUDO = TSPSEUDO !<
+  TSType, PARAMETER :: PETSC_TS_CN = TSCN !<Crank-Nicolson time integrator
   TSType, PARAMETER :: PETSC_TS_SUNDIALS = TSSUNDIALS
-  TSType, PARAMETER :: PETSC_TS_RK = TSRK
+  TSType, PARAMETER :: PETSC_TS_RK = TSRK !<Runge-Kutta time integrator
   TSType, PARAMETER :: PETSC_TS_PYTHON = TSPYTHON
-  TSType, PARAMETER :: PETSC_TS_THETA = TSTHETA
-  TSType, PARAMETER :: PETSC_TS_ALPHA = TSALPHA
-  TSType, PARAMETER :: PETSC_TS_GL = TSGL
-  TSType, PARAMETER :: PETSC_TS_SSP = TSSSP
-  TSType, PARAMETER :: PETSC_TS_ARKIMEX = TSARKIMEX
-  TSType, PARAMETER :: PETSC_TS_ROSW = TSROSW
-  TSType, PARAMETER :: PETSC_TS_EIMEX = TSEIMEX
+  TSType, PARAMETER :: PETSC_TS_THETA = TSTHETA !<Theta based time integrator
+  TSType, PARAMETER :: PETSC_TS_ALPHA = TSALPHA !<Alpha based time integrator
+  TSType, PARAMETER :: PETSC_TS_GLLE = TSGLLE
+  TSType, PARAMETER :: PETSC_TS_SSP = TSSSP !<Multistage SSP Runge-Kutta time integrator
+  TSType, PARAMETER :: PETSC_TS_ARKIMEX = TSARKIMEX !<IMEX Runge-Kutta time integrator
+  TSType, PARAMETER :: PETSC_TS_ROSW = TSROSW !<Rosenbrock-W time integrator
+  TSType, PARAMETER :: PETSC_TS_EIMEX = TSEIMEX !<Extrapolated IMEX time integrator
+  TSType, PARAMETER :: PETSC_TS_RADAU5 = TSRADAU5
+  TSType, PARAMETER :: PETSC_TS_MPRK = TSMPRK !<Multirate Partitioned Runge-Kutta time inegrator
+  !>@}
 
   !TS convergence flags
+  !> \addtogroup OpenCMISSPETSc_PetscTSConvergedReasons OpenCMISS::PETSc::Constants::TS::TSConvergedReason
+  !> \brief The types of PETSc time stepping (TS) methods
+  !> \see OpenCMISSPETSc
+  !>@{
   TSConvergedReason, PARAMETER :: PETSC_TS_CONVERGED_ITERATING = TS_CONVERGED_ITERATING
   TSConvergedReason, PARAMETER :: PETSC_TS_CONVERGED_TIME = TS_CONVERGED_TIME
   TSConvergedReason, PARAMETER :: PETSC_TS_CONVERGED_ITS = TS_CONVERGED_ITS
   TSConvergedReason, PARAMETER :: PETSC_TS_DIVERGED_NONLINEAR_SOLVE = TS_DIVERGED_NONLINEAR_SOLVE
   TSConvergedReason, PARAMETER :: PETSC_TS_DIVERGED_STEP_REJECTED = TS_DIVERGED_STEP_REJECTED
+  !>@}
   
   !TS problem types
+  !> \addtogroup OpenCMISSPETSc_PetscTSProblemTypes OpenCMISS::PETSc::Constants::TS::TSProblemType
+  !> \brief The types of PETSc time stepping (TS) methods
+  !> \see OpenCMISSPETSc
+  !>@{
   TSProblemType, PARAMETER :: PETSC_TS_LINEAR = TS_LINEAR
   TSProblemType, PARAMETER :: PETSC_TS_NONLINEAR = TS_NONLINEAR
+  !>@}
   
   !TS Sundials types
+  !> \addtogroup OpenCMISSPETSc_PetscTSSundialsTypes OpenCMISS::PETSc::Constants::TS::TSSundialsType
+  !> \brief The types of PETSc time stepping (TS) methods
+  !> \see OpenCMISSPETSc
+  !>@{
   TSSundialsType, PARAMETER :: PETSC_SUNDIALS_ADAMS = SUNDIALS_ADAMS
   TSSundialsType, PARAMETER :: PETSC_SUNDIALS_BDF = SUNDIALS_BDF
+  !>@}
 
   !TS Sundials Gram Schmidt Type
+  !> \addtogroup OpenCMISSPETSc_PetscTSSundialsGramSchmidtTypes OpenCMISS::PETSc::Constants::TS::TSSundialsGramSchmidtType
+  !> \brief The types of PETSc time stepping (TS) methods
+  !> \see OpenCMISSPETSc
+  !>@{
   TSSundialsGramSchmidtType, PARAMETER :: PETSC_SUNDIALS_MODIFIED_GS = SUNDIALS_MODIFIED_GS
   TSSundialsGramSchmidtType, PARAMETER :: PETSC_SUNDIALS_CLASSICAL_GS = SUNDIALS_CLASSICAL_GS
-
+  !>@}
   !>@}
   
   !Module types
@@ -513,1228 +643,6 @@ MODULE CMISSPetsc
   LOGICAL, SAVE :: petscHandleError
 
   !Interfaces
-
-  INTERFACE
-
-    !PETSc miscellanous routines
-
-    SUBROUTINE PetscFinalize(ierr)
-      PetscInt ierr
-    END SUBROUTINE PetscFinalize
-
-    SUBROUTINE PetscInitialize(file,ierr)
-      CHARACTER(LEN=*) file
-      PetscInt ierr
-    END SUBROUTINE PetscInitialize
-
-    SUBROUTINE PetscPopSignalHandler(ierr)
-      PetscInt ierr
-    END SUBROUTINE PetscPopSignalHandler
-    
-    SUBROUTINE PetscLogView(viewer,ierr)
-      PetscViewer viewer
-      PetscInt ierr
-    END SUBROUTINE PetscLogView
-
-    SUBROUTINE PetscOptionSetValue(name,value,ierr)
-      CHARACTER(LEN=*) name
-      CHARACTER(LEN=*) value
-      PetscInt ierr
-    END SUBROUTINE PetscOptionSetValue
-
-    !IS routines
-    
-    SUBROUTINE ISDestroy(indexset,ierr)
-      IS indexset
-      PetscInt ierr
-    END SUBROUTINE ISDestroy
-
-    !IS coloring routines
-
-    SUBROUTINE ISColoringDestroy(iscoloring,ierr)
-      ISColoring iscoloring
-      PetscInt ierr
-    END SUBROUTINE ISColoringDestroy
-
-    !IS local to global mapping routines
-    
-    SUBROUTINE ISLocalToGlobalMappingApply(islocaltoglobalmapping,n,idxin,idxout,ierr)
-      ISLocalToGlobalMapping islocaltoglobalmapping
-      PetscInt n
-      PetscInt idxin(*)
-      PetscInt idxout(*)
-      PetscInt ierr
-    END SUBROUTINE ISLocalToGlobalMappingApply
-    
-    SUBROUTINE ISLocalToGlobalMappingApplyIS(islocaltoglobalmapping,isin,isout,ierr)
-      ISLocalToGlobalMapping islocaltoglobalmapping
-      IS isin
-      IS isout
-      PetscInt ierr
-    END SUBROUTINE ISLocalToGlobalMappingApplyIS
-    
-    SUBROUTINE ISLocalToGlobalMappingCreate(comm,blockSize,n,indices,mode,islocaltoglobalmapping,ierr)
-      MPI_Comm comm
-      PetscInt blockSize
-      PetscInt n
-      PetscInt indices(*)
-      PetscCopyMode mode
-      ISLocalToGlobalMapping islocaltoglobalmapping
-      PetscInt ierr
-    END SUBROUTINE ISLocalToGlobalMappingCreate
-    
-    SUBROUTINE ISLocalToGlobalMappingDestroy(islocaltoglobalmapping,ierr)
-      ISLocalToGlobalMapping islocaltoglobalmapping
-      PetscInt ierr
-    END SUBROUTINE ISLocalToGlobalMappingDestroy
-
-    !KSP routines
-    
-    SUBROUTINE KSPCreate(comm,ksp,ierr)
-      MPI_Comm comm
-      KSP ksp
-      PetscInt ierr
-    END SUBROUTINE KSPCreate
-    
-    SUBROUTINE KSPDestroy(ksp,ierr)
-      KSP ksp
-      PetscInt ierr
-    END SUBROUTINE KSPDestroy
-    
-    SUBROUTINE KSPGetConvergedReason(ksp,reason,ierr)
-      KSP ksp
-      KSPConvergedReason reason
-      PetscInt ierr
-    END SUBROUTINE KSPGetConvergedReason
-    
-    SUBROUTINE KSPGetIterationNumber(ksp,its,ierr)
-      KSP ksp
-      PetscInt its
-      PetscInt ierr
-    END SUBROUTINE KSPGetIterationNumber
-    
-    SUBROUTINE KSPGetPC(ksp,pc,ierr)
-      KSP ksp
-      PC pc
-      PetscInt ierr
-    END SUBROUTINE KSPGetPC
-    
-    SUBROUTINE KSPGetResidualNorm(ksp,rnorm,ierr)
-      KSP ksp
-      PetscReal rnorm
-      PetscInt ierr
-    END SUBROUTINE KSPGetResidualNorm
-    
-    SUBROUTINE KSPGMRESSetRestart(ksp,restart,ierr)
-      KSP ksp
-      PetscInt restart
-      PetscInt ierr
-    END SUBROUTINE KSPGMRESSetRestart
-    
-    SUBROUTINE KSPSetFromOptions(ksp,ierr)
-      KSP ksp
-      PetscInt ierr
-    END SUBROUTINE KSPSetFromOptions
-    
-    SUBROUTINE KSPSetInitialGuessNonzero(ksp,flg,ierr)
-      KSP ksp
-      PetscBool flg
-      PetscInt ierr
-    END SUBROUTINE KSPSetInitialGuessNonzero
-    
-    SUBROUTINE KSPSetOperators(ksp,amat,pmat,ierr)
-      KSP ksp
-      Mat amat
-      Mat pmat
-      PetscInt ierr
-    END SUBROUTINE KSPSetOperators
-    
-    SUBROUTINE KSPSetReusePreconditioner(ksp,flag,ierr)
-      KSP ksp
-      PetscBool flag
-      PetscInt ierr
-    END SUBROUTINE KSPSetReusePreconditioner
-    
-    SUBROUTINE KSPSetTolerances(ksp,rtol,atol,dtol,maxits,ierr)
-      KSP ksp
-      PetscReal rtol
-      PetscReal atol
-      PetscReal dtol
-      PetscInt maxits
-      PetscInt ierr
-    END SUBROUTINE KSPSetTolerances
-    
-    SUBROUTINE KSPSetType(ksp,method,ierr)
-      KSP ksp
-      KSPType method
-      PetscInt ierr
-    END SUBROUTINE KSPSetType
-    
-    SUBROUTINE KSPSetUp(ksp,ierr)
-      KSP ksp
-      PetscInt ierr
-    END SUBROUTINE KSPSetUp
-    
-    SUBROUTINE KSPSolve(ksp,b,x,ierr)
-      KSP ksp
-      Vec b
-      Vec x
-      PetscInt ierr
-    END SUBROUTINE KSPSolve
-
-    !Matrix routines
-    
-    SUBROUTINE MatAssemblyBegin(A,assemblytype,ierr)
-      Mat A
-      MatAssemblyType assemblytype
-      PetscInt ierr
-    END SUBROUTINE MatAssemblyBegin
-    
-    SUBROUTINE MatAssemblyEnd(A,assemblytype,ierr)
-      Mat A
-      MatAssemblyType assemblytype
-      PetscInt ierr
-    END SUBROUTINE MatAssemblyEnd
-
-    SUBROUTINE MatCreate(comm,A,ierr)
-      MPI_Comm comm
-      Mat A
-      PetscInt ierr
-    END SUBROUTINE MatCreate
-
-    SUBROUTINE MatCreateAIJ(comm,localm,localn,globalm,globaln,diagnumbernzperrow,diagnumbernzeachrow,offdiagnumbernzperrow, &
-      & offdiagnumbernzeachrow,A,ierr)
-      MPI_Comm comm
-      PetscInt localm
-      PetscInt localn
-      PetscInt globalm
-      PetscInt globaln
-      PetscInt diagnumbernzperrow
-      PetscInt diagnumbernzeachrow(*)
-      PetscInt offdiagnumbernzperrow
-      PetscInt offdiagnumbernzeachrow(*)
-      Mat A
-      PetscInt ierr
-    END SUBROUTINE MatCreateAIJ
-        
-    SUBROUTINE MatCreateDense(comm,localm,localn,globalm,globaln,matrixdata,A,ierr)
-      MPI_Comm comm
-      PetscInt localm
-      PetscInt localn
-      PetscInt globalm
-      PetscInt globaln
-      PetscScalar matrixdata(*)
-      Mat A
-      PetscInt ierr
-    END SUBROUTINE MatCreateDense
-        
-    SUBROUTINE MatCreateSeqAIJ(comm,m,n,numbernzperrow,numbernzeachrow,A,ierr)
-      MPI_Comm comm
-      PetscInt m
-      PetscInt n
-      PetscInt numbernzperrow
-      PetscInt numbernzeachrow(*)
-      Mat A
-      PetscInt ierr
-    END SUBROUTINE MatCreateSeqAIJ
-          
-    SUBROUTINE MatCreateSeqDense(comm,m,n,matrixdata,A,ierr)
-      MPI_Comm comm
-      PetscInt m
-      PetscInt n
-      PetscScalar matrixdata(*)
-      Mat A
-      PetscInt ierr
-    END SUBROUTINE MatCreateSeqDense
-
-    SUBROUTINE MatDenseGetArrayF90(A,array,ierr)
-      Mat A
-      PetscScalar, POINTER :: array(:,:)
-      PetscInt ierr
-    END SUBROUTINE MatDenseGetArrayF90
-
-    SUBROUTINE MatDenseRestoreArrayF90(A,array,ierr)
-      Mat A
-      PetscScalar, POINTER :: array(:,:)
-      PetscInt ierr
-    END SUBROUTINE MatDenseRestoreArrayF90
-
-    SUBROUTINE MatDestroy(A,ierr)
-      Mat A
-      PetscInt ierr
-    END SUBROUTINE MatDestroy
-    
-    SUBROUTINE MatGetInfo(A,flag,info,ierr)
-      Mat A
-      MatInfoType flag
-      MatInfo info(*)
-      PetscInt ierr
-    END SUBROUTINE MatGetInfo
-    
-    SUBROUTINE MatGetOwnershipRange(A,firstrow,lastrow,ierr)
-      Mat A
-      PetscInt firstrow
-      PetscInt lastrow
-      PetscInt ierr
-    END SUBROUTINE MatGetOwnershipRange
-
-    SUBROUTINE MatGetRow(A,row,ncols,cols,values,ierr)
-      Mat A
-      PetscInt row
-      PetscInt ncols
-      PetscInt cols(*)
-      PetscScalar values(*)
-      PetscInt ierr
-    END SUBROUTINE MatGetRow
-    
-    SUBROUTINE MatGetValues(A,m,idxm,n,idxn,values,ierr)
-      Mat A
-      PetscInt m
-      PetscInt idxm(*)
-      PetscInt n
-      PetscInt idxn(*)
-      PetscScalar values(*)
-      PetscInt ierr
-    END SUBROUTINE MatGetValues
-    
-    SUBROUTINE MatMumpsSetIcntl(A,icntl,ival,ierr)
-      Mat A
-      PetscInt icntl
-      PetscInt ival
-      PetscInt ierr
-    END SUBROUTINE MatMumpsSetIcntl
-
-    SUBROUTINE MatMumpsSetCntl(A,icntl,val,ierr)
-      Mat A
-      PetscInt icntl
-      PetscReal val
-      PetscInt ierr
-    END SUBROUTINE MatMumpsSetCntl
-
-    SUBROUTINE MatRestoreRow(A,row,ncols,cols,values,ierr)
-      Mat A
-      PetscInt row
-      PetscInt ncols
-      PetscInt cols(*)
-      PetscScalar values(*)
-      PetscInt ierr
-    END SUBROUTINE MatRestoreRow
-    
-    SUBROUTINE MatSeqAIJGetArrayF90(A,array,ierr)
-      Mat A
-      PetscScalar, POINTER :: array(:,:)
-      PetscInt ierr
-    END SUBROUTINE MatSeqAIJGetArrayF90
-
-    SUBROUTINE MatSeqAIJGetMaxRowNonzeros(A,maxNumberNonZeros,ierr)
-      Mat A
-      PetscInt maxNumberNonZeros
-      PetscInt ierr
-    END SUBROUTINE MatSeqAIJGetMaxRowNonzeros
-
-    SUBROUTINE MatSeqAIJRestoreArrayF90(A,array,ierr)
-      Mat A
-      PetscScalar, POINTER :: array(:,:)
-      PetscInt ierr
-    END SUBROUTINE MatSeqAIJRestoreArrayF90
-
-    SUBROUTINE MatSetLocalToGlobalMapping(A,ctx,ierr)
-      Mat A
-      ISLocalToGlobalMapping ctx
-      PetscInt ierr
-    END SUBROUTINE MatSetLocalToGlobalMapping
-
-    SUBROUTINE MatSetOption(A,option,flag,ierr)
-      Mat A
-      MatOption option
-      PetscBool flag
-      PetscInt ierr
-    END SUBROUTINE MatSetOption
-
-    SUBROUTINE MatSetSizes(A,localm,localn,globalM,globalN,ierr)
-      Mat A
-      PetscInt localm
-      PetscInt localn
-      PetscInt globalM
-      PetscInt globalN
-      PetscInt ierr
-    END SUBROUTINE MatSetSizes
-    
-    SUBROUTINE MatSetType(A,matrixtype,ierr)
-      Mat A
-      MatType matrixtype
-      PetscInt ierr
-    END SUBROUTINE MatSetType
-
-    SUBROUTINE MatSetValue(A,row,col,value,insertmode,ierr)
-      Mat A
-      PetscInt row
-      PetscInt col
-      PetscScalar value
-      InsertMode insertmode
-      PetscInt ierr
-    END SUBROUTINE MatSetValue
-    
-    SUBROUTINE MatSetValues(A,m,mindices,n,nindices,values,insertmode,ierr)
-      Mat A
-      PetscInt m
-      PetscInt mindices(*)
-      PetscInt n
-      PetscInt nindices(*)
-      PetscScalar values(*)
-      InsertMode insertmode
-      PetscInt ierr
-    END SUBROUTINE MatSetValues
-    
-    SUBROUTINE MatSetValueLocal(A,row,col,value,insertmode,ierr)
-      Mat A
-      PetscInt row
-      PetscInt col
-      PetscScalar value
-      InsertMode insertmode
-      PetscInt ierr
-    END SUBROUTINE MatSetValueLocal
-    
-    SUBROUTINE MatSetValuesLocal(A,m,mindices,n,nindices,values,insertmode,ierr)
-      Mat A
-      PetscInt m
-      PetscInt mindices(*)
-      PetscInt n
-      PetscInt nindices(*)
-      PetscScalar values(*)
-      InsertMode insertmode
-      PetscInt ierr
-    END SUBROUTINE MatSetValuesLocal
-    
-    SUBROUTINE MatView(A,v,ierr)
-      Mat A
-      PetscViewer v
-      PetscInt ierr
-    END SUBROUTINE MatView
-
-    SUBROUTINE MatZeroEntries(A,ierr)
-      Mat A
-      PetscInt ierr
-    END SUBROUTINE MatZeroEntries
-
-    !Mat coloring routines
-
-    SUBROUTINE MatColoringApply(coloring,isColoring,ierr)
-      MatColoring coloring
-      ISColoring isColoring
-      PetscInt ierr
-    END SUBROUTINE MatColoringApply
-    
-    SUBROUTINE MatColoringCreate(A,coloring,ierr)
-      Mat A
-      MatColoring coloring
-      PetscInt ierr
-    END SUBROUTINE MatColoringCreate
-    
-    SUBROUTINE MatColoringDestroy(coloring,ierr)
-      MatColoring coloring
-      PetscInt ierr
-    END SUBROUTINE MatColoringDestroy
-    
-    SUBROUTINE MatColoringSetFromOptions(coloring,ierr)
-      MatColoring coloring
-      PetscInt ierr
-    END SUBROUTINE MatColoringSetFromOptions
-    
-    SUBROUTINE MatColoringSetType(coloring,coloringType,ierr)
-      MatColoring coloring
-      MatColoringType coloringType
-      PetscInt ierr
-    END SUBROUTINE MatColoringSetType
-
-    !Mat FD coloring routines
-
-    SUBROUTINE MatFDColoringCreate(A,iscoloring,fdcoloring,ierr)
-      Mat A
-      ISColoring iscoloring
-      MatFDColoring fdcoloring
-      PetscInt ierr
-    END SUBROUTINE MatFDColoringCreate
-    
-    SUBROUTINE MatFDColoringDestroy(fdcoloring,ierr)
-      MatFDColoring fdcoloring
-      PetscInt ierr
-    END SUBROUTINE MatFDColoringDestroy
-    
-    SUBROUTINE MatFDColoringSetFromOptions(fdcoloring,ierr)
-      MatFDColoring fdcoloring
-      PetscInt ierr
-    END SUBROUTINE MatFDColoringSetFromOptions
-
-    SUBROUTINE MatFDColoringSetFunction(fdcoloring,ffunction,ctx,ierr)
-      USE Types
-      MatFDColoring fdcoloring
-      EXTERNAL ffunction
-      TYPE(SolverType), POINTER :: ctx
-      PetscInt ierr
-    END SUBROUTINE MatFDColoringSetFunction
-    
-    SUBROUTINE MatFDColoringSetParameters(fdcoloring,rerror,umin,ierr)
-      MatFDColoring fdcoloring
-      PetscScalar rerror
-      PetscScalar umin
-      PetscInt ierr
-    END SUBROUTINE MatFDColoringSetParameters
-    
-    SUBROUTINE MatFDColoringSetUp(A,iscoloring,fdcoloring,ierr)
-      Mat A
-      ISColoring iscoloring
-      MatFDColoring fdcoloring
-      PetscInt ierr
-    END SUBROUTINE MatFDColoringSetUp
-    
-    !Pre-conditioner routines
-
-    SUBROUTINE PCFactorGetMatrix(pc,A,ierr)
-      PC pc
-      Mat A
-      PetscInt ierr
-    END SUBROUTINE PCFactorGetMatrix
-
-    SUBROUTINE PCFactorSetMatSolverPackage(pc,solverpackage,ierr)
-      PC pc
-      MatSolverPackage solverpackage
-      PetscInt ierr
-    END SUBROUTINE PCFactorSetMatSolverPackage
-
-    SUBROUTINE PCFactorSetUpMatSolverPackage(pc,ierr)
-      PC pc
-      PetscInt ierr
-    END SUBROUTINE PCFactorSetUpMatSolverPackage
-
-    SUBROUTINE PCSetFromOptions(pc,ierr)
-      PC pc
-      PetscInt ierr
-    END SUBROUTINE PCSetFromOptions
-    
-    SUBROUTINE PCSetReusePreconditioner(pc,flag,ierr)
-      PC pc
-      PetscBool flag
-      PetscInt ierr
-    END SUBROUTINE PCSetReusePreconditioner
-    
-    SUBROUTINE PCSetType(pc,method,ierr)
-      PC pc
-      PCType method
-      PetscInt ierr
-    END SUBROUTINE PCSetType
-    
-    !SNES routines
-
-    SUBROUTINE SNESCreate(comm,snes,ierr)
-      MPI_Comm comm
-      SNES snes
-      PetscInt ierr
-    END SUBROUTINE SNESCreate
-
-    SUBROUTINE SNESDestroy(snes,ierr)
-      SNES snes
-      PetscInt ierr
-    END SUBROUTINE SNESDestroy
-
-    SUBROUTINE SNESGetApplicationContext(snes,ctx,ierr)
-      USE Types
-      SNES snes
-      TYPE(SolverType), POINTER :: ctx
-      PetscInt ierr
-    END SUBROUTINE SNESGetApplicationContext
-
-    SUBROUTINE SNESGetConvergedReason(snes,reason,ierr)
-      SNES snes
-      SNESConvergedReason reason
-      PetscInt ierr
-    END SUBROUTINE SNESGetConvergedReason
-    
-    SUBROUTINE SNESGetFunction(snes,f,ffunction,ctx,ierr)
-      USE Types
-      SNES snes
-      Vec f
-      EXTERNAL ffunction
-      PetscInt ctx
-      PetscInt ierr
-    END SUBROUTINE SNESGetFunction
-
-    SUBROUTINE SNESGetIterationNumber(snes,iter,ierr)
-      SNES snes
-      PetscInt iter
-      PetscInt ierr
-    END SUBROUTINE SNESGetIterationNumber
-
-    SUBROUTINE SNESGetJacobian(snes,A,B,Jfunction,ctx,ierr)
-      USE Types
-      SNES snes
-      Mat A
-      Mat B      
-      EXTERNAL Jfunction
-      PetscInt ctx
-      PetscInt ierr
-    END SUBROUTINE SNESGetJacobian
-
-    SUBROUTINE SNESGetKSP(snes,ksp,ierr)
-      SNES snes
-      KSP ksp
-      PetscInt ierr
-    END SUBROUTINE SNESGetKSP
-
-    SUBROUTINE SNESGetLineSearch(snes,linesearch,ierr)
-      SNES snes
-      SNESLineSearch linesearch
-      PetscInt ierr
-    END SUBROUTINE SNESGetLineSearch
-
-    SUBROUTINE SNESGetSolutionUpdate(snes,solutionUpdate,ierr)
-      SNES snes
-      Vec solutionUpdate
-      PetscInt ierr
-    END SUBROUTINE SNESGetSolutionUpdate
-
-    SUBROUTINE SNESMonitorSet(snes,mfunction,mctx,monitordestroy,ierr)
-      USE Types
-      SNES snes
-      EXTERNAL mfunction
-      TYPE(SolverType), POINTER :: mctx
-      EXTERNAL monitordestroy
-      PetscInt ierr
-    END SUBROUTINE SNESMonitorSet
-
-    SUBROUTINE SNESQNSetRestartType(snes,rtype,ierr)
-      SNES snes
-      SNESQNRestartType rtype
-      PetscInt ierr
-    END SUBROUTINE SNESQNSetRestartType
-
-    SUBROUTINE SNESQNSetScaleType(snes,stype,ierr)
-      SNES snes
-      SNESQNScaleType stype
-      PetscInt ierr
-    END SUBROUTINE SNESQNSetScaleType
-
-    SUBROUTINE SNESQNSetType(snes,qtype,ierr)
-      SNES snes
-      SNESQNType qtype
-      PetscInt ierr
-    END SUBROUTINE SNESQNSetType
-
-    SUBROUTINE SNESSetApplicationContext(snes,ctx,ierr)
-      USE Types
-      SNES snes
-      TYPE(SolverType), POINTER :: ctx
-      PetscInt ierr
-    END SUBROUTINE SNESSetApplicationContext
-
-    SUBROUTINE SNESSetConvergenceTest(snes,cfunction,ctx,destroyFunction,ierr)
-      USE Types
-      SNES snes
-      EXTERNAL cfunction
-      TYPE(SolverType), POINTER :: ctx
-      EXTERNAL destroyFunction
-      PetscInt ierr
-    END SUBROUTINE SNESSetConvergenceTest
-
-    SUBROUTINE SNESSetFromOptions(snes,ierr)
-      SNES snes
-      PetscInt ierr
-    END SUBROUTINE SNESSetFromOptions
-
-    SUBROUTINE SNESSetFunction(snes,f,ffunction,ctx,ierr)
-      USE Types
-      SNES snes
-      Vec f
-      EXTERNAL ffunction
-      TYPE(SolverType), POINTER :: ctx
-      PetscInt ierr
-    END SUBROUTINE SNESSetFunction
-
-    SUBROUTINE SNESSetJacobian(snes,A,B,Jfunction,ctx,ierr)
-      USE Types
-      SNES snes
-      Mat A
-      Mat B      
-      EXTERNAL Jfunction
-      TYPE(SolverType), POINTER :: ctx
-      PetscInt ierr
-    END SUBROUTINE SNESSetJacobian
-
-    SUBROUTINE SNESSetKSP(snes,ksp,ierr)
-      SNES snes
-      KSP ksp
-      PetscInt ierr
-    END SUBROUTINE SNESSetKSP
-
-    SUBROUTINE SNESSetNormSchedule(snes,normschedule,ierr)
-      SNES snes
-      SNESNormSchedule normschedule
-      PetscInt ierr
-    END SUBROUTINE SNESSetNormSchedule
-
-    SUBROUTINE SNESSetTolerances(snes,abstol,rtol,stol,maxit,maxf,ierr)
-      SNES snes
-      PetscReal abstol
-      PetscReal rtol
-      PetscReal stol
-      PetscInt maxit
-      PetscInt maxf
-      PetscInt ierr
-    END SUBROUTINE SNESSetTolerances
-    
-    SUBROUTINE SNESSetTrustRegionTolerance(snes,trtol,ierr)
-      SNES snes
-      PetscReal trtol
-      PetscInt ierr
-    END SUBROUTINE SNESSetTrustRegionTolerance
-
-    SUBROUTINE SNESSetType(snes,method,ierr)
-      SNES snes
-      SNESType method
-      PetscInt ierr
-    END SUBROUTINE SNESSetType
-
-    SUBROUTINE SNESSolve(snes,b,x,ierr)
-      SNES snes
-      Vec b
-      Vec x
-      PetscInt ierr
-    END SUBROUTINE SNESSolve
-
-    !SNES line search routines
-    
-    SUBROUTINE SNESLineSearchBTSetAlpha(linesearch,alpha,ierr)
-      SNESLineSearch linesearch
-      PetscReal alpha
-      PetscInt ierr
-    END SUBROUTINE SNESLineSearchBTSetAlpha
-
-     SUBROUTINE SnesLineSearchComputeNorms(linesearch,ierr)
-      SNESLineSearch linesearch
-      PetscInt ierr
-    END SUBROUTINE SnesLineSearchComputeNorms
-
-    SUBROUTINE SnesLineSearchGetNorms(linesearch,xnorm,fnorm,ynorm,ierr)
-      SNESLineSearch linesearch
-      PetscReal xnorm
-      PetscReal fnorm
-      PetscReal ynorm
-      PetscInt ierr
-    END SUBROUTINE SnesLineSearchGetNorms
-
-    SUBROUTINE SNESLineSearchGetVecs(linesearch,x,f,y,w,g,ierr)
-      SNESLineSearch linesearch
-      Vec x
-      Vec f
-      Vec y
-      Vec w
-      Vec g
-      PetscInt ierr
-    END SUBROUTINE SNESLineSearchGetVecs
-
-    SUBROUTINE SNESLineSearchSetComputeNorms(linesearch,flag,ierr)
-      SNESLineSearch linesearch
-      PetscBool flag
-      PetscInt ierr
-    END SUBROUTINE SNESLineSearchSetComputeNorms
-
-    SUBROUTINE SnesLineSearchSetMonitor(linesearch,flag,ierr)
-      SNESLineSearch linesearch
-      PetscBool flag
-      PetscInt ierr
-    END SUBROUTINE SnesLineSearchSetMonitor
-
-    SUBROUTINE SnesLineSearchSetNorms(snes,xnorm,fnorm,ynorm,ierr)
-      SNES snes
-      PetscReal xnorm
-      PetscReal fnorm
-      PetscReal ynorm
-      PetscInt ierr
-    END SUBROUTINE SnesLineSearchSetNorms
-
-    SUBROUTINE SNESLineSearchSetOrder(linesearch,linesearchorder,ierr)
-      SNESLineSearch linesearch
-      SNESLineSearchOrder linesearchorder
-      PetscInt ierr
-    END SUBROUTINE SNESLineSearchSetOrder
-
-    SUBROUTINE SNESLineSearchSetTolerances(linesearch,steptol,maxstep,rtol,atol,ltol,maxIt,ierr)
-      SNESLineSearch linesearch
-      PetscReal steptol
-      PetscReal maxstep
-      PetscReal rtol
-      PetscReal atol
-      PetscReal ltol
-      PetscInt maxIt
-      PetscInt ierr
-    END SUBROUTINE SNESLineSearchSetTolerances
-    
-    SUBROUTINE SNESLineSearchSetType(linesearch,linesearchtype,ierr)
-      SNESLineSearch linesearch
-      SNESLineSearchType linesearchtype
-      PetscInt ierr
-    END SUBROUTINE SNESLineSearchSetType
-
-    !Tao routines
-
-    SUBROUTINE TaoCreate(comm,tao,ierr)
-      MPI_Comm comm
-      Tao tao
-      PetscInt ierr
-    END SUBROUTINE TaoCreate
-
-    SUBROUTINE TaoDestroy(tao,ierr)
-      Tao tao
-      PetscInt ierr
-    END SUBROUTINE TaoDestroy
-
-    SUBROUTINE TaoGetConvergedReason(tao,convergedreason,ierr)
-      Tao tao
-      TaoConvergedReason convergedreason
-      PetscInt ierr
-    END SUBROUTINE TaoGetConvergedReason
-
-    SUBROUTINE TaoGetTolerances(tao,gatol,grtol,gttol,ierr)
-      Tao tao
-      PetscReal gatol
-      PetscReal grtol
-      PetscReal gttol
-      PetscInt ierr
-    END SUBROUTINE TaoGetTolerances
-
-    SUBROUTINE TaoSetFromOptions(tao,ierr)
-      Tao tao
-      PetscInt ierr
-    END SUBROUTINE TaoSetFromOptions
-
-    SUBROUTINE TaoSetInequalityBounds(tao,lb,ub,ierr)
-      Tao tao
-      Vec lb
-      Vec ub
-      PetscInt ierr
-    END SUBROUTINE TaoSetInequalityBounds
-
-    SUBROUTINE TaoSetInitialVector(tao,x,ierr)
-      Tao tao
-      Vec x
-      PetscInt ierr
-    END SUBROUTINE TaoSetInitialVector
-
-    SUBROUTINE TaoSetGradientRoutine(tao,GFunction,ctx,ierr)
-      USE Types
-      Tao tao
-      EXTERNAL GFunction
-      TYPE(SolverType), POINTER :: ctx
-      PetscInt ierr
-    END SUBROUTINE TaoSetGradientRoutine
-
-    SUBROUTINE TaoSetHessianRoutine(tao,H,Hpre,HFunction,ctx,ierr)
-      USE Types
-      Tao tao
-      Mat H
-      Mat Hpre
-      EXTERNAL HFunction
-      TYPE(SolverType), POINTER :: ctx
-      PetscInt ierr
-    END SUBROUTINE TaoSetHessianRoutine
-    
-    SUBROUTINE TaoSetMonitor(tao,mFunction,mctx,ierr)
-      USE Types
-      Tao tao
-      EXTERNAL mFunction
-      TYPE(SolverType), POINTER :: mctx
-      PetscInt ierr
-    END SUBROUTINE TaoSetMonitor
-    
-    SUBROUTINE TaoSetObjectiveRoutine(tao,OFunction,ctx,ierr)
-      USE Types
-      Tao tao
-      EXTERNAL OFunction
-      TYPE(SolverType), POINTER :: ctx
-      PetscInt ierr
-    END SUBROUTINE TaoSetObjectiveRoutine
-
-    SUBROUTINE TaoSetObjectiveAndGradientRoutine(tao,ogFunction,ctx,ierr)
-      USE Types
-      Tao tao
-      EXTERNAL ogFunction
-      TYPE(SolverType), POINTER :: ctx
-      PetscInt ierr
-    END SUBROUTINE TaoSetObjectiveAndGradientRoutine
-
-    SUBROUTINE TaoSetSeparableObjectiveRoutine(tao,oFunction,ctx,ierr)
-      USE Types
-      Tao tao
-      EXTERNAL oFunction
-      TYPE(SolverType), POINTER :: ctx
-      PetscInt ierr
-    END SUBROUTINE TaoSetSeparableObjectiveRoutine
-    
-    SUBROUTINE TaoSetTolerances(tao,gatol,grtol,gttol,ierr)
-      Tao tao
-      PetscReal gatol
-      PetscReal grtol
-      PetscReal gttol
-      PetscInt ierr
-    END SUBROUTINE TaoSetTolerances
-
-    SUBROUTINE TaoSetVariableBounds(tao,lb,ub,ierr)
-      Tao tao
-      Vec lb
-      Vec ub
-      PetscInt ierr
-    END SUBROUTINE TaoSetVariableBounds
-
-    SUBROUTINE TaoSolve(tao,ierr)
-      Tao tao
-      PetscInt ierr
-    END SUBROUTINE TaoSolve
-    
-    !Time stepping routines
-    
-    SUBROUTINE TSCreate(comm,ts,ierr)
-      MPI_Comm comm
-      TS ts
-      PetscInt ierr
-    END SUBROUTINE TSCreate
-
-    SUBROUTINE TSDestroy(ts,ierr)
-      TS ts
-      PetscInt ierr
-    END SUBROUTINE TSDestroy
-
-    SUBROUTINE TSGetSolution(ts,currentsolution,ierr)
-      TS ts
-      Vec currentsolution
-      PetscInt ierr
-    END SUBROUTINE TSGetSolution
-    
-    SUBROUTINE TSMonitorSet(ts,mfunction,mctx,monitordestroy,ierr)
-      USE Types
-      TS ts
-      EXTERNAL mfunction
-      TYPE(SolverType), POINTER :: mctx
-      EXTERNAL monitordestroy
-      PetscInt ierr
-    END SUBROUTINE TSMonitorSet
-
-    SUBROUTINE TSSetDuration(ts,maxsteps,maxtime,ierr)
-      TS ts
-      PetscInt maxsteps
-      PetscReal maxtime
-      PetscInt ierr
-    END SUBROUTINE TSSetDuration
-
-    SUBROUTINE TSSetExactFinalTime(ts,eftopt,ierr)
-      TS ts
-      PetscBool eftopt
-      PetscInt ierr
-    END SUBROUTINE TSSetExactFinalTime
-
-    SUBROUTINE TSSetFromOptions(ts,ierr)
-      TS ts
-      PetscInt ierr
-    END SUBROUTINE TSSetFromOptions
-
-    SUBROUTINE TSSetInitialTimeStep(ts,initial_time,time_step,ierr)
-      TS ts
-      PetscReal initial_time
-      PetscReal time_step
-      PetscInt ierr
-    END SUBROUTINE TSSetInitialTimeStep
-    
-    SUBROUTINE TSSetProblemType(ts,probtype,ierr)
-      TS ts
-      TSProblemType probtype
-      PetscInt ierr
-    END SUBROUTINE TSSetProblemType
-    
-    SUBROUTINE TSSetRHSFunction(ts,r,rhsfunc,ctx,ierr)
-      USE Types
-      TS ts
-      Vec r
-      EXTERNAL rhsfunc
-      TYPE(CellMLPETScContextType), POINTER :: ctx
-      PetscInt ierr
-    END SUBROUTINE TSSetRHSFunction
-
-    SUBROUTINE TSSetSolution(ts,initialsolution,ierr)
-      TS ts
-      Vec initialsolution
-      PetscInt ierr
-    END SUBROUTINE TSSetSolution
-
-    SUBROUTINE TSSetTimeStep(ts,time_step,ierr)
-      TS ts
-      PetscReal time_step
-      PetscInt ierr
-    END SUBROUTINE TSSetTimeStep
-    
-    SUBROUTINE TSSetType(ts,tstype,ierr)
-      TS ts
-      TSType tstype
-      PetscInt ierr
-    END SUBROUTINE TSSetType
-    
-    SUBROUTINE TSSolve(ts,x,ftime,ierr)
-      TS ts
-      Vec x
-      PetscReal ftime
-      PetscInt ierr
-    END SUBROUTINE TSSolve
-
-    SUBROUTINE TSStep(ts,steps,ptime,ierr)
-      TS ts
-      PetscInt steps
-      PetscReal ptime
-      PetscInt ierr
-    END SUBROUTINE TSStep
-
-    SUBROUTINE TSSundialsSetTolerance(ts,abstol,reltol,ierr)
-      TS ts
-      PetscReal abstol
-      PetscReal reltol
-      PetscInt ierr
-    END SUBROUTINE TSSundialsSetTolerance
-
-    SUBROUTINE TSSundialsSetType(ts,sundialstype,ierr)
-      TS ts
-      TSSundialsType sundialstype
-      PetscInt ierr
-    END SUBROUTINE TSSundialsSetType
-
-    !Vector routines
-
-    SUBROUTINE VecAssemblyBegin(x,ierr)
-      Vec x
-      PetscInt ierr
-    END SUBROUTINE VecAssemblyBegin
-
-    SUBROUTINE VecAssemblyEnd(x,ierr)
-      Vec x
-      PetscInt ierr
-    END SUBROUTINE VecAssemblyEnd
-
-    SUBROUTINE VecCopy(x,y,ierr)
-      Vec x
-      Vec y
-      PetscInt ierr
-    END SUBROUTINE VecCopy
-
-    SUBROUTINE VecCreate(comm,x,ierr)
-      MPI_Comm comm
-      Vec x
-      PetscInt ierr
-    END SUBROUTINE VecCreate
-
-    SUBROUTINE VecCreateGhost(comm,localm,globalm,nghost,ghosts,x,ierr)
-      MPI_Comm comm
-      PetscInt localm
-      PetscInt globalm
-      PetscInt nghost
-      PetscInt ghosts(*)
-      Vec x
-      PetscInt ierr
-    END SUBROUTINE VecCreateGhost
-
-    SUBROUTINE VecCreateGhostWithArray(comm,localm,globalm,nghost,ghosts,array,x,ierr)
-      MPI_Comm comm
-      PetscInt localm
-      PetscInt globalm
-      PetscInt nghost
-      PetscInt ghosts(*)
-      PetscScalar array(*)
-      Vec x
-      PetscInt ierr
-    END SUBROUTINE VecCreateGhostWithArray
-
-    SUBROUTINE VecCreateMPI(comm,localm,globalm,x,ierr)
-      MPI_Comm comm
-      PetscInt localm
-      PetscInt globalm
-      Vec x
-      PetscInt ierr
-    END SUBROUTINE VecCreateMPI
-
-    SUBROUTINE VecCreateMPIWithArray(comm,localn,globaln,array,x,ierr)
-      MPI_Comm comm
-      PetscInt localn
-      PetscInt globaln
-      PetscScalar array(*)
-      Vec x
-      PetscInt ierr
-    END SUBROUTINE VecCreateMPIWithArray
-
-    SUBROUTINE VecCreateSeq(comm,m,x,ierr)
-      MPI_Comm comm
-      PetscInt m
-      Vec x
-      PetscInt ierr
-    END SUBROUTINE VecCreateSeq
-
-    SUBROUTINE VecCreateSeqWithArray(comm,n,array,x,ierr)
-      MPI_Comm comm
-      PetscInt n
-      PetscScalar array(*)
-      Vec x
-      PetscInt ierr
-    END SUBROUTINE VecCreateSeqWithArray
-
-    SUBROUTINE VecDestroy(x,ierr)
-      Vec x
-      PetscInt ierr
-    END SUBROUTINE VecDestroy
-
-    SUBROUTINE VecDuplicate(old,new,ierr)
-      Vec old,new
-      PetscInt ierr
-    END SUBROUTINE VecDuplicate
-
-    SUBROUTINE VecDot(x,y,val,ierr)
-      Vec x
-      Vec y
-      PetscScalar val
-      PetscInt ierr
-    END SUBROUTINE VecDot
-
-    SUBROUTINE VecGetArrayF90(x,vec_data,ierr)
-      Vec x
-      PetscScalar, POINTER :: vec_data(:)
-      PetscInt ierr
-    END SUBROUTINE VecGetArrayF90
-
-    SUBROUTINE VecGetArrayReadF90(x,vec_data,ierr)
-      Vec x
-      PetscScalar, POINTER :: vec_data(:)
-      PetscInt ierr
-    END SUBROUTINE VecGetArrayReadF90
-
-    SUBROUTINE VecGetLocalSize(x,size,ierr)
-      Vec x
-      PetscInt size
-      PetscInt ierr
-    END SUBROUTINE VecGetLocalSize
-
-    SUBROUTINE VecGetOwnershipRange(x,low,high,ierr)
-      Vec x
-      PetscInt low
-      PetscInt high
-      PetscInt ierr
-    END SUBROUTINE VecGetOwnershipRange
-
-    SUBROUTINE VecGetSize(x,size,ierr)
-      Vec x
-      PetscInt size
-      PetscInt ierr
-    END SUBROUTINE VecGetSize
-
-    SUBROUTINE VecGetValues(x,n,indices,values,ierr)
-      Vec x
-      PetscInt n
-      PetscInt indices(*)
-      PetscScalar values(*)
-      PetscInt ierr
-    END SUBROUTINE VecGetValues
-
-    SUBROUTINE VecGhostGetLocalForm(g,l,ierr)
-      Vec g
-      Vec l
-      PetscInt ierr
-    END SUBROUTINE VecGhostGetLocalForm
-
-    SUBROUTINE VecGhostRestoreLocalForm(g,l,ierr)
-      Vec g
-      Vec l
-      PetscInt ierr
-    END SUBROUTINE VecGhostRestoreLocalForm
-
-   SUBROUTINE VecGhostUpdateBegin(x,insertmode,scattermode,ierr)
-      Vec x
-      InsertMode insertmode
-      ScatterMode scattermode
-      PetscInt ierr
-    END SUBROUTINE VecGhostUpdateBegin
-
-    SUBROUTINE VecGhostUpdateEnd(x,insertmode,scattermode,ierr)
-      Vec x
-      InsertMode insertmode
-      ScatterMode scattermode
-      PetscInt ierr
-    END SUBROUTINE VecGhostUpdateEnd
-
-    SUBROUTINE VecNorm(x,ntype,val,ierr)
-      Vec x
-      NormType ntype
-      PetscReal val
-      PetscInt ierr
-    END SUBROUTINE VecNorm
-    
-    SUBROUTINE VecRestoreArrayF90(x,vec_data,ierr)
-      Vec x
-      PetscScalar, POINTER :: vec_data(:)
-      PetscInt ierr
-    END SUBROUTINE VecRestoreArrayF90
-    
-    SUBROUTINE VecRestoreArrayReadF90(x,vec_data,ierr)
-      Vec x
-      PetscScalar, POINTER :: vec_data(:)
-      PetscInt ierr
-    END SUBROUTINE VecRestoreArrayReadF90
-    
-    SUBROUTINE VecScale(x,alpha,ierr)
-      Vec x
-      PetscScalar alpha
-      PetscInt ierr
-    END SUBROUTINE VecScale
-
-    SUBROUTINE VecSet(x,value,ierr)
-      Vec x
-      PetscScalar value
-      PetscInt ierr
-    END SUBROUTINE VecSet
-
-    SUBROUTINE VecSetFromOptions(x,ierr)
-      Vec x
-      PetscInt ierr
-    END SUBROUTINE VecSetFromOptions
-
-    SUBROUTINE VecSetLocalToGlobalMapping(v,ctx,ierr)
-      Vec v
-      ISLocalToGlobalMapping ctx
-      PetscInt ierr
-    END SUBROUTINE VecSetLocalToGlobalMapping
-
-    SUBROUTINE VecSetSizes(x,localm,globalm,ierr)
-      Vec x
-      PetscInt localm,globalm
-      PetscInt ierr
-    END SUBROUTINE VecSetSizes
-
-    SUBROUTINE VecSetValues(x,n,indices,values,insertmode,ierr)
-      Vec x
-      PetscInt n
-      PetscInt indices(*)
-      PetscScalar values(*)
-      InsertMode insertmode
-      PetscInt ierr
-    END SUBROUTINE VecSetValues
-
-    SUBROUTINE VecSetValuesLocal(x,n,indices,values,insertmode,ierr)
-      Vec x
-      PetscInt n
-      PetscInt indices(*)
-      PetscScalar values(*)
-      InsertMode insertmode
-      PetscInt ierr
-    END SUBROUTINE VecSetValuesLocal
-
-    SUBROUTINE VecView(x,v,ierr)
-      Vec x
-      PetscViewer v
-      PetscInt ierr
-    END SUBROUTINE VecView
-
-  END INTERFACE
 
   INTERFACE Petsc_SnesGetJacobian
     MODULE PROCEDURE Petsc_SnesGetJacobianSolver
@@ -1750,7 +658,7 @@ MODULE CMISSPetsc
   PUBLIC PETSC_TRUE,PETSC_FALSE
   
   PUBLIC PETSC_NULL_BOOL,PETSC_NULL_CHARACTER,PETSC_NULL_FUNCTION,PETSC_NULL_INTEGER,PETSC_NULL_DOUBLE,PETSC_NULL_OBJECT, &
-    & PETSC_NULL_SCALAR,PETSC_NULL_REAL
+     & PETSC_NULL_SCALAR,PETSC_NULL_REAL
 
   PUBLIC PETSC_DEFAULT_INTEGER,PETSC_DEFAULT_REAL
 
@@ -1761,7 +669,7 @@ MODULE CMISSPetsc
   PUBLIC PETSC_VIEWER_STDOUT_WORLD,PETSC_VIEWER_STDOUT_SELF,PETSC_VIEWER_DRAW_WORLD,PETSC_VIEWER_DRAW_SELF
 
   PUBLIC Petsc_Initialise,Petsc_Finalise
-
+  
   PUBLIC Petsc_ErrorHandlingSetOn,Petsc_ErrorHandlingSetOff
 
   PUBLIC Petsc_LogView
@@ -1769,61 +677,67 @@ MODULE CMISSPetsc
   PUBLIC Petsc_OptionsSetValue
   
   !Value insert constants
-
-  PUBLIC PETSC_ADD_VALUES,PETSC_INSERT_VALUES
-
-  PUBLIC PETSC_SCATTER_FORWARD,PETSC_SCATTER_REVERSE
-
-  !Norm constants
-
-  PUBLIC PETSC_NORM_1,PETSC_NORM_2,PETSC_NORM_INFINITY
   
+  PUBLIC PETSC_NOT_SET_VALUES,PETSC_ADD_VALUES,PETSC_INSERT_VALUES,PETSC_MAX_VALUES,PETSC_MIN_VALUES,PETSC_INSERT_ALL_VALUES, &
+    & PETSC_ADD_ALL_VALUES,PETSC_INSERT_BC_VALUES,PETSC_ADD_BC_VALUES
+  
+  PUBLIC PETSC_SCATTER_FORWARD,PETSC_SCATTER_REVERSE,PETSC_SCATTER_FORWARD_LOCAL,PETSC_SCATTER_REVERSE_LOCAL
+
   !IS routines
 
   PUBLIC Petsc_ISInitialise,Petsc_ISFinalise
-
+  
   PUBLIC Petsc_ISDestroy
   
   !IS coloring routines
 
   PUBLIC Petsc_ISColoringInitialise,Petsc_ISColoringFinalise
-
+  
   PUBLIC Petsc_ISColoringDestroy
-
+  
   !IS local to global mapping routines
 
   PUBLIC Petsc_ISLocalToGlobalMappingInitialise,Petsc_ISLocalToGlobalMappingFinalise
-
+  
   PUBLIC Petsc_ISLocalToGlobalMappingApply,Petsc_ISLocalToGlobalMappingApplyIS,Petsc_ISLocalToGlobalMappingCreate, &
     & Petsc_ISLocalToGlobalMappingDestroy
+
+  !Norm type
+
+  PUBLIC PETSC_NORM_1,PETSC_NORM_2,PETSC_NORM_FROBENIUS,PETSC_NORM_INFINITY,PETSC_NORM_1_AND_2
     
   !KSP routines and constants
  
-  PUBLIC PETSC_KSPRICHARDSON,PETSC_KSPCHEBYSHEV,PETSC_KSPCG,PETSC_KSPCGNE,PETSC_KSPNASH,PETSC_KSPSTCG,PETSC_KSPGLTR, &
-    & PETSC_KSPGMRES,PETSC_KSPFGMRES,PETSC_KSPLGMRES,PETSC_KSPDGMRES,PETSC_KSPPGMRES,PETSC_KSPTCQMR,PETSC_KSPBCGS, &
-    & PETSC_KSPIBCGS,PETSC_KSPFBCGS,PETSC_KSPFBCGSR,PETSC_KSPBCGSL,PETSC_KSPCGS,PETSC_KSPTFQMR,PETSC_KSPCR,PETSC_KSPLSQR, &
-    & PETSC_KSPPREONLY,PETSC_KSPQCG,PETSC_KSPBICG,PETSC_KSPMINRES,PETSC_KSPSYMMLQ,PETSC_KSPLCD,PETSC_KSPPYTHON,PETSC_KSPGCR
+  PUBLIC PETSC_KSP_RICHARDSON,PETSC_KSP_CHEBYSHEV,PETSC_KSP_CG,PETSC_KSP_GROPPCG,PETSC_KSP_PIPECG,PETSC_KSP_PIPECGRR, &
+    & PETSC_KSP_PIPELCG,PETSC_KSP_PIPECG2,PETSC_KSP_CGNE,PETSC_KSP_NASH,PETSC_KSP_STCG,PETSC_KSP_GLTR,PETSC_KSP_FCG, &
+    & PETSC_KSP_PIPEFCG,PETSC_KSP_GMRES,PETSC_KSP_PIPEFGMRES,PETSC_KSP_FGMRES,PETSC_KSP_LGMRES,PETSC_KSP_DGMRES, &
+    & PETSC_KSP_PGMRES,PETSC_KSP_TCQMR,PETSC_KSP_BCGS,PETSC_KSP_IBCGS,PETSC_KSP_QMRCGS,PETSC_KSP_FBCGS,PETSC_KSP_FBCGSR, &
+    & PETSC_KSP_BCGSL,PETSC_KSP_PIPEBCGS,PETSC_KSP_CGS,PETSC_KSP_LSQR,PETSC_KSP_PREONLY,PETSC_KSP_QCG,PETSC_KSP_BICG, &
+    & PETSC_KSP_MINRES,PETSC_KSP_SYMMLQ,PETSC_KSP_LCD,PETSC_KSP_GCR,PETSC_KSP_PIPEGCR,PETSC_KSP_TSIRM,PETSC_KSP_CGLS, &
+    & PETSC_KSP_FETIDP,PETSC_KSP_HPDDM
 
-  PUBLIC PETSC_KSP_CONVERGED_RTOL,PETSC_KSP_CONVERGED_ATOL,PETSC_KSP_CONVERGED_ITS,PETSC_KSP_CONVERGED_ITERATING, &
-    & PETSC_KSP_CONVERGED_CG_NEG_CURVE,PETSC_KSP_CONVERGED_CG_CONSTRAINED,PETSC_KSP_CONVERGED_STEP_LENGTH, &
-    & PETSC_KSP_CONVERGED_HAPPY_BREAKDOWN,PETSC_KSP_DIVERGED_NULL,PETSC_KSP_DIVERGED_ITS,PETSC_KSP_DIVERGED_DTOL, &
-    & PETSC_KSP_DIVERGED_BREAKDOWN,PETSC_KSP_DIVERGED_BREAKDOWN_BICG,PETSC_KSP_DIVERGED_NONSYMMETRIC, &
+  PUBLIC PETSC_KSP_CONVERGED_RTOL,PETSC_KSP_CONVERGED_ATOL,PETSC_KSP_CONVERGED_ITS,PETSC_KSP_CONVERGED_NEG_CURVE, &
+    & PETSC_KSP_CONVERGED_STEP_LENGTH,PETSC_KSP_CONVERGED_HAPPY_BREAKDOWN,PETSC_KSP_DIVERGED_NULL,PETSC_KSP_DIVERGED_ITS, &
+    & PETSC_KSP_DIVERGED_DTOL,PETSC_KSP_DIVERGED_BREAKDOWN,PETSC_KSP_DIVERGED_BREAKDOWN_BICG,PETSC_KSP_DIVERGED_NONSYMMETRIC, &
     & PETSC_KSP_DIVERGED_INDEFINITE_PC,PETSC_KSP_DIVERGED_NANORINF,PETSC_KSP_DIVERGED_INDEFINITE_MAT
 
   PUBLIC PETSC_KSP_NORM_NONE,PETSC_KSP_NORM_PRECONDITIONED,PETSC_KSP_NORM_UNPRECONDITIONED,PETSC_KSP_NORM_NATURAL
-
+  
   PUBLIC Petsc_KSPInitialise,Petsc_KSPFinalise
-
+  
   PUBLIC Petsc_KSPCreate,Petsc_KSPDestroy,Petsc_KSPGetConvergedReason,Petsc_KSPGetIterationNumber,Petsc_KSPGetPC, &
     & Petsc_KSPGetResidualNorm,Petsc_KSPGMRESSetRestart,Petsc_KSPSetFromOptions,Petsc_KSPSetInitialGuessNonZero, &
     & Petsc_KSPSetOperators,Petsc_KSPSetReusePreconditioner,Petsc_KSPSetTolerances,Petsc_KSPSetType,Petsc_KSPSetUp, &
     & Petsc_KSPSolve
-
+  
   !Matrix routines and constants
 
   PUBLIC PETSC_MAT_FLUSH_ASSEMBLY,PETSC_MAT_FINAL_ASSEMBLY
 
   PUBLIC PETSC_MAT_DO_NOT_COPY_VALUES,PETSC_MAT_COPY_VALUES,PETSC_MAT_SHARE_NONZERO_PATTERN
+
+  PUBLIC PETSC_MAT_FACTOR_NONE,PETSC_MAT_FACTOR_LU,PETSC_MAT_FACTOR_CHOLESKY,PETSC_MAT_FACTOR_ILU,PETSC_MAT_FACTOR_ICC, &
+    & PETSC_MAT_FACTOR_ILUDT,PETSC_MAT_FACTOR_QR
   
   PUBLIC PETSC_MAT_INFO_SIZE,PETSC_MAT_INFO_BLOCK_SIZE,PETSC_MAT_INFO_NZ_ALLOCATED,PETSC_MAT_INFO_NZ_USED, &
     & PETSC_MAT_INFO_NZ_UNNEEDED,PETSC_MAT_INFO_MEMORY,PETSC_MAT_INFO_ASSEMBLIES,PETSC_MAT_INFO_MALLOCS, &
@@ -1831,23 +745,27 @@ MODULE CMISSPetsc
 
   PUBLIC PETSC_MAT_LOCAL,PETSC_MAT_GLOBAL_MAX,PETSC_MAT_GLOBAL_SUM
 
-  PUBLIC PETSC_MAT_ROW_ORIENTED,PETSC_MAT_NEW_NONZERO_LOCATIONS,PETSC_MAT_SYMMETRIC,PETSC_MAT_STRUCTURALLY_SYMMETRIC, &
-    & PETSC_MAT_NEW_DIAGONALS,PETSC_MAT_IGNORE_OFF_PROC_ENTRIES,PETSC_MAT_NEW_NONZERO_LOCATION_ERR, &
-    & PETSC_MAT_NEW_NONZERO_ALLOCATION_ERR,PETSC_MAT_USE_HASH_TABLE,PETSC_MAT_KEEP_NONZERO_PATTERN, &
-    & PETSC_MAT_IGNORE_ZERO_ENTRIES,PETSC_MAT_USE_INODES,PETSC_MAT_HERMITIAN,PETSC_MAT_SYMMETRY_ETERNAL, &
-    & PETSC_MAT_DUMMY,PETSC_MAT_IGNORE_LOWER_TRIANGULAR,PETSC_MAT_ERROR_LOWER_TRIANGULAR,PETSC_MAT_GETROW_UPPERTRIANGULAR, &
-    & PETSC_MAT_UNUSED_NONZERO_LOCATION_ERR,PETSC_MAT_SPD,PETSC_MAT_NO_OFF_PROC_ENTRIES,PETSC_MAT_NO_OFF_PROC_ZERO_ROWS
+  PUBLIC PETSC_MAT_SPD,PETSC_MAT_SYMMETRIC,PETSC_MAT_STRUCTURALLY_SYMMETRIC,PETSC_MAT_HERMITIAN,PETSC_MAT_SYMMETRY_ETERNAL, &
+    & PETSC_MAT_STRUCTURAL_SYMMETRY_ETERNAL,PETSC_MAT_SPD_ETERNAL,PETSC_MAT_ROW_ORIENTED,PETSC_MAT_NEW_NONZERO_LOCATIONS, &
+    & PETSC_MAT_FORCE_DIAGONAL_ENTRIES,PETSC_MAT_IGNORE_OFF_PROC_ENTRIES,PETSC_MAT_NEW_NONZERO_LOCATION_ERR, &
+    & PETSC_MAT_USE_HASH_TABLE,PETSC_MAT_NO_OFF_PROC_ENTRIES,PETSC_SUBSET_OFF_PROC_ENTRIES, &
+    & PETSC_MAT_NEW_NONZERO_ALLOCATION_ERR,PETSC_MAT_KEEP_NONZERO_PATTERN,PETSC_MAT_IGNORE_ZERO_ENTRIES,PETSC_MAT_USE_INODES, &
+    & PETSC_MAT_IGNORE_LOWER_TRIANGULAR,PETSC_MAT_ERROR_LOWER_TRIANGULAR,PETSC_MAT_GETROW_UPPERTRIANGULAR, &
+    & PETSC_MAT_UNUSED_NONZERO_LOCATION_ERR,PETSC_MAT_OPTION_MAX,PETSC_MAT_OPTION_MIN,PETSC_MAT_NO_OFF_PROC_ZERO_ROWS
+  
+  PUBLIC PETSC_MAT_SOLVER_SUPERLU,PETSC_MAT_SOLVER_SUPERLU_DIST,PETSC_MAT_SOLVER_STRUMPACK,PETSC_MAT_SOLVER_UMFPACK, &
+    & PETSC_MAT_SOLVER_CHOLMOD,PETSC_MAT_SOLVER_KLU,PETSC_MAT_SOLVER_ELEMENTAL,PETSC_MAT_SOLVER_SCALAPACK, &
+    & PETSC_MAT_SOLVER_ESSL,PETSC_MAT_SOLVER_LUSOL,PETSC_MAT_SOLVER_MUMPS,PETSC_MAT_SOLVER_MKL_PARDISO, &
+    & PETSC_MAT_SOLVER_MKL_CPARDISO,PETSC_MAT_SOLVER_PASTIX,PETSC_MAT_SOLVER_MATLAB,PETSC_MAT_SOLVER_PETSC, &
+    & PETSC_MAT_SOLVER_BAS,PETSC_MAT_SOLVER_CUSPARSE,PETSC_MAT_SOLVER_CUDA,PETSC_MAT_SOLVER_HIPSPARSE,PETSC_MAT_SOLVER_HIP, &
+    & PETSC_MAT_SOLVER_KOKKOS,PETSC_MAT_SOLVER_SPQR
 
-  PUBLIC PETSC_MAT_SOLVER_SUPERLU,PETSC_MAT_SOLVER_SUPERLU_DIST,PETSC_MAT_SOLVER_UMFPACK,PETSC_MAT_SOLVER_CHOLMOD, &
-    & PETSC_MAT_SOLVER_ESSL,PETSC_MAT_SOLVER_LUSOL,PETSC_MAT_SOLVER_MUMPS,PETSC_MAT_SOLVER_PASTIX,PETSC_MAT_SOLVER_MATLAB, &
-    & PETSC_MAT_SOLVER_PETSC,PETSC_MAT_SOLVER_BAS,PETSC_MAT_SOLVER_CUSPARSE,PETSC_MAT_SOLVER_BSTRM,PETSC_MAT_SOLVER_SBSTRM
+  PUBLIC PETSC_SAME_NONZERO_PATTERN,PETSC_DIFFERENT_NONZERO_PATTERN,PETSC_SUBSET_NONZERO_PATTERN,PETSC_UNKNOWN_NONZERO_PATTERN
 
-  PUBLIC PETSC_DIFFERENT_NONZERO_PATTERN,PETSC_SUBSET_NONZERO_PATTERN,PETSC_SAME_NONZERO_PATTERN
-
-  PUBLIC PETSC_MAT_INITIAL_MATRIX,PETSC_MAT_REUSE_MATRIX,PETSC_MAT_IGNORE_MATRIX
+  PUBLIC PETSC_MAT_INITIAL_MATRIX,PETSC_MAT_REUSE_MATRIX,PETSC_MAT_IGNORE_MATRIX,PETSC_MAT_INPLACE_MATRIX
  
   PUBLIC Petsc_MatInitialise,Petsc_MatFinalise
-
+  
   PUBLIC Petsc_MatAssemblyBegin,Petsc_MatAssemblyEnd,Petsc_MatCreate,Petsc_MatCreateAIJ,Petsc_MatCreateDense, &
     & Petsc_MatCreateSeqAIJ,Petsc_MatCreateSeqDense,Petsc_MatDenseGetArrayF90,Petsc_MatDenseRestoreArrayF90, &
     & Petsc_MatDestroy,Petsc_MatGetInfo,Petsc_MatGetOwnershipRange,Petsc_MatGetRow,Petsc_MatGetValues, &
@@ -1855,11 +773,12 @@ MODULE CMISSPetsc
     & Petsc_MatSeqAIJGetMaxRowNonzeros,Petsc_MatSeqAIJRestoreArrayF90,Petsc_MatSetLocalToGlobalMapping, &
     & Petsc_MatSetOption,Petsc_MatSetSizes,Petsc_MatSetValue,Petsc_MatSetValues,Petsc_MatSetValueLocal, &
     & Petsc_MatSetValuesLocal,Petsc_MatView,Petsc_MatZeroEntries
-
+  
   !Matrix coloring routines and constants
-  PUBLIC PETSC_MATCOLORING_NATURAL,PETSC_MATCOLORING_SL,PETSC_MATCOLORING_LF,PETSC_MATCOLORING_ID,PETSC_MATCOLORING_GREEDY, &
-    & PETSC_MATCOLORING_JP
-
+  
+  PUBLIC PETSC_MATCOLORING_JP,PETSC_MATCOLORING_POWER,PETSC_MATCOLORING_NATURAL,PETSC_MATCOLORING_SL,PETSC_MATCOLORING_LF, &
+    & PETSC_MATCOLORING_ID,PETSC_MATCOLORING_GREEDY
+  
   PUBLIC Petsc_MatColoringInitialise,Petsc_MatColoringFinalise
   
   PUBLIC Petsc_MatColoringApply,Petsc_MatColoringCreate,Petsc_MatColoringDestroy,Petsc_MatColoringSetFromOptions, &
@@ -1874,26 +793,27 @@ MODULE CMISSPetsc
 
   !Pre-conditioner routines and constants
   
-  PUBLIC PETSC_PCNONE,PETSC_PCJACOBI,PETSC_PCSOR,PETSC_PCLU,PETSC_PCSHELL,PETSC_PCBJACOBI,PETSC_PCMG,PETSC_PCEISENSTAT, &
-    & PETSC_PCILU,PETSC_PCICC,PETSC_PCASM,PETSC_PCKSP,PETSC_PCCOMPOSITE,PETSC_PCREDUNDANT,PETSC_PCSPAI,PETSC_PCNN, &
-    & PETSC_PCCHOLESKY,PETSC_PCPBJACOBI,PETSC_PCMAT,PETSC_PCHYPRE,PETSC_PCPARMS,PETSC_PCFIELDSPLIT,PETSC_PCTFS,PETSC_PCML, &
-    & PETSC_PCGALERKIN,PETSC_PCEXOTIC,PETSC_PCSUPPORTGRAPH,PETSC_PCCP,PETSC_PCBFBT,PETSC_PCLSC,PETSC_PCPYTHON,PETSC_PCPFMG, &
-    & PETSC_PCSYSPFMG,PETSC_PCREDISTRIBUTE,PETSC_PCSVD,PETSC_PCGAMG,PETSC_PCGASM,PETSC_PCSACUSP,PETSC_PCSACUSPPOLY, &
-    & PETSC_PCBICGSTABCUSP,PETSC_PCAINVCUSP,PETSC_PCBDDC
+  PUBLIC PETSC_PC_NONE,PETSC_PC_JACOBI,PETSC_PC_SOR,PETSC_PC_LU,PETSC_PC_QR,PETSC_PC_SHELL,PETSC_PC_AMGX,PETSC_PC_BJACOBI, &
+    & PETSC_PC_MG,PETSC_PC_EISENSTAT,PETSC_PC_ILU,PETSC_PC_ICC,PETSC_PC_ASM,PETSC_PC_KSP,PETSC_PC_COMPOSITE, &
+    & PETSC_PC_REDUNDANT,PETSC_PC_SPAI,PETSC_PC_NN,PETSC_PC_CHOLESKY,PETSC_PC_PBJACOBI,PETSC_PC_VPBJACOBI,PETSC_PC_MAT, &
+    & PETSC_PC_HYPRE,PETSC_PC_PARMS,PETSC_PC_FIELDSPLIT,PETSC_PC_TFS,PETSC_PC_ML,PETSC_PC_GALERKIN,PETSC_PC_EXOTIC, &
+    & PETSC_PC_CP,PETSC_PC_BFBT,PETSC_PC_LSC,PETSC_PC_PYTHON,PETSC_PC_PFMG,PETSC_PC_SYSPFMG,PETSC_PC_REDISTRIBUTE, &
+    & PETSC_PC_SVD,PETSC_PC_GAMG,PETSC_PC_GASM,PETSC_PC_CHOWILUVIENNACL,PETSC_PC_ROWSCALINGVIENNACL,PETSC_PC_SAVIENNACL, &
+    & PETSC_PC_BDDC,PETSC_PC_KACZMARZ,PETSC_PC_TELESCOPE,PETSC_PC_PATCJ,PETSC_PC_LMVM,PETSC_PC_HMG,PETSC_PC_DEFLATION, &
+    & PETSC_PC_HPDDM,PETSC_PC_H2OPUS,PETSC_PC_MPI
   
   PUBLIC Petsc_PCInitialise,Petsc_PCFinalise
-
-  PUBLIC Petsc_PCFactorGetMatrix,Petsc_PCFactorSetMatSolverPackage,Petsc_PCFactorSetUpMatSolverPackage,Petsc_PCSetFromOptions, &
+  
+  PUBLIC Petsc_PCFactorGetMatrix,Petsc_PCFactorSetMatSolverType,Petsc_PCFactorSetUpMatSolverType,Petsc_PCSetFromOptions, &
     & Petsc_PCSetReusePreconditioner,Petsc_PCSetType
 
   !SNES routines and constants
   
-  PUBLIC PETSC_SNESNEWTONLS,PETSC_SNESNEWTONTR,PETSC_SNESPYTHON,PETSC_SNESTEST,PETSC_SNESNRICHARDSON,PETSC_SNESKSPONLY, &
-    & PETSC_SNESVINEWTONRSLS,PETSC_SNESVINEWTONSSLS,PETSC_SNESNGMRES,PETSC_SNESQN,PETSC_SNESSHELL,PETSC_SNESNCG,PETSC_SNESFAS, &
-    & PETSC_SNESMS
+  PUBLIC PETSC_SNES_NEWTONLS,PETSC_SNES_NEWTONTR,PETSC_SNES_NRICHARDSON,PETSC_SNES_KSPONLY,PETSC_SNES_VINEWTONRSLS, &
+    & PETSC_SNES_VINEWTONSSLS,PETSC_SNES_NGMRES,PETSC_SNES_QN,PETSC_SNES_SHELL,PETSC_SNES_NCG,PETSC_SNES_FAS
   
   PUBLIC PETSC_SNES_CONVERGED_FNORM_ABS,PETSC_SNES_CONVERGED_FNORM_RELATIVE,PETSC_SNES_CONVERGED_SNORM_RELATIVE, &
-    & PETSC_SNES_CONVERGED_ITS,PETSC_SNES_CONVERGED_TR_DELTA,PETSC_SNES_DIVERGED_FUNCTION_DOMAIN, &
+    & PETSC_SNES_CONVERGED_ITS,PETSC_SNES_DIVERGED_FUNCTION_DOMAIN, &
     & PETSC_SNES_DIVERGED_FUNCTION_COUNT,PETSC_SNES_DIVERGED_LINEAR_SOLVE,PETSC_SNES_DIVERGED_FNORM_NAN, &
     & PETSC_SNES_DIVERGED_MAX_IT,PETSC_SNES_DIVERGED_LINE_SEARCH,PETSC_SNES_DIVERGED_LOCAL_MIN,PETSC_SNES_CONVERGED_ITERATING
 
@@ -1908,16 +828,16 @@ MODULE CMISSPetsc
     & PETSC_SNES_QN_SCALE_JACOBIAN
 
   PUBLIC Petsc_SnesInitialise,Petsc_SnesFinalise
-
+  
   PUBLIC Petsc_SnesComputeJacobianDefault,Petsc_SnesComputeJacobianDefaultColor
-
+  
   PUBLIC Petsc_SnesCreate,Petsc_SnesDestroy,Petsc_SnesGetApplicationContext,Petsc_SnesGetConvergedReason,Petsc_SnesGetFunction, &
     & Petsc_SnesGetIterationNumber,Petsc_SnesGetJacobian,Petsc_SnesGetKSP,Petsc_SnesGetLineSearch,Petsc_SnesGetSolutionUpdate, &
     & Petsc_SnesMonitorSet,Petsc_SnesQNSetRestartType,Petsc_SnesQNSetScaleType,Petsc_SnesQNSetType, &
     & Petsc_SnesSetApplicationContext,Petsc_SnesSetConvergenceTest,Petsc_SnesSetFromOptions,Petsc_SnesSetFunction, &
     & Petsc_SnesSetJacobian,Petsc_SnesSetKSP,Petsc_SnesSetNormSchedule,Petsc_SnesSetTolerances,Petsc_SnesSetTrustRegionTolerance, &
     & Petsc_SnesSetType,Petsc_SnesSolve
-
+  
   !SNES line search routines and constants
 
   PUBLIC PETSC_SNES_LINESEARCH_BASIC,PETSC_SNES_LINESEARCH_BT,PETSC_SNES_LINESEARCH_L2,PETSC_SNES_LINESEARCH_CP, &
@@ -1928,24 +848,25 @@ MODULE CMISSPetsc
   PUBLIC Petsc_SnesLineSearchInitialise,Petsc_SnesLineSearchFinalise
 
   PUBLIC Petsc_SnesLineSearchBTSetAlpha,Petsc_SnesLineSearchComputeNorms,Petsc_SnesLineSearchGetNorms,Petsc_SnesLineSearchGetVecs, &
-    & Petsc_SnesLineSearchSetComputeNorms,Petsc_SnesLineSearchSetMonitor,Petsc_SnesLineSearchSetNorms, &
+    & Petsc_SnesLineSearchMonitorSet,Petsc_SnesLineSearchSetComputeNorms,Petsc_SnesLineSearchSetNorms, &
     & Petsc_SnesLineSearchSetOrder,Petsc_SnesLineSearchSetTolerances,Petsc_SnesLineSearchSetType
-
+  
   !TAO routines and constants
-
+  
   PUBLIC PETSC_TAO_LMVM,PETSC_TAO_NLS,PETSC_TAO_NTR,PETSC_TAO_NTL,PETSC_TAO_CG,PETSC_TAO_TRON,PETSC_TAO_OWLQN,PETSC_TAO_BMRM, &
     & PETSC_TAO_BLMVM,PETSC_TAO_BQPIP,PETSC_TAO_GPCG,PETSC_TAO_NM,PETSC_TAO_POUNDERS,PETSC_TAO_LCL,PETSC_TAO_SSILS, &
     & PETSC_TAO_SSFLS,PETSC_TAO_ASILS,PETSC_TAO_ASFLS,PETSC_TAO_IPM
-
-  PUBLIC PETSC_TAO_CONVERGED_FATOL,PETSC_TAO_CONVERGED_FRTOL,PETSC_TAO_CONVERGED_GATOL,PETSC_TAO_CONVERGED_GRTOL, &
-    & PETSC_TAO_CONVERGED_GTTOL,PETSC_TAO_CONVERGED_STEPTOL,PETSC_TAO_CONVERGED_MINF,PETSC_TAO_CONVERGED_USER, &
-    & PETSC_TAO_DIVERGED_MAXITS,PETSC_TAO_DIVERGED_MAXFCN,PETSC_TAO_DIVERGED_LS_FAILURE,PETSC_TAO_DIVERGED_TR_REDUCTION, &
-    & PETSC_TAO_DIVERGED_USER,PETSC_TAO_CONTINUE_ITERATING
+  
+  PUBLIC PETSC_TAO_CONVERGED_GATOL,PETSC_TAO_CONVERGED_GRTOL,PETSC_TAO_CONVERGED_GTTOL,PETSC_TAO_CONVERGED_STEPTOL, &
+    & PETSC_TAO_CONVERGED_MINF,PETSC_TAO_CONVERGED_USER,PETSC_TAO_DIVERGED_MAXITS,PETSC_TAO_DIVERGED_MAXFCN, &
+    & PETSC_TAO_DIVERGED_LS_FAILURE,PETSC_TAO_DIVERGED_TR_REDUCTION,PETSC_TAO_DIVERGED_USER,PETSC_TAO_CONTINUE_ITERATING
   
   !TS routines and constants
+
+  PUBLIC PETSC_TS_EXACTFINALTIME_STEPOVER,PETSC_TS_EXACTFINALTIME_INTERPOLATE,PETSC_TS_EXACTFINALTIME_MATCHSTEP
   
   PUBLIC PETSC_TS_EULER,PETSC_TS_BEULER,PETSC_TS_PSEUDO,PETSC_TS_CN,PETSC_TS_SUNDIALS,PETSC_TS_RK,PETSC_TS_PYTHON, &
-    & PETSC_TS_THETA,PETSC_TS_ALPHA,PETSC_TS_GL,PETSC_TS_SSP,PETSC_TS_ARKIMEX,PETSC_TS_ROSW,PETSC_TS_EIMEX
+    & PETSC_TS_THETA,PETSC_TS_ALPHA,PETSC_TS_GLLE,PETSC_TS_SSP,PETSC_TS_ARKIMEX,PETSC_TS_ROSW,PETSC_TS_EIMEX
 
   PUBLIC PETSC_TS_CONVERGED_ITERATING,PETSC_TS_CONVERGED_TIME,PETSC_TS_CONVERGED_ITS,PETSC_TS_DIVERGED_NONLINEAR_SOLVE, &
     & PETSC_TS_DIVERGED_STEP_REJECTED
@@ -1959,13 +880,14 @@ MODULE CMISSPetsc
   PUBLIC Petsc_TSInitialise,Petsc_TSFinalise
 
   PUBLIC Petsc_TSCreate,Petsc_TSDestroy,Petsc_TSGetSolution,Petsc_TSMonitorSet,Petsc_TSSetDuration,Petsc_TSSetExactFinalTime, &
-    & Petsc_TSSetFromOptions,Petsc_TSSetInitialTimeStep,Petsc_TSSetProblemType,Petsc_TSSetRHSFunction,Petsc_TSSetSolution, &
-    & Petsc_TSSetTimeStep,Petsc_TSSetType,Petsc_TSSolve,Petsc_TSStep,Petsc_TSSundialsSetTolerance,Petsc_TSSundialsSetType
-
+    & Petsc_TSSetFromOptions,Petsc_TSSetMaxTime,Petsc_TSSetProblemType,Petsc_TSSetRHSFunction, &
+    & Petsc_TSSetSolution,Petsc_TSSetTime,Petsc_TSSetTimeStep,Petsc_TSSetType,Petsc_TSSolve,Petsc_TSStep, &
+    & Petsc_TSSundialsSetTolerance,Petsc_TSSundialsSetType
+  
   !Vector routines and constants
 
   PUBLIC Petsc_VecInitialise,Petsc_VecFinalise
-
+  
   PUBLIC Petsc_VecAssemblyBegin,Petsc_VecAssemblyEnd,Petsc_VecCopy,Petsc_VecCreate,Petsc_VecCreateGhost, &
     & Petsc_VecCreateGhostWithArray,Petsc_VecCreateMPI,Petsc_VecCreateMPIWithArray,Petsc_VecCreateSeq, &
     & Petsc_VecCreateSeqWithArray,Petsc_VecDestroy,Petsc_VecDuplicate,Petsc_VecDot,Petsc_VecGetArrayF90, &
@@ -1974,11 +896,11 @@ MODULE CMISSPetsc
     & Petsc_VecSetLocalToGlobalMapping,Petsc_VecSetSizes,Petsc_VecSetValues,Petsc_VecView
   
 CONTAINS
-
+  
   !
   !================================================================================================================================
   !
-
+  
   !>Set PETSc error handling on
   SUBROUTINE Petsc_ErrorHandlingSetOff(err,error,*)
 
@@ -2134,7 +1056,7 @@ CONTAINS
 
     ENTERS("Petsc_OptionSetValue",err,error,*999)
 
-    CALL PetscOptionsSetValue(name,value,err)
+    CALL PetscOptionsSetValue(PETSC_NULL_OPTIONS,name,VALUE,err)
     IF(err/=0) THEN
       IF(petscHandleError) THEN
         CHKERRQ(err)
@@ -2164,7 +1086,7 @@ CONTAINS
 
     ENTERS("Petsc_ISFinalise",err,error,*999)
 
-    IF(is%is/=PETSC_NULL_OBJECT) THEN
+    IF(ASSOCIATED(is%is)) THEN
       CALL Petsc_ISDestroy(is,err,error,*999)
     ENDIF
     
@@ -2190,7 +1112,9 @@ CONTAINS
 
     ENTERS("Petsc_ISInitialise",err,error,*999)
 
-    is%is=PETSC_NULL_OBJECT
+    NULLIFY(is%is)
+    ALLOCATE(is%is,STAT=err)
+    IF(err/=0) CALL FlagError("Could not allocate PETSc IS object.",err,error,*999)
     
     EXITS("Petsc_ISInitialise")
     RETURN
@@ -2221,7 +1145,8 @@ CONTAINS
       ENDIF
       CALL FlagError("PETSc error in ISDestroy.",err,error,*999)
     ENDIF
-    is%is=PETSC_NULL_OBJECT
+    DEALLOCATE(is%is)
+    NULLIFY(is%is)
         
     EXITS("Petsc_ISDestroy")
     RETURN
@@ -2246,7 +1171,7 @@ CONTAINS
 
     ENTERS("Petsc_ISColoringFinalise",err,error,*999)
 
-    IF(iscoloring%iscoloring/=PETSC_NULL_OBJECT) THEN
+    IF(ASSOCIATED(iscoloring%iscoloring)) THEN
       CALL Petsc_ISColoringDestroy(iscoloring,err,error,*999)
     ENDIF
     
@@ -2272,7 +1197,9 @@ CONTAINS
 
     ENTERS("Petsc_ISColoringInitialise",err,error,*999)
 
-    iscoloring%iscoloring=PETSC_NULL_OBJECT
+    NULLIFY(iscoloring%iscoloring)
+    ALLOCATE(iscoloring%iscoloring,STAT=err)
+    IF(err/=0) CALL FlagError("Could not allocate PETSc ISColoring object.",err,error,*999)    
     
     EXITS("Petsc_ISColoringInitialise")
     RETURN
@@ -2303,7 +1230,8 @@ CONTAINS
       ENDIF
       CALL FlagError("PETSc error in ISColoringDestroy.",err,error,*999)
     ENDIF
-    iscoloring%iscoloring=PETSC_NULL_OBJECT
+    DEALLOCATE(iscoloring%iscoloring)
+    NULLIFY(iscoloring%iscoloring)
     
     EXITS("Petsc_ISColoringDestroy")
     RETURN
@@ -2327,7 +1255,7 @@ CONTAINS
 
     ENTERS("Petsc_ISLocalToGlobalMappingFinalise",err,error,*999)
 
-    IF(isLocalToGlobalMapping%isLocalToGlobalMapping/=PETSC_NULL_OBJECT) THEN
+    IF(ASSOCIATED(isLocalToGlobalMapping%isLocalToGlobalMapping)) THEN
       CALL Petsc_ISLocalToGlobalMappingDestroy(isLocalToGlobalMapping,err,error,*999)
     ENDIF
     
@@ -2353,7 +1281,9 @@ CONTAINS
 
     ENTERS("Petsc_ISLocalToGlobalMappingInitialise",err,error,*999)
 
-    isLocalToGlobalMapping%isLocalToGlobalMapping=PETSC_NULL_OBJECT
+    NULLIFY(isLocalToGlobalMapping%isLocalToGlobalMapping)
+    ALLOCATE(isLocalToGlobalMapping%isLocalToGlobalMapping,STAT=err)
+    IF(err/=0) CALL FlagError("Could not allocate PETSc ISLocalToGlobalMapping object.",err,error,*999)
     
     EXITS("Petsc_ISLocalToGlobalMappingInitialise")
     RETURN
@@ -2387,7 +1317,6 @@ CONTAINS
       ENDIF
       CALL FlagError("PETSc error in ISLocalToGlobalMappingApply.",err,error,*999)
     ENDIF
-    isLocalToGlobalMapping%isLocalToGlobalMapping=PETSC_NULL_OBJECT
     
     EXITS("Petsc_ISLocalToGlobalMappingApply")
     RETURN
@@ -2436,7 +1365,11 @@ CONTAINS
   SUBROUTINE Petsc_ISLocalToGlobalMappingCreate(communicator,blockSize,n,indices,mode,isLocalToGlobalMapping,err,error,*)
 
     !Argument Variables
+#ifdef WITH_F08_MPI
+    TYPE(MPI_Comm), INTENT(IN) :: communicator !<The MPI communicator
+#else    
     MPI_Comm, INTENT(IN) :: communicator !<The MPI communicator
+#endif    
     INTEGER(INTG), INTENT(IN) :: blockSize !<The block size
     INTEGER(INTG), INTENT(IN) :: n !<The number of local indices divided by the block size (or the number of block indices)
     INTEGER(INTG), INTENT(IN) :: indices(:) !<The global index for each local element
@@ -2485,7 +1418,8 @@ CONTAINS
       ENDIF
       CALL FlagError("PETSc error in ISLocalToGlobalMappingDestroy.",err,error,*999)
     ENDIF
-    isLocalToGlobalMapping%isLocalToGlobalMapping=PETSC_NULL_OBJECT
+    DEALLOCATE(isLocalToGlobalMapping%isLocalToGlobalMapping)
+    NULLIFY(isLocalToGlobalMapping%isLocalToGlobalMapping)
     
     EXITS("Petsc_ISLocalToGlobalMappingDestroy")
     RETURN
@@ -2509,7 +1443,7 @@ CONTAINS
 
     ENTERS("Petsc_KSPFinalise",err,error,*999)
 
-    IF(ksp%ksp/=PETSC_NULL_OBJECT) THEN
+    IF(ASSOCIATED(ksp%ksp)) THEN
       CALL Petsc_KSPDestroy(ksp,err,error,*999)
     ENDIF
     
@@ -2535,7 +1469,9 @@ CONTAINS
 
     ENTERS("Petsc_KSPInitialise",err,error,*999)
 
-    ksp%ksp=PETSC_NULL_OBJECT
+    NULLIFY(ksp%ksp)
+    ALLOCATE(ksp%ksp,STAT=err)
+    IF(err/=0) CALL FlagError("Could not allocate PETSc KSP object.",err,error,*999)
     
     EXITS("Petsc_KSPInitialise")
     RETURN
@@ -2552,7 +1488,11 @@ CONTAINS
   SUBROUTINE Petsc_KSPCreate(communicator,ksp,err,error,*)
 
     !Argument Variables
+#ifdef WITH_F08_MPI
+    TYPE(MPI_Comm), INTENT(IN) :: communicator !<The MPI communicator for the KSP creation
+#else    
     MPI_Comm, INTENT(IN) :: communicator !<The MPI communicator for the KSP creation
+#endif    
     TYPE(PetscKspType), INTENT(INOUT) :: ksp !<On exit, the KSP object
     INTEGER(INTG), INTENT(OUT) :: err !<The error code
     TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
@@ -2597,7 +1537,8 @@ CONTAINS
       ENDIF
       CALL FlagError("PETSc error in KSPDestroy.",err,error,*999)
     ENDIF
-    ksp%ksp=PETSC_NULL_OBJECT
+    DEALLOCATE(ksp%ksp)
+    NULLIFY(ksp%ksp)
     
     EXITS("Petsc_KSPDestroy")
     RETURN
@@ -3034,7 +1975,7 @@ CONTAINS
 
     ENTERS("Petsc_MatFinalise",err,error,*999)
 
-    IF(a%mat/=PETSC_NULL_OBJECT) THEN
+    IF(ASSOCIATED(a%mat)) THEN
       CALL Petsc_MatDestroy(a,err,error,*999)
     ENDIF
     
@@ -3060,7 +2001,9 @@ CONTAINS
 
     ENTERS("Petsc_MatInitialise",err,error,*999)
 
-    a%mat=PETSC_NULL_OBJECT
+    NULLIFY(a%mat)
+    ALLOCATE(a%mat,STAT=err)
+    IF(err/=0) CALL FlagError("Could not allocate PETSc Mat object.",err,error,*999)
      
     EXITS("Petsc_MatInitialise")
     RETURN
@@ -3139,7 +2082,11 @@ CONTAINS
   SUBROUTINE Petsc_MatCreate(communicator,A,err,error,*)
 
     !Argument Variables
+#ifdef WITH_F08_MPI
+    TYPE(MPI_Comm), INTENT(IN) :: communicator !<The MPI Communicator
+#else    
     MPI_Comm, INTENT(IN) :: communicator !<The MPI Communicator
+#endif    
     TYPE(PetscMatType), INTENT(INOUT) :: A !<On exit, the created matrix
     INTEGER(INTG), INTENT(OUT) :: err !<The error code
     TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
@@ -3171,7 +2118,11 @@ CONTAINS
     & offDiagNumberNonZerosPerRow,offDiagNumberNonZerosEachRow,a,err,error,*)
 
     !Argument Variables
+#ifdef WITH_F08_MPI
+    TYPE(MPI_Comm), INTENT(IN) :: communicator !<The MPI communicator
+#else    
     MPI_Comm, INTENT(IN) :: communicator !<The MPI communicator
+#endif    
     INTEGER(INTG), INTENT(IN) :: localM !<The number of local rows
     INTEGER(INTG), INTENT(IN) :: localN !<The number of local columns
     INTEGER(INTG), INTENT(IN) :: globalM !<The number of global rows
@@ -3211,12 +2162,16 @@ CONTAINS
   SUBROUTINE Petsc_MatCreateDense(communicator,localM,localN,globalM,globalN,matrixData,a,err,error,*)
 
     !Argument Variables
+#ifdef WITH_F08_MPI
+    TYPE(MPI_Comm), INTENT(IN) :: communicator !<The MPI communicator
+#else    
     MPI_Comm, INTENT(IN) :: communicator !<The MPI communicator
+#endif    
     INTEGER(INTG), INTENT(IN) :: localM !<The number of local rows
     INTEGER(INTG), INTENT(IN) :: localN !<The number of local columns
     INTEGER(INTG), INTENT(IN) :: globalM !<The number of global columns
     INTEGER(INTG), INTENT(IN) :: globalN !<The number of global rows
-    REAL(DP), INTENT(IN) :: matrixData(:) !<Optional, the allocated matrix data.
+    REAL(DP), INTENT(IN) :: matrixData !<Optional, the allocated matrix data.
     TYPE(PetscMatType), INTENT(INOUT) :: a !<On exit, the created matrix 
     INTEGER(INTG), INTENT(OUT) :: err !<The error code
     TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
@@ -3247,7 +2202,11 @@ CONTAINS
   SUBROUTINE Petsc_MatCreateSeqAIJ(communicator,m,n,numberNonZerosPerRow,numberNonZerosEachRow,a,err,error,*)
 
     !Argument Variables
+#ifdef WITH_F08_MPI
+    TYPE(MPI_Comm), INTENT(IN) :: communicator !<The MPI communicator
+#else    
     MPI_Comm, INTENT(IN) :: communicator !<The MPI communicator
+#endif    
     INTEGER(INTG), INTENT(IN) :: m !<The number of rows
     INTEGER(INTG), INTENT(IN) :: n !<The number of columns
     INTEGER(INTG), INTENT(IN) :: numberNonZerosPerRow !<The maximum number of non-zeros per row
@@ -3282,7 +2241,11 @@ CONTAINS
   SUBROUTINE Petsc_MatCreateSeqDense(communicator,m,n,matrixData,a,err,error,*)
 
     !Argument Variables
+#ifdef WITH_F08_MPI
+    TYPE(MPI_Comm), INTENT(IN) :: communicator !<The MPI Communicator
+#else    
     MPI_Comm, INTENT(IN) :: communicator !<The MPI Communicator
+#endif    
     INTEGER(INTG), INTENT(IN) :: m !<The number of rows
     INTEGER(INTG), INTENT(IN) :: n !<The number of columns
     REAL(DP), INTENT(IN) :: matrixData(*) !<Optional, the allocated matrix data
@@ -3396,7 +2359,8 @@ CONTAINS
       ENDIF
       CALL FlagError("PETSc error in MatDestroy.",err,error,*999)
     ENDIF
-    a%mat=PETSC_NULL_OBJECT
+    DEALLOCATE(a%mat)
+    NULLIFY(a%mat)
      
     EXITS("Petsc_MatDestroy")
     RETURN
@@ -3555,6 +2519,7 @@ CONTAINS
 
     ENTERS("Petsc_MatMumpsSetIcntl",err,error,*999)
 
+#ifdef WITH_MUMPS    
     CALL MatMumpsSetIcntl(factoredMatrix%mat,icntl,ival,err)
     IF(err/=0) THEN
       IF(petscHandleError) THEN
@@ -3562,6 +2527,7 @@ CONTAINS
       ENDIF
       CALL FlagError("PETSc error in MatMumpsSetIcntl.",err,error,*999)
     ENDIF
+#endif    
     
     EXITS("Petsc_MatMumpsSetIcntl")
     RETURN
@@ -3587,6 +2553,7 @@ CONTAINS
 
     ENTERS("Petsc_MatMumpsSetCntl",err,error,*999)
 
+#ifdef WITH_MUMPS    
     CALL MatMumpsSetCntl(factoredMatrix%mat,icntl,val,err)
     IF(err/=0) THEN
       IF(petscHandleError) THEN
@@ -3594,6 +2561,7 @@ CONTAINS
       ENDIF
       CALL FlagError("PETSc error in MatMumpsSetCntl.",err,error,*999)
     ENDIF
+#endif    
     
     EXITS("Petsc_MatMumpsSetCntl")
     RETURN
@@ -3645,14 +2613,14 @@ CONTAINS
 
     !Argument Variables
     TYPE(PetscMatType), INTENT(INOUT), TARGET :: a !<The matrix to get the array for
-    REAL(DP), POINTER :: array(:,:) !<On exit, a pointer to the matrix array
+    REAL(DP), POINTER :: array(:) !<On exit, a pointer to the matrix array
     INTEGER(INTG), INTENT(OUT) :: err !<The error code
     TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
     !Local Variables
 
     ENTERS("Petsc_MatSeqAIJGetArrayF90",err,error,*999)
 
-    IF(ASSOCIATED(ARRAY)) THEN
+    IF(ASSOCIATED(array)) THEN
       CALL FlagError("Array is already associated.",err,error,*999)
     ELSE
       CALL MatSeqAIJGetArrayF90(a%mat,array,err)
@@ -3713,7 +2681,7 @@ CONTAINS
 
     !Argument Variables
     TYPE(PetscMatType), INTENT(INOUT) :: a !<The matrix to restore the array for
-    REAL(DP), POINTER :: array(:,:) !<A pointer to the matrix array to restore
+    REAL(DP), POINTER :: array(:) !<A pointer to the matrix array to restore
     INTEGER(INTG), INTENT(OUT) :: err !<The error code
     TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
     !Local Variables
@@ -3740,18 +2708,19 @@ CONTAINS
   !
 
   !>Buffer routine to the PETSc MatSetLocalToGlobalMapping routine.
-  SUBROUTINE Petsc_MatSetLocalToGlobalMapping(a,isLocalToGlobalMapping,err,error,*)
+  SUBROUTINE Petsc_MatSetLocalToGlobalMapping(a,rowMapping,columnMapping,err,error,*)
 
     !Argument Variables
     TYPE(PetscMatType), INTENT(INOUT) :: a !<The matrix to set the local to global mapping for
-    TYPE(PetscISLocalToGloabalMappingType), INTENT(IN) :: isLocalToGlobalMapping !<The local to global mapping context
+    TYPE(PetscISLocalToGloabalMappingType), INTENT(IN) :: rowMapping !<The row local to global mapping 
+    TYPE(PetscISLocalToGloabalMappingType), INTENT(IN) :: columnMapping !<The column local to global mapping 
     INTEGER(INTG), INTENT(OUT) :: err !<The error code
     TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
     !Local Variables
 
     ENTERS("Petsc_MatSetLocalToGlobalMapping",err,error,*999)
 
-    CALL MatSetLocalToGlobalMapping(a%mat,isLocalToGlobalMapping%isLocalToGlobalMapping,err)
+    CALL MatSetLocalToGlobalMapping(a%mat,rowMapping%isLocalToGlobalMapping,columnMapping%isLocalToGlobalMapping,err)
     IF(err/=0) THEN
       IF(petscHandleError) THEN
         CHKERRQ(err)
@@ -3775,7 +2744,7 @@ CONTAINS
 
     !Argument Variables
     TYPE(PetscMatType), INTENT(INOUT) :: a !<The matrix to set the option for
-    MatOption, INTENT(IN) :: option !<The option to set \see CMISSPetsc_PetscMatOptionTypes,CMISSPetsc
+    MatOption, INTENT(IN) :: option !<The option to set \see OpenCMISSPETSc_PetscMatOptionTypes,OpenCMISSPETSc
     LOGICAL, INTENT(IN) :: flag !<The option flag to set
     INTEGER(INTG), INTENT(OUT) :: err !<The error code
     TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
@@ -3879,7 +2848,7 @@ CONTAINS
     INTEGER(INTG), INTENT(IN) :: row !<The row index
     INTEGER(INTG), INTENT(IN) :: col !<The column index
     REAL(DP), INTENT(IN) :: value !<The value to set
-    InsertMode, INTENT(IN) :: insertMode !<The insert mode \see CMISSPetsc_PetscMatInsertMode
+    InsertMode, INTENT(IN) :: insertMode !<The insert mode \see OpenCMISSPETSc_PetscMatInsertMode
     INTEGER(INTG), INTENT(OUT) :: err !<The error code
     TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
     !Local Variables
@@ -3915,7 +2884,7 @@ CONTAINS
     INTEGER(INTG), INTENT(IN) :: n !<The number of column indices
     INTEGER(INTG), INTENT(IN) :: nIndices(*) !<The column indices
     REAL(DP), INTENT(IN) :: values(*) !<The values to set
-    InsertMode, INTENT(IN) :: insertMode !<The insert mode \see CMISSPetsc_PetscMatInsertMode
+    InsertMode, INTENT(IN) :: insertMode !<The insert mode \see OpenCMISSPETSc_PetscMatInsertMode
     INTEGER(INTG), INTENT(OUT) :: err !<The error code
     TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
     !Local Variables
@@ -3947,7 +2916,7 @@ CONTAINS
     INTEGER(INTG), INTENT(IN) :: row !<The row index
     INTEGER(INTG), INTENT(IN) :: col !<The column index
     REAL(DP), INTENT(IN) :: value !<The value to set
-    InsertMode, INTENT(IN) :: insertMode !<The insert mode \see CMISSPetsc_PetscMatInsertMode
+    InsertMode, INTENT(IN) :: insertMode !<The insert mode \see OpenCMISSPETSc_PetscMatInsertMode
     INTEGER(INTG), INTENT(OUT) :: err !<The error code
     TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
     !Local Variables
@@ -4080,7 +3049,7 @@ CONTAINS
 
     ENTERS("Petsc_MatColoringFinalise",err,error,*999)
 
-    IF(matColoring%matColoring/=PETSC_NULL_OBJECT) THEN
+    IF(ASSOCIATED(matColoring%matColoring)) THEN
       CALL Petsc_MatColoringDestroy(matColoring,err,error,*999)
     ENDIF
     
@@ -4106,7 +3075,9 @@ CONTAINS
 
     ENTERS("Petsc_MatColoringInitialise",err,error,*999)
 
-    matColoring%matColoring=PETSC_NULL_OBJECT
+    NULLIFY(matColoring%matColoring)
+    ALLOCATE(matColoring%matColoring,STAT=err)
+    IF(err/=0) CALL FlagError("Could not allocate PETSc MatColoring object.",err,error,*999)
     
     EXITS("Petsc_MatColoringInitialise")
     RETURN
@@ -4199,7 +3170,8 @@ CONTAINS
       ENDIF
       CALL FlagError("PETSc error in MatColoringDestroy.",err,error,*999)
     ENDIF
-    matColoring%matColoring=PETSC_NULL_OBJECT
+    DEALLOCATE(matColoring%matColoring)
+    NULLIFY(matColoring%matColoring)
     
     EXITS("Petsc_MatColoringDestroy")
     RETURN
@@ -4284,7 +3256,7 @@ CONTAINS
 
     ENTERS("Petsc_MatFDColoringFinalise",err,error,*999)
 
-    IF(matFDColoring%matFDColoring/=PETSC_NULL_OBJECT) THEN
+    IF(ASSOCIATED(matFDColoring%matFDColoring)) THEN
       CALL Petsc_MatFDColoringDestroy(matFDColoring,err,error,*999)
     ENDIF
     
@@ -4310,7 +3282,9 @@ CONTAINS
 
     ENTERS("Petsc_MatFDColoringInitialise",err,error,*999)
 
-    matFDColoring%matFDColoring=PETSC_NULL_OBJECT
+    NULLIFY(matFDColoring%matFDColoring)
+    ALLOCATE(matFDColoring%matFDColoring,STAT=err)
+    IF(err/=0) CALL FlagError("Could not allocate PETSc MatFDColoring object.",err,error,*999)
     
     EXITS("Petsc_MatFDColoringInitialise")
     RETURN
@@ -4373,7 +3347,8 @@ CONTAINS
       ENDIF
       CALL FlagError("PETSc error in MatFDColoringDestroy.",err,error,*999)
     ENDIF
-    matFDColoring%matFDColoring=PETSC_NULL_OBJECT
+    DEALLOCATE(matFDColoring%matFDColoring)
+    NULLIFY(matFDColoring%matFDColoring)
      
     EXITS("Petsc_MatFDColoringDestroy")
     RETURN
@@ -4523,8 +3498,9 @@ CONTAINS
 
     ENTERS("Petsc_PCFinalise",err,error,*999)
 
-    IF(pc%pc/=PETSC_NULL_OBJECT) THEN
+    IF(ASSOCIATED(pc%pc)) THEN      
       !Do nothing - should be destroyed when the KSP is destroyed.
+      !CALL Petsc_PCDestroy(pc,err,error,*999)
     ENDIF
     
     EXITS("Petsc_PCFinalise")
@@ -4549,7 +3525,9 @@ CONTAINS
 
     ENTERS("Petsc_PCInitialise",err,error,*999)
 
-    pc%pc=PETSC_NULL_OBJECT
+    NULLIFY(pc%pc)
+    ALLOCATE(pc%pc,STAT=err)
+    IF(err/=0) CALL FlagError("Could not allocate PETSc PC object.",err,error,*999)    
     
     EXITS("Petsc_PCInitialise")
     RETURN
@@ -4557,6 +3535,38 @@ CONTAINS
     RETURN 1
     
   END SUBROUTINE Petsc_PCInitialise
+    
+  !
+  !================================================================================================================================
+  !
+
+  !>Buffer routine to the PETSc PCDestroy routine.
+  SUBROUTINE Petsc_PCDestroy(pc,err,error,*)
+
+    !Argument Variables
+    TYPE(PetscPCType), INTENT(INOUT) :: pc !<The PC to destroy
+    INTEGER(INTG), INTENT(OUT) :: err !<The error code
+    TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
+    !Local Variables
+
+    ENTERS("Petsc_PCDestroy",err,error,*999)
+
+    CALL PCDestroy(pc%pc,err)
+    IF(err/=0) THEN
+      IF(petscHandleError) THEN
+        CHKERRQ(err)
+      ENDIF
+      CALL FlagError("PETSc error in PCDestroy.",err,error,*999)
+    ENDIF
+    DEALLOCATE(pc%pc)
+    NULLIFY(pc%pc)
+    
+    EXITS("Petsc_PCDestroy")
+    RETURN
+999 ERRORSEXITS("Petsc_PCDestroy",err,error)
+    RETURN 1
+    
+  END SUBROUTINE Petsc_PCDestroy
     
   !
   !================================================================================================================================
@@ -4593,39 +3603,39 @@ CONTAINS
   !================================================================================================================================
   !
 
-  !>Buffer routine to the PETSc PCFactoSetMatSolverPackage routine.
-  SUBROUTINE Petsc_PCFactorSetMatSolverPackage(pc,solverPackage,err,error,*)
+  !>Buffer routine to the PETSc PCFactoSetMatSolverType routine.
+  SUBROUTINE Petsc_PCFactorSetMatSolverType(pc,matSolverType,err,error,*)
 
     !Argument Variables
     TYPE(PetscPCType), INTENT(INOUT) :: pc !<The preconditioner to set the solver package for
-    MatSolverPackage, INTENT(IN) :: solverPackage !<The solver package to set
+    MatSolverType, INTENT(IN) :: matSolverType !<The matrix solver type to set \see  OpenCMISSPETSc_PetscMatSolverTypes
     INTEGER(INTG), INTENT(OUT) :: err !<The error code
     TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
     !Local Variables
 
-    ENTERS("Petsc_PCFactorSetMatSolverPackage",err,error,*999)
+    ENTERS("Petsc_PCFactorSetMatSolverType",err,error,*999)
 
-    CALL PCFactorSetMatSolverPackage(pc%pc,solverPackage,err)
+    CALL PCFactorSetMatSolverType(pc%pc,matSolverType,err)
     IF(err/=0) THEN
       IF(petscHandleError) THEN
         CHKERRQ(err)
       ENDIF
-      CALL FlagError("PETSc error in PCFactorSetMatSolverPackage.",err,error,*999)
+      CALL FlagError("PETSc error in PCFactorSetMatSolverType.",err,error,*999)
     ENDIF
     
-    EXITS("Petsc_PCFactorSetMatSolverPackage")
+    EXITS("Petsc_PCFactorSetMatSolverType")
     RETURN
-999 ERRORSEXITS("Petsc_PCFactorSetMatSolverPackage",err,error)
+999 ERRORSEXITS("Petsc_PCFactorSetMatSolverType",err,error)
     RETURN 1
     
-  END SUBROUTINE Petsc_PCFactorSetMatSolverPackage
+  END SUBROUTINE Petsc_PCFactorSetMatSolverType
 
   !
   !================================================================================================================================
   !
 
-  !>Buffer routine to the PETSc PCFactorSetUpMatSolverPackage routine.
-  SUBROUTINE Petsc_PCFactorSetUpMatSolverPackage(pc,err,error,*)
+  !>Buffer routine to the PETSc PCFactorSetUpMatSolverType routine.
+  SUBROUTINE Petsc_PCFactorSetUpMatSolverType(pc,err,error,*)
 
     !Argument Variables
     TYPE(PetscPCType), INTENT(INOUT) :: pc !<The preconditioner to set the solver package for
@@ -4633,22 +3643,22 @@ CONTAINS
     TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
     !Local Variables
 
-    ENTERS("Petsc_PCFactorSetUpMatSolverPackage",err,error,*999)
+    ENTERS("Petsc_PCFactorSetUpMatSolverType",err,error,*999)
 
-    CALL PCFactorSetUpMatSolverPackage(pc%pc,err)
+    CALL PCFactorSetUpMatSolverType(pc%pc,err)
     IF(err/=0) THEN
       IF(petscHandleError) THEN
         CHKERRQ(err)
       ENDIF
-      CALL FlagError("PETSc error in PCFactorSetUpMatSolverPackage.",err,error,*999)
+      CALL FlagError("PETSc error in PCFactorSetUpMatSolverType.",err,error,*999)
     ENDIF
     
-    EXITS("Petsc_PCFactorSetUpMatSolverPackage")
+    EXITS("Petsc_PCFactorSetUpMatSolverType")
     RETURN
-999 ERRORSEXITS("Petsc_PCFactorSetUpMatSolverPackage",err,error)
+999 ERRORSEXITS("Petsc_PCFactorSetUpMatSolverType",err,error)
     RETURN 1
     
-  END SUBROUTINE Petsc_PCFactorSetUpMatSolverPackage
+  END SUBROUTINE Petsc_PCFactorSetUpMatSolverType
 
   !
   !================================================================================================================================
@@ -4761,7 +3771,7 @@ CONTAINS
 
     ENTERS("Petsc_SnesFinalise",err,error,*999)
 
-    IF(snes%snes/=PETSC_NULL_OBJECT) THEN
+    IF(ASSOCIATED(snes%snes)) THEN
       CALL Petsc_SnesDestroy(snes,err,error,*999)
     ENDIF
     
@@ -4787,7 +3797,9 @@ CONTAINS
 
     ENTERS("Petsc_SnesInitialise",err,error,*999)
 
-    snes%snes=PETSC_NULL_OBJECT
+    NULLIFY(snes%snes)
+    ALLOCATE(snes%snes,STAT=err)
+    IF(err/=0) CALL FlagError("Could not allocate PETSc SNES object.",err,error,*999)
      
     EXITS("Petsc_SnesInitialise")
     RETURN
@@ -4870,7 +3882,11 @@ CONTAINS
   SUBROUTINE Petsc_SnesCreate(communicator,snes,err,error,*)
 
     !Argument Variables
+#ifdef WITH_F08_MPI
+    TYPE(MPI_Comm), INTENT(IN) :: communicator !<The MPI communicator for the SNES creation
+#else    
     MPI_Comm, INTENT(IN) :: communicator !<The MPI communicator for the SNES creation
+#endif    
     TYPE(PetscSnesType), INTENT(INOUT) :: snes !<On exit, the SNES information
     INTEGER(INTG), INTENT(OUT) :: err !<The error code
     TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
@@ -4915,7 +3931,8 @@ CONTAINS
       ENDIF
       CALL FlagError("PETSc error in SNESDestroy.",err,error,*999)
     ENDIF
-    snes%snes=PETSC_NULL_OBJECT
+    DEALLOCATE(snes%snes)
+    NULLIFY(snes%snes)
      
     EXITS("Petsc_SnesDestroy")
     RETURN
@@ -5101,7 +4118,7 @@ CONTAINS
 
     ENTERS("Petsc_SnesGetJacobianSpecial",err,error,*999)
 
-    CALL SNESGetJacobian(snes%snes,a%mat,PETSC_NULL_OBJECT,PETSC_NULL_FUNCTION,PETSC_NULL_INTEGER,err)
+    CALL SNESGetJacobian(snes%snes,a%mat,PETSC_NULL_MAT,PETSC_NULL_FUNCTION,PETSC_NULL_INTEGER,err)
 
     IF(err/=0) THEN
       IF(petscHandleError) THEN
@@ -5463,40 +4480,6 @@ CONTAINS
   !================================================================================================================================
   !
 
-  !>Buffer routine to the PETSc SNESSetJacobian routine for MatFDColoring contexts.
-  SUBROUTINE Petsc_SnesSetJacobianMatFDColoring(snes,a,b,jFunction,ctx,err,error,*)
-
-    !Argument Variables
-    TYPE(PetscSnesType), INTENT(INOUT) :: snes !<The snes to set the function for
-    TYPE(PetscMatType), INTENT(INOUT) :: a !<The Jacobian matrix
-    TYPE(PetscMatType), INTENT(INOUT) :: b !<The Jacobian preconditioning matrix
-    EXTERNAL jFunction !<The external function to call
-    TYPE(PetscMatFDColoringType) :: ctx !<The MatFDColoring data to pass to the function
-    INTEGER(INTG), INTENT(OUT) :: err !<The error code
-    TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
-    !Local Variables
-
-    ENTERS("Petsc_SnesSetJacobianMatFDColoring",err,error,*999)
-
-    CALL SNESSetJacobianBuffer(snes,a,b,jFunction,ctx,err)
-    IF(err/=0) THEN
-      IF(petscHandleError) THEN
-        CHKERRQ(err)
-      ENDIF
-      CALL FlagError("PETSc error in SNESSetJacobian.",err,error,*999)
-    ENDIF
-    
-    EXITS("Petsc_SnesSetJacobianMatFDColoring")
-    RETURN
-999 ERRORSEXITS("Petsc_SnesSetJacobianMatFDColoring",err,error)
-    RETURN 1
-    
-  END SUBROUTINE Petsc_SnesSetJacobianMatFDColoring
-    
-  !
-  !================================================================================================================================
-  !
-
   !>Buffer routine to the PETSc SNESSetJacobian routine for solver contexts.
   SUBROUTINE Petsc_SnesSetJacobianSolver(snes,a,b,jFunction,ctx,err,error,*)
 
@@ -5734,7 +4717,8 @@ CONTAINS
 
     !We don't actually call PETSc's SNESLineSearchDestroy as PETSc accesses and destroys the LineSearch when calling
     !SNESDestroy, so we'll just let PETSc clean it up.
-    lineSearch%snesLineSearch=PETSC_NULL_OBJECT
+    DEALLOCATE(lineSearch%snesLineSearch)
+    NULLIFY(lineSearch%snesLineSearch)
 
     EXITS("Petsc_SnesLineSearchFinalise")
     RETURN
@@ -5757,9 +4741,12 @@ CONTAINS
     !Local Variables
 
     ENTERS("Petsc_SnesLineSearchInitialise",err,error,*999)
-    lineSearch%snesLineSearch=PETSC_NULL_OBJECT
+    
+    NULLIFY(lineSearch%snesLineSearch)
+    ALLOCATE(lineSearch%snesLineSearch,STAT=err)
+    IF(err/=0) CALL FlagError("Could not allocate PETSc SNESLineSearch object.",err,error,*999)
+    
     EXITS("Petsc_SnesLineSearchInitialise")
-
     RETURN
 999 ERRORSEXITS("Petsc_SnesLineSearchInitialise",err,error)
     RETURN 1
@@ -5897,6 +4884,38 @@ CONTAINS
   !================================================================================================================================
   !
 
+  !>Buffer routine to the PETSc SNESLineSearchMonitorSet routine.
+  SUBROUTINE Petsc_SnesLineSearchMonitorSet(lineSearch,mFunction,ctx,err,error,*)
+
+    !Argument Variables
+    TYPE(PetscSnesLineSearchType), INTENT(INOUT) :: lineSearch !<The SNES LineSearch to set the linesearch monitor routine for
+    EXTERNAL :: mFunction !<The external monitor function to set
+    TYPE(SolverType), POINTER :: ctx !<The solver data to pass to the monitor function
+    INTEGER(INTG), INTENT(OUT) :: err !<The error code
+    TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
+    !Local Variables
+
+    ENTERS("Petsc_SnesLineSearchMonitorSet",err,error,*999)
+
+    !CALL SnesLineSearchMonitorSet(lineSearch%snesLineSearch,mFunction,ctx,err)
+    IF(err/=0) THEN
+      IF(petscHandleError) THEN
+        CHKERRQ(err)
+      ENDIF
+      CALL FlagError("PETSc error in SNESLineSearchMonitorSet.",err,error,*999)
+    ENDIF
+
+    EXITS("Petsc_SnesLineSearchMonitorSet")
+    RETURN
+999 ERRORSEXITS("Petsc_SnesLineSearchMonitorSet",err,error)
+    RETURN 1
+    
+  END SUBROUTINE Petsc_SnesLineSearchMonitorSet
+
+  !
+  !================================================================================================================================
+  !
+
   !>Buffer routine to the PETSc SNESLineSearchSetComputeNorms routine.
   SUBROUTINE Petsc_SnesLineSearchSetComputeNorms(lineSearch,computeNorms,err,error,*)
 
@@ -5932,56 +4951,21 @@ CONTAINS
   !================================================================================================================================
   !
 
-  !>Buffer routine to the PETSc SNESLineSearchSetMonitor routine.
-  SUBROUTINE Petsc_SnesLineSearchSetMonitor(lineSearch,monitorLinesearch,err,error,*)
-
-    !Argument Variables
-    TYPE(PetscSnesLineSearchType), INTENT(INOUT) :: lineSearch !<The SNES LineSearch to set whether to output linesearch debug information
-    LOGICAL, INTENT(IN) :: monitorLinesearch !<Whether to output linesearch debug information
-    INTEGER(INTG), INTENT(OUT) :: err !<The error code
-    TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
-    !Local Variables
-
-    ENTERS("Petsc_SnesLineSearchSetMonitor",err,error,*999)
-
-    IF(monitorLinesearch) THEN
-      CALL SnesLineSearchSetMonitor(lineSearch%snesLineSearch,PETSC_TRUE,err)
-    ELSE
-      CALL SnesLineSearchSetMonitor(lineSearch%snesLineSearch,PETSC_FALSE,err)
-    ENDIF
-    IF(err/=0) THEN
-      IF(petscHandleError) THEN
-        CHKERRQ(err)
-      ENDIF
-      CALL FlagError("PETSc error in SNESLineSearchSetMonitor.",err,error,*999)
-    ENDIF
-
-    EXITS("Petsc_SnesLineSearchSetMonitor")
-    RETURN
-999 ERRORSEXITS("Petsc_SnesLineSearchSetMonitor",err,error)
-    RETURN 1
-    
-  END SUBROUTINE Petsc_SnesLineSearchSetMonitor
-
-  !
-  !================================================================================================================================
-  !
-
   !>Buffer routine to the petsc SnesLineSearchSetNorms routine.
-  SUBROUTINE Petsc_SnesLineSearchSetNorms(snes,xNorm,fNorm,yNorm,err,error,*)
+  SUBROUTINE Petsc_SnesLineSearchSetNorms(lineSearch,xNorm,fNorm,yNorm,err,error,*)
 
     !Argument Variables
-    TYPE(PetscSnesType), INTENT(INOUT) :: snes !<The SNES to get the computed norms for x, y, and f
-    REAL(DP), INTENT(INOUT) :: xNorm !<On exit, the norm of the current solution
-    REAL(DP), INTENT(INOUT) :: fNorm !<On exit, the norm of the current function
-    REAL(DP), INTENT(INOUT) :: yNorm !<On exit, the norm of the current update
+    TYPE(PetscSnesLineSearchType), INTENT(INOUT) :: lineSearch !<The SNESLineSearch to set the computed norms for x, y, and f
+    REAL(DP), INTENT(IN) :: xNorm !<The norm of the current solution
+    REAL(DP), INTENT(IN) :: fNorm !<The norm of the current function
+    REAL(DP), INTENT(IN) :: yNorm !<The norm of the current update
     INTEGER(INTG), INTENT(OUT) :: err !<The error code
     TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
     !Local Variables
 
     ENTERS("Petsc_SnesLineSearchSetNorms",err,error,*999)
 
-    CALL SnesLineSearchSetNorms(snes%snes,xNorm,fNorm,yNorm,err)
+    CALL SnesLineSearchSetNorms(lineSearch%snesLineSearch,xNorm,fNorm,yNorm,err)
     IF(err/=0) THEN
       IF(petscHandleError) THEN
         CHKERRQ(err)
@@ -6116,7 +5100,7 @@ CONTAINS
 
     ENTERS("Petsc_TaoFinalise",err,error,*999)
 
-    IF(tao%tao/=PETSC_NULL_OBJECT) THEN
+    IF(ASSOCIATED(tao%tao)) THEN
       CALL Petsc_TaoDestroy(tao,err,error,*999)
     ENDIF
     
@@ -6142,7 +5126,9 @@ CONTAINS
 
     ENTERS("Petsc_TaoInitialise",err,error,*999)
 
-    tao%tao=PETSC_NULL_OBJECT
+    NULLIFY(tao%tao)
+    ALLOCATE(tao%tao,STAT=err)
+    IF(err/=0) CALL FlagError("Could not allocate PETSc TAO object.",err,error,*999)
      
     EXITS("Petsc_TaoInitialise")
     RETURN
@@ -6159,7 +5145,11 @@ CONTAINS
   SUBROUTINE Petsc_TaoCreate(communicator,tao,err,error,*)
 
     !Argument Variables
+#ifdef WITH_F08_MPI
+    TYPE(MPI_Comm), INTENT(INOUT) :: communicator !<The MPI communicator for the Tao creation
+#else    
     MPI_Comm, INTENT(INOUT) :: communicator !<The MPI communicator for the Tao creation
+#endif    
     TYPE(PetscTaoType), INTENT(INOUT) :: tao !<On exit, the Tao information
     INTEGER(INTG), INTENT(OUT) :: err !<The error code
     TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
@@ -6203,7 +5193,8 @@ CONTAINS
       ENDIF
       CALL FlagError("PETSc error in TaoDestroy.",err,error,*999)
     ENDIF
-    tao%tao=PETSC_NULL_OBJECT
+    DEALLOCATE(tao%tao)
+    NULLIFY(tao%tao)
     
     EXITS("Petsc_TaoDestroy")
     RETURN
@@ -6341,39 +5332,8 @@ CONTAINS
   !================================================================================================================================
   !
   
-  !>Buffer routine to the PETSc TaoSetInitialVector routine.
-  SUBROUTINE Petsc_TaoSetInitialVector(tao,x0,err,error,*)
-
-    !Argument Variables
-    TYPE(PetscTaoType), INTENT(INOUT) :: tao !<The tao to set the initial vector for
-    TYPE(PetscVecType), INTENT(INOUT) :: x0 !<The initial vector
-    INTEGER(INTG), INTENT(OUT) :: err !<The error code
-    TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
-    !Local Variables
-
-    ENTERS("Petsc_TaoSetInitialVector",err,error,*999)
-
-    CALL TaoSetInitialVector(tao%tao,x0%vec,err)
-    IF(err/=0) THEN
-      IF(petscHandleError) THEN
-        CHKERRQ(err)
-      ENDIF
-      CALL FlagError("PETSc error in TaoSetInitialVector.",err,error,*999)
-    ENDIF
-    
-    EXITS("Petsc_TaoSetInitialVector")
-    RETURN
-999 ERRORSEXITS("Petsc_TaoSetInitialVector",err,error)
-    RETURN 1
-    
-  END SUBROUTINE Petsc_TaoSetInitialVector
-    
-  !
-  !================================================================================================================================
-  !
-  
-  !>Buffer routine to the PETSc TaoSetGradientRoutine routine.
-  SUBROUTINE Petsc_TaoSetGradientRoutine(tao,gFunction,ctx,err,error,*)
+  !>Buffer routine to the PETSc TaoSetGradient routine.
+  SUBROUTINE Petsc_TaoSetGradient(tao,gFunction,ctx,err,error,*)
 
     !Argument Variables
     TYPE(PetscTaoType), INTENT(INOUT) :: tao !<The tao to set the gradient function for
@@ -6383,29 +5343,29 @@ CONTAINS
     TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
     !Local Variables
 
-    ENTERS("Petsc_TaoSetGradientRoutine",err,error,*999)
+    ENTERS("Petsc_TaoSetGradient",err,error,*999)
 
-    CALL TaoSetGradientRoutine(tao%tao,gFunction,ctx,err)
+    CALL TaoSetGradient(tao%tao,gFunction,ctx,err)
     IF(err/=0) THEN
       IF(petscHandleError) THEN
         CHKERRQ(err)
       ENDIF
-      CALL FlagError("PETSc error in TaoSetGradientRoutine.",err,error,*999)
+      CALL FlagError("PETSc error in TaoSetGradient.",err,error,*999)
     ENDIF
     
-    EXITS("Petsc_TaoSetGradientRoutine")
+    EXITS("Petsc_TaoSetGradient")
     RETURN
-999 ERRORSEXITS("Petsc_TaoSetGradientRoutine",err,error)
+999 ERRORSEXITS("Petsc_TaoSetGradient",err,error)
     RETURN 1
     
-  END SUBROUTINE Petsc_TaoSetGradientRoutine
+  END SUBROUTINE Petsc_TaoSetGradient
     
   !
   !================================================================================================================================
   !
   
-  !>Buffer routine to the PETSc TaoSetHessianRoutine routine.
-  SUBROUTINE Petsc_TaoSetHessianRoutine(tao,H,Hpre,hFunction,ctx,err,error,*)
+  !>Buffer routine to the PETSc TaoSetHessian routine.
+  SUBROUTINE Petsc_TaoSetHessian(tao,H,Hpre,hFunction,ctx,err,error,*)
 
     !Argument Variables
     TYPE(PetscTaoType), INTENT(INOUT) :: tao !<The tao to set the Hessian function for
@@ -6417,29 +5377,29 @@ CONTAINS
     TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
     !Local Variables
 
-    ENTERS("Petsc_TaoSetHessianRoutine",err,error,*999)
+    ENTERS("Petsc_TaoSetHessian",err,error,*999)
 
-    CALL TaoSetHessianRoutine(tao%tao,H%mat,Hpre%mat,hFunction,ctx,err)
+    CALL TaoSetHessian(tao%tao,H%mat,Hpre%mat,hFunction,ctx,err)
     IF(err/=0) THEN
       IF(petscHandleError) THEN
         CHKERRQ(err)
       ENDIF
-      CALL FlagError("PETSc error in TaoSetHessianRoutine.",err,error,*999)
+      CALL FlagError("PETSc error in TaoSetHessian.",err,error,*999)
     ENDIF
     
-    EXITS("Petsc_TaoSetHessianRoutine")
+    EXITS("Petsc_TaoSetHessian")
     RETURN
-999 ERRORSEXITS("Petsc_TaoSetHessianRoutine",err,error)
+999 ERRORSEXITS("Petsc_TaoSetHessian",err,error)
     RETURN 1
     
-  END SUBROUTINE Petsc_TaoSetHessianRoutine
+  END SUBROUTINE Petsc_TaoSetHessian
     
   !
   !================================================================================================================================
   !
   
-  !>Buffer routine to the PETSc TaoSetMonitor routine.
-  SUBROUTINE Petsc_TaoSetMonitor(tao,mFunction,ctx,err,error,*)
+  !>Buffer routine to the PETSc TaoMonitorSet routine.
+  SUBROUTINE Petsc_TaoMonitorSet(tao,mFunction,ctx,err,error,*)
 
     !Argument Variables
     TYPE(PetscTaoType), INTENT(INOUT) :: tao !<The tao to set the monitor function for
@@ -6449,29 +5409,29 @@ CONTAINS
     TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
     !Local Variables
 
-    ENTERS("Petsc_TaoSetMonitor",err,error,*999)
+    ENTERS("Petsc_TaoMonitorSet",err,error,*999)
 
-    CALL TaoSetMonitor(tao%tao,mFunction,ctx,err)
+    CALL TaoMonitorSet(tao%tao,mFunction,ctx,err)
     IF(err/=0) THEN
       IF(petscHandleError) THEN
         CHKERRQ(err)
       ENDIF
-      CALL FlagError("PETSc error in TaoSetMonitor.",err,error,*999)
+      CALL FlagError("PETSc error in TaoMonitorSet.",err,error,*999)
     ENDIF
     
-    EXITS("Petsc_TaoSetMonitor")
+    EXITS("Petsc_TaoMonitorSet")
     RETURN
-999 ERRORSEXITS("Petsc_TaoSetMonitor",err,error)
+999 ERRORSEXITS("Petsc_TaoMonitorSet",err,error)
     RETURN 1
     
-  END SUBROUTINE Petsc_TaoSetMonitor
+  END SUBROUTINE Petsc_TaoMonitorSet
     
   !
   !================================================================================================================================
   !
   
-  !>Buffer routine to the PETSc TaoSetObjectiveRoutine routine.
-  SUBROUTINE Petsc_TaoSetObjectiveRoutine(tao,oFunction,ctx,err,error,*)
+  !>Buffer routine to the PETSc TaoSetObjective routine.
+  SUBROUTINE Petsc_TaoSetObjective(tao,oFunction,ctx,err,error,*)
 
     !Argument Variables
     TYPE(PetscTaoType), INTENT(INOUT) :: tao !<The tao to set the objective function for
@@ -6481,29 +5441,29 @@ CONTAINS
     TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
     !Local Variables
 
-    ENTERS("Petsc_TaoSetObjectiveRoutine",err,error,*999)
+    ENTERS("Petsc_TaoSetObjective",err,error,*999)
 
-    CALL TaoSetObjectiveRoutine(tao%tao,oFunction,ctx,err)
+    CALL TaoSetObjective(tao%tao,oFunction,ctx,err)
     IF(err/=0) THEN
       IF(petscHandleError) THEN
         CHKERRQ(err)
       ENDIF
-      CALL FlagError("PETSc error in TaoSetObjectiveRoutine.",err,error,*999)
+      CALL FlagError("PETSc error in TaoSetObjective.",err,error,*999)
     ENDIF
     
-    EXITS("Petsc_TaoSetObjectiveRoutine")
+    EXITS("Petsc_TaoSetObjective")
     RETURN
-999 ERRORSEXITS("Petsc_TaoSetObjectiveRoutine",err,error)
+999 ERRORSEXITS("Petsc_TaoSetObjective",err,error)
     RETURN 1
     
-  END SUBROUTINE Petsc_TaoSetObjectiveRoutine
+  END SUBROUTINE Petsc_TaoSetObjective
     
   !
   !================================================================================================================================
   !
   
-  !>Buffer routine to the PETSc TaoSetObjectiveAndGradientRoutine routine.
-  SUBROUTINE Petsc_TaoSetObjectiveAndGradientRoutine(tao,ogFunction,ctx,err,error,*)
+  !>Buffer routine to the PETSc TaoSetObjectiveAndGradient routine.
+  SUBROUTINE Petsc_TaoSetObjectiveAndGradient(tao,ogFunction,ctx,err,error,*)
 
     !Argument Variables
     TYPE(PetscTaoType), INTENT(INOUT) :: tao !<The tao to set the objective and gradient function for
@@ -6513,54 +5473,53 @@ CONTAINS
     TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
     !Local Variables
 
-    ENTERS("Petsc_TaoSetObjectiveAndGradientRoutine",err,error,*999)
+    ENTERS("Petsc_TaoSetObjectiveAndGradient",err,error,*999)
 
-    CALL TaoSetObjectiveAndGradientRoutine(tao%tao,ogFunction,ctx,err)
+    CALL TaoSetObjectiveAndGradient(tao%tao,ogFunction,ctx,err)
     IF(err/=0) THEN
       IF(petscHandleError) THEN
         CHKERRQ(err)
       ENDIF
-      CALL FlagError("PETSc error in TaoSetObjectiveAndGradientRoutine.",err,error,*999)
+      CALL FlagError("PETSc error in TaoSetObjectiveAndGradient.",err,error,*999)
     ENDIF
     
-    EXITS("Petsc_TaoSetObjectiveAndGradientRoutine")
+    EXITS("Petsc_TaoSetObjectiveAndGradient")
     RETURN
-999 ERRORSEXITS("Petsc_TaoSetObjectiveAndGradientRoutine",err,error)
+999 ERRORSEXITS("Petsc_TaoSetObjectiveAndGradient",err,error)
     RETURN 1
     
-  END SUBROUTINE Petsc_TaoSetObjectiveAndGradientRoutine
+  END SUBROUTINE Petsc_TaoSetObjectiveAndGradient
     
   !
   !================================================================================================================================
   !
   
-  !>Buffer routine to the PETSc TaoSetSeparableObjectiveRoutine routine.
-  SUBROUTINE Petsc_TaoSetSeparableObjectiveRoutine(tao,oFunction,ctx,err,error,*)
+  !>Buffer routine to the PETSc TaoSetSolution routine.
+  SUBROUTINE Petsc_TaoSetSolution(tao,x0,err,error,*)
 
     !Argument Variables
-    TYPE(PetscTaoType), INTENT(INOUT) :: tao !<The tao to set the separable objective function for
-    EXTERNAL oFunction !<The external separable objective function to call
-    TYPE(SolverType), POINTER :: ctx !<The solver data to pass to the function
+    TYPE(PetscTaoType), INTENT(INOUT) :: tao !<The tao to set the solution vector for
+    TYPE(PetscVecType), INTENT(INOUT) :: x0 !<The solution vector
     INTEGER(INTG), INTENT(OUT) :: err !<The error code
     TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
     !Local Variables
 
-    ENTERS("Petsc_TaoSetSeparableObjectiveRoutine",err,error,*999)
+    ENTERS("Petsc_TaoSetSolution",err,error,*999)
 
-    CALL TaoSetSeparableObjectiveRoutine(tao%tao,oFunction,ctx,err)
+    CALL TaoSetSolution(tao%tao,x0%vec,err)
     IF(err/=0) THEN
       IF(petscHandleError) THEN
         CHKERRQ(err)
       ENDIF
-      CALL FlagError("PETSc error in TaoSetSeparableObjectiveRoutine.",err,error,*999)
+      CALL FlagError("PETSc error in TaoSetSolution.",err,error,*999)
     ENDIF
     
-    EXITS("Petsc_TaoSetSeparableObjectiveRoutine")
+    EXITS("Petsc_TaoSetSolution")
     RETURN
-999 ERRORSEXITS("Petsc_TaoSetSeparableObjectiveRoutine",err,error)
+999 ERRORSEXITS("Petsc_TaoSetSolution",err,error)
     RETURN 1
     
-  END SUBROUTINE Petsc_TaoSetSeparableObjectiveRoutine
+  END SUBROUTINE Petsc_TaoSetSolution
     
   !
   !================================================================================================================================
@@ -6672,7 +5631,7 @@ CONTAINS
 
     ENTERS("Petsc_TSFinalise",err,error,*999)
 
-    IF(ts%ts/=PETSC_NULL_OBJECT) THEN
+    IF(ASSOCIATED(ts%ts)) THEN
       CALL Petsc_TSDestroy(ts,err,error,*999)
     ENDIF
     
@@ -6698,7 +5657,9 @@ CONTAINS
 
     ENTERS("Petsc_TSInitialise",err,error,*999)
 
-    ts%ts=PETSC_NULL_OBJECT
+    NULLIFY(ts%ts)
+    ALLOCATE(ts%ts,STAT=err)
+    IF(err/=0) CALL FlagError("Could not allocate PETSc TS object.",err,error,*999)
      
     EXITS("Petsc_TSInitialise")
     RETURN
@@ -6715,7 +5676,11 @@ CONTAINS
   SUBROUTINE Petsc_TSCreate(communicator,ts,err,error,*)
 
     !Argument Variables
+#ifdef WITH_F08_MPI
+   TYPE(MPI_Comm), INTENT(INOUT) :: communicator !<The MPI communicator for the TS creation
+#else    
     MPI_Comm, INTENT(INOUT) :: communicator !<The MPI communicator for the TS creation
+#endif    
     TYPE(PetscTSType), INTENT(INOUT) :: ts !<On exit, the TS information
     INTEGER(INTG), INTENT(OUT) :: err !<The error code
     TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
@@ -6759,7 +5724,8 @@ CONTAINS
       ENDIF
       CALL FlagError("PETSc error in TSDestroy.",err,error,*999)
     ENDIF
-    ts%ts=PETSC_NULL_OBJECT
+    DEALLOCATE(ts%ts)
+    NULLIFY(ts%ts)
     
     EXITS("Petsc_TSDestroy")
     RETURN
@@ -6866,22 +5832,17 @@ CONTAINS
   !
     
   !>Buffer routine to the PETSc TSSetExactFinalTime routine.
-  SUBROUTINE Petsc_TSSetExactFinalTime(ts,exactFinalTime,err,error,*)
+  SUBROUTINE Petsc_TSSetExactFinalTime(ts,exactFinalTimeOption,err,error,*)
 
     TYPE(PetscTSType), INTENT(INOUT) :: ts !<The TS to set the initial time step for
-    LOGICAL, INTENT(IN) :: exactFinalTime !<The option for exact final time to set
+    TSExactFinalTimeOption, INTENT(IN) :: exactFinalTimeOption !<The option for exact final time to set \see OpenCMISSPETSc_PetscTSExactFinalTimeOptions
     INTEGER(INTG), INTENT(OUT) :: err !<The error code
     TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
     !Local Variables
 
     ENTERS("Petsc_TSSetExactFinalTime",err,error,*999)
 
-    IF(exactFinalTime) THEN
-      CALL TSSetExactFinalTime(ts%ts,PETSC_TRUE,err)
-    ELSE
-      CALL TSSetExactFinalTime(ts%ts,PETSC_FALSE,err)
-    ENDIF
-    
+    CALL TSSetExactFinalTime(ts%ts,exactFinalTimeOption,err)
     IF(err/=0) THEN
       IF(petscHandleError) THEN
         CHKERRQ(err)
@@ -6929,32 +5890,31 @@ CONTAINS
   !================================================================================================================================
   !
     
-  !>Buffer routine to the PETSc TSSetInitialTimeStep routine.
-  SUBROUTINE Petsc_TSSetInitialTimeStep(ts,initialTime,timeStep,err,error,*)
+  !>Buffer routine to the PETSc TSSetMaxTime routine.
+  SUBROUTINE Petsc_TSSetMaxTime(ts,maxTime,err,error,*)
 
-    TYPE(PetscTSType), INTENT(INOUT) :: ts !<The TS to set the initial time step for
-    REAL(DP), INTENT(IN) :: initialTime !<The initial time to set
-    REAL(DP), INTENT(IN) :: timeStep !<The time step to set
+    TYPE(PetscTSType), INTENT(INOUT) :: ts !<The TS to set the time for
+    REAL(DP), INTENT(IN) :: maxTime !<The maximum time to set
     INTEGER(INTG), INTENT(OUT) :: err !<The error code
     TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
     !Local Variables
 
-    ENTERS("Petsc_TSSetInitialTimeStep",err,error,*999)
+    ENTERS("Petsc_TSSetMaxTime",err,error,*999)
 
-    CALL TSSetInitialTimeStep(ts%ts,initialTime,timeStep,err)
+    CALL TSSetMaxTime(ts%ts,maxTime,err)
     IF(err/=0) THEN
       IF(petscHandleError) THEN
         CHKERRQ(err)
       ENDIF
-      CALL FlagError("PETSc error in TSSetInitialTimeStep.",err,error,*999)
+      CALL FlagError("PETSc error in TSSetMaxTime.",err,error,*999)
     ENDIF
     
-    EXITS("Petsc_TSSetInitialTimeStep")
+    EXITS("Petsc_TSSetMaxTime")
     RETURN
-999 ERRORSEXITS("Petsc_TSSetInitialTimeStep",err,error)
+999 ERRORSEXITS("Petsc_TSSetMaxTime",err,error)
     RETURN 1
     
-  END SUBROUTINE Petsc_TSSetInitialTimeStep
+  END SUBROUTINE Petsc_TSSetMaxTime
 
   !
   !================================================================================================================================
@@ -7052,6 +6012,36 @@ CONTAINS
   !================================================================================================================================
   !
     
+  !>Buffer routine to the PETSc TSSetTime routine.
+  SUBROUTINE Petsc_TSSetTime(ts,time,err,error,*)
+
+    TYPE(PetscTSType), INTENT(INOUT) :: ts !<The TS to set the time for
+    REAL(DP), INTENT(IN) :: time !<The time to set
+    INTEGER(INTG), INTENT(OUT) :: err !<The error code
+    TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
+    !Local Variables
+
+    ENTERS("Petsc_TSSetTime",err,error,*999)
+
+    CALL TSSetTime(ts%ts,time,err)
+    IF(err/=0) THEN
+      IF(petscHandleError) THEN
+        CHKERRQ(err)
+      ENDIF
+      CALL FlagError("PETSc error in TSSetTime.",err,error,*999)
+    ENDIF
+    
+    EXITS("Petsc_TSSetTime")
+    RETURN
+999 ERRORSEXITS("Petsc_TSSetTime",err,error)
+    RETURN 1
+    
+  END SUBROUTINE Petsc_TSSetTime
+
+  !
+  !================================================================================================================================
+  !
+    
   !>Buffer routine to the PETSc TSSetTimeStep routine.
   SUBROUTINE Petsc_TSSetTimeStep(ts,timeStep,err,error,*)
 
@@ -7113,18 +6103,17 @@ CONTAINS
   !
     
   !>Buffer routine to the PETSc TSSolve routine.
-  SUBROUTINE Petsc_TSSolve(ts,x,finalTime,err,error,*)
+  SUBROUTINE Petsc_TSSolve(ts,x,err,error,*)
 
     TYPE(PetscTSType), INTENT(INOUT) :: ts !<The TS to solve
     TYPE(PetscVecType), INTENT(INOUT) :: x !<The solution vector
-    REAL(DP), INTENT(OUT) :: finalTime !<The final time
     INTEGER(INTG), INTENT(OUT) :: err !<The error code
     TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
     !Local Variables
 
     ENTERS("Petsc_TSSolve",err,error,*999)
 
-    CALL TSSolve(ts%ts,x%vec,finalTime,err)
+    CALL TSSolve(ts%ts,x%vec,err)
     IF(err/=0) THEN
       IF(petscHandleError) THEN
         CHKERRQ(err)
@@ -7144,18 +6133,16 @@ CONTAINS
   !
     
   !>Buffer routine to the PETSc TSStep routine.
-  SUBROUTINE Petsc_TSStep(ts,steps,pTime,err,error,*)
+  SUBROUTINE Petsc_TSStep(ts,err,error,*)
 
     TYPE(PetscTSType), INTENT(INOUT) :: ts !<The TS to step
-    INTEGER(INTG), INTENT(IN) :: steps !<The number of iterations until termination
-    REAL(DP), INTENT(IN) :: pTime !<The time until termination
     INTEGER(INTG), INTENT(OUT) :: err !<The error code
     TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
     !Local Variables
 
     ENTERS("Petsc_TSStep",err,error,*999)
 
-    CALL TSStep(ts%ts,steps,pTime,err)
+    CALL TSStep(ts%ts,err)
     IF(err/=0) THEN
       IF(petscHandleError) THEN
         CHKERRQ(err)
@@ -7185,6 +6172,7 @@ CONTAINS
 
     ENTERS("Petsc_TSSundialsSetType",err,error,*999)
 
+#ifdef WITH_SUNDIALS    
     CALL TSSundialsSetType(ts%ts,sundialsType,err)
     IF(err/=0) THEN
       IF(petscHandleError) THEN
@@ -7192,6 +6180,7 @@ CONTAINS
       ENDIF
       CALL FlagError("PETSc error in TSSundialsSetType.",err,error,*999)
     ENDIF
+#endif    
     
     EXITS("Petsc_TSSundialsSetType")
     RETURN
@@ -7215,6 +6204,7 @@ CONTAINS
 
     ENTERS("Petsc_TSSundialsSetTolerance",err,error,*999)
 
+#ifdef WITH_SUNDIALS    
     CALL TSSundialsSetTolerance(ts%ts,absTol,relTol,err)
     IF(err/=0) THEN
       IF(petscHandleError) THEN
@@ -7222,6 +6212,7 @@ CONTAINS
       ENDIF
       CALL FlagError("PETSc error in TSSundialsSetTolerance.",err,error,*999)
     ENDIF
+#endif    
     
     EXITS("Petsc_TSSundialsSetTolerance")
     RETURN
@@ -7244,7 +6235,7 @@ CONTAINS
 
     ENTERS("Petsc_VecFinalise",err,error,*999)
 
-    IF(x%vec/=PETSC_NULL_OBJECT) THEN
+    IF(ASSOCIATED(x%vec)) THEN
       CALL Petsc_VecDestroy(x,err,error,*999)
     ENDIF
     
@@ -7270,7 +6261,9 @@ CONTAINS
 
     ENTERS("Petsc_VecInitialise",err,error,*999)
 
-    x%vec=PETSC_NULL_OBJECT
+    NULLIFY(x%vec)
+    ALLOCATE(x%vec,STAT=err)
+    IF(err/=0) CALL FlagError("Could not allocate PETSc Vec object.",err,error,*999)
     
     EXITS("Petsc_VecInitialise")
     RETURN
@@ -7378,7 +6371,11 @@ CONTAINS
   SUBROUTINE Petsc_VecCreate(communicator,x,err,error,*)
 
     !Argument Variables
+#ifdef WITH_F08_MPI
+    TYPE(MPI_Comm), INTENT(IN) :: communicator !<The MPI communicator
+#else    
     MPI_Comm, INTENT(IN) :: communicator !<The MPI communicator
+#endif    
     TYPE(PetscVecType), INTENT(INOUT) :: x !<On exit, the created vector
     INTEGER(INTG), INTENT(OUT) :: err !<The error code
     TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
@@ -7409,7 +6406,11 @@ CONTAINS
   SUBROUTINE Petsc_VecCreateGhost(communicator,localN,globalN,numGhosts,ghosts,x,err,error,*)
 
     !Argument Variables
+#ifdef WITH_F08_MPI
+    TYPE(MPI_Comm), INTENT(IN) :: communicator !<The MPI communicator
+#else    
     MPI_Comm, INTENT(IN) :: communicator !<The MPI communicator
+#endif    
     INTEGER(INTG), INTENT(IN) :: localN !<The number of local elements
     INTEGER(INTG), INTENT(IN) :: globalN !<The number of global elements
     INTEGER(INTG), INTENT(IN) :: numGhosts !<The number of ghost elements
@@ -7443,8 +6444,12 @@ CONTAINS
   !>Buffer routine to the PETSc VecCreateGhostWithArray routine.
   SUBROUTINE Petsc_VecCreateGhostWithArray(communicator,localN,globalN,numGhosts,ghosts,array,x,err,error,*)
 
-   !Argument Variables
+    !Argument Variables
+#ifdef WITH_F08_MPI
+    TYPE(MPI_Comm), INTENT(IN) :: communicator !<The MPI communicator
+#else    
     MPI_Comm, INTENT(IN) :: communicator !<The MPI communicator
+#endif    
     INTEGER(INTG), INTENT(IN) :: localN !<The number of local elements
     INTEGER(INTG), INTENT(IN) :: globalN !<The number of global elements
     INTEGER(INTG), INTENT(IN) :: numGhosts !<The number of ghost elements
@@ -7480,7 +6485,11 @@ CONTAINS
   SUBROUTINE Petsc_VecCreateMPI(communicator,localN,globalN,x,err,error,*)
 
     !Argument Variables
+#ifdef WITH_F08_MPI
+    TYPE(MPI_Comm), INTENT(IN) :: communicator !<The MPI communicator
+#else    
     MPI_Comm, INTENT(IN) :: communicator !<The MPI communicator
+#endif    
     INTEGER(INTG), INTENT(IN) :: localN !<The number of local elements
     INTEGER(INTG), INTENT(IN) :: globalN !<The number of global elements
     TYPE(PetscVecType), INTENT(INOUT) :: x !<On exit, the created vector
@@ -7510,10 +6519,15 @@ CONTAINS
   !
 
   !>Buffer routine to the PETSc VecCreateMPIWithArray routine.
-  SUBROUTINE Petsc_VecCreateMPIWithArray(communicator,localN,globalN,array,x,err,error,*)
+  SUBROUTINE Petsc_VecCreateMPIWithArray(communicator,bs,localN,globalN,array,x,err,error,*)
 
     !Argument Variables
+#ifdef WITH_F08_MPI
+    TYPE(MPI_Comm), INTENT(IN) :: communicator !<The MPI communicator
+#else    
     MPI_Comm, INTENT(IN) :: communicator !<The MPI communicator
+#endif    
+    INTEGER(INTG), INTENT(IN) :: bs !<The block size
     INTEGER(INTG), INTENT(IN) :: localN !<The number of local elements
     INTEGER(INTG), INTENT(IN) :: globalN !<The number of global elements
     REAL(DP), INTENT(OUT) :: array(:) !<The preallocated array for the vector data
@@ -7524,7 +6538,7 @@ CONTAINS
 
     ENTERS("Petsc_VecCreateMPIWithArray",err,error,*999)
 
-    CALL VecCreateMPIWithArray(communicator,localN,globalN,array,x%vec,err)
+    CALL VecCreateMPIWithArray(communicator,bs,localN,globalN,array,x%vec,err)
     IF(err/=0) THEN
       IF(petscHandleError) THEN
         CHKERRQ(err)
@@ -7547,7 +6561,11 @@ CONTAINS
   SUBROUTINE Petsc_VecCreateSeq(communicator,n,x,err,error,*)
 
     !Argument Variables
+#ifdef WITH_F08_MPI
+    TYPE(MPI_Comm), INTENT(IN) :: communicator !<The MPI communicator
+#else    
     MPI_Comm, INTENT(IN) :: communicator !<The MPI communicator
+#endif    
     INTEGER(INTG), INTENT(IN) :: n !<The size of the vector
     TYPE(PetscVecType), INTENT(INOUT) :: x !<On exit, the created vector
     INTEGER(INTG), INTENT(OUT) :: err !<The error code
@@ -7576,10 +6594,15 @@ CONTAINS
   !
 
   !>Buffer routine to the PETSc VecCreateSeqWithArray routine.
-  SUBROUTINE Petsc_VecCreateSeqWithArray(communicator,n,array,x,err,error,*)
+  SUBROUTINE Petsc_VecCreateSeqWithArray(communicator,bs,n,array,x,err,error,*)
 
     !Argument Variables
+#ifdef WITH_F08_MPI
+    TYPE(MPI_Comm), INTENT(IN) :: communicator !<The MPI communicator
+#else    
     MPI_Comm, INTENT(IN) :: communicator !<The MPI communicator
+#endif    
+    INTEGER(INTG), INTENT(IN) :: bs !<The block size 
     INTEGER(INTG), INTENT(IN) :: n !<The size of the vector
     REAL(DP), INTENT(OUT) :: array(:) !<The preallocated array for the vector data
     TYPE(PetscVecType), INTENT(INOUT) :: x !<On exit, the created vector
@@ -7589,7 +6612,7 @@ CONTAINS
 
     ENTERS("Petsc_VecCreateSeqWithArray",err,error,*999)
 
-    CALL VecCreateSeqWithArray(communicator,n,array,x%vec,err)
+    CALL VecCreateSeqWithArray(communicator,bs,n,array,x%vec,err)
     IF(err/=0) THEN
       IF(petscHandleError) THEN
         CHKERRQ(err)
@@ -7626,7 +6649,8 @@ CONTAINS
       ENDIF
       CALL FlagError("PETSc error in VecDestroy.",err,error,*999)
     ENDIF
-    x%vec=PETSC_NULL_OBJECT
+    DEALLOCATE(x%vec)
+    NULLIFY(x%vec)
     
     EXITS("Petsc_VecDestroy")
     RETURN
@@ -8369,31 +7393,8 @@ CONTAINS
     
   END SUBROUTINE Petsc_VecView
 
-
   !
   !================================================================================================================================
   !
 
-END MODULE CMISSPetsc
-    
-!>Buffer routine to the PETSc SNESSetJacobian routine for MatFDColoring contexts. The buffer is required because we want to
-!>provide an interface so that we can pass a pointer to the solver for analytic Jacobian's. However, if we provided an interface
-!>the Fortran's strong typing rules would not let us pass the matfdcoloring.
-SUBROUTINE SNESSetJacobianBuffer(snes,A,B,jFunction,matFDColoring,err)
-
-  USE CMISSPetscTypes
-  USE Kinds
-
-  IMPLICIT NONE
-  
-  !Argument Variables
-  TYPE(PetscSnesType), INTENT(INOUT) :: snes !<The snes to set the function for
-  TYPE(PetscMatType), INTENT(INOUT) :: a !<The Jacobian matrix
-  TYPE(PetscMatType), INTENT(INOUT) :: b !<The Jacobian preconditioning matrix
-  EXTERNAL jFunction !<The external function to call
-  TYPE(PetscMatFDColoringType) :: matFDColoring !<The MatFDColoring data to pass to the function
-  INTEGER(INTG), INTENT(OUT) :: err !<The error code
-
-  CALL SNESSetJacobian(snes%snes,a%mat,b%mat,jFunction,matFDColoring%matFDColoring,err)
-
-END SUBROUTINE SNESSetJacobianBuffer
+END MODULE OpenCMISSPETSc

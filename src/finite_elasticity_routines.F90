@@ -83,8 +83,12 @@ MODULE FiniteElasticityRoutines
   USE MatrixVector
   USE MeshRoutines
   USE MeshAccessRoutines
-#ifndef NOMPIMOD
+#ifdef WITH_MPI  
+#ifdef WITH_F08_MPI
+  USE MPI_F08
+#elif WITH_F90_MPI  
   USE MPI
+#endif
 #endif
   USE ProblemAccessRoutines
   USE ProfilingRoutines
@@ -101,9 +105,11 @@ MODULE FiniteElasticityRoutines
 
   IMPLICIT NONE
 
-#ifdef NOMPIMOD
+#ifdef WITH_MPI  
+#ifdef WITH_F77_MPI
 #include "mpif.h"
 #endif
+#endif  
 
   PRIVATE
 
@@ -199,10 +205,18 @@ CONTAINS
     TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
     !Local variables
     INTEGER(INTG) :: analyticFunctionType,bottomNormalXi,nodeIdx,componentIdx,derivativeIdx,dimensionIdx,domainNumber, &
-      & globalNodeNumber,globalDerivativeIndex,groupCommuicator,innerNormalXi,localDOFIdx,localNodeNumber,meshComponent, &
-      & meshNodeNumber,mpiIError,myGroupComputationNodeNumber,numberOfDimensions,numberOfNodes,numberOfNodeDerivatives, &
+      & globalNodeNumber,globalDerivativeIndex,innerNormalXi,localDOFIdx,localNodeNumber,meshComponent, &
+      & meshNodeNumber,myGroupComputationNodeNumber,numberOfDimensions,numberOfNodes,numberOfNodeDerivatives, &
       & numberOfVariables,outerNormalXi,pressureComponentIdx,pressureMeshComponent,topNormalXi,userNodeNumber,variableIdx, &
       & variableType
+#ifdef WITH_F08_MPI
+    TYPE(MPI_Comm) :: groupCommunicator
+#else
+    INTEGER(ING) :: groupCommunicator
+#endif
+#ifdef WITH_MPI
+    INTEGER(INTG) :: mpiIError
+#endif    
     INTEGER(INTG),ALLOCATABLE :: bottomSurfaceNodes(:),innerSurfaceNodes(:),outerSurfaceNodes(:),topSurfaceNodes(:)
     REAL(DP) :: deformedZ,lambda,P,pIn,pOut,X(3),deformedX(3)
     REAL(DP), POINTER :: geometricParameters(:)
@@ -245,7 +259,7 @@ CONTAINS
     NULLIFY(workGroup)
     CALL Decomposition_WorkGroupGet(decomposition,workGroup,err,error,*999)          
     CALL WorkGroup_GroupNodeNumberGet(workGroup,myGroupComputationNodeNumber,err,error,*999)
-    CALL WorkGroup_GroupCommunicatorGet(workGroup,groupCommuicator,err,error,*999)
+    CALL WorkGroup_GroupCommunicatorGet(workGroup,groupCommunicator,err,error,*999)
 
     !Assign BC here - it's complicated so separate from analytic calculations
     NULLIFY(mesh)
@@ -344,8 +358,15 @@ CONTAINS
       ENDIF
     ENDDO !nodeIdx
     !Check it went well
-    CALL MPI_REDUCE(xFixed,xOkay,1,MPI_LOGICAL,MPI_LOR,0,groupCommuicator,mpiIError)
-    CALL MPI_REDUCE(yFixed,yOkay,1,MPI_LOGICAL,MPI_LOR,0,groupCommuicator,mpiIError)
+#ifdef WITH_MPI
+#ifdef WITH_F08_MPI
+    CALL MPI_Reduce(xFixed,xOkay,1,MPI_LOGICAL,MPI_LOR,0,groupCommunicator,mpiIError)
+    CALL MPI_Reduce(yFixed,yOkay,1,MPI_LOGICAL,MPI_LOR,0,groupCommunicator,mpiIError)
+#else    
+    CALL MPI_REDUCE(xFixed,xOkay,1,MPI_LOGICAL,MPI_LOR,0,groupCommunicator,mpiIError)
+    CALL MPI_REDUCE(yFixed,yOkay,1,MPI_LOGICAL,MPI_LOR,0,groupCommunicator,mpiIError)
+#endif    
+#endif    
     IF(myGroupComputationNodeNumber==0) THEN
       IF(.NOT.(xOkay.AND.yOkay)) THEN
         CALL FlagError("Could not fix nodes to prevent rigid body motion",err,error,*999)

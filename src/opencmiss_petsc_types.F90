@@ -42,70 +42,73 @@
 !>
 
 !>This module contains types related to the PETSc library.
-MODULE CMISSPetscTypes
+MODULE OpenCMISSPETScTypes
   
   USE KINDS
   
-  IMPLICIT NONE
- 
-  PRIVATE
-
 #include "petsc/finclude/petsc.h"
+#include "petsc/finclude/petsctao.h"
+  USE petsc
+  USE petsctao
+  
+  IMPLICIT NONE
+
+  PRIVATE
 
   !Module parameters
   
   !Module types
 
   TYPE PetscISType
-    IS :: is
+    IS, POINTER :: is
   END TYPE PetscISType
 
   TYPE PetscISLocalToGloabalMappingType
-    ISLocalToGlobalMapping :: isLocalToGlobalMapping
+    ISLocalToGlobalMapping, POINTER :: isLocalToGlobalMapping
   END TYPE PetscISLocalToGloabalMappingType
 
   TYPE PetscISColoringType
-    ISColoring :: isColoring
+    ISColoring, POINTER :: isColoring
   END TYPE PetscISColoringType
 
   TYPE PetscKspType
-    KSP :: ksp
+    KSP, POINTER :: ksp
   END TYPE PetscKspType
 
   TYPE PetscMatType
-    Mat :: mat
+    Mat, POINTER :: mat
   END TYPE PetscMatType
   
   TYPE PetscMatColoringType
-    MatColoring :: matColoring
+    MatColoring, POINTER :: matColoring
   END TYPE PetscMatColoringType
   
   TYPE PETScMatFDColoringType
-    MatFDColoring :: matFDColoring
+    MatFDColoring, POINTER :: matFDColoring
   END TYPE PETScMatFDColoringType
 
   TYPE PetscPCType
-    PC :: pc
+    PC, POINTER :: pc
   END TYPE PetscPCType
   
   TYPE PetscSnesType
-    SNES :: snes
+    SNES, POINTER :: snes
   END TYPE PetscSnesType
 
   TYPE PetscSnesLineSearchType
-    SNESLineSearch :: snesLineSearch
+    SNESLineSearch, POINTER :: snesLineSearch
   END TYPE PetscSnesLineSearchType
 
   TYPE PetscTaoType
-    Tao :: tao
+    Tao, POINTER :: tao
   END TYPE PetscTaoType
     
   TYPE PetscTSType
-    TS :: ts
+    TS, POINTER :: ts
   END TYPE PetscTSType
   
   TYPE PetscVecType
-    Vec :: vec
+    Vec, POINTER :: vec
   END TYPE PetscVecType
   
   !Interfaces
@@ -113,4 +116,4 @@ MODULE CMISSPetscTypes
   PUBLIC PetscISType,PetscISLocalToGloabalMappingType,PetscISColoringType,PetscKspType,PetscMatType,PetscMatColoringType, &
     & PetscMatFDColoringType,PetscPCType,PetscSnesType,PetscSnesLineSearchType,PetscTaoType,PetscTSType,PetscVecType
 
-END MODULE CMISSPetscTypes
+END MODULE OpenCMISSPETScTypes

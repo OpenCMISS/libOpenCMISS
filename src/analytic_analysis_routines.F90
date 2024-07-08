@@ -47,7 +47,6 @@ MODULE AnalyticAnalysisRoutines
 
   USE BasisRoutines
   USE BasisAccessRoutines
-  USE CmissMPI
   USE ComputationRoutines
   USE ComputationAccessRoutines
   USE Constants
@@ -55,13 +54,19 @@ MODULE AnalyticAnalysisRoutines
   USE FieldRoutines
   USE FieldAccessRoutines
   USE InputOutput
+  USE ISO_C_BINDING, ONLY : C_LOC
   USE ISO_VARYING_STRING
   USE Kinds
   USE MatrixVector
   USE MeshAccessRoutines
-#ifndef NOMPIMOD
+#ifdef WITH_MPI  
+#ifdef WITH_F08_MPI
+  USE MPI_F08
+#elif WITH_F90_MPI  
   USE MPI
-#endif
+#endif  
+  USE OpenCMISSMPI
+#endif  
   USE Strings
   USE Timer
   USE Types
@@ -72,9 +77,11 @@ MODULE AnalyticAnalysisRoutines
 
   PRIVATE
 
-#ifdef NOMPIMOD
+#ifdef WITH_MPI  
+#ifdef WITH_F77_MPI
 #include "mpif.h"
 #endif
+#endif  
 
   !Module parameters
 
@@ -129,15 +136,25 @@ CONTAINS
     INTEGER(INTG), INTENT(OUT) :: err !<The error code
     TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
     !Local Variables
-    INTEGER(INTG) :: componentIdx,derivativeIdx,elementIdx,ghostNumber(8),groupCommunicator,interpolationType,localDOF, &
-      & mpiIerror,myGroupComputationNodeNumber,nodeIdx,number(MAXIMUM_GLOBAL_DERIV_NUMBER),numberOfComponents, &
-      & numberOfGroupComputationNodes,numberOfDerivatives,numberOfElements,numberOfNodes,numberOfVariables,outputID, &
-      & totalNumberOfElements,totalNumberOfNodes,variableIdx,variableType
+    INTEGER(INTG) :: componentIdx,derivativeIdx,elementIdx,ghostNumber(8),interpolationType,localDOF, &
+      & myGroupComputationNodeNumber,nodeIdx,numberOfComponents,numberOfGroupComputationNodes,numberOfDerivatives, &
+      & numberOfElements,numberOfNodes,numberOfVariables,outputID,totalNumberOfElements,totalNumberOfNodes,variableIdx, &
+      & variableType
+#ifdef WITH_MPI
+#ifdef WITH_F08_MPI
+    TYPE(MPI_Comm) :: groupCommunicator
+#else
+    INTEGER(INTG) :: groupCommunicator
+#endif    
+    INTEGER(INTG) :: mpiIError
+#endif    
+    INTEGER(INTG), TARGET :: number(MAXIMUM_GLOBAL_DERIV_NUMBER)
     REAL(DP) :: ghostRMSErrorPer(MAXIMUM_GLOBAL_DERIV_NUMBER),ghostRMSErrorAbs(MAXIMUM_GLOBAL_DERIV_NUMBER), &
-      & ghostRMSErrorRel(MAXIMUM_GLOBAL_DERIV_NUMBER),rmsErrorPer(MAXIMUM_GLOBAL_DERIV_NUMBER), &
-      & rmsErrorAbs(MAXIMUM_GLOBAL_DERIV_NUMBER),rmsErrorRel(MAXIMUM_GLOBAL_DERIV_NUMBER),values(5)
+      & ghostRMSErrorRel(MAXIMUM_GLOBAL_DERIV_NUMBER),values(5)
+    REAL(DP), TARGET :: rmsErrorPer(MAXIMUM_GLOBAL_DERIV_NUMBER),rmsErrorAbs(MAXIMUM_GLOBAL_DERIV_NUMBER), &
+      & rmsErrorRel(MAXIMUM_GLOBAL_DERIV_NUMBER)
     REAL(DP), POINTER :: analyticValues(:),numericalValues(:)
-    REAL(DP), ALLOCATABLE :: integralErrors(:,:),ghostIntegralErrors(:,:)
+    REAL(DP), ALLOCATABLE, TARGET :: integralErrors(:,:),ghostIntegralErrors(:,:)
     CHARACTER(LEN=40) :: firstFormat
     CHARACTER(LEN=MAXSTRLEN) :: fName
     TYPE(DecompositionType), POINTER :: decomposition
@@ -294,15 +311,29 @@ CONTAINS
               values(3)=SQRT((rmsErrorRel(1)+ghostRMSErrorRel(1))/(number(1)+ghostNumber(1)))
               CALL WriteStringVector(outputID,1,1,3,3,3,VALUES,"(46X,3(2X,E12.5))","(46X,3(2X,E12.5))",err,error,*999)
               !Global RMS values
+#ifdef WITH_MPI
+#ifdef WITH_F08_MPI
               !Collect the values across the ranks
-              CALL MPI_ALLREDUCE(MPI_IN_PLACE,NUMBER,1,MPI_INTEGER,MPI_SUM,groupCommunicator,mpiIerror)
+              CALL MPI_Allreduce(MPI_IN_PLACE,number,1,MPI_INTEGER,MPI_SUM,groupCommunicator,mpiIerror)
+              CALL MPI_ErrorCheck("MPI_Allreduce",mpiIerror,err,error,*999)
+              CALL MPI_Allreduce(MPI_IN_PLACE,rmsErrorPer,1,MPI_DOUBLE_PRECISION,MPI_SUM,groupCommunicator,mpiIerror)
+              CALL MPI_ErrorCheck("MPI_Allreduce",mpiIerror,err,error,*999)
+              CALL MPI_Allreduce(MPI_IN_PLACE,rmsErrorAbs,1,MPI_DOUBLE_PRECISION,MPI_SUM,groupCommunicator,mpiIerror)
+              CALL MPI_ErrorCheck("MPI_Allreduce",mpiIerror,err,error,*999)
+              CALL MPI_Allreduce(MPI_IN_PLACE,rmsErrorRel,1,MPI_DOUBLE_PRECISION,MPI_SUM,groupCommunicator,mpiIerror)
+              CALL MPI_ErrorCheck("MPI_Allreduce",mpiIerror,err,error,*999)
+#else              
+              !Collect the values across the ranks
+              CALL MPI_ALLREDUCE(MPI_IN_PLACE,C_LOC(number),1,MPI_INTEGER,MPI_SUM,groupCommunicator,mpiIerror)
               CALL MPI_ErrorCheck("MPI_ALLREDUCE",mpiIerror,err,error,*999)
-              CALL MPI_ALLREDUCE(MPI_IN_PLACE,rmsErrorPer,1,MPI_DOUBLE_PRECISION,MPI_SUM,groupCommunicator,mpiIerror)
+              CALL MPI_ALLREDUCE(MPI_IN_PLACE,C_LOC(rmsErrorPer),1,MPI_DOUBLE_PRECISION,MPI_SUM,groupCommunicator,mpiIerror)
               CALL MPI_ErrorCheck("MPI_ALLREDUCE",mpiIerror,err,error,*999)
-              CALL MPI_ALLREDUCE(MPI_IN_PLACE,rmsErrorAbs,1,MPI_DOUBLE_PRECISION,MPI_SUM,groupCommunicator,mpiIerror)
+              CALL MPI_ALLREDUCE(MPI_IN_PLACE,C_LOC(rmsErrorAbs),1,MPI_DOUBLE_PRECISION,MPI_SUM,groupCommunicator,mpiIerror)
               CALL MPI_ErrorCheck("MPI_ALLREDUCE",mpiIerror,err,error,*999)
-              CALL MPI_ALLREDUCE(MPI_IN_PLACE,rmsErrorRel,1,MPI_DOUBLE_PRECISION,MPI_SUM,groupCommunicator,mpiIerror)
+              CALL MPI_ALLREDUCE(MPI_IN_PLACE,C_LOC(rmsErrorRel),1,MPI_DOUBLE_PRECISION,MPI_SUM,groupCommunicator,mpiIerror)
               CALL MPI_ErrorCheck("MPI_ALLREDUCE",mpiIerror,err,error,*999)
+#endif              
+#endif              
               CALL WriteString(outputID,"Global RMS errors:",err,error,*999)
               localString="                                                     % error  Absolute err  Relative err"
               CALL WriteString(outputID,localString,err,error,*999)
@@ -416,18 +447,37 @@ CONTAINS
                 ENDIF
               ENDDO !derivativeIdx
               !Global RMS values
+#ifdef WITH_MPI
+#ifdef WITH_F08_MPI
               !Collect the values across the ranks
-              CALL MPI_ALLREDUCE(MPI_IN_PLACE,NUMBER,MAXIMUM_GLOBAL_DERIV_NUMBER,MPI_INTEGER,MPI_SUM,groupCommunicator,mpiIerror)
-              CALL MPI_ErrorCheck("MPI_ALLREDUCE",mpiIerror,err,error,*999)
-              CALL MPI_ALLREDUCE(MPI_IN_PLACE,rmsErrorPer,MAXIMUM_GLOBAL_DERIV_NUMBER,MPI_DOUBLE_PRECISION,MPI_SUM, &
+              CALL MPI_Allreduce(MPI_IN_PLACE,number,MAXIMUM_GLOBAL_DERIV_NUMBER,MPI_INTEGER,MPI_SUM, &
+                & groupCommunicator,mpiIerror)
+              CALL MPI_ErrorCheck("MPI_Allreduce",mpiIerror,err,error,*999)
+              CALL MPI_Allreduce(MPI_IN_PLACE,rmsErrorPer,MAXIMUM_GLOBAL_DERIV_NUMBER,MPI_DOUBLE_PRECISION,MPI_SUM, &
+                & groupCommunicator,mpiIerror)
+              CALL MPI_ErrorCheck("MPI_Allreduce",mpiIerror,err,error,*999)
+              CALL MPI_Allreduce(MPI_IN_PLACE,rmsErrorAbs,MAXIMUM_GLOBAL_DERIV_NUMBER,MPI_DOUBLE_PRECISION,MPI_SUM, &
+                & groupCommunicator,mpiIerror)
+              CALL MPI_ErrorCheck("MPI_Allreduce",mpiIerror,err,error,*999)
+              CALL MPI_Allreduce(MPI_IN_PLACE,rmsErrorRel,MAXIMUM_GLOBAL_DERIV_NUMBER,MPI_DOUBLE_PRECISION,MPI_SUM, &
+                & groupCommunicator,mpiIerror)
+              CALL MPI_ErrorCheck("MPI_Allreduce",mpiIerror,err,error,*999)
+#else              
+              !Collect the values across the ranks
+              CALL MPI_ALLREDUCE(MPI_IN_PLACE,C_LOC(number),MAXIMUM_GLOBAL_DERIV_NUMBER,MPI_INTEGER,MPI_SUM, &
                 & groupCommunicator,mpiIerror)
               CALL MPI_ErrorCheck("MPI_ALLREDUCE",mpiIerror,err,error,*999)
-              CALL MPI_ALLREDUCE(MPI_IN_PLACE,rmsErrorAbs,MAXIMUM_GLOBAL_DERIV_NUMBER,MPI_DOUBLE_PRECISION,MPI_SUM, &
+              CALL MPI_ALLREDUCE(MPI_IN_PLACE,C_LOC(rmsErrorPer),MAXIMUM_GLOBAL_DERIV_NUMBER,MPI_DOUBLE_PRECISION,MPI_SUM, &
                 & groupCommunicator,mpiIerror)
               CALL MPI_ErrorCheck("MPI_ALLREDUCE",mpiIerror,err,error,*999)
-              CALL MPI_ALLREDUCE(MPI_IN_PLACE,rmsErrorRel,MAXIMUM_GLOBAL_DERIV_NUMBER,MPI_DOUBLE_PRECISION,MPI_SUM, &
+              CALL MPI_ALLREDUCE(MPI_IN_PLACE,C_LOC(rmsErrorAbs),MAXIMUM_GLOBAL_DERIV_NUMBER,MPI_DOUBLE_PRECISION,MPI_SUM, &
                 & groupCommunicator,mpiIerror)
               CALL MPI_ErrorCheck("MPI_ALLREDUCE",mpiIerror,err,error,*999)
+              CALL MPI_ALLREDUCE(MPI_IN_PLACE,C_LOC(rmsErrorRel),MAXIMUM_GLOBAL_DERIV_NUMBER,MPI_DOUBLE_PRECISION,MPI_SUM, &
+                & groupCommunicator,mpiIerror)
+              CALL MPI_ErrorCheck("MPI_ALLREDUCE",mpiIerror,err,error,*999)
+#endif              
+#endif              
               CALL WriteString(outputID,"Global RMS errors:",err,error,*999)
               localString="            Deriv#                                   % error  Absolute err  Relative err"
               CALL WriteString(outputID,localString,err,error,*999)
@@ -551,14 +601,23 @@ CONTAINS
           WRITE(firstFormat,"(A)") "(12X,'Diff^2',4(2X,E12.5))"
           CALL WriteStringVector(outputID,1,1,4,4,4,VALUES,firstFormat,"(20X,4(2X,E12.5))",err,error,*999)
         ENDDO !componentIdx
+#ifdef WITH_MPI
+#ifdef WITH_F08_MPI
         !Collect the values across the ranks
-        CALL MPI_ALLREDUCE(MPI_IN_PLACE,integralErrors,6*numberOfComponents,MPI_DOUBLE_PRECISION, &
+        CALL MPI_Allreduce(MPI_IN_PLACE,integralErrors,6*numberOfComponents,MPI_DOUBLE_PRECISION, &
           & MPI_SUM,groupCommunicator,mpiIerror)
+        CALL MPI_ErrorCheck("MPI_Allreduce",mpiIerror,err,error,*999)
+#else        
+        !Collect the values across the ranks
+        CALL MPI_ALLREDUCE(MPI_IN_PLACE,C_LOC(integralErrors),6*numberOfComponents,MPI_DOUBLE_PRECISION, &
+          & MPI_SUM,groupCommunicator,mpiIerror)
+        CALL MPI_ErrorCheck("MPI_ALLREDUCE",mpiIerror,err,error,*999)
+#endif        
+#endif        
         CALL WriteString(outputID,"Global Integral errors:",err,error,*999)
         localString="Component#             Numerical      Analytic       % error  Absolute err  Relative err"
         CALL WriteString(outputID,localString,err,error,*999)
         DO componentIdx=1,numberOfComponents
-          CALL MPI_ErrorCheck("MPI_ALLREDUCE",mpiIerror,err,error,*999)
           values(1)=integralErrors(1,componentIdx)
           values(2)=integralErrors(3,componentIdx)
           values(4)=AnalyticAnalysis_AbsoluteError(values(1),values(2))
@@ -1761,9 +1820,18 @@ CONTAINS
     !Local Variables
     INTEGER(INTG) :: derivativeIdx,maximumNumberOfDerivatives,nodeIdx,numberOfDerivatives,numberOfNodes,totalNumberOfNodes
     REAL(DP) :: errorValue
-    INTEGER(INTG) :: ghostNumber(MAXIMUM_GLOBAL_DERIV_NUMBER),number(MAXIMUM_GLOBAL_DERIV_NUMBER),mpiIerror, &
-      & numberOfGroupComputationNodes,myGroupComputationNodeNumber,groupCommunicator
-    REAL(DP) :: rmsError(MAXIMUM_GLOBAL_DERIV_NUMBER),ghostRMSError(MAXIMUM_GLOBAL_DERIV_NUMBER)
+    INTEGER(INTG) :: ghostNumber(MAXIMUM_GLOBAL_DERIV_NUMBER),numberOfGroupComputationNodes,myGroupComputationNodeNumber
+#ifdef WITH_MPI
+#ifdef WITH_F08_MPI
+    TYPE(MPI_Comm) :: groupCommunicator
+#else
+    INTEGER(INTG) :: groupCommunicator
+#endif    
+    INTEGER(INTG) :: mpiIError
+#endif    
+    INTEGER(INTG), TARGET :: number(MAXIMUM_GLOBAL_DERIV_NUMBER)
+    REAL(DP) :: ghostRMSError(MAXIMUM_GLOBAL_DERIV_NUMBER)
+    REAL(DP), TARGET :: rmsError(MAXIMUM_GLOBAL_DERIV_NUMBER)
     TYPE(DecompositionType), POINTER :: decomposition
     TYPE(DomainType), POINTER :: domain
     TYPE(DomainNodesType), POINTER :: domainNodes
@@ -1876,12 +1944,23 @@ CONTAINS
             & SQRT((rmsError(derivativeIdx)+ghostRMSError(derivativeIdx))/(number(derivativeIdx)+ghostNumber(derivativeIdx)))
         ENDDO !derivativeIdx
         !Global RMS values
+#ifdef WITH_MPI
+#ifdef WITH_F08_MPI
         !Collect the values across the ranks
-        CALL MPI_ALLREDUCE(MPI_IN_PLACE,number,maximumNumberOfDerivatives,MPI_INTEGER,MPI_SUM,groupCommunicator,mpiIerror)
+        CALL MPI_Allreduce(MPI_IN_PLACE,number,maximumNumberOfDerivatives,MPI_INTEGER,MPI_SUM,groupCommunicator,mpiIerror)
+        CALL MPI_ErrorCheck("MPI_Allreduce",mpiIerror,err,error,*999)
+        CALL MPI_Allreduce(MPI_IN_PLACE,rmsError,maximumNumberOfDerivatives,MPI_DOUBLE_PRECISION,MPI_SUM,groupCommunicator, &
+          & mpiIerror)
+        CALL MPI_ErrorCheck("MPI_Allreduce",mpiIerror,err,error,*999)
+#else        
+        !Collect the values across the ranks
+        CALL MPI_ALLREDUCE(MPI_IN_PLACE,C_LOC(number),maximumNumberOfDerivatives,MPI_INTEGER,MPI_SUM,groupCommunicator,mpiIerror)
         CALL MPI_ErrorCheck("MPI_ALLREDUCE",mpiIerror,err,error,*999)
-        CALL MPI_ALLREDUCE(MPI_IN_PLACE,rmsError,maximumNumberOfDerivatives,MPI_DOUBLE_PRECISION,MPI_SUM,groupCommunicator, &
+        CALL MPI_ALLREDUCE(MPI_IN_PLACE,C_LOC(rmsError),maximumNumberOfDerivatives,MPI_DOUBLE_PRECISION,MPI_SUM,groupCommunicator, &
           & mpiIerror)
         CALL MPI_ErrorCheck("MPI_ALLREDUCE",mpiIerror,err,error,*999)
+#endif        
+#endif        
         DO derivativeIdx=1,maximumNumberOfDerivatives
           IF(number(derivativeIdx)>0) globalRMS(derivativeIdx)=SQRT(rmsError(derivativeIdx)/number(derivativeIdx))
         ENDDO !derivativeIdx
@@ -1924,8 +2003,18 @@ CONTAINS
     TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
     !Local Variables
     INTEGER(INTG) :: elementIdx
-    INTEGER(INTG) :: ghostNumber,number,mpiIerror,numberOfGroupComputationNodes,myGroupComputationNodeNumber,groupCommunicator
-    REAL(DP) :: errorValue,rmsError,ghostRMSError
+    INTEGER(INTG) :: ghostNumber,numberOfGroupComputationNodes,myGroupComputationNodeNumber
+#ifdef WITH_MPI
+#ifdef WITH_F08_MPI
+    TYPE(MPI_Comm) :: groupCommunicator
+#else
+    INTEGER(INTG) :: groupCommunicator
+#endif
+    INTEGER(INTG) :: mpiIError
+#endif    
+    INTEGER(INTG), TARGET :: number
+    REAL(DP) :: errorValue,ghostRMSError
+    REAL(DP), TARGET :: rmsError
     TYPE(DecompositionType), POINTER :: decomposition
     TYPE(DecompositionElementsType), POINTER :: decompositionElements
     TYPE(DecompositionTopologyType), POINTER :: decompositionTopology
@@ -2004,11 +2093,21 @@ CONTAINS
         !Local and ghost elements
         localGhostRMS=SQRT((rmsError+ghostRMSError)/(number+ghostNumber))
         !Global RMS values
+#ifdef WITH_MPI
+#ifdef WITH_F08_MPI
         !Collect the values across the ranks
-        CALL MPI_ALLREDUCE(MPI_IN_PLACE,number,1,MPI_INTEGER,MPI_SUM,groupCommunicator,mpiIerror)
+        CALL MPI_Allreduce(MPI_IN_PLACE,number,1,MPI_INTEGER,MPI_SUM,groupCommunicator,mpiIerror)
+        CALL MPI_ErrorCheck("MPI_Allreduce",mpiIerror,err,error,*999)
+        CALL MPI_Allreduce(MPI_IN_PLACE,rmsError,1,MPI_DOUBLE_PRECISION,MPI_SUM,groupCommunicator,mpiIerror)
+        CALL MPI_ErrorCheck("MPI_Allreduce",mpiIerror,err,error,*999)
+#else        
+        !Collect the values across the ranks
+        CALL MPI_ALLREDUCE(MPI_IN_PLACE,C_LOC(number),1,MPI_INTEGER,MPI_SUM,groupCommunicator,mpiIerror)
         CALL MPI_ErrorCheck("MPI_ALLREDUCE",mpiIerror,err,error,*999)
-        CALL MPI_ALLREDUCE(MPI_IN_PLACE,rmsError,1,MPI_DOUBLE_PRECISION,MPI_SUM,groupCommunicator,mpiIerror)
+        CALL MPI_ALLREDUCE(MPI_IN_PLACE,C_LOC(rmsError),1,MPI_DOUBLE_PRECISION,MPI_SUM,groupCommunicator,mpiIerror)
         CALL MPI_ErrorCheck("MPI_ALLREDUCE",mpiIerror,err,error,*999)
+#endif        
+#endif        
         globalRMS=SQRT(rmsError/number)
       ENDIF
     ENDIF

@@ -49,7 +49,6 @@ MODULE BoundaryConditionsRoutines
   USE BasisRoutines
   USE BasisAccessRoutines
   USE BoundaryConditionAccessRoutines
-  USE CmissMPI
   USE ComputationRoutines
   USE ComputationAccessRoutines
   USE Constants
@@ -73,10 +72,17 @@ MODULE BoundaryConditionsRoutines
   USE ISO_VARYING_STRING
   USE Kinds
   USE MeshAccessRoutines
-#ifndef NOMPIMOD
-  USE MPI
+#ifdef WITH_MPI  
+#ifdef WITH_F08_MPI
+  USE MPI_F08
+#elif WITH_F90_MPI  
+  USE MPI  
 #endif
+#endif  
   USE NodeRoutines
+#ifdef WITH_MPI  
+  USE OpenCMISSMPI
+#endif  
   USE RegionAccessRoutines
   USE SolverAccessRoutines
   USE SolverMappingAccessRoutines
@@ -90,9 +96,12 @@ MODULE BoundaryConditionsRoutines
 
   IMPLICIT NONE
 
-#ifdef NOMPIMOD
+#ifdef WITH_MPI  
+#ifdef WITH_F77_MPI
 #include "mpif.h"
 #endif
+#endif  
+  
 
   PRIVATE
 
@@ -762,10 +771,18 @@ MODULE BoundaryConditionsRoutines
     TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
     !Local Variables
     INTEGER(INTG) :: boundaryConditionsVarType,colIdx,count,currentRowCondition,dirichletDOF,dirichletIdx,dofIdx,domainNumber, &
-      & dummy,equationsMatrixIdx,equationsSetIdx,groupCommunicator,last,lhsVariableType,localDOFIdx,mpiIError, &
+      & dummy,equationsMatrixIdx,equationsSetIdx,last,lhsVariableType,localDOFIdx, &
       & myGroupComputationNodeNumber,neumannIdx,numberOfBoundaryConditionsVariables,numberOfBoundaryConditionsRowVariables, &
       & numberOfDynamicMatrices,numberOfEquationsSets,numberOfGlobal,numberOfGroupComputationNodes,numberOfLinearMatrices, &
       & numberOfNonZeros,numberOfRows,parameterSetIdx,pressureIdx,rowIdx,sendCount,storageType,totalNumberOfLocal,variableIdx
+#ifdef WITH_MPI
+#ifdef WITH_F08_MPI
+    TYPE(MPI_Comm) :: groupCommunicator
+#else
+    INTEGER(INTG) :: groupCommunicator
+#endif
+    INTEGER(INTG) :: mpiIError
+#endif    
     INTEGER(INTG), ALLOCATABLE:: columnArray(:)
     TYPE(BoundaryConditionsDirichletType), POINTER :: boundaryConditionsDirichlet
     TYPE(BoundaryConditionsNeumannType), POINTER :: boundaryConditionsNeumann
@@ -825,41 +842,72 @@ MODULE BoundaryConditionsRoutines
         CALL DomainMapping_NumberOfGlobalGet(domainMapping,sendCount,err,error,*999)
         NULLIFY(field)
         CALL FieldVariable_FieldGet(fieldVariable,field,err,error,*999)
+#ifdef WITH_MPI        
         IF(numberOfGroupComputationNodes>1) THEN
+#ifdef WITH_F08_MPI
           !\todo This operation is a little expensive as we are doing an unnecessary sum across all the ranks in order to combin
           !\todo the data from each rank into all ranks. We will see how this goes for now.
-          CALL MPI_ALLREDUCE(MPI_IN_PLACE,boundaryConditionsVariable%DOFTypes,sendCount,MPI_INTEGER,MPI_SUM, &
+          CALL MPI_Allreduce(MPI_IN_PLACE,boundaryConditionsVariable%DOFTypes,sendCount,MPI_INTEGER,MPI_SUM, &
             & groupCommunicator,mpiIError)
-          CALL MPI_ErrorCheck("MPI_ALLREDUCE",mpiIError,err,error,*999)
-          CALL MPI_ALLREDUCE(MPI_IN_PLACE,boundaryConditionsVariable%conditionTypes,sendCount,MPI_INTEGER,MPI_SUM, &
+          CALL MPI_ErrorCheck("MPI_Allreduce",mpiIError,err,error,*999)
+          CALL MPI_Allreduce(MPI_IN_PLACE,boundaryConditionsVariable%conditionTypes,sendCount,MPI_INTEGER,MPI_SUM, &
             & groupCommunicator,mpiIError)
-          CALL MPI_ErrorCheck("MPI_ALLREDUCE",mpiIError,err,error,*999)
-        ENDIF !mpi_in_place bug workaround - only do this when num comp nodes > 1
-        IF(numberOfGroupComputationNodes>1) THEN
+          CALL MPI_ErrorCheck("MPI_Allreduce",mpiIError,err,error,*999)
           ! Update the total number of boundary condition types by summing across all nodes
-          CALL MPI_ALLREDUCE(MPI_IN_PLACE,boundaryConditionsVariable%dofCounts,MAX_BOUNDARY_CONDITION_NUMBER,MPI_INTEGER, &
+          CALL MPI_Allreduce(MPI_IN_PLACE,boundaryConditionsVariable%dofCounts,MAX_BOUNDARY_CONDITION_NUMBER,MPI_INTEGER, &
+            & MPI_SUM,groupCommunicator,mpiIError)
+          CALL MPI_ErrorCheck("MPI_Allreduce",mpiIError,err,error,*999)
+          CALL MPI_Allreduce(MPI_IN_PLACE,boundaryConditionsVariable%numberOfDirichletConditions,1,MPI_INTEGER,MPI_SUM, &
+            & groupCommunicator,mpiIError)
+          CALL MPI_ErrorCheck("MPI_Allreduce",mpiIError,err,error,*999)
+#else          
+          !\todo This operation is a little expensive as we are doing an unnecessary sum across all the ranks in order to combin
+          !\todo the data from each rank into all ranks. We will see how this goes for now.
+          CALL MPI_ALLREDUCE(MPI_IN_PLACE,C_LOC(boundaryConditionsVariable%DOFTypes),sendCount,MPI_INTEGER,MPI_SUM, &
+            & groupCommunicator,mpiIError)
+          CALL MPI_ErrorCheck("MPI_ALLREDUCE",mpiIError,err,error,*999)
+          CALL MPI_ALLREDUCE(MPI_IN_PLACE,C_LOC(boundaryConditionsVariable%conditionTypes),sendCount,MPI_INTEGER,MPI_SUM, &
+            & groupCommunicator,mpiIError)
+          CALL MPI_ErrorCheck("MPI_ALLREDUCE",mpiIError,err,error,*999)
+          ! Update the total number of boundary condition types by summing across all nodes
+          CALL MPI_ALLREDUCE(MPI_IN_PLACE,C_LOC(boundaryConditionsVariable%dofCounts),MAX_BOUNDARY_CONDITION_NUMBER,MPI_INTEGER, &
             & MPI_SUM,groupCommunicator,mpiIError)
           CALL MPI_ErrorCheck("MPI_ALLREDUCE",mpiIError,err,error,*999)
-          CALL MPI_ALLREDUCE(MPI_IN_PLACE,boundaryConditionsVariable%numberOfDirichletConditions,1,MPI_INTEGER,MPI_SUM, &
+          CALL MPI_ALLREDUCE(MPI_IN_PLACE,C_LOC(boundaryConditionsVariable%numberOfDirichletConditions),1,MPI_INTEGER,MPI_SUM, &
             & groupCommunicator,mpiIError)
           CALL MPI_ErrorCheck("MPI_ALLREDUCE",mpiIError,err,error,*999)
+#endif          
         ENDIF !mpi_in_place bug workaround - only do this when num comp nodes > 1
+#endif        
         
         !Check that the boundary conditions set are appropriate for equations sets
         CALL BoundaryConditionsVariable_CheckEquations(boundaryConditionsVariable,err,error,*999)
+        DO parameterSetIdx=1,FIELD_NUMBER_OF_SET_TYPES
+          IF(boundaryConditionsVariable%parameterSetRequired(parameterSetIdx)) THEN
+            CALL FieldVariable_ParameterSetEnsureCreated(fieldVariable,parameterSetIdx,err,error,*999)
+          ENDIF
+        ENDDO !parameterSetIdx
 
+#ifdef WITH_MPI          
         IF(numberOfGroupComputationNodes>1) THEN
+#ifdef WITH_F08_MPI
           !Make sure the required parameter sets are created on all computational nodes and begin updating them
-          CALL MPI_ALLREDUCE(MPI_IN_PLACE,boundaryConditionsVariable%parameterSetRequired,FIELD_NUMBER_OF_SET_TYPES,MPI_LOGICAL, &
-            & MPI_LOR,groupCommunicator,mpiIError)
+          CALL MPI_Allreduce(MPI_IN_PLACE,boundaryConditionsVariable%parameterSetRequired,FIELD_NUMBER_OF_SET_TYPES, &
+            & MPI_LOGICAL,MPI_LOR,groupCommunicator,mpiIError)
+          CALL MPI_ErrorCheck("MPI_Allreduce",mpiIError,err,error,*999)
+#else          
+          !Make sure the required parameter sets are created on all computational nodes and begin updating them
+          CALL MPI_ALLREDUCE(MPI_IN_PLACE,C_LOC(boundaryConditionsVariable%parameterSetRequired),FIELD_NUMBER_OF_SET_TYPES, &
+            & MPI_LOGICAL,MPI_LOR,groupCommunicator,mpiIError)
           CALL MPI_ErrorCheck("MPI_ALLREDUCE",mpiIError,err,error,*999)
+#endif          
           DO parameterSetIdx=1,FIELD_NUMBER_OF_SET_TYPES
             IF(boundaryConditionsVariable%parameterSetRequired(parameterSetIdx)) THEN
-              CALL FieldVariable_ParameterSetEnsureCreated(fieldVariable,parameterSetIdx,err,error,*999)
               CALL FieldVariable_ParameterSetUpdateStart(fieldVariable,parameterSetIdx,err,error,*999)
             ENDIF
           ENDDO
         ENDIF !mpi_in_place bug workaround - only do this when num comp nodes > 1
+#endif          
         
         !Set up pressure incremented condition, if it exists
         NULLIFY(boundaryConditionsPressureIncremented)

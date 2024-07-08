@@ -65,7 +65,6 @@ MODULE OpenCMISS_Iron
  USE BoundaryConditionAccessRoutines
  USE CellMLAccessRoutines
  USE Cmiss
- USE CmissPetsc
  USE CmissCellML
  USE ComputationRoutines
  USE ComputationAccessRoutines
@@ -117,6 +116,7 @@ MODULE OpenCMISS_Iron
  USE MeshRoutines
  USE MeshAccessRoutines
  USE NodeRoutines
+ USE OpenCMISSPETSc
  USE ProblemRoutines
  USE ProblemAccessRoutines
  USE RegionRoutines

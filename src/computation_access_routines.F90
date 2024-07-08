@@ -48,9 +48,13 @@ MODULE ComputationAccessRoutines
   USE BaseRoutines
   USE ISO_VARYING_STRING
   USE Kinds
-#ifndef NOMPIMOD
+#ifdef WITH_MPI
+#ifdef WITH_F08_MPI
+  USE MPI_F08
+#elif WITH_F90_MPI
   USE MPI
 #endif
+#endif  
   USE Strings
   USE Types
 
@@ -60,9 +64,11 @@ MODULE ComputationAccessRoutines
 
   PRIVATE
 
-#ifdef NOMPIMOD
+#ifdef WITH_MPI  
+#ifdef WITH_F77_MPI
 #include "mpif.h"
 #endif
+#endif  
   
   !Module parameters
   
@@ -119,8 +125,17 @@ CONTAINS
   SUBROUTINE ComputationEnvironment_WorldCommunicatorGet(computationEnvironment,worldCommunicator,err,error,*)
 
     !Argument Variables
+    
     TYPE(ComputationEnvironmentType), POINTER, INTENT(IN) :: computationEnvironment !<The computational environment to get the world node number for.
+#ifdef WITH_MPI
+#ifdef WITH_F08_MPI
+    TYPE(MPI_Comm), INTENT(OUT) :: worldCommunicator !<On return, the current world communicator
+#else
     INTEGER(INTG), INTENT(OUT) :: worldCommunicator !<On return, the current world communicator
+#endif 
+#else    
+    INTEGER(INTG), INTENT(OUT) :: worldCommunicator !<On return, the current world communicator
+#endif    
     INTEGER(INTG), INTENT(OUT) :: err !<The error code
     TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
     !Local Variables
@@ -129,9 +144,15 @@ CONTAINS
 
 #ifdef WITH_PRECHECKS    
     IF(.NOT.ASSOCIATED(computationEnvironment)) CALL FlagError("Computation environment is not associated.",err,error,*999)
-#endif    
-    
+#endif
+
+    ASSERT_WITH_MPI()
+
+#ifdef WITH_MPI    
     worldCommunicator=computationEnvironment%mpiCommWorld
+#else
+    worldCommunicator=0
+#endif
  
     EXITS("ComputationEnvironment_WorldCommunicatorGet")
     RETURN
@@ -441,7 +462,15 @@ CONTAINS
 
     !Argument variables
     TYPE(WorkGroupType), POINTER, INTENT(IN) :: workGroup !<The work group to get the group communicator for.
+#ifdef WITH_MPI
+#ifdef WITH_F08_MPI
+    TYPE(MPI_Comm), INTENT(OUT) :: groupCommunicator !<On exit, the group communicator for the work group.
+#else
     INTEGER(INTG), INTENT(OUT) :: groupCommunicator !<On exit, the group communicator for the work group.
+#endif
+#else    
+    INTEGER(INTG), INTENT(OUT) :: groupCommunicator !<On exit, the group communicator for the work group.
+#endif    
     INTEGER(INTG), INTENT(OUT) :: err !<The error code
     TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
     !Local Variables
@@ -453,7 +482,12 @@ CONTAINS
     IF(.NOT.ASSOCIATED(workGroup)) CALL FlagError("Work group is not associated.",err,error,*999)
 #endif    
 
+#ifdef WITH_MPI
     groupCommunicator=workGroup%mpiGroupCommunicator
+#else    
+    groupCommunicator=0
+#endif    
+    
     
     EXITS("WorkGroup_GroupCommunicatorGet")
     RETURN

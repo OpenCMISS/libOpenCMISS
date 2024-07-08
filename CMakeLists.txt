@@ -1,247 +1,243 @@
 #[=======================================================================[.rst:
-libOpenCMISS CMake Build
-========================
+OpenCMISS CMake Build
+=====================
 
 The CMake build system to build the OpenCMISS library.
 
 
 #]=======================================================================]
 
-cmake_minimum_required (VERSION 3.26 FATAL_ERROR)
+cmake_minimum_required(VERSION 3.26 FATAL_ERROR)
 
-if(NOT DEFINED LibOpenCMISS_ROOT)
-  set(LibOpenCMISS_ROOT "${CMAKE_CURRENT_SOURCE_DIR}" CACHE PATH "LibOpenCMISS build system root" FORCE)
+if(NOT DEFINED OpenCMISS_ROOT)
+  set(OpenCMISS_ROOT "${CMAKE_CURRENT_SOURCE_DIR}" CACHE PATH "OpenCMISS library root" FORCE)
 endif()
 
-set(LibOpenCMISS_INC_DIR "${LibOpenCMISS_ROOT}/include")
-set(LibOpenCMISS_VERSION_H "${LibOpenCMISS_INC_DIR}/opencmiss_version.h")
-if(EXISTS "${LibOpenCMISS_VERSION_H}")
-  file(STRINGS "${LibOpenCMISS_VERSION_H}" LibOpenCMISS_VERSION_H_LINES)
-  foreach(line ${LibOpenCMISS_VERSION_H_LINES})
-    if(line MATCHES "^#define[ \t](LibOpenCMISS_MAJOR_VERSION|LibOpenCMISS_MINOR_VERSION|LibOpenCMISS_PATCH_VERSION)[ \t]*([0-9]+)$")
+set(OpenCMISS_INC_DIR "${OpenCMISS_ROOT}/include")
+set(OpenCMISS_VERSION_H "${OpenCMISS_INC_DIR}/opencmiss_version.h")
+if(EXISTS "${OpenCMISS_VERSION_H}")
+  file(STRINGS "${OpenCMISS_VERSION_H}" OpenCMISS_VERSION_H_LINES)
+  foreach(line ${OpenCMISS_VERSION_H_LINES})
+    if(line MATCHES "^#define[ \t](OpenCMISS_MAJOR_VERSION|OpenCMISS_MINOR_VERSION|OpenCMISS_PATCH_VERSION)[ \t]*([0-9]+)$")
       set(${CMAKE_MATCH_1} ${CMAKE_MATCH_2})
     endif()
   endforeach()
 else()
-  message(FATAL_ERROR "OpenCMISS version file not found? Invalid setup?"
+  message(FATAL_ERROR "OpenCMISS version file not found? Invalid setup?")
 endif()
-set(LibOpenCMISS_VERSION "${LibOpenCMISS_MAJOR_VERSION}.${LibOpenCMISS_MINOR_VERSION}.${LibOpenCMISS_PATCH_VERSION}")
+set(OpenCMISS_VERSION "${OpenCMISS_MAJOR_VERSION}.${OpenCMISS_MINOR_VERSION}.${OpenCMISS_PATCH_VERSION}")
 
-project(LibOpenCMISS
-  VERSION "${LibOpenCMISS_VERSION}"
+project(OpenCMISS
+  VERSION "${OpenCMISS_VERSION}"
   LANGUAGES C CXX Fortran
   DESCRIPTION "OpenCMISS computional library"
-  HOMEPAGE_URL "https://www.opencmiss.org/")  
+  HOMEPAGE_URL "https://www.opencmiss.org/"
 )
 
 # Set additional directory variables
-set(LibOpenCMISS_BINDINGS_DIR "${LibOpenCMISS_ROOT}/bindings")
-set(LibOpenCMISS_CMAKE_DIR "${LibOpenCMISS_ROOT}/cmake")
-set(LibOpenCMISS_DOC_DIR "${LibOpenCMISS_ROOT}/doc")
-set(LibOpenCMISS_DOXYGEN_DIR "${LibOpenCMISS_DOC_DIR}/doxygen")
-set(LibOpenCMISS_GEN_BINDINGS_DIR "${CMAKE_CURRENT_BINARY_DIRECTORY}/bindings")
-set(LibOpenCMISS_GEN_INC_DIR "${CMAKE_CURRENT_BINARY_DIRECTORY}/include")
-set(LibOpenCMISS_Fortran_MODULES_DIR "${CMAKE_CURRENT_BINARY_DIRECTORY}/fortran_modules")
-set(LibOpenCMISS_GEN_SRC_DIR "${CMAKE_CURRENT_BINARY_DIRECTORY}/src")
-set(LibOpenCMISS_SRC_DIR "${LibOpenCMISS_ROOT}/src")
-set(LibOpenCMISS_TESTS_DIR "${LibOpenCMISS_ROOT}/tests")
-set(LibOpenCMISS_UTILS_DIR "${LibOpenCMISS_ROOT}/utils")
+set(OpenCMISS_BINDINGS_DIR "${OpenCMISS_ROOT}/bindings")
+set(OpenCMISS_CMAKE_DIR "${OpenCMISS_ROOT}/cmake")
+set(OpenCMISS_DOC_DIR "${OpenCMISS_ROOT}/doc")
+set(OpenCMISS_Doxygen_DIR "${OpenCMISS_DOC_DIR}/doxygen")
+set(OpenCMISS_SRC_DIR "${OpenCMISS_ROOT}/src")
+set(OpenCMISS_TESTS_DIR "${OpenCMISS_ROOT}/tests")
+set(OpenCMISS_UTILS_DIR "${OpenCMISS_ROOT}/utils")
 
-# Add in library CMake modules to the module path
-set(CMAKE_MODULE_PATH ${CMAKE_MODULE_PATH} "${LibOpenCMISS_CMAKE_DIR}")
+# Set additional directory variables for the build tree
+set(OpenCMISS_GEN_BINDINGS_DIR "${CMAKE_CURRENT_BINARY_DIR}/bindings")
+set(OpenCMISS_GEN_INC_DIR "${CMAKE_CURRENT_BINARY_DIR}/include")
+set(OpenCMISS_Fortran_MODULES_DIR "${CMAKE_CURRENT_BINARY_DIR}/fortran_modules")
+set(OpenCMISS_GEN_SRC_DIR "${CMAKE_CURRENT_BINARY_DIR}/src")
 
-set(_CORRECT_CMAKE_MODULE_PATH FALSE)
-# First check if the CMAKE_MODULE_PATH is already set properly.
-foreach(_PATH ${CMAKE_MODULE_PATH})
-    if (EXISTS "${_PATH}/OpenCMISS/OCMiscFunctions.cmake")
-        set(_CORRECT_CMAKE_MODULE_PATH TRUE)
-        if (NOT DEFINED IRON_CMAKE_MODULE_PATH)
-            set(IRON_CMAKE_MODULE_PATH "${_PATH}" CACHE STRING "Location of OpenCMISS CMake modules.")
-        endif ()
-        break()
-    endif ()
-endforeach()
+# Add in library cmake modules to the module path
+set(CMAKE_MODULE_PATH ${CMAKE_MODULE_PATH} "${OpenCMISS_CMAKE_DIR}")
 
-if (NOT _CORRECT_CMAKE_MODULE_PATH)
-    # Check bare minimum configuration
-    set(IRON_CMAKE_MODULE_PATH "${IRON_CMAKE_MODULE_PATH}" CACHE STRING "Location of OpenCMISS CMake modules.")
-    if (EXISTS "${IRON_CMAKE_MODULE_PATH}/OpenCMISS/OCMiscFunctions.cmake")
-        list(APPEND CMAKE_MODULE_PATH "${IRON_CMAKE_MODULE_PATH}/FindModuleWrappers")
-        list(APPEND CMAKE_MODULE_PATH "${IRON_CMAKE_MODULE_PATH}")
-        list(APPEND CMAKE_MODULE_PATH "${IRON_CMAKE_MODULE_PATH}/OpenCMISS")
-        set(_CORRECT_CMAKE_MODULE_PATH TRUE)
-    endif ()
-endif ()
+# set(_CORRECT_CMAKE_MODULE_PATH FALSE)
+# # First check if the CMAKE_MODULE_PATH is already set properly.
+# foreach(_PATH ${CMAKE_MODULE_PATH})
+#     if (EXISTS "${_PATH}/OpenCMISS/OCMiscFunctions.cmake")
+#         set(_CORRECT_CMAKE_MODULE_PATH TRUE)
+#         if (NOT DEFINED IRON_CMAKE_MODULE_PATH)
+#             set(IRON_CMAKE_MODULE_PATH "${_PATH}" CACHE STRING "Location of OpenCMISS CMake modules.")
+#         endif ()
+#         break()
+#     endif ()
+# endforeach()
 
-if (NOT _CORRECT_CMAKE_MODULE_PATH)
-    message(STATUS "CMAKE_MODULE_PATH: '${CMAKE_MODULE_PATH}'")
-    message(STATUS "IRON_CMAKE_MODULE_PATH: '${IRON_CMAKE_MODULE_PATH}'")
-    message(FATAL_ERROR "'OCMiscFunctions.cmake' was not found on the module path.  Check the value of CMAKE_MODULE_PATH and/or IRON_CMAKE_MODULE_PATH.")
-endif ()
+# if (NOT _CORRECT_CMAKE_MODULE_PATH)
+#     # Check bare minimum configuration
+#     set(IRON_CMAKE_MODULE_PATH "${IRON_CMAKE_MODULE_PATH}" CACHE STRING "Location of OpenCMISS CMake modules.")
+#     if (EXISTS "${IRON_CMAKE_MODULE_PATH}/OpenCMISS/OCMiscFunctions.cmake")
+#         list(APPEND CMAKE_MODULE_PATH "${IRON_CMAKE_MODULE_PATH}/FindModuleWrappers")
+#         list(APPEND CMAKE_MODULE_PATH "${IRON_CMAKE_MODULE_PATH}")
+#         list(APPEND CMAKE_MODULE_PATH "${IRON_CMAKE_MODULE_PATH}/OpenCMISS")
+#         set(_CORRECT_CMAKE_MODULE_PATH TRUE)
+#     endif ()
+# endif ()
+
+# if (NOT _CORRECT_CMAKE_MODULE_PATH)
+#     message(STATUS "CMAKE_MODULE_PATH: '${CMAKE_MODULE_PATH}'")
+#     message(STATUS "IRON_CMAKE_MODULE_PATH: '${IRON_CMAKE_MODULE_PATH}'")
+#     message(FATAL_ERROR "'OCMiscFunctions.cmake' was not found on the module path.  Check the value of CMAKE_MODULE_PATH and/or IRON_CMAKE_MODULE_PATH.")
+# endif ()
 
 # Check multi-config environment
-get_property(LibOpenCMISS_HAVE_MULTICONFIG_ENV GLOBAL PROPERTY GENERATOR_IS_MULTI_CONFIG)
-if(LibOpenCMISS_HAVE_MULTICONFIG_ENV)
-  string(TOUPPER "$<$<CONFIG>>" LibOpenCMISS_CONFIG_TYPE)
+get_property(OpenCMISS_HAVE_MULTICONFIG_ENV GLOBAL PROPERTY GENERATOR_IS_MULTI_CONFIG)
+if(OpenCMISS_HAVE_MULTICONFIG_ENV)
+  string(TOUPPER "$<$<CONFIG>>" OpenCMISS_CONFIG_TYPE)
 else()
-  string(TOUPPER "${CMAKE_BUILD_TYPE}" LibOpenCMISS_CONFIG_TYPE)
+  string(TOUPPER "${CMAKE_BUILD_TYPE}" OpenCMISS_CONFIG_TYPE)
 endif()
-if(LibOpenCMISS_CONFIG_TYPE MATCHES "^(DEBUG|RELWITHDEBINFO)$")
-  set(LibOpenCMISS_IS_DEBUG_BUILD TRUE)
+if(OpenCMISS_CONFIG_TYPE MATCHES "^(DEBUG|RELWITHDEBINFO)$")
+  set(OpenCMISS_IS_DEBUG_BUILD TRUE)
 else()
-  set(LibOpenCMISS_IS_DEBUG_BUILD FALSE)
+  set(OpenCMISS_IS_DEBUG_BUILD FALSE)
 endif()
 
-# Options for LibOpenCMISS
+# Options for OpenCMISS
 
 # Options for installation
 include(GNUInstallDirs)
-set(LibOpenCMISS_INSTALL_BIN_DIR "${CMAKE_INSTALL_BIN}" CACHE PATH "Installation directory for OpenCMISS executables.")
-set(LibOpenCMISS_INSTALL_LIB_DIR "${CMAKE_INSTALL_LIBDIR}" CACHE PATH "Installation directory for OpenCMISS libraries.")
-set(LibOpenCMISS_INSTALL_INC_DIR "${CMAKE_INSTALL_INCLUDEDIR}" CACHE PATH "Installation directory for OpenCMISS headers.")
-set(LibOpenCMISS_INSTALL_DATA_DIR "${CMAKE_INSTALL_DATAROOTDIR}" CACHE PATH "Installation directory for OpenCMISS data.")
-set(LibOpenCMISS_INSTALL_DOC_DIR "${CMAKE_INSTALL_DOCDIR}" CACHE PATH "Installation directory for OpenCMISS documents.")
-set(LibOpenCMISS_INSTALL_MAN_DIR "${CMAKE_INSTALL_MANDIR}" CACHE PATH "Installation directory for OpenCMISS manual pages.")
-set(LibOpenCMISS_INSTALL_CMAKE_DIR "${LibOpenCMISS_INSTALL_LIB_DIR}/cmake" CACHE PATH "Installation directory for OpenCMISS manual pages.")
-set(LibOpenCMISS_INSTALL_PKGCONFIG_DIR "${LibOpenCMISS_INSTALL_DATA_DIR}/pkgconfig" CACHE PATH "Installation directory for OpenCMISS pkgconfig (.pc) files.")
+set(OpenCMISS_INSTALL_BIN_DIR "${CMAKE_INSTALL_BINDIR}" CACHE PATH "Installation directory for OpenCMISS executables.")
+set(OpenCMISS_INSTALL_LIB_DIR "${CMAKE_INSTALL_LIBDIR}" CACHE PATH "Installation directory for OpenCMISS libraries.")
+set(OpenCMISS_INSTALL_INC_DIR "${CMAKE_INSTALL_INCLUDEDIR}" CACHE PATH "Installation directory for OpenCMISS headers.")
+set(OpenCMISS_INSTALL_DATA_DIR "${CMAKE_INSTALL_DATAROOTDIR}" CACHE PATH "Installation directory for OpenCMISS data.")
+set(OpenCMISS_INSTALL_DOC_DIR "${CMAKE_INSTALL_DOCDIR}" CACHE PATH "Installation directory for OpenCMISS documents.")
+set(OpenCMISS_INSTALL_MAN_DIR "${CMAKE_INSTALL_MANDIR}" CACHE PATH "Installation directory for OpenCMISS manual pages.")
+
 # Options for library type
-if(DEFINED BUILD_SHARED_LIBS)
-  if(BUILD_SHARED_LIBS)
-    set(LibOpenCMISS_BUILD_SHARED_LIBRARY ON CACHE BOOL "Build shared OpenCMISS libraries." FORCE)
-  else()
-    set(LibOpenCMISS_BUILD_SHARED_LIBRARY OFF CACHE BOOL "Build shared OpenCMISS libraries." FORCE)
-  endif()
-else()
-  set(LibOpenCMISS_BUILD_SHARED_LIBRARY ON CACHE BOOL "Build shared OpenCMISS libraries." FORCE)
-endif()
-set(LibOpenCMISS_BUILD_STATIC_LIBRARY OFF CACHE BOOL "Build static OpenCMISS libraries." FORCE)
+set(OpenCMISS_BUILD_SHARED_LIBRARIES ON CACHE BOOL "Build shared OpenCMISS libraries." FORCE)
+set(OpenCMISS_BUILD_STATIC_LIBRARIES OFF CACHE BOOL "Build static OpenCMISS libraries." FORCE)
+
 # Options for data types
-option(LibOpenCMISS_WITH_SINGLE_PRECISION "Build OpenCMISS with single precision real numbers." OFF)
-option(LibOpenCMISS_WITH_LARGE_INDICES "Build OpenCMISS with extended integers for larger indicies." OFF)
+option(OpenCMISS_WITH_SINGLE_PRECISION "Build OpenCMISS with single precision real numbers." OFF)
+option(OpenCMISS_WITH_LARGE_INDICES "Build OpenCMISS with extended integers for larger indicies." OFF)
+
 # Options for language bindings
-option(LibOpenCMISS_WITH_C_BINDINGS "Build the C bindings for OpenCMISS." ON)
-option(LibOpenCMISS_WITH_Python_BINDINGS "Build the Python bindings for OpenCMISS." ON)
-option(LibOpenCMISS_WITH_Python_VIRTUALENV "Build the Python bindings vitual environment for OpenCMISS." OFF)
-option(LibOpenCMISS_WITH_DOCKER "Build the docker environment for OpenCMISS." OFF)
+option(OpenCMISS_WITH_C_BINDINGS "Build the C bindings for OpenCMISS." ON)
+option(OpenCMISS_WITH_Python_BINDINGS "Build the Python bindings for OpenCMISS." ON)
+option(OpenCMISS_WITH_Python_VIRTUALENV "Build the Python bindings vitual environment for OpenCMISS." OFF)
+
+# Options for packaging
+option(OpenCMISS_WITH_DOCKER "Build the docker environment for OpenCMISS." OFF)
+
 # Options for parallelism
-option(LibOpenCMISS_WITH_MPI "Build OpenCMISS with MPI support." ON)
-option(LibOpenCMISS_WITH_OpenMP "Build OpenCMISS with OpenMP support." ON)
-option(LibOpenCMISS_WITH_CUDA "Build OpenCMISS with CUDA support." ON)
+option(OpenCMISS_WITH_MPI "Build OpenCMISS with MPI support." ON)
+option(OpenCMISS_WITH_OpenMP "Build OpenCMISS with OpenMP support." ON)
+option(OpenCMISS_WITH_CUDA "Build OpenCMISS with CUDA support." ON)
+
 # Options for diagnostics, checking, profiling etc. 
-if(NOT DEFINED LibOpenCMISS_WITH_DIAGNOSTICS)
-  if(LibOpenCMISS_IS_DEBUG_BUILD)
-    set(LibOpenCMISS_WITH_DIAGNOSTICS ON)
+if(NOT DEFINED OpenCMISS_WITH_DIAGNOSTICS)
+  if(OpenCMISS_IS_DEBUG_BUILD)
+    set(OpenCMISS_WITH_DIAGNOSTICS ON)
   else()
-    set(LibOpenCMISS_WITH_DIAGNOSTICS OFF)
+    set(OpenCMISS_WITH_DIAGNOSTICS OFF)
   endif()
 else()
-  set(LibOpenCMISS_WITH_DIAGNOSTICS ${LibOpenCMISS_WITH_DIAGNOSTICS})
+  set(OpenCMISS_WITH_DIAGNOSTICS ${OpenCMISS_WITH_DIAGNOSTICS})
 endif()
-if(DEFINED LibOpenCMISS_IS_DEBUG_BUILD)
-  opton(LibOpenCMISS_WITH_DIAGNOSTICS "Build OpenCMISS with diagnostics support." ON)
+if(DEFINED OpenCMISS_IS_DEBUG_BUILD)
+  option(OpenCMISS_WITH_DIAGNOSTICS "Build OpenCMISS with diagnostics support." ON)
 else()
-  option(LibOpenCMISS_WITH_DIAGNOSTICS "Build OpenCMISS with diagnostics support." OFF)
+  option(OpenCMISS_WITH_DIAGNOSTICS "Build OpenCMISS with diagnostics support." OFF)
 endif()
-if(NOT DEFINED LibOpenCMISS_WITH_NO_CHECKS)
-  set(LibOpenCMISS_WITH_NO_CHECKS OFF)
+if(NOT DEFINED OpenCMISS_WITH_NO_CHECKS)
+  set(OpenCMISS_WITH_NO_CHECKS OFF)
 else()
-  set(LibOpenCMISS_WITH_NO_CHECKS ${LibOpenCMISS_WITH_NO_CHECKS})
+  set(OpenCMISS_WITH_NO_CHECKS ${OpenCMISS_WITH_NO_CHECKS})
 endif()
-option(LibOpenCMISS_WITH_NO_CHECKS "Build OpenCMISS with no pre- or post-checks" OFF)
-if(NOT DEFINED LibOpenCMISS_WITH_NO_PRECHECKS)
-  set(LibOpenCMISS_WITH_NO_PRECHECKS OFF)
+option(OpenCMISS_WITH_NO_CHECKS "Build OpenCMISS with no pre- or post-checks" OFF)
+if(NOT DEFINED OpenCMISS_WITH_NO_PRECHECKS)
+  set(OpenCMISS_WITH_NO_PRECHECKS OFF)
 else()
-  set(LibOpenCMISS_WITH_NO_PRECHECKS ${LibOpenCMISS_WITH_NO_PRECHECKS})
+  set(OpenCMISS_WITH_NO_PRECHECKS ${OpenCMISS_WITH_NO_PRECHECKS})
 endif()
-option(LibOpenCMISS_WITH_NO_PRECHECKS "Build OpenCMISS with no pre-checks" OFF)
-if(NOT DEFINED LibOpenCMISS_WITH_NO_POSTCHECKS)
-  set(LibOpenCMISS_WITH_NO_POSTCHECKS OFF)
+option(OpenCMISS_WITH_NO_PRECHECKS "Build OpenCMISS with no pre-checks" OFF)
+if(NOT DEFINED OpenCMISS_WITH_NO_POSTCHECKS)
+  set(OpenCMISS_WITH_NO_POSTCHECKS OFF)
 else()
-  set(LibOpenCMISS_WITH_NO_POSTCHECKS ${LibOpenCMISS_WITH_NO_POSTCHECKS})
+  set(OpenCMISS_WITH_NO_POSTCHECKS ${OpenCMISS_WITH_NO_POSTCHECKS})
 endif()
-option(LibOpenCMISS_WITH_NO_POSTCHECKS "Build OpenCMISS with no post-checks." OFF)
+option(OpenCMISS_WITH_NO_POSTCHECKS "Build OpenCMISS with no post-checks." OFF)
+
 # Options for compiling
-if(NOT DEFINED LibOpenCMISS_WITH_CHECK_ALL)
-  if(LibOpenCMISS_IS_DEBUG_BUILD)
-    set(LibOpenCMISS_WITH_CHECK_ALL ON)
+if(NOT DEFINED OpenCMISS_WITH_CHECK_ALL)
+  if(OpenCMISS_IS_DEBUG_BUILD)
+    set(OpenCMISS_WITH_CHECK_ALL ON)
   else()
-    set(LibOpenCMISS_WITH_CHECK_ALL OFF)
+    set(OpenCMISS_WITH_CHECK_ALL OFF)
   endif()
 else()
-  set(LibOpenCMISS_WITH_CHECK_ALL ${LibOpenCMISS_WITH_CHECK_ALL})
+  set(OpenCMISS_WITH_CHECK_ALL ${OpenCMISS_WITH_CHECK_ALL})
 endif()
-option(LibOpenCMISS_WITH_CHECK_ALL "Build OpenCMISS with all checks enabled." OFF)
-option(LibOpenCMISS_WITH_WARN_ALL "Build OpenCMISS with all warnings enabled." ON)
-option(LibOpenCMISS_WITH_PROFILING "Build OpenCMISS with profiling enbabled." OFF)
+option(OpenCMISS_WITH_CHECK_ALL "Build OpenCMISS with all checks enabled." OFF)
+option(OpenCMISS_WITH_WARN_ALL "Build OpenCMISS with all warnings enabled." ON)
+option(OpenCMISS_WITH_PROFILING "Build OpenCMISS with profiling enbabled." OFF)
+
 # Options for testing
-option(LibOpenCMISS_WITH_TESTS "Build OpenCMISS with tests enabled." ON)
+option(OpenCMISS_WITH_TESTS "Build OpenCMISS with tests enabled." ON)
+
+# Options for documentation
+option(OpenCMISS_WITH_Doxygen "Build the Doxygen documentation for OpenCMISS." ON)
+
 # Options for external functionality
-option(LibOpenCMISS_WITH_CellML "Build OpenCMISS with CellML support." ON)
-option(LibOpenCMISS_WITH_FieldML "Build OpenCMISS with FieldML support." ON)
-option(LibOpenCMISS_WITH_HYPRE "Build OpenCMISS with HYPRE integration." OFF)
-option(LibOpenCMISS_WITH_MUMPS "Build OpenCMISS with MUMPS integration." OFF)
-option(LibOpenCMISS_WITH_ParMETIS "Build OpenCMISS with ParMETIS integration." ON)
-option(LibOpenCMISS_WITH_PETSc "Build OpenCMISS with PETSc integration." ON)
-option(LibOpenCMISS_WITH_SLEPc "Build OpenCMISS with SLEPc integration." ON)
-option(LibOpenCMISS_WITH_SUNDIALS "Build OpenCMISS with SUNDIALS integration." OFF)
+option(OpenCMISS_WITH_CellML "Build OpenCMISS with CellML support." ON)
+option(OpenCMISS_WITH_FieldML "Build OpenCMISS with FieldML support." ON)
+option(OpenCMISS_WITH_HYPRE "Build OpenCMISS with HYPRE integration." OFF)
+option(OpenCMISS_WITH_MUMPS "Build OpenCMISS with MUMPS integration." OFF)
+option(OpenCMISS_WITH_ParMETIS "Build OpenCMISS with ParMETIS integration." ON)
+option(OpenCMISS_WITH_PETSc "Build OpenCMISS with PETSc integration." ON)
+option(OpenCMISS_WITH_SLEPc "Build OpenCMISS with SLEPc integration." ON)
+option(OpenCMISS_WITH_SUNDIALS "Build OpenCMISS with SUNDIALS integration." OFF)
+
+set(OpenCMISS_WITH_CellML OFF)
+set(OpenCMISS_WITH_MUMPS OFF)
+set(OpenCMISS_WITH_SUNDIALS OFF)
 
 # Set versions of external libraries/packages
 include(OCDefaultVersions)
 
 # Check consistency of options
-if(LibOpenCMISS_WITH_Python_BINDINGS)
+if(OpenCMISS_WITH_Python_BINDINGS)
   # Check we are building a shared library if Python bindings are turned on
-  if(NOT LibOpenCMISS_BUILD_SHARED_LIBRARY)
+  if(NOT OpenCMISS_BUILD_SHARED_LIBRARIES)
     message(WARNING "Building with Python bindings requires a shared libary. Turning building a shared library on.")
-    SET(LibOpenCMISS_BUILD_SHARED_LIBRARY ON)
+    SET(OpenCMISS_BUILD_SHARED_LIBRARIES ON)
   endif()
   # Check we have C bindings if Python bindings are turned on
-  if(NOT LibOpenCMISS_WITH_C_BINDINGS)
+  if(NOT OpenCMISS_WITH_C_BINDINGS)
     message(WARNING "Building with Python bindings requires C bindings. Turning C bindings on.")
-    SET(LibOpenCMISS_WITH_C_BINDINGS ON)
+    SET(OpenCMISS_WITH_C_BINDINGS ON)
   endif()
 endif()
-if(LibOpenCMISS_WITH_Python_VIRTUALENV)
-  if(NOT LibOpenCMISS_WITH_Python_BINDINGS)
+if(OpenCMISS_WITH_Python_VIRTUALENV)
+  if(NOT OpenCMISS_WITH_Python_BINDINGS)
     # Check we have Python bindings if Python a Python virtual environment is turned on
     message(WARNING "Building with Python virtual environment requires Python bindings. Turning Python bindings on.")
-    SET(LibOpenCMISS_WITH_Python_BINDINGS ON)
+    SET(OpenCMISS_WITH_Python_BINDINGS ON)
   endif()
 endif()
 
 # Set other variables from options
-if(LibOpenCMISS_WITH_SINGLE_PRECISION)
-  set(LibOpenCMISS_BUILD_PRECISION "SINGLE")
+if(OpenCMISS_WITH_SINGLE_PRECISION)
+  set(OpenCMISS_BUILD_PRECISION "SINGLE")
 else()
-  set(LibOpenCMISS_BUILD_PRECISION "DOUBLE")
+  set(OpenCMISS_BUILD_PRECISION "DOUBLE")
 endif()
-
-option(PRINT_CONFIG_SUMMARY "Show a summary of the configuration." TRUE)
-
-string(TOUPPER "${REAL_PRECISION}" _uppercase_REAL_PRECISION)
-if(_uppercase_REAL_PRECISION STREQUAL "SINGLE")
-  set(WORKING_REAL_PRECISION_SINGLE)
-elseif(_uppercase_REAL_PRECISION STREQUAL "DOUBLE")
-  set(WORKING_REAL_PRECISION_DOUBLE)
-else()
-  message(STATUS "The specified real precision of '${REAL_PRECISION}' is invalid. Defaulting to double.")
-  set(WORKING_REAL_PRECISION_DOUBLE)
-endif()
-
-include(OCMiscFunctions)
-include(OCMultiConfigEnvironment)
 
 # Find and check required packages etc.
+
 # C bindings
-if(LibOpenCMISS_WITH_C_BINDINGS)
-  find_package(Python ${LibOpenCMISS_Python_VERSION} COMPONENTS Interpreter)
+if(OpenCMISS_WITH_C_BINDINGS)
+  find_package(Python ${OpenCMISS_Python_VERSION} COMPONENTS Interpreter)
   if (NOT Python_Interpreter_FOUND)
     message(FATAL_ERROR "No Python found. A working Python interpreter is required to generate the OpenCMISS C bindings.")
   endif()
 endif()
+
 # Python bindings
-if(LibOpenCMISS_WITH_Python_BINDINGS)
-  find_package(Python ${LibOpenCMISS_Python_VERSION} COMPONENTS Interpreter Development NumPy)
+if(OpenCMISS_WITH_Python_BINDINGS)
+  find_package(Python ${OpenCMISS_Python_VERSION} COMPONENTS Interpreter Development NumPy)
   if (NOT Python_Interpreter_FOUND)
     message(FATAL_ERROR "No Python found. A working Python interpreter is required to generate the OpenCMISS Python bindings.")
   endif()
@@ -251,325 +247,572 @@ if(LibOpenCMISS_WITH_Python_BINDINGS)
   if(NOT Python_NumPy_FOUND)
     message(FATAL_ERROR "No Python NumPy module found. Unable to generate OpenCMISS Python bindings.")
   endif()
-  find_package(SWIG ${LibOpenCMISS_SWIG_VERSION} COMPONENTS Python QUIET)
+  find_package(SWIG ${OpenCMISS_SWIG_VERSION} COMPONENTS python QUIET)
   if(NOT SWIG_FOUND)
     message(FATAL_ERROR "SWIG could not be found. Unable to generate OpenCMISS Python bindings.")
   endif()
   set(UseSWIG_MODULE_VERSION 2)
-  if(Python_VERSION_MAJOR STREQUAL "3")
-    set(LibOpenCMISS_PYTHONLIBS_SWIG_FLAGS -py3)
-  endif()
+  #set(OpenCMISS_PYTHONLIBS_SWIG_FLAGS )
 endif()
-if(LibOpenCMISS_WITH_Python_VIRTUALENV)
+if(OpenCMISS_WITH_Python_VIRTUALENV)
   # Bindings options
-  find_program(LibOpenCMISS_VIRTUALENV_EXEC virtualenv)
-  mark_as_advanced(LibOpenCMISS_VIRTUALENV_EXEC)
-  if(NOT EXISTS "${LibOpenCMISS_VIRTUALENV_EXEC}")
+  find_program(OpenCMISS_VIRTUALENV_EXEC virtualenv)
+  mark_as_advanced(OpenCMISS_VIRTUALENV_EXEC)
+  if(NOT EXISTS "${OpenCMISS_VIRTUALENV_EXEC}")
     message(WARNING "The program virtualenv was not found. Disabling Python virtual environment generation.")
-    set(LibOpenCMISS_WITH_Python_VIRTUALENV OFF FORCE)
+    set(OpenCMISS_WITH_Python_VIRTUALENV OFF FORCE)
   endif()
 endif()
+
 # CUDA
-if(LibOpenCMISS_WITH_CUDA)
+if(OpenCMISS_WITH_CUDA)
   if(NOT CUDA_FOUND)
     message(WARNING "CUDA Toolkit was not found. Disabling CUDA support in OpenCMISS.")
-    set(LibOpenCMISS_WITH_CUDA OFF)
+    set(OpenCMISS_WITH_CUDA OFF)
   endif()
 endif()
+
 # MPI
-if(LibOpenCMISS_WITH_MPI)
-  find_package(MPI ${LibOpenCMISS_MPI_VERSION} COMPONENTS C CXX Fortran REQUIRED)
+if(OpenCMISS_WITH_MPI)
+  find_package(MPI ${OpenCMISS_MPI_VERSION} COMPONENTS C CXX Fortran QUIET)
+  if(MPI_FOUND)
+    if(MPI_Fortran_FOUND)
+      if(MPI_Fortran_HAVE_F08_MODULE)
+	set(OpenCMISS_MPI_Fortran_DEFINES "WITH_F08_MPI")
+      else()
+	if(MPI_Fortran_HAVE_F90_MODULE)
+	  set(OpenCMISS_MPI_Fortran_DEFINES "WITH_F90_MPI")
+	elseif(MPI_Fortran_HAVE_F77_HEADER)
+	  set(OpenCMISS_MPI_Fortran_DEFINES "WITH_F77_MPI")
+	else()
+	  message(FATAL_ERROR "Modules/Headers for MPI Fortran have not been found. Can not compile OpenCMISS.")
+	endif()
+      endif()
+    else()
+      message(FATAL_ERROR "Could not find MPI Fortran. Can not compile OpenCMISS. Please ensure MPI Fortran is installed, can compile programs and can run.")
+    endif()
+  else()
+    message(FATAL_ERROR "Could not find MPI. Check MPI is installed and can compile and run.")
+  endif()
 endif()
+
 # OpenMP
-if(LibOpenCMISS_WITH_OpenMP)
+if(OpenCMISS_WITH_OpenMP)
 endif()
+
+# Doxygen
+if(OpenCMISS_WITH_Doxygen)
+  find_package(Doxygen REQUIRED dot)
+  if(NOT DOXYGEN_FOUND)
+    message(WARNING "Doxygen was not found. Disabling Doxygen documentation for OpenCMISS.")
+    set(OpenCMISS_WITH_Doxygen OFF)
+  endif()
+endif()
+
 # CellML
-if(LibOpenCMISS_WITH_CellML)
-  find_package(LibCellML ${LibOpenCMISS_CellML_VERSION} REQUIED)
+if(OpenCMISS_WITH_CellML)
+  find_package(libCellML ${OpenCMISS_CellML_VERSION} REQUIRED)
 endif()
+
 # FieldML
-if(LibOpenCMISS_WITH_FieldML)
-  find_package(FieldML ${LibOpenCMISS_FieldML_VERSION} REQUIRED) 
+if(OpenCMISS_WITH_FieldML)
+  find_package(FieldML ${OpenCMISS_FieldML_VERSION} REQUIRED) 
 endif()
+
 # ParMETIS
-if(LibOpenCMISS_WITH_ParMETIS)
-  find_package(ParMETIS ${LibOpenCMISS_ParMETIS_VERSION} REQUIRED)
+if(OpenCMISS_WITH_ParMETIS)
+  find_package(ParMETIS ${OpenCMISS_ParMETIS_VERSION} REQUIRED)
 endif()
+
 # PETSc
-if(LibOpenCMISS_WITH_PETSc)
-  find_package(PETSc ${LibOpenCMISS_PETSc_VERSION} REQUIRED)
+if(OpenCMISS_WITH_PETSc)
+  find_package(PETSc ${OpenCMISS_PETSc_VERSION} REQUIRED)
 endif()
+
 # SLEPc
-if(LibOpenCMISS_WITH_SLEPc)
-  find_package(SLEPc ${LibOpenCMISS_SLEPc_VERSION} REQUIRED)
+if(OpenCMISS_WITH_SLEPc)
+  find_package(SLEPc ${OpenCMISS_SLEPc_VERSION} REQUIRED)
 endif()
 
-# Populates the LibOpenCMISS_XX_SRC variables
-include(Sources)
+# Populates the OpenCMISS_XX_SRC variables
+include(OCSources)
 
-set(BUILD_SHARED_LIBS ${LibOpenCMISS_BUILD_SHARED_LIBRARY})
+# Standard names, prefixes and suffixes
+set(OpenCMISS_TARGET_NAME "${PROJECT_NAME}")
+set(OpenCMISS_SHARED_SUFFIX "")
+set(OpenCMISS_STATIC_SUFFIX "_static")
+set(OpenCMISS_Fortran_SUFFIX "_Fortran")
+set(OpenCMISS_C_SUFFIX "_C")
+set(OpenCMISS_Python_SUFFIX "_Python")
+set(OpenCMISS_Doxygen_SUFFIX "_Doxygen")
+set(OpenCMISS_Python_PACKAGE_NAME "opencmiss")
+set(OpenCMISS_Python_PACKAGE_MODULE_NAME "opencmiss")
+set(OpenCMISS_Python_MODULE_NAME "${OpenCMISS_TARGET_NAME}${OpenCMISS_Python_SUFFIX}")
+
+# Main target names
+set(OpenCMISS_SHARED_Fortran_TARGET "${OpenCMISS_TARGET_NAME}${OpenCMISS_SHARED_SUFFIX}${OpenCMISS_Fortran_SUFFIX}")
+set(OpenCMISS_STATIC_Fortran_TARGET "${OpenCMISS_TARGET_NAME}${OpenCMISS_STATIC_SUFFIX}${OpenCMISS_Fortran_SUFFIX}")
+if(WIN32)
+  set(OpenCMISS_SHARED_Fortran_C_TARGET "${OpenCMISS_TARGET_NAME}${OpenCMISS_SHARED_SUFFIX}${OpenCMISS_Fortran_SUFFIX}${OpenCMISS_C_SUFFIX}")
+  set(OpenCMISS_STATIC_Fortran_C_TARGET "${OpenCMISS_TARGET_NAME}${OpenCMISS_STATIC_SUFFIX}${OpenCMISS_Fortran_SUFFIX}${OpenCMISS_C_SUFFIX}")
+endif()
+if(OpenCMISS_WITH_C_BINDINGS)
+  set(OpenCMISS_SHARED_C_TARGET "${OpenCMISS_TARGET_NAME}${OpenCMISS_SHARED_SUFFIX}${OpenCMISS_C_SUFFIX}")
+  set(OpenCMISS_STATIC_C_TARGET "${OpenCMISS_TARGET_NAME}${OpenCMISS_STATIC_SUFFIX}${OpenCMISS_C_SUFFIX}")
+endif()
+if(OpenCMISS_WITH_Python_BINDINGS)
+  set(OpenCMISS_Python_MODULE_TARGET "${OpenCMISS_Python_MODULE_NAME}")
+endif()
+
 # See http://cmake.3232098.n2.nabble.com/How-to-install-Fortran-module-files-td7584399.html
-SET(CMAKE_Fortran_MODULE_DIRECTORY ${LibOpenCMISS_Fortran_MODULES_DIR})
+SET(CMAKE_Fortran_MODULE_DIRECTORY ${OpenCMISS_Fortran_MODULES_DIR})
 SET(CMAKE_NO_SYSTEM_FROM_IMPORTED TRUE)
+set(BUILD_SHARED_LIBS ${OpenCMISS_BUILD_SHARED_LIBRARIES})
 
-set(LibOpenCMISS_CLEANUP_FILES )
-set(LibOpenCMISS_INCLUDE_INSTALL_FILES )
-set(LibOpenCMISS_INSTALL_TARGETS )
+set(OpenCMISS_CLEANUP_FILES )
+set(OpenCMISS_INSTALL_TARGETS )
 
-# Handle the main Fortran libOpenCMISS library
+# Handle the main Fortran OpenCMISS library
 
 # Platform-checks
 include(CheckSymbolExists)
 CHECK_SYMBOL_EXISTS(SA_NODEFER "signal.h" HAVE_SA_NODEFER)
 CHECK_SYMBOL_EXISTS(sigaction "signal.h" HAVE_SIGACTION_STRUCT)
 
-set(LibOpenCMISS_CMISS_H "${LibOpenCMISS_GEN_INC_DIR}/cmiss.h")
-configure_file(${LibOpenCMISS_CMAKE_DIR}/cmiss.h.in ${LibOpenCMISS_CMISS_H)
-list(APPEND LibOpenCMISS_CLEANUP_FILES "${LibOpenCMISS_CMISS_H}")
+set(OpenCMISS_OPENCMISS_INIT_H "${OpenCMISS_GEN_INC_DIR}/opencmiss_init.h")
+configure_file(${OpenCMISS_CMAKE_DIR}/opencmiss_init.h.in ${OpenCMISS_OPENCMISS_INIT_H})
+list(APPEND OpenCMISS_CLEANUP_FILES "${OpenCMISS_OPENCMISS_INIT_H}")
 
-set(LibOpenCMISS_Fortran_TARGETS )
+set(OpenCMISS_Fortran_TARGETS )
 if(MSVC)
   # Need separate C/Fortran code due to Project natures in VS
-  if(LibOpenCMISS_BUILD_SHARED_LIBRARY)
-    list(APPEND LibOpenCMISS_Fortran_TARGETS LibOpenCMISS LibOpenCMISSC)
-    add_library(LibOpenCMISS SHARED ${LibOpenCMISS_Fortran_SRC})
-    add_library(LibOpenCMISSC SHARED ${LibOpenCMISS_C_SRC})
-    target_link_libraries(LibOpenCMISS PRIVATE LibOpenCMISSC)
+  if(OpenCMISS_BUILD_SHARED_LIBRARIES)
+    add_library(${OpenCMISS_SHARED_Fortran_TARGET} SHARED ${OpenCMISS_Fortran_SOURCES})
+    add_library(${OpenCMISS_SHARED_Fortran_C_TARGET} SHARED ${OpenCMISS_Fortran_C_SOURCES})
+    target_link_libraries(${OpenCMISS_SHARED_Fortran_TARGET} PRIVATE ${OpenCMISS_SHARED_Fortran_C_TARGET})
+    list(APPEND OpenCMISS_Fortran_TARGETS ${OpenCMISS_SHARED_Fortran_TARGET} ${OpenCMISS_SHARED_Fortran_C_TARGET})
   endif()
-  if(LibOpenCMISS_BUILD_STATIC_LIBRARY)
-    list(APPEND LibOpenCMISS_Fortran_TARGETS LibOpenCMISS-static LibOpenCMISSC-static)
-    add_library(LibOpenCMISS-static STATIC ${LibOpenCMISS_Fortran_SRC})
-    add_library(LibOpenCMISSC-static STATIC ${LibOpenCMISS_C_SRC})
-    target_link_libraries(LibOpenCMISS-static PRIVATE LibOpenCMISSC-static)
+  if(OpenCMISS_BUILD_STATIC_LIBRARIES)
+    add_library(${OpenCMISS_STATIC_Fortran_TARGET} STATIC ${OpenCMISS_Fortran_SOURCES})
+    add_library(${OpenCMISS_STATIC_Fortran_C_TARGET} STATIC ${OpenCMISS_Fortran_C_SOURCES})
+    target_link_libraries(${OpenCMISS_STATIC_Fortran_TARGET} PRIVATE ${OpenCMISS_STATIC_Fortran_C_TARGET})
+    list(APPEND OpenCMISS_Fortran_TARGETS ${OpenCMISS_STATIC_Fortran_TARGET} ${OpenCMISS_STATIC_Fortran_C_TARGET})
   endif()   
   # IDE stuff
-  source_group(headers FILES ${LibOpenCMISS_HEADERS})
-  source_group(src FILES ${LibOpenCMISS_C_SRC})
-  source_group(src FILES ${LibOpenCMISS_Fortran_SRC})
+  source_group(headers FILES ${OpenCMISS_HEADERS})
+  source_group(src FILES ${OpenCMISS_C_SRC})
+  source_group(src FILES ${OpenCMISS_Fortran_SRC})
 else()
-  if(LibOpenCMISS_BUILD_SHARED_LIBRARY)
-    list(APPEND LibOpenCMISS_Fortran_TARGETS LibOpenCMISS)
-    add_library(LibOpenCMISS SHARED ${LibOpenCMISS_SRC})
+  if(OpenCMISS_BUILD_SHARED_LIBRARIES)
+    message(STATUS "Adding library target ${OpenCMISS_SHARED_Fortran_TARGET}...")
+    add_library(${OpenCMISS_SHARED_Fortran_TARGET} SHARED ${OpenCMISS_SOURCES})
+    target_sources(${OpenCMISS_SHARED_Fortran_TARGET} PRIVATE ${CMAKE_CURRENT_SOURCE_DIR}/src/opencmiss.F90)
+    get_target_property(sourcefiles ${OpenCMISS_SHARED_Fortran_TARGET} SOURCES)
+    list(APPEND OpenCMISS_Fortran_TARGETS ${OpenCMISS_SHARED_Fortran_TARGET})
   endif()
-  if(LibOpenCMISS_BUILD_STATIC_LIBRARY)
-    list(APPEND LibOpenCMISS_Fortran_TARGETS LibOpenCMISS-static)
-    add_library(LibOpenCMISS-static STATIC ${LibOpenCMISS_SRC})
+  if(OpenCMISS_BUILD_STATIC_LIBRARIES)
+    add_library(${OpenCMISS_STATIC_Fortran_TARGET} STATIC ${OpenCMISS_SOURCES})
+    list(APPEND OpenCMISS_Fortran_TARGETS ${OpenCMISS_STATIC_Fortran_TARGET})
   endif()
-  source_group(headers FILES ${LibOpenCMISS_HEADERS})
-  source_group(src FILES ${LibOpenCMISS_Fortran_SRC} ${LibOpenCMISS_C_SRC})
+  source_group(headers FILES ${OpenCMISS_HEADERS})
+  source_group(src FILES ${OpenCMISS_Fortran_SRC} ${OpenCMISS_C_SRC})
 endif()
 
 # Set the same stuff for either the separate targets (windows) or one target (else)
-foreach(_target ${LibOpenCMISS_Fortran_TARGETS})
+foreach(_target ${OpenCMISS_Fortran_TARGETS})
   target_include_directories(${_target}
     PRIVATE
-    $<BUILD_INTERFACE:${LibOpenCMISS_INC_DIR}>
-    $<BUILD_INTERFACE:${LibOpenCMISS_GEN_INC_DIR}>
+    ${OpenCMISS_INC_DIR}
+    ${OpenCMISS_GEN_INC_DIR}
     INTERFACE
-    $<BUILD_INTERFACE:${CMAKE_INSTALL_PREFIX}/${LibOpenCMISS_INSTALL_INC_DIR}>
+    $<INSTALL_INTERFACE:${CMAKE_INSTALL_PREFIX}/${OpenCMISS_INSTALL_INC_DIR}>/opencmiss
   )
   # Dont use "USE MPI" instructions if the precompiled mpi module files are incompatible.
   # This happens when the fortran compiler used to build mpi differs from the currently used one.
   # This holds on windows (only pre-compiled mpi implementations available; MPICH2 and MSMPI)
   # and on e.g. clusters with inappropriately configured toolchain environments.
-  if(NOT MPI_Fortran_MODULE_COMPATIBLE)
-    target_compile_definitions(${_target} PUBLIC $<BUILD_INTERFACE:NOMPIMOD>)
+  if(OpenCMISS_IS_DEBUG_BUILD)
+    target_compile_definitions(${_target} PRIVATE DEBUG)
   endif()
-  if(LibOpenCMISS_IS_DEBUG_BUILD)
-    target_compile_definitions(${_target} PUBLIC DEBUG)
-  endif()
-  if(WORKING_REAL_PRECISION_SINGLE)
+  if(OpenCMISS_WITH_SINGLE_PRECISION)
     target_compile_definitions(${_target} PUBLIC SINGLE_REAL_PRECISION)
   else()
     target_compile_definitions(${_target} PUBLIC DOUBLE_REAL_PRECISION)
   endif()
-  if(LibOpenCMISS_WITH_LARGE_INDICES)
+  if(OpenCMISS_WITH_LARGE_INDICES)
     target_compile_definitions(${_target} PUBLIC LARGE_INDICES)
   else()
     target_compile_definitions(${_target} PUBLIC STANDARD_INDICES)
   endif()
-  if(LibOpenCMISS_WITH_MPI)
-    target_compile_definitions(${_target} PRIVATE WITH_MPI)
+  if(OpenCMISS_WITH_MPI)
+    target_compile_definitions(${_target} PUBLIC WITH_MPI ${OpenCMISS_MPI_Fortran_DEFINES})    
     target_link_libraries(${_target} PUBLIC MPI::MPI_Fortran)
   endif()
-  if(LibOpenCMISS_WITH_OpenMP)
-    target_compile_definitions(${_target} PRIVATE WITH_OpenMP)
+  if(OpenCMISS_WITH_OpenMP)
+    target_compile_definitions(${_target} PUBLIC WITH_OpenMP)
   endif()
-  if(LibOpenCMISS_WITH_CUDA)
-    target_compile_definitions(${_target} PRIVATE WITH_CUDA)
+  if(OpenCMISS_WITH_CUDA)
+    target_compile_definitions(${_target} PUBLIC WITH_CUDA)
   endif()
-  if(LibOpenCMISS_WITH_DIAGNOSTICS)
-    target_compile_definitions(${_target} PUBLIC WITH_DIAGNOSTICS)
+  if(OpenCMISS_WITH_DIAGNOSTICS)
+    target_compile_definitions(${_target} PRIVATE WITH_DIAGNOSTICS)
   endif()
-  if(LibOpenCMISS_WITH_NO_CHECKS)
-    target_compile_definitions(${_target} PUBLIC WITH_NO_CHECKS)
+  if(OpenCMISS_WITH_NO_CHECKS)
+    target_compile_definitions(${_target} PRIVATE WITH_NO_CHECKS)
   endif()
-  if(LibOpenCMISS_WITH_NO_PRECHECKS)
-    target_compile_definitions(${_target} PUBLIC WITH_NO_PRECHECKS)
+  if(OpenCMISS_WITH_NO_PRECHECKS)
+    target_compile_definitions(${_target} PRIVATE WITH_NO_PRECHECKS)
   endif()
-  if(LibOpenCMISS_WITH_NO_POSTCHECKS)
-    target_compile_definitions(${_target} PUBLIC WITH_NO_POSTCHECKS)
+  if(OpenCMISS_WITH_NO_POSTCHECKS)
+    target_compile_definitions(${_target} PRIVATE WITH_NO_POSTCHECKS)
   endif()
-  if(LibOpenCMISS_WITH_CELLML)
-    target_compile_definitions(${_target} PRIVATE WITH_CELLML)
+  if(OpenCMISS_WITH_CellML)
+    message(STATUS "Adding CellML to target ${_target}...")
+    target_compile_definitions(${_target} PUBLIC WITH_CELLML)
     target_link_libraries(${_target} PUBLIC libCellML::libCellML)
   endif()
-  if(LibOpenCMISS_WITH_FIELDML)
-    target_compile_definitions(${_target} PRIVATE WITH_FIELDML)
-    target_link_libraries(${_target} PUBLIC FieldML::FieldML)
+  if(OpenCMISS_WITH_FieldML)
+    message(STATUS "Adding FieldML to target ${_target}...")
+    target_compile_definitions(${_target} PUBLIC WITH_FIELDML)
+    target_link_libraries(${_target} PUBLIC FieldML::FieldML-API)
   endif()
-  if(LibOpenCMISS_WITH_HYPRE)
-    target_compile_definitions(${_target} PRIVATE WITH_HYPRE)
+  if(OpenCMISS_WITH_HYPRE)
+    message(STATUS "Adding HYPRE to target ${_target}...")
+    target_compile_definitions(${_target} PUBLIC WITH_HYPRE)
   endif()
-  if(LibOpenCMISS_WITH_MUMPS)
-    target_compile_definitions(${_target} PRIVATE WITH_MUMPS)
+  if(OpenCMISS_WITH_MUMPS)
+    message(STATUS "Adding MUMPS to target ${_target}...")
+    target_compile_definitions(${_target} PUBLIC WITH_MUMPS)
   endif()
-  if(LibOpenCMISS_WITH_PETSc)
-    target_compile_definitions(${_target} PRIVATE WITH_PETSC)
+  if(OpenCMISS_WITH_ParMETIS)
+    message(STATUS "Adding ParMETIS to target ${_target}...")
+    target_compile_definitions(${_target} PUBLIC WITH_PARMETIS)
+    target_link_libraries(${_target} PUBLIC ParMETIS::ParMETIS)
+  endif()
+  if(OpenCMISS_WITH_PETSc)
+    message(STATUS "Adding PETSc to target ${_target}...")
+    target_compile_definitions(${_target} PUBLIC WITH_PETSC)
     target_link_libraries(${_target} PUBLIC PETSc::PETSc)
   endif()
-  if(LibOpenCMISS_WITH_SLEPc)
+  if(OpenCMISS_WITH_SLEPc)
+    message(STATUS "Adding SLEPc to target ${_target}...")
     target_compile_definitions(${_target} PUBLIC WITH_SLEPC)
     target_link_libraries(${_target} PUBLIC SLEPc::SLEPc)
   endif()
-  if(LibOpenCMISS_WITH_SUNDIALS)
-    target_compile_definitions(${_target} PRIVATE WITH_SUNDIALS)
+  if(OpenCMISS_WITH_SUNDIALS)
+    message(STATUS "Adding SUNDIALS to target ${_target}...")
+    target_compile_definitions(${_target} PUBLIC WITH_SUNDIALS)
   endif()
-  list(APPEND LibOpenCMISS_INSTALL_TARGETS ${_target})
+  list(APPEND OpenCMISS_INSTALL_TARGETS ${_target})
 endforeach()
 
 # Handle bindings generation with target
-set(LibOpenCMISS_GEN_BINDINGS_C_DIR "${LibOpenCMISS_GEN_BINDINGS_DIR}/c")
-set(LibOpenCMISS_OPENCMISS_H "${LibOpenCMISS_GEN_BINDINGS_C_DIR}/opencmiss.h")
-set(LibOpenCMISS_OPENCMISS_C_F90 "${LibOpenCMISS_GEN_SRC_DIR}/opencmiss_c.F90")
-set(LibOpemCMISS_GEN_C_BINDINGS_TARGETS LibOpenCMISS_OPENCMISS_H LibOpenCMISS_OPENCMISS_C_F90)
+set(OpenCMISS_GEN_BINDINGS_C_DIR "${OpenCMISS_GEN_BINDINGS_DIR}/c")
+set(OpenCMISS_OPENCMISS_H "${OpenCMISS_GEN_BINDINGS_C_DIR}/opencmiss/opencmiss.h")
+set(OpenCMISS_OPENCMISS_C_F90 "${OpenCMISS_GEN_SRC_DIR}/opencmiss_c.F90")
+set(LibOpemCMISS_GEN_C_BINDINGS_TARGETS OpenCMISS_OPENCMISS_H OpenCMISS_OPENCMISS_C_F90)
 
 add_custom_command(
-  OUTPUT ${LibOpenCMISS_GEN_C_BINDINGS_TARGETS}
-  COMMENT "Generating C bindings for OpenCMISS..."
-  COMMAND ${CMAKE_EXECUTABLE} -P ${LibOpenCMISS_CMAKE_DIR}/OCGenerateCBindings.cmake
-  MAIN_DEPENDENCY ${LibOpenCMISS_SRC_DIR}/opencmiss.F90
-  WORKING_DIRECTORY ${LibOpenCMISS_BINDINGS_DIR}
+  OUTPUT "${OpenCMISS_OPENCMISS_H}" "${OpenCMISS_OPENCMISS_C_F90}"
+  COMMENT "Generating C bindings for ${PROJECT_NAME}..."
+  COMMAND
+  ${CMAKE_COMMAND} 
+  -DOpenCMISS_ROOT=${OpenCMISS_ROOT}
+  -DOpenCMISS_BINDINGS_DIR=${OpenCMISS_BINDINGS_DIR}
+  -DOpenCMISS_Python_EXECUTABLE=${Python_EXECUTABLE}
+  -DOpenCMISS_OPENCMISS_H=${OpenCMISS_OPENCMISS_H}
+  -DOpenCMISS_OPENCMISS_C_F90=${OpenCMISS_OPENCMISS_C_F90}
+  -P ${OpenCMISS_CMAKE_DIR}/OCGenerateCBindings.cmake  
+  DEPENDS ${OpenCMISS_SRC_DIR}/opencmiss.F90
+  WORKING_DIRECTORY ${OpenCMISS_BINDINGS_DIR}
 )
 
 # Handle the C bindings and C library
-if(LibOpenCMISS_WITH_C_BINDINGS)
-  add_custom_target(generate_c_bindings DEPENDS ${LibOpenCMISS_GEN_C_BINDINGS_TARGETS})
-  set(LibOpenCMISS_C_TARGETS )
-  if(LibOpenCMISS_BUILD_SHARED_LIBRARIES)
-    list(APPEND LibOpenCMISS_C_TARGETS LibOpenCMISS_C)
-    add_library(LibOpenCMISS_C SHARED ${LibOpenCMISS_OPENCMISS_C_F90})
-    target_link_library(LibOpenCMISS_C PUBLIC LibOpenCMISS)
+if(OpenCMISS_WITH_C_BINDINGS)
+  add_custom_target(generate_c_bindings DEPENDS ${OpenCMISS_GEN_C_BINDINGS_TARGETS})
+  set(OpenCMISS_INSTALL_C_INCLUDE_FILES ${OpenCMISS_OPENCMISS_H})
+  list(APPEND OpenCMISS_CLEANUP_FILES "${OpenCMISS_OPENCMISS_H}")
+  list(APPEND OpenCMISS_CLEANUP_FILES "${OpenCMISS_OPENCMISS_C_F90}")
+  set(OpenCMISS_C_TARGETS )
+  if(OpenCMISS_BUILD_SHARED_LIBRARIES)
+    add_library(${OpenCMISS_SHARED_C_TARGET} SHARED ${OpenCMISS_OPENCMISS_C_F90} ${OpenCMISS_OPENCMISS_H})
+    target_link_libraries(${OpenCMISS_SHARED_C_TARGET} PUBLIC ${OpenCMISS_SHARED_Fortran_TARGET})
+    list(APPEND OpenCMISS_C_TARGETS ${OpenCMISS_SHARED_C_TARGET})
   endif()
-  if(LibOpenCMISS_BUILD_STATIC_LIBRARIES)
-    list(APPEND LibOpenCMISS_C_TARGETS LibOpenCMISS-static_C)
-    add_library(LibOpenCMISS-static_C STATIC ${LibOpenCMISS_OPENCMISS_C_F90})    
-    target_link_library(LibOpenCMISS-static_C PUBLIC LibOpenCMISS-static)
+  if(OpenCMISS_BUILD_STATIC_LIBRARIES)
+    add_library(${OpenCMISS_STATIC_C_TARGET} STATIC ${OpenCMISS_OPENCMISS_C_F90} ${OpenCMISS_OPENCMISS_H})
+    target_link_libraries(${OpenCMISS_STATIC_C_TARGET} PUBLIC ${OpenCMISS_STATIC_Fortran_TARGET})
+    list(APPEND OpenCMISS_C_TARGETS ${OpenCMISS_STATIC_C_TARGET})
   endif()
   include(GenerateExportHeader)
-  foreach(_target ${LibOpenCMISS_C_TARGETS})
+  foreach(_target ${OpenCMISS_C_TARGETS})
     target_include_directories(${_target}
       PRIVATE
-      $<BUILD_INTERFACE:${LibOpenCMISS_INC_DIR}>
-      $<BUILD_INTERFACE:${LibOpenCMISS_GEN_INC_DIR}>
+      ${OpenCMISS_INC_DIR}
+      ${OpenCMISS_GEN_BINDINGS_C_DIR}/opencmiss
+      ${OpenCMISS_GEN_INC_DIR}
       INTERFACE
-      $<INSTALL_INTERFACE:${CMAKE_INSTALL_PREFIX}/${LibOpenCMISS_INSTALL_INC_DIR}>
+      $<INSTALL_INTERFACE:${CMAKE_INSTALL_PREFIX}/${OpenCMISS_INSTALL_INC_DIR}>/opencmiss
     )
-    generate_export_header(${_target})
-    list(APPEND LibOpenCMISS_INCLUDE_INSTALL_FILES "${CMAKE_CURRENT_BINARY_DIR}/{$_target}_export.h")
-    list(APPEND LibOpenCMISS_INSTALL_TARGETS ${_target})
+    generate_export_header(${_target}
+      EXPORT_MACRO_NAME OPENCMISS_C_EXPORT
+      DEPRECATED_MACRO_NAME OPENCMISS_C_DEPRECATED
+      NO_EXPORT_MACRO_NAME OPENCMISS_C_NO_EXPORT
+      NO_DEPRECATED_MACRO_NAME OPENCMISS_C_NO_DEPRECATED
+      EXPORT_FILE_NAME "${OpenCMISS_GEN_BINDINGS_C_DIR}/opencmiss/opencmiss_c_export.h"
+    )
+    list(APPEND OpenCMISS_INSTALL_C_INCLUDE_FILES "${OpenCMISS_GEN_BINDINGS_C_DIR}/opencmiss/opencmiss_c_export.h")
+    list(APPEND OpenCMISS_INSTALL_TARGETS ${_target})
   endforeach()
 endif()
 
-set(LibOpenCMISS_BINDINGS_PYTHON_DIR "${LibOpenCMISS_BINDINGS_DIR}/python")
-set(LibOpenCMISS_BINDINGS_PYTHON_SWIG_DIR "${LibOpenCMISS_BINDINGS_PYTHON_DIR}/swig")
-set(LibOpenCMISS_GEN_BINDINGS_PYTHON_DIR "${LibOpenCMISS_GEN_BINDINGS_DIR}/python")
-set(LibOpenCMISS_GEN_BINDINGS_PYTHON_SWIG_DIR "${LibOpenCMISS_GEN_BINDINGS_PYTHON_DIR}/swig")
-set(LibOpenCMISS_GEN_BINDINGS_PYTHON_SWIG_WRAPPER_DIR "${LibOpenCMISS_GEN_BINDINGS_PYTHON_SWIG_DIR}/wrapper")
-set(LibOpenCMISS_PYTHON_PACKAGE_NAME "opencmiss")
-set(LibOpenCMISS_PYTHON_PACKAGE_MODULE_NAME "opencmiss")
-set(LibOpenCMISS_PYTHON_MODULE_NAME opencmiss_python)
-set(LibOpenCMISS_OPENCMISS_I "${LibOpenCMISS_BINDINGS_PYTHON_SWIG_PYTHON_DIR}/opencmiss.i")
-set(LibOpenCMISS_NUMPY_I "${LibOpenCMISS_BINDINGS_PYTHON_SWIG_DIR}/numpy.i")
-set(LibOpenCMISS_NUMPY_EXTRA_I "${LibOpenCMISS_BINDINGS_PYTHON_SWIG_DIR}/numpy_extra.i")
-set(LibOpenCMISS_OPENCMISS_GENERATED_I "${LibOpenCMISS_GEN_BINDINGS_PYTHON_SWIG_DIR}/opencmiss_generated.i")
-set(LibOpenCMISS_OPENCMISS_PY "${LibOpenCMISS_GEN_BINDINGS_PYTHON_DIR}/${LibOpenCMISS_PYTHON_PACKAGE_NAME}/${LibOpenCMISS_PYTHON_PACKAGE_MODULE_NAME}/opencmiss.py")
-set(LibOpenCMISS_OPENCMISS_PYTHON_WRAPPER_C "${LibOpenCMISS_GEN_BINDINGS_PYTHON_SWIG_WRAPPER_DIR}/opencmiss_python_wrapper.c")
+set(OpenCMISS_BINDINGS_Python_DIR "${OpenCMISS_BINDINGS_DIR}/python")
+set(OpenCMISS_BINDINGS_Python_SWIG_DIR "${OpenCMISS_BINDINGS_Python_DIR}/swig")
+set(OpenCMISS_GEN_BINDINGS_Python_DIR "${OpenCMISS_GEN_BINDINGS_DIR}/python")
+set(OpenCMISS_GEN_BINDINGS_Python_SWIG_DIR "${OpenCMISS_GEN_BINDINGS_Python_DIR}/swig")
+set(OpenCMISS_GEN_BINDINGS_Python_SWIG_WRAPPER_DIR "${OpenCMISS_GEN_BINDINGS_Python_SWIG_DIR}/wrapper")
+set(OpenCMISS_OPENCMISS_I "${OpenCMISS_GEN_BINDINGS_Python_SWIG_DIR}/opencmiss.i")
+set(OpenCMISS_NUMPY_I "${OpenCMISS_BINDINGS_Python_SWIG_DIR}/numpy.i")
+set(OpenCMISS_NUMPY_EXTRA_I "${OpenCMISS_BINDINGS_Python_SWIG_DIR}/numpy_extra.i")
+set(OpenCMISS_OPENCMISS_GENERATED_I "${OpenCMISS_GEN_BINDINGS_Python_SWIG_DIR}/opencmiss_generated.i")
+set(OpenCMISS_OPENCMISS_PYTHON_PY "${OpenCMISS_GEN_BINDINGS_Python_DIR}/${OpenCMISS_Python_PACKAGE_NAME}/${OpenCMISS_Python_PACKAGE_MODULE_NAME}/${OpenCMISS_Python_MODULE_NAME}.py")
+set(OpenCMISS_OPENCMISS_Python_WRAPPER_C "${OpenCMISS_GEN_BINDINGS_Python_SWIG_WRAPPER_DIR}/opencmissPYTHON_wrap.c")
 
 add_custom_command(
-  OUTPUT ${LibOpenCMISS_OPENCMISS_GENERATED_I}
-  COMMENT "Generating SWIG file for OpenCMISS..."
-  COMMAND ${CMAKE_EXECUTABLE} -P ${LibOpenCMISS_CMAKE_DIR}/OCGenerateSWIGFile.cmake
-  MAIN_DEPENDENCY ${LibOpenCMISS_SRC_DIR}/opencmiss.F90
-  WORKING_DIRECTORY ${LibOpenCMISS_BINDINGS_DIR}
+  OUTPUT ${OpenCMISS_OPENCMISS_I} ${OpenCMISS_OPENCMISS_GENERATED_I} 
+  COMMENT "Generating SWIG files for ${PROJECT_NAME}..."
+  COMMAND ${CMAKE_COMMAND}
+  -DOpenCMISS_ROOT=${OpenCMISS_ROOT}
+  -DOpenCMISS_BINDINGS_DIR=${OpenCMISS_BINDINGS_DIR}
+  -DOpenCMISS_BINDINGS_Python_SWIG_DIR=${OpenCMISS_BINDINGS_Python_SWIG_DIR}
+  -DOpenCMISS_Python_EXECUTABLE=${Python_EXECUTABLE}
+  -DOpenCMISS_OPENCMISS_I=${OpenCMISS_OPENCMISS_I}
+  -DOpenCMISS_OPENCMISS_GENERATED_I=${OpenCMISS_OPENCMISS_GENERATED_I}
+  -DOpenCMISS_Python_MODULE_NAME=${OpenCMISS_Python_MODULE_NAME}
+  -P ${OpenCMISS_CMAKE_DIR}/OCGenerateSWIGFiles.cmake
+  DEPENDS ${OpenCMISS_SRC_DIR}/opencmiss.F90
+  WORKING_DIRECTORY ${OpenCMISS_BINDINGS_DIR}
 )
 
 add_custom_command(
-  OUTPUT ${LibOpenCMISS_OPENCMISS_PY}
-  COMMENT "Generating Python module file for OpenCMISS..."
-  COMMAND ${CMAKE_EXECUTABLE} -P ${LibOpenCMISS_CMAKE_DIR}/OCGeneratePythonModuleFile.cmake
-  MAIN_DEPENDENCY ${LibOpenCMISS_SRC_DIR}/opencmiss.F90
-  WORKING_DIRECTORY ${LibOpenCMISS_BINDINGS_DIR}
-)
-
-add_custom_command(
-  OUTPUT ${LibOpenCMISS_OPENCMISS_PYTHON_WRAPPER_C}
-  COMMENT "Generating SWIG Python wrapper for OpenCMISS..."
-  COMMAND ${CMAKE_EXECUTABLE} -P ${LibOpenCMISS_CMAKE_DIR}/OCGenerateSWIGPythonWrapper.cmake
-  MAIN_DEPENDENCY ${LibOpenCMISS_OPENCMISS_GENERATED_I}
-  DEPENDS ${LibOpenCMISS_OPENCMISS_I} ${LibOpenCMISS_NUMPY_I} ${LibOpenCMISS_NUMPY_EXTRA_I}
-  WORKING_DIRECTORY ${LibOpenCMISS_BINDINGS_DIR}
+  OUTPUT ${OpenCMISS_OPENCMISS_PYTHON_PY}
+  COMMENT "Generating Python module file for ${PROJECT_NAME}..."
+  COMMAND ${CMAKE_COMMAND}
+  -DOpenCMISS_ROOT=${OpenCMISS_ROOT}
+  -DOpenCMISS_BINDINGS_DIR=${OpenCMISS_BINDINGS_DIR}
+  -DOpenCMISS_Python_EXECUTABLE=${Python_EXECUTABLE}
+  -DOpenCMISS_Python_MODULE_NAME=${OpenCMISS_Python_MODULE_NAME}
+  -DOpenCMISS_OPENCMISS_PYTHON_PY=${OpenCMISS_OPENCMISS_PYTHON_PY}
+  -P ${OpenCMISS_CMAKE_DIR}/OCGeneratePythonModuleFile.cmake
+  DEPENDS ${OpenCMISS_SRC_DIR}/opencmiss.F90
+  WORKING_DIRECTORY ${OpenCMISS_BINDINGS_DIR}
 )
 
 # Handle the Python bindings 
-if(LibOpenCMISS_WITH_Python_BINDINGS)
-  set(LibOpenCMISS_PYTHON_PACKAGE_DESTINATION_PREFIX python${Python_VERSION_MAJOR}.${Python_VERSION_MINOR}/$<CONFIG>/${LibOpenCMISS_PYTHON_PACKAGE_NAME}/${LibOpenCMISS_PACKAGE_MODULE_NAME})
-  file(RELATIVE_PATH _REL_INSTALL_PATH ${CMAKE_INSTALL_PREFIX}/${LibOpenCMISS_INSTALL_LIB_DIR}/${LibOpenCMISS_PYTHON_PACKAGE_DESTINATION_PREFIX} ${CMAKE_INSTALL_PREFIX}/${LibOpenCMISS_INSTALL_LIB_DIR})
-  add_custom_target(generate_python_files
-    DEPENDS ${LibOpenCMISS_OPENCMISS_PY} ${LibOpenCMISS_OPENCMISS_GENERATED_I} ${LibOpenCMISS_OPENCMISS_PYTHON_WRAPPER_C}
+if(OpenCMISS_WITH_Python_BINDINGS)
+  set(OpenCMISS_Python_DESTINATION_PREFIX "python${Python_VERSION_MAJOR}.${Python_VERSION_MINOR}/$<CONFIG>")
+  set(OpenCMISS_Python_PACKAGE_DESTINATION_PREFIX "${OpenCMISS_Python_DESTINATION_PREFIX}/${OpenCMISS_Python_PACKAGE_NAME}")
+  set(OpenCMISS_Python_MODULE_DESTINATION_PREFIX "${OpenCMISS_Python_PACKAGE_DESTINATION_PREFIX}/${OpenCMISS_Python_PACKAGE_MODULE_NAME}")
+  add_custom_target(generate_python_bindings
+   COMMENT "Generating Python bindings for ${PROJECT_NAME}..."
+   DEPENDS ${OpenCMISS_OPENCMISS_PYTHON_PY} ${OpenCMISS_OPENCMISS_GENERATED_I}
   )
-  add_library(${LibOpenCMISS_PYTHON_MODULE} MODULE
-    ${LibOpenCMIS_OPENCMISS_PYTHON_WRAPPER_C} ${LibOpenCMISS_OPENCMISS_H} ${LibOpencmiss_OPENCMISS_C_F90}
+  list(APPEND OpenCMISS_CLEANUP_FILES "${OpenCMISS_OPENCMISS_PYTHON_PY}" "${OpenCMISS_OPENCMISS_GENERATED_I} ${OpenCMISS_OPENCMISS_Python_WRAPPER_C}")
+  file(MAKE_DIRECTORY "${OpenCMISS_GEN_BINDINGS_Python_SWIG_WRAPPER_DIR}")
+  include(UseSWIG)
+  swig_add_library(${OpenCMISS_Python_MODULE_TARGET}
+    TYPE SHARED
+    LANGUAGE python
+    OUTPUT_DIR ${OpenCMISS_GEN_BINDINGS_Python_SWIG_WRAPPER_DIR}
+    SOURCES ${OpenCMISS_OPENCMISS_I}
   )
-  add_dependencies(${LibOpenCMISS_PYTHON_MODULE} LibOpenCMISS_C)
-  target_include_directories(${LibOpenCMISS_PYTHON_MODULE} PRIVATE LibOpenCMISS_C Python::NumPy Python::Python)
+  set_property(TARGET ${OpenCMISS_Python_MODULE_TARGET} PROPERTY SWIG_INCLUDE_DIRECTORIES ${OpenCMISS_BINDINGS_Python_SWIG_DIR})
+  set_property(TARGET ${OpenCMISS_Python_MODULE_TARGET} PROPERTY SWIG_MODULE_NAME "${OpenCMISS_Python_MODULE_NAME}")
+  if(DEFINED OpenCMISS_PYTHONLIBS_SWIG_FLAGS)
+    set_property(TARGET ${OpenCMISS_Python_MODULE_TARGET} PROPERTY SWIG_COMPILE_OPTIONS ${OpenCMISS_PYTHONLIBS_SWIG_FLAGS})
+  endif()  
+  add_dependencies(${OpenCMISS_Python_MODULE_TARGET}
+    generate_python_bindings
+    ${OpenCMISS_SHARED_C_TARGET}
   )
-  target_link_libraries(${LibOpenCMISS_PYTHON_MODULE} PUBLIC LibOpenCMISS_C Python::Python)
-  set_target_properties(${LibOpenCMISS_PYTHON_MODULE} PROPERTIES
+  target_include_directories(${OpenCMISS_Python_MODULE_TARGET} PRIVATE ${OpenCMISS_SHARED_C_TARGET} Python::NumPy Python::Python)
+  target_link_libraries(${OpenCMISS_Python_MODULE_TARGET} PUBLIC ${OpenCMISS_SHARED_C_TARGET} Python::Python)
+  set_target_properties(${OpenCMISS_Python_MODULE_TARGET} PROPERTIES
+    OUTPUT_NAME ${OpenCMISS_Python_MODULE_NAME}
+    LINKER_LANGUAGE C
     PREFIX "_"
     DEBUG_POSTFIX ""
-    LIBRARY_OUTPUT_DIRECTORY ${LibOpenCMISS_GEN_BINDINGS_PYTHON_DIR}/${LibOpenCMISS_PYTHON_PACKAGE_NAME}/${LibOpenCMISS_PYTHON_PACKGE_MODULE_NAME}
-    RUNTIME_OUTPUT_DIRECTORY ${LibOpenCMISS_GEN_BINDINGS_PYTHON_DIR}/${LibOpenCMISS_PYTHON_PACKAGE_NAME}/${LibOpenCMISS_PYTHON_PACKGE_MODULE_NAME}
+    LIBRARY_OUTPUT_DIRECTORY ${OpenCMISS_GEN_BINDINGS_Python_DIR}/${OpenCMISS_Python_PACKAGE_NAME}/${OpenCMISS_Python_PACKAGE_MODULE_NAME}
+    RUNTIME_OUTPUT_DIRECTORY ${OpenCMISS_GEN_BINDINGS_Python_DIR}/${OpenCMISS_Python_PACKAGE_NAME}/${OpenCMISS_Python_PACKAGE_MODULE_NAME}
   )
+  list(APPEND OpenCMISS_CLEANUP_FILES "${OpenCMISS_OPENCMISS_Python_WRAPPER_C}")
+  # Set RPATH of installed python module to the library directory
+  #cmake_path(SET OpenCMISS_Python_MODULE_INSTALL_PATH "${CMAKE_INSTALL_PREFIX}/${OpenCMISS_INSTALL_LIB_DIR}/${OpenCMISS_Python_MODULE_DESTINATION_PREFIX}")
+  #cmake_path(RELATIVE_PATH OpenCMISS_Python_MODULE_INSTALL_PATH
+  #  BASE_DIRECTORY "${CMAKE_INSTALL_PREFIX}/${OpenCMISS_INSTALL_LIB_DIR}"
+  #  OUTPUT_VARIABLE _REL_INSTALL_PATH
+  #)
+  set(_REL_INSTALL_PATH "../../../../../")
   if(APPLE)
-    set_target_properties(${LibOpenCMISS_PYTHON_MODULE} PROPERTIES
-      INSTALL_RPATH "@loader_path/${_REL_INSTALL_PATH};@loader_path/")
+    set_target_properties(${OpenCMISS_Python_MODULE_TARGET} PROPERTIES
+      INSTALL_RPATH "@loader_path/${_REL_INSTALL_PATH};@loader_path/"
+    )
   elseif(UNIX)
-    set_target_properties(${LibOpenCMISS_PYTHON_MODULE} PROPERTIES
-      INSTALL_RPATH "\$ORIGIN/${_REL_INSTALL_PATH};\$ORIGIN/")
+    set_target_properties(${OpenCMISS_Python_MODULE_TARGET} PROPERTIES
+      INSTALL_RPATH "\$ORIGIN/${_REL_INSTALL_PATH};\$ORIGIN/${_REL_INSTALL_PATH}/../lib;\$ORIGIN/${_REL_INSTALL_PATH}/../../no_mpi/lib;\$ORIGIN/${_REL_INSTALL_PATH}/../../no_mpi/lib64;\$ORIGIN/"
+    )
   elseif(WIN32 AND NOT CYGWIN)
-    set_target_properties(${LibOpenCMISS_PYTHON_MODULE} PROPERTIES
+    set_target_properties(${OpenCMISS_Python_MODULE_TARGET} PROPERTIES
       SUFFIX ".pyd"
     )
   endif()      
   # Generate Python module
-  set(LibOpenCMISS_PYTHON_SETUP_PY ${LibOpenCMISS_GEN_BINDINGS_PYTHON_DIR}/setup.py)
-  set(LibOpenCMISS_PYTHON_INIT_PY ${LibOpenCMISS_GEN_BINDINGS_PYTHON_DIR}/__init__.py)
-  set(LibOpenCMISS_PYTHON_UTILS_PY ${LibOpenCMISS_GEN_BINDINGS_PYTHON_DIR}/_utils.py)
-  configure_file(${LibOpenCMISS_BINDINGS_PYTHON_DIR}/setup.py.in ${LibOpenCMISS_PYTHON_SETUP_PY} @ONLY)
+  set(OpenCMISS_Python_SETUP_PY ${OpenCMISS_GEN_BINDINGS_Python_DIR}/setup.py)
+  set(OpenCMISS_Python_PACKAGE_INIT_PY ${OpenCMISS_GEN_BINDINGS_Python_DIR}/${OpenCMISS_Python_PACKAGE_NAME}/__init__.py)
+  set(OpenCMISS_Python_MODULE_INIT_PY ${OpenCMISS_GEN_BINDINGS_Python_DIR}/${OpenCMISS_Python_PACKAGE_NAME}/${OpenCMISS_Python_PACKAGE_MODULE_NAME}/__init__.py)
+  set(OpenCMISS_Python_MODULE_UTILS_PY ${OpenCMISS_GEN_BINDINGS_Python_DIR}/${OpenCMISS_Python_PACKAGE_NAME}/${OpenCMISS_Python_PACKAGE_MODULE_NAME}/_utils.py)
+  configure_file(${OpenCMISS_BINDINGS_Python_DIR}/setup.py.in ${OpenCMISS_Python_SETUP_PY} @ONLY)
   if(WIN32)
-    file(TO_NATIVE_PATH "${CMAKE_INSTALL_PREFIX}/${LibOpenCMISS_INSTALL_BIN_DIR}" NATIVE_LIBRARY_PATH)
+    file(TO_NATIVE_PATH "${CMAKE_INSTALL_PREFIX}/${OpenCMISS_INSTALL_BIN_DIR}" NATIVE_LIBRARY_PATH)
   else()
-    file(TO_NATIVE_PATH "${CMAKE_INSTALL_PREFIX}/${LibOpenCMISS_INSTALL_LIB_DIR}" NATIVE_LIBRARY_PATH)
+    file(TO_NATIVE_PATH "${CMAKE_INSTALL_PREFIX}/${OpenCMISS_INSTALL_LIB_DIR}" NATIVE_LIBRARY_PATH)
   endif()
-  configure_file(${LibOpenCMISS_BINDINGS_PYTHON_DIR}/${LibOpenCMISS_PYTHON_PACKAGE_NAME}/${LibOpenCMISS_PYTHON_PACKAGE_MODULE_NAME}/__init__.py.in ${LibOpenCMISS_PYTHON_INIT_PY} @ONLY)
-  configure_file(${LibOpenCMISS_BINDINGS_PYTHON_DIR}/${LibOpenCMISS_PYTHON_PACKAGE_NAME}/${LibOpenCMISS_PYTHON_PACKAGE_MODULE_NAME}/_utils.py.in ${UTILS_PY} @ONLY)
-  if(LibOpenCMISS_WITH_PYTHON_VIRTUALENV)
+  configure_file(${OpenCMISS_BINDINGS_Python_DIR}/${OpenCMISS_Python_PACKAGE_NAME}/__init__.py.in ${OpenCMISS_Python_PACKAGE_INIT_PY} @ONLY)
+  configure_file(${OpenCMISS_BINDINGS_Python_DIR}/${OpenCMISS_Python_PACKAGE_NAME}/${OpenCMISS_Python_PACKAGE_MODULE_NAME}/__init__.py.in ${OpenCMISS_Python_MODULE_INIT_PY} @ONLY)
+  configure_file(${OpenCMISS_BINDINGS_Python_DIR}/${OpenCMISS_Python_PACKAGE_NAME}/${OpenCMISS_Python_PACKAGE_MODULE_NAME}/_utils.py.in ${OpenCMISS_Python_MODULE_UTILS_PY} @ONLY)
+  if(OpenCMISS_WITH_Python_VIRTUALENV)
     # Generate virtual environment
   endif()
 endif()
 
-if(LibOpenCMISS_WITH_TESTS)
+if(OpenCMISS_WITH_Doxygen)
+  # Generate Doxygen documentation
+  set(OpenCMISS_Doxygen_TARGET "${OpenCMISS_TARGET_NAME}${OpenCMISS_Doxygen_SUFFIX}")
+  set(OpenCMISS_Doxygen_Fortran_TARGET "${OpenCMISS_TARGET_NAME}${OpenCMISS_Doxygen_SUFFIX}${OpenCMISS_Fortran_SUFFIX}")
+  set(OpenCMISS_Doxygen_Programmer_TARGET "${OpenCMISS_TARGET_NAME}${OpenCMISS_Doxygen_SUFFIX}_Programmer")
+  doxygen_add_docs(${OpenCMISS_Doxygen_Fortran_TARGET}
+    COMMENT "Generating ${PROJECT_NAME} Fortran API Doxygen documentation..."
+    WORKING_DIR ${OpenCMISS_Doxygen_DIR}
+    CONFIG_FILE ${OpenCMISS_Doxygen_DIR}/Doxyfile_Fortran
+  )
+  doxygen_add_docs(${OpenCMISS_Doxygen_Programmer_TARGET}
+    COMMENT "Generating ${PROJECT_NAME} Programmer Doxygen documentation..."
+    WORKING_DIR ${OpenCMISS_Doxygen_DIR}
+    CONFIG_FILE ${OpenCMISS_Doxygen_DIR}/Doxyfile_Programmer
+  )
+  set(OpenCMISS_Doxygen_TARGETS ${OpenCMISS_Doxygen_Fortran_TARGET} ${OpenCMISS_Doxygen_Programmer_TARGET})
+  if(OpenCMISS_WITH_C_BINDINGS)
+    set(OpenCMISS_Doxygen_C_TARGET "${OpenCMISS_TARGET_NAME}${OpenCMISS_Doxygen_SUFFIX}${OpenCMISS_C_SUFFIX}")
+    doxygen_add_docs(${OpenCMISS_Doxygen_C_TARGET}
+      COMMENT "Generating ${PROJECT_NAME} C API Doxygen documentation..."
+      WORKING_DIR ${OpenCMISS_Doxygen_DIR}
+      CONFIG_FILE ${OpenCMISS_Doxygen_DIR}/Doxyfile_C
+    )
+    list(APPEND OpenCMISS_Doxygen_TARGETS ${OpenCMISS_Doxygen_C_TARGET})
+  endif()
+  if(OpenCMISS_WITH_Python_BINDINGS)
+    set(OpenCMISS_Doxygen_Python_TARGET "${OpenCMISS_TARGET_NAME}${OpenCMISS_Doxygen_SUFFIX}${OpenCMISS_Python_SUFFIX}")
+    doxygen_add_docs(${OpenCMISS_Doxygen_Python_TARGET}
+      COMMENT "Generating ${PROJECT_NAME} Python API Doxygen documentation..."
+      WORKING_DIR ${OpenCMISS_Doxygen_DIR}
+      CONFIG_FILE ${OpenCMISS_Doxygen_DIR}/Doxyfile_Python
+    )
+    list(APPEND OpenCMISS_Doxygen_TARGETS ${OpenCMISS_Doxygen_Python_TARGET})
+  endif()
+  add_custom_target(${OpenCMISS_Doxygen_TARGET} DEPENDS ${OpenCMISS_Doxygen_TARGETS})
+endif()
+# Install steps
+set(OpenCMISS_INSTALL_CMAKE_DIR "${OpenCMISS_INSTALL_LIB_DIR}/cmake" CACHE PATH "Installation directory for OpenCMISS cmake files.")
+set(OpenCMISS_INSTALL_CMAKE_CONFIG_DIR "${OpenCMISS_INSTALL_LIB_DIR}/cmake/${PROJECT_NAME}-${PROJECT_VERSION}" CACHE PATH "Installation directory for OpenCMISS cmake package configure file.")
+set(OpenCMISS_INSTALL_PKGCONFIG_DIR "${OpenCMISS_INSTALL_DATA_DIR}/pkgconfig" CACHE PATH "Installation directory for OpenCMISS pkgconfig (.pc) files.")
+
+install(TARGETS ${OpenCMISS_INSTALL_TARGETS}
+  EXPORT "${PROJECT_NAME}-targets"
+  RUNTIME DESTINATION ${OpenCMISS_INSTALL_BIN_DIR}
+  COMPONENT Runtime
+  ARCHIVE DESTINATION ${OpenCMISS_INSTALL_LIB_DIR}    
+  COMPONENT Runtime
+  LIBRARY DESTINATION ${OpenCMISS_INSTALL_LIB_DIR}
+  COMPONENT Development
+  INCLUDES DESTINATION ${OpenCMISS_INSTALL_INC_DIR}/opencmiss
+)
+
+install(FILES
+  "${CMAKE_Fortran_MODULE_DIRECTORY}/opencmiss.mod"
+  "${CMAKE_Fortran_MODULE_DIRECTORY}/opencmiss_c.mod"
+  "${CMAKE_Fortran_MODULE_DIRECTORY}/opencmissfortranc.mod"
+  DESTINATION ${OpenCMISS_INSTALL_INC_DIR}/opencmiss
+  COMPONENT Development
+)
+
+if(OpenCMISS_WITH_C_BINDINGS)
+  install(FILES ${OpenCMISS_INSTALL_C_INCLUDE_FILES}
+    DESTINATION ${OpenCMISS_INSTALL_INC_DIR}/opencmiss
+    COMPONENT CBindings
+  )
+endif()
+
+if(OpenCMISS_WITH_Python_BINDINGS)
+  install(FILES ${OpenCMISS_Python_SETUP_PY}
+    DESTINATION ${OpenCMISS_INSTALL_LIB_DIR}/${OpenCMISS_Python_PACKAGE_DESTINATION_PREFIX}
+    COMPONENT PythonBindings)
+  install(FILES ${OpenCMISS_Python_PACKAGE_INIT_PY}
+    DESTINATION ${OpenCMISS_INSTALL_LIB_DIR}/${OpenCMISS_Python_PACKAGE_DESTINATION_PREFIX}${_Python_DESTINATION_PREFIX}/${OpenCMISS_Python_PACKAGE_NAME}
+    COMPONENT PythonBindings)
+  install(FILES ${OpenCMISS_Python_PACKAGE_INIT_PY} ${OpenCMISS_Python_MODULE_INIT_PY} ${OpenCMISS_OPENCMISS_PYTHON_PY} ${OpenCMISS_Python_MODULE_UTILS_PY}
+    DESTINATION ${OpenCMISS_INSTALL_LIB_DIR}/${OpenCMISS_Python_PACKAGE_DESTINATION_PREFIX}${_Python_DESTINATION_PREFIX}/${OpenCMISS_Python_PACKAGE_NAME}/${OpenCMISS_Python_PACKAGE_MODULE_NAME}
+    COMPONENT PythonBindings)
+  install(TARGETS ${OpenCMISS_Python_MODULE_TARGET}
+    DESTINATION ${OpenCMISS_INSTALL_LIB_DIR}/${OpenCMISS_Python_PACKAGE_DESTINATION_PREFIX}${_Python_DESTINATION_PREFIX}/${OpenCMISS_Python_PACKAGE_NAME}/${OpenCMISS_Python_PACKAGE_MODULE_NAME}
+    COMPONENT PythonBindings)  
+endif()
+
+install(EXPORT "${PROJECT_NAME}-targets"
+  NAMESPACE OpenCMISS::
+  DESTINATION ${OpenCMISS_INSTALL_CMAKE_CONFIG_DIR}
+  COMPONENT Development
+)
+include(CMakePackageConfigHelpers)
+configure_package_config_file("${OpenCMISS_CMAKE_DIR}/${PROJECT_NAME}-config.cmake.in"
+  "${CMAKE_CURRENT_BINARY_DIR}/${PROJECT_NAME}-config.cmake"
+  INSTALL_DESTINATION ${OpenCMISS_INSTALL_CMAKE_CONFIG_DIR}
+)
+write_basic_package_version_file(${CMAKE_CURRENT_BINARY_DIR}/${PROJECT_NAME}-config-version.cmake
+  VERSION ${OpenCMISS_VERSION}
+  COMPATIBILITY AnyNewerVersion
+)
+install(FILES 
+    ${CMAKE_CURRENT_BINARY_DIR}/${PROJECT_NAME}-config.cmake
+    ${CMAKE_CURRENT_BINARY_DIR}/${PROJECT_NAME}-config-version.cmake
+    DESTINATION ${OpenCMISS_INSTALL_CMAKE_CONFIG_DIR}
+    COMPONENT Development
+)
+# Bundle fixup for iron shared library
+# We need non-system libraries shipped out with the Runtime libraries.
+# This will probably also work on other platforms - need to check
+if (WIN32)
+    # The wild turkey is out! We need this generator-intermediate step to get a hold of the effective output location
+    # of the iron shared library. This in turn in placed inside a directory that is configuration-dependent,
+    # and in the cmake_install script the CMAKE_INSTALL_CONFIG_NAME helps us getting the job done.
+    file(GENERATE OUTPUT "${CMAKE_CURRENT_BINARY_DIR}/$<CONFIG>/wildturkey.cmake"
+        CONTENT "set(IRON_LIB_NAME \"$<TARGET_FILE:iron>\")")
+    # Hack: The BundleUtilities dont seem to work unless you give them an executable (just the dll wont work),
+    # and as we dont always have the tests around we just use the cmake executable, which will always be around.
+    install(FILES ${CMAKE_COMMAND}
+        DESTINATION bin)
+    get_filename_component(CMAKE_NAME "${CMAKE_COMMAND}" NAME)
+    install(CODE "
+       include(BundleUtilities)
+       include(${CMAKE_CURRENT_BINARY_DIR}/\${CMAKE_INSTALL_CONFIG_NAME}/wildturkey.cmake)
+       file(COPY \"${CMAKE_COMMAND}\" DESTINATION \"\${CMAKE_INSTALL_PREFIX}/bin\")
+       fixup_bundle(\"\${CMAKE_INSTALL_PREFIX}/bin/${CMAKE_NAME}\" \"\${IRON_LIB_NAME}\" \"\")
+       file(REMOVE \"\${CMAKE_INSTALL_PREFIX}/bin/${CMAKE_NAME}\")
+       "
+       COMPONENT Redist)
+endif()
+
+
+if(OpenCMISS_WITH_TESTS)
   enable_testing()
   
   # Composes a native PATH-compatible variable to use for DLL/SO finding.
@@ -608,179 +851,71 @@ if(LibOpenCMISS_WITH_TESTS)
   endfunction()
   
   add_subdirectory(tests)
-  if(LibOpenCMISS_WITH_C_BINDINGS)
-    add_subdirectory(c/tests)
+  if(OpenCMISS_WITH_C_BINDINGS)
+    add_subdirectory(bindings/c/tests)
   endif()
-  if(LibOpenCMISS_WITH_Python_BINDINGS)
-    add_subdirectory(python/tests)
+  if(OpenCMISS_WITH_Python_BINDINGS)
+    add_subdirectory(bindings/python/tests)
   endif()
 endif()
 
-# Install steps
-install(TARGETS ${LibOpenCMISS_INSTALL_TARGETS}
-    EXPORT opencmiss-targets
-    RUNTIME DESTINATION ${LibOpenCMISS_INSTALL_BIN_DIR}
-    COMPONENT Runtime
-    ARCHIVE DESTINATION ${LibOpenCMISS_INSTALL_LIB_DIR}
-    
-    COMPONENT Runtime
-    LIBRARY DESTINATION ${LibOpenCMISS_INSTALL_LIB_DIR}
-    COMPONENT Development
-    INCLUDES DESTINATION ${LibOpenCMISS_INSTALL_INC_DIR}/opencmiss
-)
-
-install(DIRECTORY ${CMAKE_Fortran_MODULE_DIRECTORY}/
-    DESTINATION ${Lib_OpenCMISS_INSTALL_INC_DIR}/opencmiss
-    COMPONENT Development
-    FILES_MATCHING PATTERN "opencmiss*.mod"
-)
-
-install(EXPORT opencmiss-targets
-  NAMESPACE OpenCMISS
-  DESTINATION ${PACKAGE_CONFIG_DIR}
-  COMPONENT Development
-)
-include(CMakePackageConfigHelpers)
-configure_package_config_file("${LibOpenCMISS_CMAKE_DIR}/opencmiss-config-template.cmake.in"
-  "${CMAKE_CURRENT_BINARY_DIR}/opencmiss-config.cmake"
-  INSTALL_DESTINATION "cmake/"
-)
-write_basic_package_version_file(${CMAKE_CURRENT_BINARY_DIR}/opencmiss-config-version.cmake
-  VERSION ${LibOpenCMISS_VERSION}
-  COMPATIBILITY AnyNewerVersion
-)
-install(FILES 
-    ${CMAKE_CURRENT_BINARY_DIR}/opencmiss-config-version.cmake
-    DESTINATION ${PACKAGE_CONFIG_DIR}
-    COMPONENT Development
-)
-# Bundle fixup for iron shared library
-# We need non-system libraries shipped out with the Runtime libraries.
-# This will probably also work on other platforms - need to check
-if (WIN32)
-    # The wild turkey is out! We need this generator-intermediate step to get a hold of the effective output location
-    # of the iron shared library. This in turn in placed inside a directory that is configuration-dependent,
-    # and in the cmake_install script the CMAKE_INSTALL_CONFIG_NAME helps us getting the job done.
-    file(GENERATE OUTPUT "${CMAKE_CURRENT_BINARY_DIR}/$<CONFIG>/wildturkey.cmake"
-        CONTENT "set(IRON_LIB_NAME \"$<TARGET_FILE:iron>\")")
-    # Hack: The BundleUtilities dont seem to work unless you give them an executable (just the dll wont work),
-    # and as we dont always have the tests around we just use the cmake executable, which will always be around.
-    install(FILES ${CMAKE_COMMAND}
-        DESTINATION bin)
-    get_filename_component(CMAKE_NAME "${CMAKE_COMMAND}" NAME)
-    install(CODE "
-       include(BundleUtilities)
-       include(${CMAKE_CURRENT_BINARY_DIR}/\${CMAKE_INSTALL_CONFIG_NAME}/wildturkey.cmake)
-       file(COPY \"${CMAKE_COMMAND}\" DESTINATION \"\${CMAKE_INSTALL_PREFIX}/bin\")
-       fixup_bundle(\"\${CMAKE_INSTALL_PREFIX}/bin/${CMAKE_NAME}\" \"\${IRON_LIB_NAME}\" \"\")
-       file(REMOVE \"\${CMAKE_INSTALL_PREFIX}/bin/${CMAKE_NAME}\")
-       "
-       COMPONENT Redist)
+message(STATUS "")
+message(STATUS "=============================================================")
+message(STATUS "${PROJECT_NAME} has been configured with the following settings:")
+message(STATUS "")
+if(NOT OpenCMISS_HAVE_MULTICONFIG_ENV)
+  message(STATUS "                     Build type: '${CMAKE_BUILD_TYPE}'")
 endif()
-
-if (PRINT_CONFIG_SUMMARY)
-	message(STATUS   "")
-	message(STATUS   "=====================================================")
-	message(STATUS   "Iron has been configured with the following settings:")
-	message(STATUS   "")
-	message(STATUS   "          Build type: '${CMAKE_BUILD_TYPE}'")
-	if (IS_DEBUG_BUILD)
-	  message(STATUS "      Is debug build: TRUE")
-	else()
-	  message(STATUS "      Is debug build: FALSE")
-	endif()
-        if(WORKING_REAL_PRECISION_SINGLE)
-	  message(STATUS "      Real precision: SINGLE")
-	else()
-	  message(STATUS "      Real precision: DOUBLE")
-	endif()
-	if (IRON_BUILD_SHARED_LIBRARY)
-	  message(STATUS "        Library type: SHARED")
-	elseif(IRON_BUILD_STATIC_LIBRARY)
-	  message(STATUS "        Library type: STATIC")
-	endif()
-	message(STATUS   "         Install dir: '${CMAKE_INSTALL_PREFIX}'")
-	if (BUILD_TESTS)
-	  message(STATUS "         Build tests: ON")
-	else()
-	  message(STATUS "         Build tests: OFF")
-	endif()
-	if (WITH_PROFILING)
-	  message(STATUS "           Profiling: ON")
-	else()
-	  message(STATUS "           Profiling: OFF")
-	endif()
-	if (WITH_C_BINDINGS)
-	  message(STATUS "          C Bindings: ON")
-	else()
-	  message(STATUS "          C Bindings: OFF")
-	endif()
-	if (WITH_Python_BINDINGS)
-	  message(STATUS "     Python Bindings: ON")
-	else()
-	  message(STATUS "     Python Bindings: OFF")
-	endif()
-	if (WITH_DIAGNOSTICS)
-	  message(STATUS "         Diagnostics: ON")
-	else()
-	  message(STATUS "         Diagnostics: OFF")
-	endif()
-	if (WITH_NO_CHECKS)
-	  message(STATUS "           No checks: ON")
-	else()
-	  message(STATUS "           No checks: OFF")
-	endif()
-	if (WITH_NO_PRECHECKS)
-	  message(STATUS "       No pre-checks: ON")
-	else()
-	  message(STATUS "       No pre-checks: OFF")
-	endif()
-	if (WITH_NO_POSTCHECKS)
-	  message(STATUS "      No post-checks: ON")
-	else()
-	  message(STATUS "      No post-checks: OFF")
-	endif()
-	if (WITH_CELLML)
-	  message(STATUS "              CellML: ON")
-	else()
-	  message(STATUS "              CellML: OFF")
-	endif()
-	if (WITH_FIELDML)
-	  message(STATUS "             FieldML: ON")
-	else()
-	  message(STATUS "             FieldML: OFF")
-	endif()
-	if (WITH_HYPRE)
-	  message(STATUS "               Hypre: ON")
-	else()
-	  message(STATUS "               Hypre: OFF")
-	endif()
-	if (WITH_SUNDIALS)
-	  message(STATUS "            SUNDIALS: ON")
-	else()
-	  message(STATUS "            SUNDIALS: OFF")
-	endif()
-	if (WITH_MUMPS)
-	  message(STATUS "               MUMPS: ON")
-	else()
-	  message(STATUS "               MUMPS: OFF")
-	endif()
-	if (WITH_SCALAPACK)
-	  message(STATUS "           ScaLAPACK: ON")
-	else()
-	  message(STATUS "           ScaLAPACK: OFF")
-	endif()
-	if (WITH_PETSC)
-	  message(STATUS "               PETSc: ON")
-	else()
-	  message(STATUS "               PETSc: OFF")
-	endif()
-	message(STATUS   "=====================================================")
-	message(STATUS   "")
+message(STATUS "           Build shared library: ${OpenCMISS_BUILD_SHARED_LIBRARIES}")
+message(STATUS "           Build static library: ${OpenCMISS_BUILD_STATIC_LIBRARIES}")
+message(STATUS "")
+message(STATUS "                 Is debug build: ${OpenCMISS_IS_DEBUG_BUILD}")
+if(${OpenCMISS_WITH_SINGLE_PRECISION})
+  message(STATUS "                 Real precision: SINGLE")
+else()
+  message(STATUS "                 Real precision: DOUBLE")
 endif()
+message(STATUS "             With large indices: ${OpenCMISS_WITH_LARGE_INDICES}")
+message(STATUS "")
+message(STATUS "                With C bindings: ${OpenCMISS_WITH_C_BINDINGS}")
+message(STATUS "           With Python bindings: ${OpenCMISS_WITH_Python_BINDINGS}")
+message(STATUS "With Python virtual environment: ${OpenCMISS_WITH_Python_BINDINGS}")
+message(STATUS "")
+message(STATUS "              With docker image: ${OpenCMISS_WITH_DOCKER}")
+message(STATUS "")
+message(STATUS "                       With MPI: ${OpenCMISS_WITH_MPI}")
+message(STATUS "                    With OpenMP: ${OpenCMISS_WITH_OpenMP}")
+message(STATUS "                      With CUDA: ${OpenCMISS_WITH_CUDA}")
+message(STATUS "")
+message(STATUS "               With diagnostics: ${OpenCMISS_WITH_DIAGNOSTICS}")
+message(STATUS "                 With no checks: ${OpenCMISS_WITH_NO_CHECKS}")
+message(STATUS "              With no prechecks: ${OpenCMISS_WITH_NO_PRECHECKS}")
+message(STATUS "             With no postchecks: ${OpenCMISS_WITH_NO_POSTCHECKS}")
+message(STATUS "")
+message(STATUS "                With all checks: ${OpenCMISS_WITH_CHECK_ALL}")
+message(STATUS "              With all warnings: ${OpenCMISS_WITH_WARN_ALL}")
+message(STATUS "                 With profiling: ${OpenCMISS_WITH_PROFILING}")
+message(STATUS "")
+message(STATUS "                   With testing: ${OpenCMISS_WITH_TESTS}")
+message(STATUS "")
+message(STATUS "     With Doxygen documentation: ${OpenCMISS_WITH_Doxygen}")
+message(STATUS "")
+message(STATUS "                    With CellML: ${OpenCMISS_WITH_CellML}")
+message(STATUS "                   With FieldML: ${OpenCMISS_WITH_FieldML}")
+message(STATUS "                     With HYPRE: ${OpenCMISS_WITH_HYPRE}")
+message(STATUS "                     With MUMPS: ${OpenCMISS_WITH_MUMPS}")
+message(STATUS "                  With ParMETIS: ${OpenCMISS_WITH_ParMETIS}")
+message(STATUS "                     With PETSc: ${OpenCMISS_WITH_PETSc}")
+message(STATUS "                     With SLEPc: ${OpenCMISS_WITH_SLEPc}")
+message(STATUS "                  With SUNDIALS: ${OpenCMISS_WITH_SUNDIALS}")
+message(STATUS   "")
+message(STATUS "                 Install prefix: '${CMAKE_INSTALL_PREFIX}'")
+message(STATUS   "")
+message(STATUS   "=============================================================")
+message(STATUS   "")
 
 # Set the files for cleaning
-set_directory_properties(PROPERTIES ADDITIONAL_CLEAN_FILES "${LibOpenCMISS_CLEANUP_FILES}")
+set_directory_properties(PROPERTIES ADDITIONAL_CLEAN_FILES "${OpenCMISS_CLEANUP_FILES}")
 
 # Summary
 

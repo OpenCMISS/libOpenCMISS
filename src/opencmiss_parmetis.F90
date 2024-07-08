@@ -41,12 +41,15 @@
 !> the terms of any one of the MPL, the GPL or the LGPL.
 !>
 
-!> This module is a CMISS buffer module to the ParMETIS library.
-MODULE CMISSParMETIS
+!> This module is a OpenCMISS buffer module to the ParMETIS library.
+MODULE OpenCMISSParMETIS
   
   USE BaseRoutines
   USE Kinds
   USE ISO_VARYING_STRING
+#ifdef WITH_F08_MPI
+  USE MPI_F08
+#endif  
   
 #include "macros.h"
 
@@ -142,7 +145,11 @@ CONTAINS
     INTEGER(INTG), INTENT(IN) :: options(:)
     INTEGER(INTG), INTENT(OUT) :: numberEdgesCut
     INTEGER(INTG), INTENT(OUT) :: partition(:)
+#ifdef WITH_F08_MPI
+    TYPE(MPI_Comm), INTENT(IN) :: communicator
+#else    
     INTEGER(INTG), INTENT(IN) :: communicator
+#endif    
     INTEGER(INTG), INTENT(OUT) :: err
     TYPE(VARYING_STRING), INTENT(OUT) :: error
     !Local Variables
@@ -150,8 +157,13 @@ CONTAINS
 
     ENTERS("ParMETIS_PartKWay",err,error,*999)
 
+#ifdef WITH_F08_MPI
+    status=ParMETIS_V3_PartKway(vertexDistance,xadj,adjncy,vertexWeight,adjWeight,weightFlag,numFlag,nCon, &
+      & numberParts,tpWeights,ubVec,options,numberEdgesCut,partition,communicator%MPI_VAL)
+#else    
     status=ParMETIS_V3_PartKway(vertexDistance,xadj,adjncy,vertexWeight,adjWeight,weightFlag,numFlag,nCon, &
       & numberParts,tpWeights,ubVec,options,numberEdgesCut,partition,communicator)
+#endif    
     
     IF(status/=1) CALL FlagError("ParMetis error in ParMETIS_V3_PartKway",err,error,*999)
     
@@ -185,16 +197,25 @@ CONTAINS
     INTEGER(INTG), INTENT(IN) :: options(:)
     INTEGER(INTG), INTENT(OUT) :: numberEdgesCut
     INTEGER(INTG), INTENT(OUT) :: partition(:)
+#ifdef WITH_F08_MPI
+    TYPE(MPI_Comm) :: communicator
+#else    
     INTEGER(INTG), INTENT(IN) :: communicator
+#endif    
     INTEGER(INTG), INTENT(OUT) :: err
     TYPE(VARYING_STRING), INTENT(OUT) :: error
     !Local Variables
     INTEGER(INTG) :: status
 
     ENTERS("ParMETIS_PartMeshKWay",err,error,*999)
-    
+
+#ifdef WITH_F08_MPI
+    status=ParMETIS_V3_PartMeshKway(elementDistance,elementPtr,elementIndex,elementWeight,weightFlag,numflag,nCon, &
+      & numberCommonNodes,numberParts,tpWeights,ubVec,options,numberEdgesCut,partition,communicator%MPI_VAL)
+#else    
     status=ParMETIS_V3_PartMeshKway(elementDistance,elementPtr,elementIndex,elementWeight,weightFlag,numflag,nCon, &
       & numberCommonNodes,numberParts,tpWeights,ubVec,options,numberEdgesCut,partition,communicator)
+#endif
     
     IF(status/=1) CALL FlagError("ParMetis error in ParMETIS_V3_PartMeshKway",ERR,ERROR,*999)
     
@@ -209,4 +230,4 @@ CONTAINS
   !================================================================================================================================
   !
     
-END MODULE CMISSParMETIS
+END MODULE OpenCMISSParMETIS

@@ -73,23 +73,23 @@
 
 int main()
 {
-  oc_BasisType basis = (oc_BasisType)NULL;
-  oc_BoundaryConditionsType boundaryConditions=(oc_BoundaryConditionsType)NULL;
-  oc_ComputationEnvironmentType computationEnvironment = (oc_ComputationEnvironmentType)NULL;
-  oc_ContextType context = (oc_ContextType)NULL;
-  oc_CoordinateSystemType coordinateSystem=(oc_CoordinateSystemType)NULL;
-  oc_DecompositionType decomposition=(oc_DecompositionType)NULL;
-  oc_DecomposerType decomposer=(oc_DecomposerType)NULL;
-  oc_EquationsType equations=(oc_EquationsType)NULL;
-  oc_EquationsSetType equationsSet=(oc_EquationsSetType)NULL;
-  oc_FieldType geometricField=(oc_FieldType)NULL,dependentField=(oc_FieldType)NULL,equationsSetField=(oc_FieldType)NULL;
-  oc_GeneratedMeshType generatedMesh=(oc_GeneratedMeshType)NULL;
-  oc_MeshType mesh=(oc_MeshType)NULL;
-  oc_ProblemType problem=(oc_ProblemType)NULL;
-  oc_RegionType region=(oc_RegionType)NULL,worldRegion=(oc_RegionType)NULL;
-  oc_SolverType solver=(oc_SolverType)NULL;
-  oc_SolverEquationsType solverEquations=(oc_SolverEquationsType)NULL;
-  oc_WorkGroupType worldWorkGroup=(oc_WorkGroupType)NULL;
+  OC_BasisType basis = (OC_BasisType)NULL;
+  OC_BoundaryConditionsType boundaryConditions=(OC_BoundaryConditionsType)NULL;
+  OC_ComputationEnvironmentType computationEnvironment = (OC_ComputationEnvironmentType)NULL;
+  OC_ContextType context = (OC_ContextType)NULL;
+  OC_CoordinateSystemType coordinateSystem=(OC_CoordinateSystemType)NULL;
+  OC_DecompositionType decomposition=(OC_DecompositionType)NULL;
+  OC_DecomposerType decomposer=(OC_DecomposerType)NULL;
+  OC_EquationsType equations=(OC_EquationsType)NULL;
+  OC_EquationsSetType equationsSet=(OC_EquationsSetType)NULL;
+  OC_FieldType geometricField=(OC_FieldType)NULL,dependentField=(OC_FieldType)NULL,equationsSetField=(OC_FieldType)NULL;
+  OC_GeneratedMeshType generatedMesh=(OC_GeneratedMeshType)NULL;
+  OC_MeshType mesh=(OC_MeshType)NULL;
+  OC_ProblemType problem=(OC_ProblemType)NULL;
+  OC_RegionType region=(OC_RegionType)NULL,worldRegion=(OC_RegionType)NULL;
+  OC_SolverType solver=(OC_SolverType)NULL;
+  OC_SolverEquationsType solverEquations=(OC_SolverEquationsType)NULL;
+  OC_WorkGroupType worldWorkGroup=(OC_WorkGroupType)NULL;
 
   int numberOfComputationNodes,computationNodeNumber;
   int decompositionIndex,equationsSetIndex;
@@ -107,73 +107,73 @@ int main()
 
   controlLoopIdentifier[0]=OC_CONTROL_LOOP_NODE;
 
-  err = oc_Initialise();
+  err = OC_Initialise();
   OPENCMISS_CHECK_ERROR(err,"Initialising OpenCMISS");
-  err = oc_Context_Initialise(&context);
+  err = OC_Context_Initialise(&context);
   OPENCMISS_CHECK_ERROR(err,"Initialising context");
-  err = oc_Context_Create(CONTEXT_USER_NUMBER,context);
+  err = OC_Context_Create(CONTEXT_USER_NUMBER,context);
   OPENCMISS_CHECK_ERROR(err,"Creating context");
-  err = oc_Region_Initialise(&worldRegion);
+  err = OC_Region_Initialise(&worldRegion);
   OPENCMISS_CHECK_ERROR(err,"Initialising world region");
-  err = oc_Context_WorldRegionGet(context,worldRegion);
+  err = OC_Context_WorldRegionGet(context,worldRegion);
   OPENCMISS_CHECK_ERROR(err,"Get world region");
-  err = oc_ErrorHandlingModeSet(OC_ERRORS_TRAP_ERROR);
+  err = OC_ErrorHandlingModeSet(OC_ERRORS_TRAP_ERROR);
 
-  err = oc_ComputationEnvironment_Initialise(&computationEnvironment);
-  err = oc_Context_ComputationEnvironmentGet(context,computationEnvironment);
+  err = OC_ComputationEnvironment_Initialise(&computationEnvironment);
+  err = OC_Context_ComputationEnvironmentGet(context,computationEnvironment);
 
-  err = oc_WorkGroup_Initialise(&worldWorkGroup);
-  err = oc_ComputationEnvironment_WorldWorkGroupGet(computationEnvironment,worldWorkGroup);
-  err = oc_WorkGroup_NumberOfGroupNodesGet(worldWorkGroup,&numberOfComputationNodes);
-  err = oc_WorkGroup_GroupNodeNumberGet(worldWorkGroup,&computationNodeNumber);
+  err = OC_WorkGroup_Initialise(&worldWorkGroup);
+  err = OC_ComputationEnvironment_WorldWorkGroupGet(computationEnvironment,worldWorkGroup);
+  err = OC_WorkGroup_NumberOfGroupNodesGet(worldWorkGroup,&numberOfComputationNodes);
+  err = OC_WorkGroup_GroupNodeNumberGet(worldWorkGroup,&computationNodeNumber);
 
   /* Start the creation of a new RC coordinate system */
-  err = oc_CoordinateSystem_Initialise(&coordinateSystem);
-  err = oc_CoordinateSystem_CreateStart(COORDINATE_SYSTEM_USER_NUMBER,context,coordinateSystem);
+  err = OC_CoordinateSystem_Initialise(&coordinateSystem);
+  err = OC_CoordinateSystem_CreateStart(COORDINATE_SYSTEM_USER_NUMBER,context,coordinateSystem);
   if(NUMBER_GLOBAL_Z_ELEMENTS==0)
     {
       /* Set the coordinate system to be 2D */
-      err = oc_CoordinateSystem_DimensionSet(coordinateSystem,2);
+      err = OC_CoordinateSystem_DimensionSet(coordinateSystem,2);
     }
   else
     {
       /* Set the coordinate system to be 3D */
-      err = oc_CoordinateSystem_DimensionSet(coordinateSystem,3);
+      err = OC_CoordinateSystem_DimensionSet(coordinateSystem,3);
     }
   /* Finish the creation of the coordinate system */
-  err = oc_CoordinateSystem_CreateFinish(coordinateSystem);
+  err = OC_CoordinateSystem_CreateFinish(coordinateSystem);
 
   /* Start the creation of the region */
-  err = oc_Region_Initialise(&region);
-  err = oc_Region_CreateStart(REGION_USER_NUMBER,worldRegion,region);
+  err = OC_Region_Initialise(&region);
+  err = OC_Region_CreateStart(REGION_USER_NUMBER,worldRegion,region);
   /* Set the regions coordinate system to the 2D RC coordinate system that we have created */
-  err = oc_Region_CoordinateSystemSet(region,coordinateSystem);
+  err = OC_Region_CoordinateSystemSet(region,coordinateSystem);
   /* Finish the creation of the region */
-  err = oc_Region_CreateFinish(region);
+  err = OC_Region_CreateFinish(region);
 
   /* Start the creation of a basis (default is trilinear lagrange) */
-  err = oc_Basis_Initialise(&basis);
-  err = oc_Basis_CreateStart(BASIS_USER_NUMBER,context,basis);
+  err = OC_Basis_Initialise(&basis);
+  err = OC_Basis_CreateStart(BASIS_USER_NUMBER,context,basis);
   if(NUMBER_GLOBAL_Z_ELEMENTS==0)
     {
       /* Set the basis to be a bilinear Lagrange basis */
-      err = oc_Basis_NumberOfXiSet(basis,2);
+      err = OC_Basis_NumberOfXiSet(basis,2);
     }
   else
     {
       /* Set the basis to be a trilinear Lagrange basis */
-      err = oc_Basis_NumberOfXiSet(basis,3);
+      err = OC_Basis_NumberOfXiSet(basis,3);
     }
   /* Finish the creation of the basis */
-  err = oc_Basis_CreateFinish(basis);
+  err = OC_Basis_CreateFinish(basis);
 
   /* Start the creation of a generated mesh in the region */
-  err = oc_GeneratedMesh_Initialise(&generatedMesh);
-  err = oc_GeneratedMesh_CreateStart(GENERATED_MESH_USER_NUMBER,region,generatedMesh);
+  err = OC_GeneratedMesh_Initialise(&generatedMesh);
+  err = OC_GeneratedMesh_CreateStart(GENERATED_MESH_USER_NUMBER,region,generatedMesh);
   /* Set up a regular x*y*z mesh */
-  err = oc_GeneratedMesh_TypeSet(generatedMesh,OC_GENERATED_MESH_REGULAR_MESH_TYPE);
+  err = OC_GeneratedMesh_TypeSet(generatedMesh,OC_GENERATED_MESH_REGULAR_MESH_TYPE);
   /* Set the default basis */
-  err = oc_GeneratedMesh_BasisSet(generatedMesh,1,&basis);
+  err = OC_GeneratedMesh_BasisSet(generatedMesh,1,&basis);
   OPENCMISS_CHECK_ERROR(err,"Setting mesh basis");
   /* Define the mesh on the region */
   meshExtent[0]=WIDTH;
@@ -185,124 +185,124 @@ int main()
       meshExtent[2]=LENGTH;
       numberXiElements[2]=NUMBER_GLOBAL_Z_ELEMENTS;
     }
-  err = oc_GeneratedMesh_ExtentSet(generatedMesh,MAX_COORDINATES,meshExtent);
-  err = oc_GeneratedMesh_NumberOfElementsSet(generatedMesh,MAX_COORDINATES,numberXiElements);
+  err = OC_GeneratedMesh_ExtentSet(generatedMesh,MAX_COORDINATES,meshExtent);
+  err = OC_GeneratedMesh_NumberOfElementsSet(generatedMesh,MAX_COORDINATES,numberXiElements);
   /* Finish the creation of a generated mesh in the region */
-  err = oc_Mesh_Initialise(&mesh);
+  err = OC_Mesh_Initialise(&mesh);
   /* Finish the creation of a generated mesh in the region */
-  err = oc_GeneratedMesh_CreateFinish(generatedMesh,MESH_USER_NUMBER,mesh);
+  err = OC_GeneratedMesh_CreateFinish(generatedMesh,MESH_USER_NUMBER,mesh);
 
   /* Create a decomposition */
-  err = oc_Decomposition_Initialise(&decomposition);
-  err = oc_Decomposition_CreateStart(DECOMPOSITION_USER_NUMBER,mesh,decomposition);
+  err = OC_Decomposition_Initialise(&decomposition);
+  err = OC_Decomposition_CreateStart(DECOMPOSITION_USER_NUMBER,mesh,decomposition);
   /* Finish the decomposition */
-  err = oc_Decomposition_CreateFinish(decomposition);
+  err = OC_Decomposition_CreateFinish(decomposition);
 
   /* Create a decomposer */
-  err = oc_Decomposer_Initialise(&decomposer);
-  err = oc_Decomposer_CreateStart(DECOMPOSER_USER_NUMBER,region,worldWorkGroup,decomposer);
+  err = OC_Decomposer_Initialise(&decomposer);
+  err = OC_Decomposer_CreateStart(DECOMPOSER_USER_NUMBER,region,worldWorkGroup,decomposer);
   /* Add in the decomposition */
-  err = oc_Decomposer_DecompositionAdd(decomposer,decomposition,&decompositionIndex);
+  err = OC_Decomposer_DecompositionAdd(decomposer,decomposition,&decompositionIndex);
   /* Finish the decomposer */
-  err = oc_Decomposer_CreateFinish(decomposer);
+  err = OC_Decomposer_CreateFinish(decomposer);
   
   /* Start to create a default (geometric) field on the region */
-  err = oc_Field_Initialise(&geometricField);
-  err = oc_Field_CreateStart(GEOMETRIC_FIELD_USER_NUMBER,region,geometricField);
+  err = OC_Field_Initialise(&geometricField);
+  err = OC_Field_CreateStart(GEOMETRIC_FIELD_USER_NUMBER,region,geometricField);
   /* Set the decomposition to use */
-  err = oc_Field_DecompositionSet(geometricField,decomposition);
+  err = OC_Field_DecompositionSet(geometricField,decomposition);
   /* Set the domain to be used by the field components. */
-  err = oc_Field_ComponentMeshComponentSet(geometricField,OC_FIELD_U_VARIABLE_TYPE,1,1);
-  err = oc_Field_ComponentMeshComponentSet(geometricField,OC_FIELD_U_VARIABLE_TYPE,2,1);
+  err = OC_Field_ComponentMeshComponentSet(geometricField,OC_FIELD_U_VARIABLE_TYPE,1,1);
+  err = OC_Field_ComponentMeshComponentSet(geometricField,OC_FIELD_U_VARIABLE_TYPE,2,1);
   if(NUMBER_GLOBAL_Z_ELEMENTS!=0)
     {
-      err = oc_Field_ComponentMeshComponentSet(geometricField,OC_FIELD_U_VARIABLE_TYPE,3,1);
+      err = OC_Field_ComponentMeshComponentSet(geometricField,OC_FIELD_U_VARIABLE_TYPE,3,1);
     }
   /* Finish creating the field */
-  err = oc_Field_CreateFinish(geometricField);
+  err = OC_Field_CreateFinish(geometricField);
 
   /* Update the geometric field parameters */
-  err = oc_GeneratedMesh_GeometricParametersCalculate(generatedMesh,geometricField);
+  err = OC_GeneratedMesh_GeometricParametersCalculate(generatedMesh,geometricField);
 
   /* Create the equations_set */
-  err = oc_EquationsSet_Initialise(&equationsSet);
-  err = oc_Field_Initialise(&equationsSetField);
+  err = OC_EquationsSet_Initialise(&equationsSet);
+  err = OC_Field_Initialise(&equationsSetField);
   equationsSetSpecification[0] = OC_EQUATIONS_SET_CLASSICAL_FIELD_CLASS;
   equationsSetSpecification[1] = OC_EQUATIONS_SET_LAPLACE_EQUATION_TYPE;
   equationsSetSpecification[2] = OC_EQUATIONS_SET_STANDARD_LAPLACE_SUBTYPE;
-  err = oc_EquationsSet_CreateStart(EQUATIONS_SET_USER_NUMBER,region,geometricField, \
+  err = OC_EquationsSet_CreateStart(EQUATIONS_SET_USER_NUMBER,region,geometricField, \
     3,equationsSetSpecification,EQUATIONS_SET_FIELD_USER_NUMBER, \
     equationsSetField,equationsSet);
   OPENCMISS_CHECK_ERROR(err,"Creating equations set");
   /* Finish creating the equations set */
-  err = oc_EquationsSet_CreateFinish(equationsSet);
+  err = OC_EquationsSet_CreateFinish(equationsSet);
 
   /* Create the equations set dependent field variables */
-  err = oc_Field_Initialise(&dependentField);
-  err = oc_EquationsSet_DependentCreateStart(equationsSet,DEPENDENT_FIELD_USER_NUMBER,dependentField);
+  err = OC_Field_Initialise(&dependentField);
+  err = OC_EquationsSet_DependentCreateStart(equationsSet,DEPENDENT_FIELD_USER_NUMBER,dependentField);
   /* Finish the equations set dependent field variables */
-  err = oc_EquationsSet_DependentCreateFinish(equationsSet);
+  err = OC_EquationsSet_DependentCreateFinish(equationsSet);
 
   /* Create the equations set equations */
-  err = oc_Equations_Initialise(&equations);
-  err = oc_EquationsSet_EquationsCreateStart(equationsSet,equations);
+  err = OC_Equations_Initialise(&equations);
+  err = OC_EquationsSet_EquationsCreateStart(equationsSet,equations);
   /* Set the equations matrices sparsity type */
-  err = oc_Equations_SparsityTypeSet(equations,OC_EQUATIONS_SPARSE_MATRICES);
+  err = OC_Equations_SparsityTypeSet(equations,OC_EQUATIONS_SPARSE_MATRICES);
   /* Set the equations set output */
-  /* err = oc_Equations_OutputTypeSet(equations,OC_EQUATIONS_NO_OUTPUT); */
-  err = oc_Equations_OutputTypeSet(equations,OC_EQUATIONS_TIMING_OUTPUT);
-  /* err = oc_Equations_OutputTypeSet(equations,OC_EQUATIONS_MATRIX_OUTPUT); */
-  /* err = oc_Equations_OutputTypeSet(equations,OC_EQUATIONS_ELEMENT_MATRIX_OUTPUT); */
+  /* err = OC_Equations_OutputTypeSet(equations,OC_EQUATIONS_NO_OUTPUT); */
+  err = OC_Equations_OutputTypeSet(equations,OC_EQUATIONS_TIMING_OUTPUT);
+  /* err = OC_Equations_OutputTypeSet(equations,OC_EQUATIONS_MATRIX_OUTPUT); */
+  /* err = OC_Equations_OutputTypeSet(equations,OC_EQUATIONS_ELEMENT_MATRIX_OUTPUT); */
   /* Finish the equations set equations */
-  err = oc_EquationsSet_EquationsCreateFinish(equationsSet);
+  err = OC_EquationsSet_EquationsCreateFinish(equationsSet);
 
   /* Start the creation of a problem, setting the problem to be a standard Laplace problem. */
-  err = oc_Problem_Initialise(&problem);
+  err = OC_Problem_Initialise(&problem);
   problemSpecification[0] = OC_PROBLEM_CLASSICAL_FIELD_CLASS;
   problemSpecification[1] = OC_PROBLEM_LAPLACE_EQUATION_TYPE;
   problemSpecification[2] = OC_PROBLEM_STANDARD_LAPLACE_SUBTYPE;
-  err = oc_Problem_CreateStart(PROBLEM_USER_NUMBER,context,3,problemSpecification,problem);
+  err = OC_Problem_CreateStart(PROBLEM_USER_NUMBER,context,3,problemSpecification,problem);
   /* Finish the creation of a problem. */
-  err = oc_Problem_CreateFinish(problem);
+  err = OC_Problem_CreateFinish(problem);
 
   /* Start the creation of the problem control loop */
-  err = oc_Problem_ControlLoopCreateStart(problem);
+  err = OC_Problem_ControlLoopCreateStart(problem);
   /* Finish creating the problem control loop */
-  err = oc_Problem_ControlLoopCreateFinish(problem);
+  err = OC_Problem_ControlLoopCreateFinish(problem);
 
   /* Start the creation of the problem solvers */
-  err = oc_Solver_Initialise(&solver);
-  err = oc_Problem_SolversCreateStart(problem);
-  err = oc_Problem_SolverGet(problem,1,controlLoopIdentifier,1,solver);
-  /* err = oc_Solver_OutputTypeSet(solver,OC_SOLVER_NO_OUTPUT); */
-  /* err = oc_Solver_OutputTypeSet(solver,OC_SOLVER_PROGRESS_OUTPUT); */
-  /* err = oc_Solver_OutputTypeSet(solver,OC_SOLVER_TIMING_OUTPUT); */
-  /* err = oc_Solver_OutputTypeSet(solver,OC_SOLVER_SOLVER_OUTPUT); */
-  err = oc_Solver_OutputTypeSet(solver,OC_SOLVER_MATRIX_OUTPUT);
-  err = oc_Solver_LinearTypeSet(solver,OC_SOLVER_LINEAR_DIRECT_SOLVE_TYPE);
-  err = oc_Solver_LibraryTypeSet(solver,OC_SOLVER_MUMPS_LIBRARY);
+  err = OC_Solver_Initialise(&solver);
+  err = OC_Problem_SolversCreateStart(problem);
+  err = OC_Problem_SolverGet(problem,1,controlLoopIdentifier,1,solver);
+  /* err = OC_Solver_OutputTypeSet(solver,OC_SOLVER_NO_OUTPUT); */
+  /* err = OC_Solver_OutputTypeSet(solver,OC_SOLVER_PROGRESS_OUTPUT); */
+  /* err = OC_Solver_OutputTypeSet(solver,OC_SOLVER_TIMING_OUTPUT); */
+  /* err = OC_Solver_OutputTypeSet(solver,OC_SOLVER_SOLVER_OUTPUT); */
+  err = OC_Solver_OutputTypeSet(solver,OC_SOLVER_MATRIX_OUTPUT);
+  err = OC_Solver_LinearTypeSet(solver,OC_SOLVER_LINEAR_DIRECT_SOLVE_TYPE);
+  err = OC_Solver_LibraryTypeSet(solver,OC_SOLVER_MUMPS_LIBRARY);
   /* Finish the creation of the problem solver */
-  err = oc_Problem_SolversCreateFinish(problem);
+  err = OC_Problem_SolversCreateFinish(problem);
 
   /* Start the creation of the problem solver equations */
-  solver=(oc_SolverType)NULL;
-  err = oc_Solver_Initialise(&solver);
-  err = oc_SolverEquations_Initialise(&solverEquations);
-  err = oc_Problem_SolverEquationsCreateStart(problem);
+  solver=(OC_SolverType)NULL;
+  err = OC_Solver_Initialise(&solver);
+  err = OC_SolverEquations_Initialise(&solverEquations);
+  err = OC_Problem_SolverEquationsCreateStart(problem);
   /* Get the solve equations */
-  err = oc_Problem_SolverGet(problem,1,controlLoopIdentifier,1,solver);
-  err = oc_Solver_SolverEquationsGet(solver,solverEquations);
+  err = OC_Problem_SolverGet(problem,1,controlLoopIdentifier,1,solver);
+  err = OC_Solver_SolverEquationsGet(solver,solverEquations);
   /* Set the solver equations sparsity */
-  err = oc_SolverEquations_SparsityTypeSet(solverEquations,OC_SOLVER_SPARSE_MATRICES);
-  /* err = oc_SolverEquations_SparsityTypeSet(solverEquations,OC_SOLVER_FULL_MATRICES);  */
+  err = OC_SolverEquations_SparsityTypeSet(solverEquations,OC_SOLVER_SPARSE_MATRICES);
+  /* err = OC_SolverEquations_SparsityTypeSet(solverEquations,OC_SOLVER_FULL_MATRICES);  */
   /* Add in the equations set */
-  err = oc_SolverEquations_EquationsSetAdd(solverEquations,equationsSet,&equationsSetIndex);
+  err = OC_SolverEquations_EquationsSetAdd(solverEquations,equationsSet,&equationsSetIndex);
   /* Finish the creation of the problem solver equations */
-  err = oc_Problem_SolverEquationsCreateFinish(problem);
+  err = OC_Problem_SolverEquationsCreateFinish(problem);
 
   /* Start the creation of the equations set boundary conditions */
-  err = oc_BoundaryConditions_Initialise(&boundaryConditions);
-  err = oc_SolverEquations_BoundaryConditionsCreateStart(solverEquations,boundaryConditions);
+  err = OC_BoundaryConditions_Initialise(&boundaryConditions);
+  err = OC_SolverEquations_BoundaryConditionsCreateStart(solverEquations,boundaryConditions);
   /* Set the first node to 0.0 and the last node to 1.0 */
   firstNodeNumber=1;
   if(NUMBER_GLOBAL_Z_ELEMENTS==0)
@@ -313,28 +313,28 @@ int main()
     {
       lastNodeNumber=(NUMBER_GLOBAL_X_ELEMENTS+1)*(NUMBER_GLOBAL_Y_ELEMENTS+1)*(NUMBER_GLOBAL_Z_ELEMENTS+1);
     }
-  err = oc_Decomposition_NodeDomainGet(decomposition,firstNodeNumber,1,&firstNodeDomain);
-  err = oc_Decomposition_NodeDomainGet(decomposition,lastNodeNumber,1,&lastNodeDomain);
+  err = OC_Decomposition_NodeDomainGet(decomposition,firstNodeNumber,1,&firstNodeDomain);
+  err = OC_Decomposition_NodeDomainGet(decomposition,lastNodeNumber,1,&lastNodeDomain);
   if(firstNodeDomain==computationNodeNumber)
     {
-      err = oc_BoundaryConditions_SetNode(boundaryConditions,dependentField,OC_FIELD_U_VARIABLE_TYPE,1,1,firstNodeNumber,1, \
+      err = OC_BoundaryConditions_SetNode(boundaryConditions,dependentField,OC_FIELD_U_VARIABLE_TYPE,1,1,firstNodeNumber,1, \
         OC_BOUNDARY_CONDITION_FIXED,0.0);
     }
   if(lastNodeDomain==computationNodeNumber)
     {
-      err = oc_BoundaryConditions_SetNode(boundaryConditions,dependentField,OC_FIELD_U_VARIABLE_TYPE,1,1,lastNodeNumber,1, \
+      err = OC_BoundaryConditions_SetNode(boundaryConditions,dependentField,OC_FIELD_U_VARIABLE_TYPE,1,1,lastNodeNumber,1, \
         OC_BOUNDARY_CONDITION_FIXED,1.0);
     }
   /* Finish the creation of the equations set boundary conditions */
-  err = oc_SolverEquations_BoundaryConditionsCreateFinish(solverEquations);
+  err = OC_SolverEquations_BoundaryConditionsCreateFinish(solverEquations);
 
   /* Solve the problem */
-  err = oc_Problem_Solve(problem);
+  err = OC_Problem_Solve(problem);
 
   /* Destroy the context */
-  err = oc_Context_Destroy(context);
+  err = OC_Context_Destroy(context);
   /* Finalise OpenCMISS */
-  err = oc_Finalise();
+  err = OC_Finalise();
 
   return err;
 }

@@ -53,39 +53,39 @@
 int main() 
 {
 
-  oc_ContextType context=(oc_ContextType)NULL;
-  oc_RegionType region=(oc_RegionType)NULL,worldRegion=(oc_RegionType)NULL;
+  OC_ContextType context=(OC_ContextType)NULL;
+  OC_RegionType region=(OC_RegionType)NULL,worldRegion=(OC_RegionType)NULL;
   char label[STRING_SIZE];
   int err;
 
-  err = oc_Initialise();
+  err = OC_Initialise();
   OPENCMISS_CHECK_ERROR(err,"Initialising OpenCMISS");
-  err = oc_Context_Initialise(&context);
+  err = OC_Context_Initialise(&context);
   OPENCMISS_CHECK_ERROR(err,"Initialising context");
-  err = oc_Context_Create(CONTEXT_USER_NUMBER,context);
+  err = OC_Context_Create(CONTEXT_USER_NUMBER,context);
   OPENCMISS_CHECK_ERROR(err,"Creating context");
-  err = oc_Region_Initialise(&worldRegion);
+  err = OC_Region_Initialise(&worldRegion);
   OPENCMISS_CHECK_ERROR(err,"Initialising world region");
-  err = oc_Context_WorldRegionGet(context,worldRegion);
+  err = OC_Context_WorldRegionGet(context,worldRegion);
   OPENCMISS_CHECK_ERROR(err,"Get world region");
   
-  err = oc_Region_LabelGet(worldRegion,STRING_SIZE,label);
+  err = OC_Region_LabelGet(worldRegion,STRING_SIZE,label);
   printf("The world region label is '%s'.\n",label);
   
-  err = oc_Region_Initialise(&region);
-  err = oc_Region_CreateStart(REGION_USER_NUMBER,worldRegion,region);
-  err = oc_Region_LabelSet(region,8,"Testing");
-  err = oc_Region_CreateFinish(region);
+  err = OC_Region_Initialise(&region);
+  err = OC_Region_CreateStart(REGION_USER_NUMBER,worldRegion,region);
+  err = OC_Region_LabelSet(region,8,"Testing");
+  err = OC_Region_CreateFinish(region);
   
-  err = oc_Region_LabelGet(region,STRING_SIZE,label);	       
+  err = OC_Region_LabelGet(region,STRING_SIZE,label);	       
   printf("The region label is '%s'.\n",label);
   
   /* Destroy the region */
-  err = oc_Region_Finalise(&region);
+  err = OC_Region_Finalise(&region);
   /* Destroy the context */
-  err = oc_Context_Destroy(context);
+  err = OC_Context_Destroy(context);
   /* Finalise OpenCMISS */
-  err = oc_Finalise();
+  err = OC_Finalise();
 
   return err;
 }

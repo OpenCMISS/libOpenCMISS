@@ -3,7 +3,7 @@
 """
 Compare object dependencies with the modules used
 
-Must be run from the cm directory
+Must be run from the OpenCMISS root directory
 """
 
 import os

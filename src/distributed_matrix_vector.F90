@@ -45,8 +45,6 @@
 MODULE DistributedMatrixVector
 
   USE BaseRoutines
-  USE CmissMPI
-  USE CmissPetsc
   USE ComputationRoutines
   USE ComputationAccessRoutines
   USE DistributedMatrixVectorAccessRoutines
@@ -57,10 +55,18 @@ MODULE DistributedMatrixVector
   USE Kinds
   USE Maths
   USE MatrixVector
-#ifndef NOMPIMOD
+#ifdef WITH_MPI  
+#ifdef WITH_F08_MPI
+  USE MPI_F08
+#elif WITH_F90_MPI
   USE MPI
 #endif
-  USE CMISSPETScTypes, ONLY : PetscMatType,PetscVecType
+  USE OpenCMISSMPI
+#endif  
+#ifdef WITH_PETSC  
+  USE OpenCMISSPETSc
+  USE OpenCMISSPETScTypes, ONLY : PetscMatType,PetscVecType
+#endif  
   USE Strings
   USE Types
   USE LINKEDLIST_ROUTINES
@@ -71,10 +77,14 @@ MODULE DistributedMatrixVector
 
   PRIVATE
 
-#ifdef NOMPIMOD
+#ifdef WITH_MPI  
+#ifdef WITH_F77_MPI
 #include "mpif.h"
 #endif
+#endif
+#ifdef WITH_PETSC  
 #include "petscversion.h"
+#endif  
   
   !Module parameters
   !Module types
@@ -802,7 +812,7 @@ CONTAINS
     INTEGER(INTG), INTENT(OUT) :: err !<The error code
     TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
     !Local Variables
-    REAL(DP), POINTER :: petscData(:,:)
+    REAL(DP), POINTER :: petscData1(:),petscData2(:,:)
     TYPE(DistributedMatrixCMISSType), POINTER :: cmissMatrix
     TYPE(DistributedMatrixPETScType), POINTER :: petscMatrix
     TYPE(VARYING_STRING) :: localError
@@ -813,7 +823,8 @@ CONTAINS
     IF(ASSOCIATED(data)) CALL FlagError("Data is already associated.",err,error,*999)    
     CALL DistributedMatrix_AssertIsFinished(distributedMatrix,err,error,*999)
 
-    NULLIFY(petscData)
+    NULLIFY(petscData1)
+    NULLIFY(petscData2)
     SELECT CASE(distributedMatrix%libraryType)
     CASE(DISTRIBUTED_MATRIX_VECTOR_CMISS_TYPE)
       NULLIFY(cmissMatrix)
@@ -825,7 +836,7 @@ CONTAINS
       IF(petscMatrix%useOverrideMatrix) THEN
         SELECT CASE(petscMatrix%storageType)
         CASE(DISTRIBUTED_MATRIX_BLOCK_STORAGE_TYPE)
-          CALL Petsc_MatDenseGetArrayF90(distributedMatrix%petsc%overrideMatrix,petscData,err,error,*999)
+          CALL Petsc_MatDenseGetArrayF90(distributedMatrix%petsc%overrideMatrix,petscData2,err,error,*999)
         CASE(DISTRIBUTED_MATRIX_DIAGONAL_STORAGE_TYPE)
           CALL FlagError("Diagonal storage is not implemented for PETSc matrices.",err,error,*999)
         CASE(DISTRIBUTED_MATRIX_COLUMN_MAJOR_STORAGE_TYPE)
@@ -834,7 +845,7 @@ CONTAINS
           CALL FlagError("Row major storage is not implemented for PETSc matrices.",err,error,*999)
         CASE(DISTRIBUTED_MATRIX_COMPRESSED_ROW_STORAGE_TYPE)
           IF(petscMatrix%m==petscMatrix%globalM) THEN
-            CALL Petsc_MatSeqAIJGetArrayF90(distributedMatrix%petsc%overrideMatrix,petscData,err,error,*999)
+            CALL Petsc_MatSeqAIJGetArrayF90(distributedMatrix%petsc%overrideMatrix,petscData1,err,error,*999)
           ELSE
             !Do nothing, PETSc doesn't yet have the facility to get a pointer to the matrix data for MPI matrices
           ENDIF
@@ -854,7 +865,7 @@ CONTAINS
       ELSE
         SELECT CASE(petscMatrix%storageType)
         CASE(DISTRIBUTED_MATRIX_BLOCK_STORAGE_TYPE)
-          CALL Petsc_MatDenseGetArrayF90(petscMatrix%matrix,petscData,err,error,*999)
+          CALL Petsc_MatDenseGetArrayF90(petscMatrix%matrix,petscData2,err,error,*999)
         CASE(DISTRIBUTED_MATRIX_DIAGONAL_STORAGE_TYPE)
           CALL FlagError("Diagonal storage is not implemented for PETSc matrices.",err,error,*999)
         CASE(DISTRIBUTED_MATRIX_COLUMN_MAJOR_STORAGE_TYPE)
@@ -863,7 +874,7 @@ CONTAINS
           CALL FlagError("Row major storage is not implemented for PETSc matrices.",err,error,*999)
         CASE(DISTRIBUTED_MATRIX_COMPRESSED_ROW_STORAGE_TYPE)
           IF(petscMatrix%m==petscMatrix%globalM) THEN
-            CALL Petsc_MatSeqAIJGetArrayF90(petscMatrix%matrix,petscData,err,error,*999)
+            CALL Petsc_MatSeqAIJGetArrayF90(petscMatrix%matrix,petscData1,err,error,*999)
           ELSE
             !Do nothing, PETSc doesn't yet have the facility to get a pointer to the matrix data for MPI matrices
           ENDIF
@@ -882,12 +893,12 @@ CONTAINS
         END SELECT
       ENDIF
       !If we have any data convert it to a 1D array. 
-      IF(ASSOCIATED(petscData)) THEN
+      IF(ASSOCIATED(petscData1).OR.ASSOCIATED(petscData2)) THEN
         ! Convert 2D array from PETSc to 1D array
         ! Using C_F_POINTER(C_LOC(... is a bit ugly but transfer doesn't work with pointers
         SELECT CASE(petscMatrix%storageType)
         CASE(DISTRIBUTED_MATRIX_BLOCK_STORAGE_TYPE)
-          tempMe = C_LOC(petscData(1,1))
+          tempMe = C_LOC(petscData2(1,1))
           CALL C_F_POINTER(tempMe,DATA,[petscMatrix%m*petscMatrix%n])
         CASE(DISTRIBUTED_MATRIX_DIAGONAL_STORAGE_TYPE)
           CALL FlagError("Diagonal storage is not implemented for PETSc matrices.",err,error,*999)
@@ -896,10 +907,7 @@ CONTAINS
         CASE(DISTRIBUTED_MATRIX_ROW_MAJOR_STORAGE_TYPE)
           CALL FlagError("Row major storage is not implemented for PETSc matrices.",err,error,*999)
         CASE(DISTRIBUTED_MATRIX_COMPRESSED_ROW_STORAGE_TYPE)
-          !PETSc returns an m * n matrix rather than number non-zeros by 1, so the returned
-          !2D array actually contains junk data outside of the actual matrix.
-          !This is a bug in PETSc but we can get the correct 1D data here
-          tempMe = C_LOC(petscData(1,1))
+          tempMe = C_LOC(petscData1(1))
           CALL C_F_POINTER(tempMe,DATA,[petscMatrix%numberOfNonZeros])
         CASE(DISTRIBUTED_MATRIX_COMPRESSED_COLUMN_STORAGE_TYPE)
           CALL FlagError("Compressed column storage is not implemented for PETSc matrices.",err,error,*999)
@@ -1058,7 +1066,7 @@ CONTAINS
     INTEGER(INTG), INTENT(OUT) :: err !<The error code
     TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
     !Local Variables
-    REAL(DP), POINTER :: petscData(:,:)
+    REAL(DP), POINTER :: petscData1(:),petscData2(:,:)
     TYPE(DistributedMatrixPETScType), POINTER :: petscMatrix
     TYPE(VARYING_STRING) :: localError
     TYPE(C_PTR) :: tempMe
@@ -1081,7 +1089,7 @@ CONTAINS
         CASE(DISTRIBUTED_MATRIX_BLOCK_STORAGE_TYPE)
           !Convert 1D array to 2D
           tempMe = C_LOC(DATA(1))
-          CALL C_F_POINTER(tempMe,petscData,[petscMatrix%m,petscMatrix%n])
+          CALL C_F_POINTER(tempMe,petscData2,[petscMatrix%m,petscMatrix%n])
         CASE(DISTRIBUTED_MATRIX_DIAGONAL_STORAGE_TYPE)
           CALL FlagError("Diagonal storage is not implemented for PETSc matrices.",err,error,*999)
         CASE(DISTRIBUTED_MATRIX_COLUMN_MAJOR_STORAGE_TYPE)
@@ -1089,10 +1097,8 @@ CONTAINS
         CASE(DISTRIBUTED_MATRIX_ROW_MAJOR_STORAGE_TYPE)
           CALL FlagError("Row major storage is not implemented for PETSc matrices.",err,error,*999)
         CASE(DISTRIBUTED_MATRIX_COMPRESSED_ROW_STORAGE_TYPE)
-          !PETSc expects an m * n 2D matrix rather than a 1D array with length equal to number of non-zeros
-          !This is a bug in PETSc so we have to give it a 2D matrix with junk at the end
           tempMe = C_LOC(DATA(1))
-          CALL C_F_POINTER(tempMe,petscData,[petscMatrix%m,petscMatrix%n])
+          CALL C_F_POINTER(tempMe,petscData1,[petscMatrix%numberOfNonZeros])
         CASE(DISTRIBUTED_MATRIX_COMPRESSED_COLUMN_STORAGE_TYPE)
           CALL FlagError("Compressed column storage is not implemented for PETSc matrices.",err,error,*999)
         CASE(DISTRIBUTED_MATRIX_ROW_COLUMN_STORAGE_TYPE)
@@ -1110,7 +1116,7 @@ CONTAINS
       IF(petscMatrix%useOverrideMatrix) THEN
         SELECT CASE(petscMatrix%storageType)
         CASE(DISTRIBUTED_MATRIX_BLOCK_STORAGE_TYPE)
-          CALL Petsc_MatDenseRestoreArrayF90(petscMatrix%overrideMatrix,petscData,err,error,*999)
+          CALL Petsc_MatDenseRestoreArrayF90(petscMatrix%overrideMatrix,petscData2,err,error,*999)
         CASE(DISTRIBUTED_MATRIX_DIAGONAL_STORAGE_TYPE)
           CALL FlagError("Diagonal storage is not implemented for PETSc matrices.",err,error,*999)
         CASE(DISTRIBUTED_MATRIX_COLUMN_MAJOR_STORAGE_TYPE)
@@ -1119,7 +1125,7 @@ CONTAINS
           CALL FlagError("Row major storage is not implemented for PETSc matrices.",err,error,*999)
         CASE(DISTRIBUTED_MATRIX_COMPRESSED_ROW_STORAGE_TYPE)
           IF(petscMatrix%m==petscMatrix%globalM) THEN
-            CALL Petsc_MatSeqAIJRestoreArrayF90(petscMatrix%overrideMatrix,petscData,err,error,*999)
+            CALL Petsc_MatSeqAIJRestoreArrayF90(petscMatrix%overrideMatrix,petscData1,err,error,*999)
           ELSE
             !Do nothing, PETSc doesn't yet have the facility to restore a pointer to the matrix data for MPI matrices
           ENDIF
@@ -1139,7 +1145,7 @@ CONTAINS
       ELSE
         SELECT CASE(petscMatrix%storageType)
         CASE(DISTRIBUTED_MATRIX_BLOCK_STORAGE_TYPE)
-          CALL Petsc_MatDenseRestoreArrayF90(petscMatrix%matrix,petscData,err,error,*999)
+          CALL Petsc_MatDenseRestoreArrayF90(petscMatrix%matrix,petscData2,err,error,*999)
         CASE(DISTRIBUTED_MATRIX_DIAGONAL_STORAGE_TYPE)
           CALL FlagError("Diagonal storage is not implemented for PETSc matrices.",err,error,*999)
         CASE(DISTRIBUTED_MATRIX_COLUMN_MAJOR_STORAGE_TYPE)
@@ -1148,7 +1154,7 @@ CONTAINS
           CALL FlagError("Row major storage is not implemented for PETSc matrices.",err,error,*999)
         CASE(DISTRIBUTED_MATRIX_COMPRESSED_ROW_STORAGE_TYPE)
           IF(petscMatrix%m==petscMatrix%globalM) THEN
-            CALL Petsc_MatSeqAIJRestoreArrayF90(petscMatrix%matrix,petscData,err,error,*999)
+            CALL Petsc_MatSeqAIJRestoreArrayF90(petscMatrix%matrix,petscData1,err,error,*999)
           ELSE
             !Do nothing, PETSc doesn't yet have the facility to restore a pointer to the matrix data for MPI matrices
           ENDIF
@@ -2908,7 +2914,14 @@ CONTAINS
     INTEGER(INTG), INTENT(OUT) :: err !<The error code
     TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
     !Local Variables
-    INTEGER(INTG) :: dummyErr,rowIdx,groupCommunicator
+    INTEGER(INTG) :: dummyErr,rowIdx
+#ifdef WITH_MPI    
+#ifdef WITH_F08_MPI
+    TYPE(MPI_Comm) :: groupCommunicator
+#else
+    INTEGER(INTG) :: groupCommunicator
+#endif    
+#endif    
     TYPE(DistributedMatrixType), POINTER :: distributedMatrix
     TYPE(DomainMappingType), POINTER :: rowDomainMapping,columnDomainMapping
     TYPE(VARYING_STRING) :: dummyError,localError
@@ -2939,8 +2952,15 @@ CONTAINS
       !Set up the matrix
       ALLOCATE(petscMatrix%dataDP(petscMatrix%dataSize),STAT=err)
       IF(err/=0) CALL FlagError("Could not allocate PETSc matrix data.",err,error,*999)
+#ifdef WITH_PETSC
+#ifdef WITH_F08_MPI
+      CALL Petsc_MatCreateDense(groupCommunicator%MPI_VAL,petscMatrix%m,petscMatrix%n,petscMatrix%globalM,petscMatrix%globalN, &
+        & petscMatrix%dataDP(1),petscMatrix%matrix,err,error,*999)
+#else      
       CALL Petsc_MatCreateDense(groupCommunicator,petscMatrix%m,petscMatrix%n,petscMatrix%globalM,petscMatrix%globalN, &
-        & petscMatrix%dataDP,petscMatrix%matrix,err,error,*999)
+        & petscMatrix%dataDP(1),petscMatrix%matrix,err,error,*999)
+#endif      
+#endif      
     CASE(DISTRIBUTED_MATRIX_DIAGONAL_STORAGE_TYPE)
       petscMatrix%numberOfNonZeros=petscMatrix%m
       petscMatrix%maximumColumnIndicesPerRow=1
@@ -2958,10 +2978,18 @@ CONTAINS
       IF(err/=0) CALL FlagError("Could not allocate off diagonal number of non zeros.",err,error,*999)
       petscMatrix%diagonalNumberOfNonZeros=1
       petscMatrix%offdiagonalNumberOfNonZeros=0
+#ifdef WITH_PETSC      
       !Create the PETsc AIJ matrix
+#ifdef WITH_F08_MPI
+      CALL Petsc_MatCreateAIJ(groupCommunicator%MPI_VAL,petscMatrix%m,petscMatrix%n,petscMatrix%globalM,petscMatrix%globalN, &
+        & PETSC_NULL_INTEGER,petscMatrix%diagonalNumberOfNonZeros,PETSC_NULL_INTEGER,petscMatrix%offdiagonalNumberOfNonZeros, &
+        & petscMatrix%matrix,err,error,*999)
+#else      
       CALL Petsc_MatCreateAIJ(groupCommunicator,petscMatrix%m,petscMatrix%n,petscMatrix%globalM,petscMatrix%globalN, &
         & PETSC_NULL_INTEGER,petscMatrix%diagonalNumberOfNonZeros,PETSC_NULL_INTEGER,petscMatrix%offdiagonalNumberOfNonZeros, &
         & petscMatrix%matrix,err,error,*999)
+#endif      
+#endif      
     CASE(DISTRIBUTED_MATRIX_COLUMN_MAJOR_STORAGE_TYPE)
       CALL FlagError("Column major storage is not implemented for PETSc matrices.",err,error,*999)
     CASE(DISTRIBUTED_MATRIX_ROW_MAJOR_STORAGE_TYPE)
@@ -2971,14 +2999,22 @@ CONTAINS
         & CALL FlagError("Matrix diagonal storage locations have not been set.",err,error,*999)
       IF(.NOT.ALLOCATED(petscMatrix%offdiagonalNumberOfNonZeros)) &
         & CALL FlagError("Matrix off diagonal storage locations have not been set.",err,error,*999)
+#ifdef WITH_PETSC      
       !Create the PETSc AIJ matrix
+#ifdef WITH_F08_MPI
+      CALL Petsc_MatCreateAIJ(groupCommunicator%MPI_VAL,petscMatrix%m,petscMatrix%n,petscMatrix%globalM,petscMatrix%globalN, &
+        & PETSC_NULL_INTEGER,petscMatrix%diagonalNumberOfNonZeros,PETSC_NULL_INTEGER,petscMatrix%offdiagonalNumberOfNonZeros, &
+        & petscMatrix%matrix,err,error,*999)
+#else      
       CALL Petsc_MatCreateAIJ(groupCommunicator,petscMatrix%m,petscMatrix%n,petscMatrix%globalM,petscMatrix%globalN, &
         & PETSC_NULL_INTEGER,petscMatrix%diagonalNumberOfNonZeros,PETSC_NULL_INTEGER,petscMatrix%offdiagonalNumberOfNonZeros, &
         & petscMatrix%matrix,err,error,*999)
+#endif      
       !Set matrix options
       CALL Petsc_MatSetOption(petscMatrix%matrix,PETSC_MAT_NEW_NONZERO_LOCATION_ERR,.TRUE.,err,error,*999)
       CALL Petsc_MatSetOption(petscMatrix%matrix,PETSC_MAT_NEW_NONZERO_ALLOCATION_ERR,.TRUE.,err,error,*999)
       CALL Petsc_MatSetOption(petscMatrix%matrix,PETSC_MAT_UNUSED_NONZERO_LOCATION_ERR,.TRUE.,err,error,*999)
+#endif      
       !Set up the Local to Global mappings
       ALLOCATE(petscMatrix%globalRowNumbers(petscMatrix%m),STAT=err)
       IF(err/=0) CALL FlagError("Could not allocate global row numbers for PETSc distributed matrix.",err,error,*999)
@@ -3001,6 +3037,7 @@ CONTAINS
         & " is invalid."
       CALL FlagError(localError,err,error,*999)
     END SELECT
+#ifdef WITH_PETSC    
     SELECT CASE(petscMatrix%symmetryType)
     CASE(DISTRIBUTED_MATRIX_SYMMETRIC_TYPE)
       CALL Petsc_MatSetOption(petscMatrix%matrix,PETSC_MAT_SYMMETRIC,.TRUE.,err,error,*999)
@@ -3015,6 +3052,7 @@ CONTAINS
         & " is invalid."
       CALL FlagError(localError,err,error,*999)
     END SELECT
+#endif    
 
     EXITS("DistributedMatrix_PETScCreateFinish")
     RETURN
@@ -7124,7 +7162,14 @@ CONTAINS
     INTEGER(INTG), INTENT(OUT) :: err !<The error code
     TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
     !Local Variables
-    INTEGER(INTG) :: dummyErr,i,groupCommunicator
+    INTEGER(INTG) :: dummyErr,i
+#ifdef WITH_MPI
+#ifdef WITH_F08_MPI
+    TYPE(MPI_Comm) :: groupCommunicator
+#else
+    INTEGER(INTG) :: groupCommunicator
+#endif    
+#endif
     TYPE(DistributedVectorType), POINTER :: distributedVector
     TYPE(DomainMappingType), POINTER :: domainMapping
     TYPE(VARYING_STRING) :: dummyError
@@ -7140,8 +7185,15 @@ CONTAINS
     
     !Create the PETSc vector
     petscVector%dataSize=petscVector%n
+#ifdef WITH_PETSC
+#ifdef WITH_F08_MPI
+    CALL Petsc_VecCreateMPI(groupCommunicator%MPI_VAL,petscVector%n,petscVector%globalN,petscVector%vector, &
+      & err,error,*999)
+#else    
     CALL Petsc_VecCreateMPI(groupCommunicator,petscVector%n,petscVector%globalN,petscVector%vector, &
       & err,error,*999)
+#endif    
+#endif    
     !Set up the Local to Global Mappings
     DO i=1,petscVector%n
       petscVector%globalNumbers(i)=domainMapping%localToGlobalMap(i)-1
@@ -7412,11 +7464,13 @@ CONTAINS
     CASE(DISTRIBUTED_MATRIX_VECTOR_PETSC_TYPE)
       NULLIFY(petscVector)
       CALL DistributedVector_PETScVectorGet(distributedVector,petscVector,err,error,*999)
+#ifdef WITH_PETSC      
       IF(petscVector%useOverrideVector) THEN
         CALL Petsc_VecAssemblyEnd(petscVector%overrideVector,err,error,*999)
       ELSE
         CALL Petsc_VecAssemblyEnd(petscVector%vector,err,error,*999)
       ENDIF
+#endif      
     CASE DEFAULT
       localError="The distributed vector library type of "// &
         & TRIM(NumberToVString(distributedVector%libraryType,"*",err,error))//" is invalid."
@@ -7428,6 +7482,7 @@ CONTAINS
       CASE(DISTRIBUTED_MATRIX_VECTOR_CMISS_TYPE)
         CALL WriteString(DIAGNOSTIC_OUTPUT_TYPE,"Distributed vector :",err,error,*999)
         CALL WriteStringValue(DIAGNOSTIC_OUTPUT_TYPE,"  Data type = ",distributedVector%dataType,err,error,*999)
+#ifdef WITH_MPI        
         CALL WriteStringValue(DIAGNOSTIC_OUTPUT_TYPE,"  Base tag number = ",cmissVector%baseTagNumber,err,error,*999)
         CALL WriteStringValue(DIAGNOSTIC_OUTPUT_TYPE,"  Number of adjacent domains = ",domainMapping%numberOfAdjacentDomains, &
           & err,error,*999)
@@ -7439,11 +7494,14 @@ CONTAINS
             & receiveTagNumber,err,error,*999)
           CALL WriteStringValue(DIAGNOSTIC_OUTPUT_TYPE,"    Send tag number = ",cmissVector%transfers(domainIdx)% &
             & sendTagNumber,err,error,*999)
+#ifndef WITH_F08_MPI          
           CALL WriteStringValue(DIAGNOSTIC_OUTPUT_TYPE,"    MPI send request = ",cmissVector%transfers(domainIdx)% &
             & mpiSendRequest,err,error,*999)
           CALL WriteStringValue(DIAGNOSTIC_OUTPUT_TYPE,"    MPI receive request = ",cmissVector%transfers(domainIdx)% &
             & mpiReceiveRequest,err,error,*999)
+#endif          
         ENDDO !domainIdx
+#endif        
         CALL WriteStringValue(DIAGNOSTIC_OUTPUT_TYPE,"  Data size = ",cmissVector%dataSize,err,error,*999)
         SELECT CASE(distributedVector%dataType)
         CASE(DISTRIBUTED_MATRIX_VECTOR_INTG_TYPE)
@@ -7496,8 +7554,14 @@ CONTAINS
     INTEGER(INTG), INTENT(OUT) :: err !<The error code
     TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
     !Local Variables
-    INTEGER(INTG) :: domainIdx
-    INTEGER(INTG) :: mpiIError,status(MPI_STATUS_SIZE)
+#ifdef WITH_MPI
+#ifdef WITH_F08_MPI
+    TYPE(MPI_Status) :: status
+#else
+    INTEGER(INTG) :: status(MPI_STATUS_SIZE)
+#endif    
+    INTEGER(INTG) :: domainIdx,mpiIError
+#endif    
     TYPE(DistributedVectorCMISSType), POINTER :: cmissVector
     TYPE(DomainMappingType), POINTER :: domainMapping
     TYPE(VARYING_STRING) :: localError
@@ -7513,15 +7577,19 @@ CONTAINS
     CASE(DISTRIBUTED_MATRIX_VECTOR_CMISS_TYPE)
       NULLIFY(cmissVector)
       CALL DistributedVector_CMISSVectorGet(distributedVector,cmissVector,err,error,*999)
+#ifdef WITH_MPI      
 !!TODO: USE MPI_TESTALL and store the request handles as big array.
       DO domainIdx=1,domainMapping%numberOfAdjacentDomains
-        CALL MPI_TEST(cmissVector%transfers(domainIdx)%mpiReceiveRequest,isFinished,status,mpiIError)
+#ifdef WITH_F08_MPI        
+        CALL MPI_Test(cmissVector%transfers(domainIdx)%mpiReceiveRequest,isFinished,status,mpiIError)
+        CALL MPI_ErrorCheck("MPI_Test",mpiIError,err,error,*999)
+#else
+        CALL MPI_TEST(cmissVector%transfers(domainIdx)%mpiReceiveRequest,isFinished,stgatus,mpiIError)
         CALL MPI_ErrorCheck("MPI_TEST",mpiIError,err,error,*999)
+#endif        
         IF(.NOT.isFinished) EXIT
-        !CALL MPI_TEST(cmissVector%transfers(domainIdx)%mpiSendRequest,isFinished,status,mpiIError)
-        !CALL MPI_ErrorCheck("MPI_TEST",mpiIError,err,error,*999)
-        !IF(.NOT.isFinished) EXIT
       ENDDO !domainIdx
+#endif      
     CASE(DISTRIBUTED_MATRIX_VECTOR_PETSC_TYPE)
       CALL FlagError("Cannot test if update isfinished for a PETSc distributed vector.",err,error,*999)          
     CASE DEFAULT
@@ -7549,8 +7617,14 @@ CONTAINS
     INTEGER(INTG), INTENT(OUT) :: err !<The error code
     TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
     !Local Variables
-    INTEGER(INTG) :: domainIdx
-    INTEGER(INTG) :: mpiIError,status(MPI_STATUS_SIZE)
+#ifdef WITH_MPI
+#ifdef WITH_F08_MPI
+    TYPE(MPI_Status) :: status
+#else
+    INTEGER(INTG) :: status(MPI_STATUS_SIZE)
+#endif    
+    INTEGER(INTG) :: domainIdx,mpiIError
+#endif    
     TYPE(DistributedVectorCMISSType), POINTER :: cmissVector
     TYPE(DomainMappingType), POINTER :: domainMapping
     TYPE(VARYING_STRING) :: localError
@@ -7565,11 +7639,18 @@ CONTAINS
     CASE(DISTRIBUTED_MATRIX_VECTOR_CMISS_TYPE)
       NULLIFY(cmissVector)
       CALL DistributedVector_CMISSVectorGet(distributedVector,cmissVector,err,error,*999)
+#ifdef WITH_MPI      
 !!TODO: USE MPI_WAITALL and store the request handles as big array.
       DO domainIdx=1,domainMapping%numberOfAdjacentDomains
+#ifdef WITH_F08_MPI        
+        CALL MPI_Wait(cmissVector%transfers(domainIdx)%mpiReceiveRequest,status,mpiIError)
+        CALL MPI_ErrorCheck("MPI_Wait",mpiIError,err,error,*999)
+#else
         CALL MPI_WAIT(cmissVector%transfers(domainIdx)%mpiReceiveRequest,status,mpiIError)
         CALL MPI_ErrorCheck("MPI_WAIT",mpiIError,err,error,*999)
+#endif        
       ENDDO !domainIdx
+#endif      
     CASE(DISTRIBUTED_MATRIX_VECTOR_PETSC_TYPE)
       CALL FlagError("Cannot wait for finished for a PETSc distributed vector.",err,error,*999)          
     CASE DEFAULT
@@ -7597,7 +7678,14 @@ CONTAINS
     INTEGER(INTG), INTENT(OUT) :: err !<The error code
     TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
     !Local Variables
-    INTEGER(INTG) :: domainIdx,i,mpiIError,numberOfComputationNodes,groupCommunicator
+#ifdef WITH_MPI
+#ifdef WITH_F08_MPI
+    TYPE(MPI_Comm) :: groupCommunicator
+#else
+    INTEGER(INTG) :: groupCommunicator
+#endif    
+    INTEGER(INTG) :: domainIdx,i,mpiIError,numberOfComputationNodes
+#endif    
     TYPE(DistributedVectorCMISSType), POINTER :: cmissVector
     TYPE(DistributedVectorPETScType), POINTER :: petscVector
     TYPE(DomainMappingType), POINTER :: domainMapping
@@ -7613,6 +7701,7 @@ CONTAINS
     CASE(DISTRIBUTED_MATRIX_VECTOR_CMISS_TYPE)
       NULLIFY(cmissVector)
       CALL DistributedVector_CMISSVectorGet(distributedVector,cmissVector,err,error,*999)
+#ifdef WITH_MPI      
       CALL WorkGroup_GroupCommunicatorGet(domainMapping%workGroup,groupCommunicator,err,error,*999)
       CALL WorkGroup_NumberOfGroupNodesGet(domainMapping%workGroup,numberOfComputationNodes,err,error,*999)
       IF(numberOfComputationNodes>1) THEN
@@ -7654,84 +7743,144 @@ CONTAINS
           DO domainIdx=1,domainMapping%numberOfAdjacentDomains
             SELECT CASE(distributedVector%dataType)
             CASE(DISTRIBUTED_MATRIX_VECTOR_INTG_TYPE)
-              CALL MPI_IRECV(cmissVector%transfers(domainIdx)%receiveBufferIntg, &
+#ifdef WITH_F08_MPI              
+              CALL MPI_Irecv(cmissVector%transfers(domainIdx)%receiveBufferIntg, &
+                & cmissVector%transfers(domainIdx)%receiveBufferSize,MPI_INTEGER, &
+                & domainMapping%adjacentDomains(domainIdx)%domainNumber, &
+                & cmissVector%transfers(domainIdx)%receiveTagNumber, &
+                & groupCommunicator,cmissVector%transfers(domainIdx)%mpiReceiveRequest,mpiIError)
+              CALL MPI_ErrorCheck("MPI_Irecv",mpiIError,err,error,*999)
+#else
+              CALL MPI_IRECV(C_LOC(cmissVector%transfers(domainIdx)%receiveBufferIntg), &
                 & cmissVector%transfers(domainIdx)%receiveBufferSize,MPI_INTEGER, &
                 & domainMapping%adjacentDomains(domainIdx)%domainNumber, &
                 & cmissVector%transfers(domainIdx)%receiveTagNumber, &
                 & groupCommunicator,cmissVector%transfers(domainIdx)%mpiReceiveRequest,mpiIError)
               CALL MPI_ErrorCheck("MPI_IRECV",mpiIError,err,error,*999)
+#endif
               IF(diagnostics5) THEN
                 CALL WriteString(DIAGNOSTIC_OUTPUT_TYPE,"MPI IRECV call posted:",err,error,*999)
                 CALL WriteStringValue(DIAGNOSTIC_OUTPUT_TYPE,"  Receive count = ",cmissVector%transfers(domainIdx)% &
                   & receiveBufferSize,err,error,*999)
+#ifdef WITH_F08_MPI
+                CALL WriteString(DIAGNOSTIC_OUTPUT_TYPE,"  Receive datatype = MPI_INTEGER",err,error,*999)
+#else                
                 CALL WriteStringValue(DIAGNOSTIC_OUTPUT_TYPE,"  Receive datatype = ",MPI_INTEGER,err,error,*999)
+#endif                
                 CALL WriteStringValue(DIAGNOSTIC_OUTPUT_TYPE,"  Receive source = ",domainMapping%adjacentDomains(domainIdx)% &
                   & domainNumber,err,error,*999)
                 CALL WriteStringValue(DIAGNOSTIC_OUTPUT_TYPE,"  Receive tag = ",cmissVector%transfers(domainIdx)% &
                   & receiveTagNumber,err,error,*999)
+#ifndef WITH_F08_MPI                
                 CALL WriteStringValue(DIAGNOSTIC_OUTPUT_TYPE,"  Receive comm = ",groupCommunicator,err,error,*999)
                 CALL WriteStringValue(DIAGNOSTIC_OUTPUT_TYPE,"  Receive request = ",cmissVector%transfers(domainIdx)% &
                   & mpiReceiveRequest,err,error,*999)
+#endif                
               ENDIF
             CASE(DISTRIBUTED_MATRIX_VECTOR_SP_TYPE)
-              CALL MPI_IRECV(cmissVector%transfers(domainIdx)%receiveBufferSP, &
+#ifdef WITH_F08_MPI
+              CALL MPI_Irecv(cmissVector%transfers(domainIdx)%receiveBufferSP, &
+                & cmissVector%transfers(domainIdx)%receiveBufferSize,MPI_REAL, &
+                & domainMapping%adjacentDomains(domainIdx)%domainNumber, &
+                & cmissVector%transfers(domainIdx)%receiveTagNumber, &
+                & groupCommunicator,cmissVector%transfers(domainIdx)%mpiReceiveRequest,mpiIError)
+              CALL MPI_ErrorCheck("MPI_Irecv",mpiIError,err,error,*999)
+#else              
+              CALL MPI_IRECV(C_LOC(cmissVector%transfers(domainIdx)%receiveBufferSP), &
                 & cmissVector%transfers(domainIdx)%receiveBufferSize,MPI_REAL, &
                 & domainMapping%adjacentDomains(domainIdx)%domainNumber, &
                 & cmissVector%transfers(domainIdx)%receiveTagNumber, &
                 & groupCommunicator,cmissVector%transfers(domainIdx)%mpiReceiveRequest,mpiIError)
               CALL MPI_ErrorCheck("MPI_IRECV",mpiIError,err,error,*999)
+#endif              
               IF(diagnostics5) THEN
                 CALL WriteString(DIAGNOSTIC_OUTPUT_TYPE,"MPI IRECV call posted:",err,error,*999)
                 CALL WriteStringValue(DIAGNOSTIC_OUTPUT_TYPE,"  Receive count = ",cmissVector%transfers(domainIdx)% &
                   & receiveBufferSize,err,error,*999)
+#ifdef WITH_F08_MPI
+                CALL WriteString(DIAGNOSTIC_OUTPUT_TYPE,"  Receive datatype = MPI_REAL",err,error,*999)
+#else                
                 CALL WriteStringValue(DIAGNOSTIC_OUTPUT_TYPE,"  Receive datatype = ",MPI_REAL,err,error,*999)
+#endif                
                 CALL WriteStringValue(DIAGNOSTIC_OUTPUT_TYPE,"  Receive source = ",domainMapping%adjacentDomains(domainIdx)% &
                   & domainNumber,err,error,*999)
                 CALL WriteStringValue(DIAGNOSTIC_OUTPUT_TYPE,"  Receive tag = ",cmissVector%transfers(domainIdx)% &
                   & receiveTagNumber,err,error,*999)
+#ifndef WITH_F08_MPI                
                 CALL WriteStringValue(DIAGNOSTIC_OUTPUT_TYPE,"  Receive comm = ",groupCommunicator,err,error,*999)
                 CALL WriteStringValue(DIAGNOSTIC_OUTPUT_TYPE,"  Receive request = ",cmissVector%transfers(domainIdx)% &
                   & mpiReceiveRequest,err,error,*999)
+#endif                
               ENDIF
             CASE(DISTRIBUTED_MATRIX_VECTOR_DP_TYPE)
-              CALL MPI_IRECV(cmissVector%transfers(domainIdx)%receiveBufferDP, &
+#ifdef WITH_F08_MPI
+              CALL MPI_Irecv(cmissVector%transfers(domainIdx)%receiveBufferDP, &
+                & cmissVector%transfers(domainIdx)%receiveBufferSize,MPI_DOUBLE_PRECISION, &
+                & domainMapping%adjacentDomains(domainIdx)%domainNumber, &
+                & cmissVector%transfers(domainIdx)%receiveTagNumber, &
+                & groupCommunicator,cmissVector%transfers(domainIdx)%mpiReceiveRequest,mpiIError)
+              CALL MPI_ErrorCheck("MPI_Irecv",mpiIError,err,error,*999)
+#else              
+              CALL MPI_IRECV(C_LOC(cmissVector%transfers(domainIdx)%receiveBufferDP), &
                 & cmissVector%transfers(domainIdx)%receiveBufferSize,MPI_DOUBLE_PRECISION, &
                 & domainMapping%adjacentDomains(domainIdx)%domainNumber, &
                 & cmissVector%transfers(domainIdx)%receiveTagNumber, &
                 & groupCommunicator,cmissVector%transfers(domainIdx)%mpiReceiveRequest,mpiIError)
               CALL MPI_ErrorCheck("MPI_IRECV",mpiIError,err,error,*999)
+#endif              
               IF(diagnostics5) THEN
                 CALL WriteString(DIAGNOSTIC_OUTPUT_TYPE,"MPI IRECV call posted:",err,error,*999)
                 CALL WriteStringValue(DIAGNOSTIC_OUTPUT_TYPE,"  Receive count = ",cmissVector%transfers(domainIdx)% &
                   & receiveBufferSize,err,error,*999)
+#ifdef WITH_F08_MPI
+                CALL WriteString(DIAGNOSTIC_OUTPUT_TYPE,"  Receive datatype = MPI_DOUBLE_PRECISION",err,error,*999)
+#else                
                 CALL WriteStringValue(DIAGNOSTIC_OUTPUT_TYPE,"  Receive datatype = ",MPI_DOUBLE_PRECISION,err,error,*999)
+#endif                
                 CALL WriteStringValue(DIAGNOSTIC_OUTPUT_TYPE,"  Receive source = ",domainMapping%adjacentDomains(domainIdx)% &
                   & domainNumber,err,error,*999)
                 CALL WriteStringValue(DIAGNOSTIC_OUTPUT_TYPE,"  Receive tag = ",cmissVector%transfers(domainIdx)%receiveTagNumber, &
                   & err,error,*999)
+#ifndef WITH_F08_MPI                
                 CALL WriteStringValue(DIAGNOSTIC_OUTPUT_TYPE,"  Receive comm = ",groupCommunicator,err,error,*999)
                 CALL WriteStringValue(DIAGNOSTIC_OUTPUT_TYPE,"  Receive request = ",cmissVector%transfers(domainIdx)% &
                   & mpiReceiveRequest,err,error,*999)
+#endif                
               ENDIF
             CASE(DISTRIBUTED_MATRIX_VECTOR_L_TYPE)
-              CALL MPI_IRECV(cmissVector%transfers(domainIdx)%receiveBufferL, &
+#ifdef WITH_F08_MPI
+              CALL MPI_Irecv(cmissVector%transfers(domainIdx)%receiveBufferL, &
+                & cmissVector%transfers(domainIdx)%receiveBufferSize,MPI_LOGICAL, &
+                & domainMapping%adjacentDomains(domainIdx)%domainNumber, &
+                & cmissVector%transfers(domainIdx)%receiveTagNumber, &
+                & groupCommunicator,cmissVector%transfers(domainIdx)%mpiReceiveRequest,mpiIError)
+              CALL MPI_ErrorCheck("MPI_Irecv",mpiIError,err,error,*999)
+#else              
+              CALL MPI_IRECV(C_LOC(cmissVector%transfers(domainIdx)%receiveBufferL), &
                 & cmissVector%transfers(domainIdx)%receiveBufferSize,MPI_LOGICAL, &
                 & domainMapping%adjacentDomains(domainIdx)%domainNumber, &
                 & cmissVector%transfers(domainIdx)%receiveTagNumber, &
                 & groupCommunicator,cmissVector%transfers(domainIdx)%mpiReceiveRequest,mpiIError)
               CALL MPI_ErrorCheck("MPI_IRECV",mpiIError,err,error,*999)
+#endif              
               IF(diagnostics5) THEN
                 CALL WriteString(DIAGNOSTIC_OUTPUT_TYPE,"MPI IRECV call posted:",err,error,*999)
                 CALL WriteStringValue(DIAGNOSTIC_OUTPUT_TYPE,"  Receive count = ",cmissVector%transfers(domainIdx)% &
                   & receiveBufferSize,err,error,*999)
+#ifdef WITH_F08_MPI
+                CALL WriteString(DIAGNOSTIC_OUTPUT_TYPE,"  Receive datatype = MPI_LOGICAL",err,error,*999)
+#else                
                 CALL WriteStringValue(DIAGNOSTIC_OUTPUT_TYPE,"  Receive datatype = ",MPI_LOGICAL,err,error,*999)
+#endif                
                 CALL WriteStringValue(DIAGNOSTIC_OUTPUT_TYPE,"  Receive source = ",domainMapping%adjacentDomains(domainIdx)% &
                   & domainNumber,err,error,*999)
                 CALL WriteStringValue(DIAGNOSTIC_OUTPUT_TYPE,"  Receive tag = ",cmissVector%transfers(domainIdx)% &
                   & receiveTagNumber,err,error,*999)
+#ifndef WITH_F08_MPI                
                 CALL WriteStringValue(DIAGNOSTIC_OUTPUT_TYPE,"  Receive comm = ",groupCommunicator,err,error,*999)
                 CALL WriteStringValue(DIAGNOSTIC_OUTPUT_TYPE,"  Receive request = ",cmissVector%transfers(domainIdx)% &
                   & mpiReceiveRequest,err,error,*999)
+#endif                
               ENDIF
             CASE(DISTRIBUTED_MATRIX_VECTOR_SPC_TYPE)
               CALL FlagError("Not implemented.",err,error,*999)
@@ -7747,84 +7896,144 @@ CONTAINS
           DO domainIdx=1,domainMapping%numberOfAdjacentDomains
             SELECT CASE(distributedVector%dataType)
             CASE(DISTRIBUTED_MATRIX_VECTOR_INTG_TYPE)
-              CALL MPI_ISEND(cmissVector%transfers(domainIdx)%sendBufferIntg, &
+#ifdef WITH_F08_MPI
+              CALL MPI_Isend(cmissVector%transfers(domainIdx)%sendBufferIntg, &
+                & cmissVector%transfers(domainIdx)%sendBufferSize,MPI_INTEGER, &
+                & domainMapping%adjacentDomains(domainIdx)%domainNumber, &
+                & cmissVector%transfers(domainIdx)%sendTagNumber, &
+                & groupCommunicator,cmissVector%transfers(domainIdx)%mpiSendRequest,mpiIError)
+              CALL MPI_ErrorCheck("MPI_Isend",mpiIError,err,error,*999)
+#else              
+              CALL MPI_ISEND(C_LOC(cmissVector%transfers(domainIdx)%sendBufferIntg), &
                 & cmissVector%transfers(domainIdx)%sendBufferSize,MPI_INTEGER, &
                 & domainMapping%adjacentDomains(domainIdx)%domainNumber, &
                 & cmissVector%transfers(domainIdx)%sendTagNumber, &
                 & groupCommunicator,cmissVector%transfers(domainIdx)%mpiSendRequest,mpiIError)
               CALL MPI_ErrorCheck("MPI_ISEND",mpiIError,err,error,*999)
+#endif              
               IF(diagnostics5) THEN
                 CALL WriteString(DIAGNOSTIC_OUTPUT_TYPE,"MPI ISEND call posted:",err,error,*999)
                 CALL WriteStringValue(DIAGNOSTIC_OUTPUT_TYPE,"  Send count = ",cmissVector%transfers(domainIdx)% &
                   & sendBufferSize,err,error,*999)
+#ifdef WITH_F08_MPI
+                CALL WriteString(DIAGNOSTIC_OUTPUT_TYPE,"  Send datatype = MPI_INTEGER",err,error,*999)
+#else                
                 CALL WriteStringValue(DIAGNOSTIC_OUTPUT_TYPE,"  Send datatype = ",MPI_INTEGER,err,error,*999)
+#endif                
                 CALL WriteStringValue(DIAGNOSTIC_OUTPUT_TYPE,"  Send dest = ",domainMapping%adjacentDomains(domainIdx)% &
                   & domainNumber,err,error,*999)
                 CALL WriteStringValue(DIAGNOSTIC_OUTPUT_TYPE,"  Send tag = ",cmissVector%transfers(domainIdx)%sendTagNumber, &
                   & err,error,*999)
+#ifndef WITH_F08_MPI                
                 CALL WriteStringValue(DIAGNOSTIC_OUTPUT_TYPE,"  Send comm = ",groupCommunicator,err,error,*999)
                 CALL WriteStringValue(DIAGNOSTIC_OUTPUT_TYPE,"  Send request = ",cmissVector%transfers(domainIdx)% &
                   & mpiSendRequest,err,error,*999)
+#endif                
               ENDIF
             CASE(DISTRIBUTED_MATRIX_VECTOR_SP_TYPE)
-              CALL MPI_ISEND(cmissVector%transfers(domainIdx)%sendBufferSP, &
+#ifdef WITH_F08_MPI
+              CALL MPI_Isend(cmissVector%transfers(domainIdx)%sendBufferSP, &
+                & cmissVector%transfers(domainIdx)%sendBufferSize,MPI_REAL, &
+                & domainMapping%adjacentDomains(domainIdx)%domainNumber, &
+                & cmissVector%transfers(domainIdx)%sendTagNumber, &
+                & groupCommunicator,cmissVector%transfers(domainIdx)%mpiSendRequest,mpiIError)
+              CALL MPI_ErrorCheck("MPI_Isend",mpiIError,err,error,*999)
+#else              
+              CALL MPI_ISEND(C_LOC(cmissVector%transfers(domainIdx)%sendBufferSP), &
                 & cmissVector%transfers(domainIdx)%sendBufferSize,MPI_REAL, &
                 & domainMapping%adjacentDomains(domainIdx)%domainNumber, &
                 & cmissVector%transfers(domainIdx)%sendTagNumber, &
                 & groupCommunicator,cmissVector%transfers(domainIdx)%mpiSendRequest,mpiIError)
               CALL MPI_ErrorCheck("MPI_ISEND",mpiIError,err,error,*999)
+#endif              
               IF(diagnostics5) THEN
                 CALL WriteString(DIAGNOSTIC_OUTPUT_TYPE,"MPI ISEND call posted:",err,error,*999)
                 CALL WriteStringValue(DIAGNOSTIC_OUTPUT_TYPE,"  Send count = ",cmissVector%transfers(domainIdx)% &
                   & sendBufferSize,err,error,*999)
+#ifdef WITH_F08_MPI
+                CALL WriteString(DIAGNOSTIC_OUTPUT_TYPE,"  Send datatype = MPI_REAL",err,error,*999)
+#else                
                 CALL WriteStringValue(DIAGNOSTIC_OUTPUT_TYPE,"  Send datatype = ",MPI_REAL,err,error,*999)
+#endif                
                 CALL WriteStringValue(DIAGNOSTIC_OUTPUT_TYPE,"  Send dest = ",domainMapping%adjacentDomains(domainIdx)% &
                   & domainNumber,err,error,*999)
                 CALL WriteStringValue(DIAGNOSTIC_OUTPUT_TYPE,"  Send tag = ",cmissVector%transfers(domainIdx)%sendTagNumber, &
                   & err,error,*999)
+#ifndef WITH_F08_MPI                
                 CALL WriteStringValue(DIAGNOSTIC_OUTPUT_TYPE,"  Send comm = ",groupCommunicator,err,error,*999)
                 CALL WriteStringValue(DIAGNOSTIC_OUTPUT_TYPE,"  Send request = ",cmissVector%transfers(domainIdx)% &
                   & mpiSendRequest,err,error,*999)
+#endif                
               ENDIF
             CASE(DISTRIBUTED_MATRIX_VECTOR_DP_TYPE)
-              CALL MPI_ISEND(cmissVector%transfers(domainIdx)%sendBufferDP, &
+#ifdef WITH_F08_MPI
+              CALL MPI_Isend(cmissVector%transfers(domainIdx)%sendBufferDP, &
+                & cmissVector%transfers(domainIdx)%sendBufferSize,MPI_DOUBLE_PRECISION, &
+                & domainMapping%adjacentDomains(domainIdx)%domainNumber, &
+                & cmissVector%transfers(domainIdx)%sendTagNumber, &
+                & groupCommunicator,cmissVector%transfers(domainIdx)%mpiSendRequest,mpiIError)
+              CALL MPI_ErrorCheck("MPI_Isend",mpiIError,err,error,*999)
+#else              
+              CALL MPI_ISEND(C_LOC(cmissVector%transfers(domainIdx)%sendBufferDP), &
                 & cmissVector%transfers(domainIdx)%sendBufferSize,MPI_DOUBLE_PRECISION, &
                 & domainMapping%adjacentDomains(domainIdx)%domainNumber, &
                 & cmissVector%transfers(domainIdx)%sendTagNumber, &
                 & groupCommunicator,cmissVector%transfers(domainIdx)%mpiSendRequest,mpiIError)
               CALL MPI_ErrorCheck("MPI_ISEND",mpiIError,err,error,*999)
+#endif              
               IF(diagnostics5) THEN
                 CALL WriteString(DIAGNOSTIC_OUTPUT_TYPE,"MPI ISEND call posted:",err,error,*999)
                 CALL WriteStringValue(DIAGNOSTIC_OUTPUT_TYPE,"  Send count = ",cmissVector%transfers(domainIdx)% &
                   & sendBufferSize,err,error,*999)
+#ifdef WITH_F08_MPI
+                CALL WriteString(DIAGNOSTIC_OUTPUT_TYPE,"  Send datatype = MPI_DOUBLE_PRECISION",err,error,*999)
+#else                
                 CALL WriteStringValue(DIAGNOSTIC_OUTPUT_TYPE,"  Send datatype = ",MPI_DOUBLE_PRECISION,err,error,*999)
+#endif                
                 CALL WriteStringValue(DIAGNOSTIC_OUTPUT_TYPE,"  Send dest = ",domainMapping%adjacentDomains(domainIdx)% &
                   & domainNumber,err,error,*999)
                 CALL WriteStringValue(DIAGNOSTIC_OUTPUT_TYPE,"  Send tag = ",cmissVector%transfers(domainIdx)%sendTagNumber, &
                   & err,error,*999)
+#ifndef WITH_F08_MPI                
                 CALL WriteStringValue(DIAGNOSTIC_OUTPUT_TYPE,"  Send comm = ",groupCommunicator,err,error,*999)
                 CALL WriteStringValue(DIAGNOSTIC_OUTPUT_TYPE,"  Send request = ",cmissVector%transfers(domainIdx)%mpiSendRequest, &
                   & err,error,*999)
+#endif
               ENDIF
             CASE(DISTRIBUTED_MATRIX_VECTOR_L_TYPE)
-              CALL MPI_ISEND(cmissVector%transfers(domainIdx)%sendBufferL, &
+#ifdef WITH_F08_MPI
+              CALL MPI_Isend(cmissVector%transfers(domainIdx)%sendBufferL, &
+                & cmissVector%transfers(domainIdx)%sendBufferSize,MPI_LOGICAL, &
+                & domainMapping%adjacentDomains(domainIdx)%domainNumber, &
+                & cmissVector%transfers(domainIdx)%sendTagNumber, &
+                & groupCommunicator,cmissVector%transfers(domainIdx)%mpiSendRequest,mpiIError)
+              CALL MPI_ErrorCheck("MPI_Isend",mpiIError,err,error,*999)
+#else              
+              CALL MPI_ISEND(C_LOC(cmissVector%transfers(domainIdx)%sendBufferL), &
                 & cmissVector%transfers(domainIdx)%sendBufferSize,MPI_LOGICAL, &
                 & domainMapping%adjacentDomains(domainIdx)%domainNumber, &
                 & cmissVector%transfers(domainIdx)%sendTagNumber, &
                 & groupCommunicator,cmissVector%transfers(domainIdx)%mpiSendRequest,mpiIError)
               CALL MPI_ErrorCheck("MPI_ISEND",mpiIError,err,error,*999)
+#endif              
               IF(diagnostics5) THEN
                 CALL WriteString(DIAGNOSTIC_OUTPUT_TYPE,"MPI ISEND call posted:",err,error,*999)
                 CALL WriteStringValue(DIAGNOSTIC_OUTPUT_TYPE,"  Send count = ",cmissVector%transfers(domainIdx)%sendBufferSize, &
                   & err,error,*999)
+#ifdef WITH_F08_MPI
+                CALL WriteString(DIAGNOSTIC_OUTPUT_TYPE,"  Send datatype = MPI_LOGICAL",err,error,*999)
+#else                
                 CALL WriteStringValue(DIAGNOSTIC_OUTPUT_TYPE,"  Send datatype = ",MPI_LOGICAL,err,error,*999)
+#endif                
                 CALL WriteStringValue(DIAGNOSTIC_OUTPUT_TYPE,"  Send dest = ",domainMapping%adjacentDomains(domainIdx)% &
                   & domainNumber,err,error,*999)
                 CALL WriteStringValue(DIAGNOSTIC_OUTPUT_TYPE,"  Send tag = ",cmissVector%transfers(domainIdx)%sendTagNumber, &
                   & err,error,*999)
+#ifndef WITH_F08_MPI                
                 CALL WriteStringValue(DIAGNOSTIC_OUTPUT_TYPE,"  Send comm = ",groupCommunicator,err,error,*999)
                 CALL WriteStringValue(DIAGNOSTIC_OUTPUT_TYPE,"  Send request = ",cmissVector%transfers(domainIdx)%mpiSendRequest, &
                   & err,error,*999)
+#endif
               ENDIF
             CASE(DISTRIBUTED_MATRIX_VECTOR_SPC_TYPE)
               CALL FlagError("Not implemented.",err,error,*999)
@@ -7838,14 +8047,17 @@ CONTAINS
           ENDDO !domainIdx
         ENDIF
       ENDIF
+#endif      
     CASE(DISTRIBUTED_MATRIX_VECTOR_PETSC_TYPE)          
       NULLIFY(petscVector)
       CALL DistributedVector_PETScVectorGet(distributedVector,petscVector,err,error,*999)
+#ifdef WITH_PETSC      
       IF(petscVector%useOverrideVector) THEN
         CALL Petsc_VecAssemblyBegin(petscVector%overrideVector,err,error,*999)
       ELSE
         CALL Petsc_VecAssemblyBegin(petscVector%vector,err,error,*999)
       ENDIF
+#endif      
     CASE DEFAULT
       localError="The distributed vector library type of "// &
         & TRIM(NumberToVString(distributedVector%libraryType,"*",err,error))//" is invalid."
@@ -7857,6 +8069,7 @@ CONTAINS
       CASE(DISTRIBUTED_MATRIX_VECTOR_CMISS_TYPE)
         CALL WriteString(DIAGNOSTIC_OUTPUT_TYPE,"Distributed vector :",err,error,*999)
         CALL WriteStringValue(DIAGNOSTIC_OUTPUT_TYPE,"  Data type = ",distributedVector%dataType,err,error,*999)
+#ifdef WITH_MPI        
         CALL WriteStringValue(DIAGNOSTIC_OUTPUT_TYPE,"  Base tag number = ",cmissVector%baseTagNumber,err,error,*999)
         CALL WriteStringValue(DIAGNOSTIC_OUTPUT_TYPE,"  Number of adjacent domains = ",domainMapping%numberOfAdjacentDomains, &
           & err,error,*999)
@@ -7868,11 +8081,14 @@ CONTAINS
             & receiveTagNumber,err,error,*999)
           CALL WriteStringValue(DIAGNOSTIC_OUTPUT_TYPE,"    Send tag number = ",cmissVector%transfers(domainIdx)%sendTagNumber, &
             & err,error,*999)
+#ifndef WITH_F08_MPI          
           CALL WriteStringValue(DIAGNOSTIC_OUTPUT_TYPE,"    MPI send request = ",cmissVector%transfers(domainIdx)%mpiSendRequest, &
             & err,error,*999)
           CALL WriteStringValue(DIAGNOSTIC_OUTPUT_TYPE,"    MPI receive request = ",cmissVector%transfers(domainIdx)% &
             & mpiReceiveRequest,err,error,*999)
+#endif          
         ENDDO !domainIdx
+#endif        
         CALL WriteStringValue(DIAGNOSTIC_OUTPUT_TYPE,"  Data size = ",cmissVector%dataSize,err,error,*999)
         SELECT CASE(distributedVector%dataType)
         CASE(DISTRIBUTED_MATRIX_VECTOR_INTG_TYPE)

@@ -84,7 +84,9 @@ class LibrarySource(object):
 
             def add(self, match, line_number):
                 for symbol in match.group(1).split(','):
-                    self.source_file.public.add(symbol.strip())
+                    stripsymbol = symbol.strip()
+                    if( not stripsymbol in ['OC_MAJOR_VERSION','OC_MINOR_VERSION','OC_PATCH_VERSION']):
+                        self.source_file.public.add(symbol.strip())
 
         class ConstantFinder(LineFinder):
             line_re = re.compile(
@@ -216,11 +218,11 @@ class LibrarySource(object):
         self.public_subroutines = sorted(
             self.public_subroutines, key=attrgetter('name'))
         # Remove oc...TypesCopy routines, as these are only used within the
-        # C bindings.  Also remove oc_GeneratedMeshSurfaceGet for now as it
+        # C bindings.  Also remove OC_GeneratedMeshSurfaceGet for now as it
         # takes an allocatable array but will be removed soon anyways.
         self.public_subroutines = list(filter(
                 lambda r:
-                not (r.name.startswith('oc_GeneratedMesh_SurfaceGet') or
+                not (r.name.startswith('OC_GeneratedMesh_SurfaceGet') or
                 r.name.endswith('TypesCopy')),
                 self.public_subroutines))
 
@@ -557,9 +559,9 @@ class Subroutine(CodeObject):
             return
 
         if self.name.count('_') > 1:
-            # Type name eg. = oc_Basis
-            # Sometimes the type name has an extra bit at the end, eg oc_FieldMLIO,
-            # but routines are named oc_FieldML_OutputCreate, so we check if
+            # Type name eg. = OC_Basis
+            # Sometimes the type name has an extra bit at the end, eg OC_FieldMLIO,
+            # but routines are named OC_FieldML_OutputCreate, so we check if
             # the parameter type name starts with the routine type name
             routine_type_name = '_'.join(self.name.split('_')[0:2])
             # Object parameter is either first or last, it is last if this
@@ -569,7 +571,7 @@ class Subroutine(CodeObject):
                 if param_type_name.startswith(routine_type_name):
                     self.self_idx = 0
                     return param_type_name
-            # Some stuff like oc_FieldML_OutputCreate has the "self" object
+            # Some stuff like OC_FieldML_OutputCreate has the "self" object
             # as the last parameter, check for these here:
             if (self.parameters[-1].var_type == Parameter.CUSTOM_TYPE and
                     self.name.find('Create') > -1):

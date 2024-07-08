@@ -39,15 +39,15 @@ INITIALISE = """Initialise()
 ErrorHandlingModeSet(ErrorHandlingModes.OUTPUT_ERROR)
 """
 
-PREFIX = 'oc_'
+PREFIX = 'OC_'
 
 def generate(opencmiss_source_dir, args):
     """Generate the OpenCMISS Python module
     This wraps the lower level extension module created by SWIG
     """
     swig_module_name = args[0]
-    opencmiss_py_path = args[1]
-    module = open(os.sep.join((opencmiss_py_path, 'opencmiss.py')), 'w')
+    opencmiss_py_name = args[1]
+    module = open(opencmiss_py_name, 'w')
 
     library = LibrarySource(opencmiss_source_dir)
 
@@ -190,7 +190,7 @@ def property_docstring(property):
 
 
 def method_name(type, routine):
-    "Return the name of a method of an object"""
+    """Return the name of a method of an object"""
 
     c_name = subroutine_c_names(routine)[0]
     if c_name.count('_') > 1:
@@ -386,7 +386,7 @@ def replace_doxygen_commands(param):
     comment = param.comment
 
     if param.var_type == Parameter.INTEGER:
-        see_re = r'\.?\s*\\see\s*OPENCMISS_([^\s,\.]*)'
+        see_re = r'\.?\s*\\see\s*OpenCMISS_([^\s,\.]*)'
         match = re.search(see_re, comment)
         if match:
             enum = match.group(1)

@@ -48,7 +48,6 @@ MODULE FIELDML_INPUT_ROUTINES
   USE BaseRoutines
   USE BasisRoutines
   USE BasisAccessRoutines
-  USE CMISS
   USE ComputationRoutines
   USE ComputationAccessRoutines
   USE Constants
