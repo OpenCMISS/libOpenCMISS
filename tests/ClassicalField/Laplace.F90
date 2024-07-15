@@ -49,6 +49,7 @@
 PROGRAM LaplaceExample
 
   USE OpenCMISS
+  
 #ifdef WITH_MPI
 #ifdef WITH_F08_MPI
   USE MPI_F08
@@ -73,30 +74,30 @@ PROGRAM LaplaceExample
 
   !Test program parameters
 
-  REAL(OCRP), PARAMETER :: HEIGHT=1.0_OCRP
-  REAL(OCRP), PARAMETER :: WIDTH=1.0_OCRP
-  REAL(OCRP), PARAMETER :: LENGTH=1.0_OCRP
+  REAL(OC_RP), PARAMETER :: HEIGHT=1.0_OC_RP
+  REAL(OC_RP), PARAMETER :: WIDTH=1.0_OC_RP
+  REAL(OC_RP), PARAMETER :: LENGTH=1.0_OC_RP
 
-  INTEGER(OCIntg), PARAMETER :: ContextUserNumber=1
-  INTEGER(OCIntg), PARAMETER :: CoordinateSystemUserNumber=2
-  INTEGER(OCIntg), PARAMETER :: RegionUserNumber=3
-  INTEGER(OCIntg), PARAMETER :: BasisUserNumber=4
-  INTEGER(OCIntg), PARAMETER :: GeneratedMeshUserNumber=5
-  INTEGER(OCIntg), PARAMETER :: MeshUserNumber=6
-  INTEGER(OCIntg), PARAMETER :: DecompositionUserNumber=7
-  INTEGER(OCIntg), PARAMETER :: DecomposerUserNumber=8
-  INTEGER(OCIntg), PARAMETER :: GeometricFieldUserNumber=9
-  INTEGER(OCIntg), PARAMETER :: EquationsSetFieldUserNumber=10
-  INTEGER(OCIntg), PARAMETER :: DependentFieldUserNumber=11
-  INTEGER(OCIntg), PARAMETER :: EquationsSetUserNumber=12
-  INTEGER(OCIntg), PARAMETER :: ProblemUserNumber=13
+  INTEGER(OC_Intg), PARAMETER :: ContextUserNumber=1
+  INTEGER(OC_Intg), PARAMETER :: CoordinateSystemUserNumber=2
+  INTEGER(OC_Intg), PARAMETER :: RegionUserNumber=3
+  INTEGER(OC_Intg), PARAMETER :: BasisUserNumber=4
+  INTEGER(OC_Intg), PARAMETER :: GeneratedMeshUserNumber=5
+  INTEGER(OC_Intg), PARAMETER :: MeshUserNumber=6
+  INTEGER(OC_Intg), PARAMETER :: DecompositionUserNumber=7
+  INTEGER(OC_Intg), PARAMETER :: DecomposerUserNumber=8
+  INTEGER(OC_Intg), PARAMETER :: GeometricFieldUserNumber=9
+  INTEGER(OC_Intg), PARAMETER :: EquationsSetFieldUserNumber=10
+  INTEGER(OC_Intg), PARAMETER :: DependentFieldUserNumber=11
+  INTEGER(OC_Intg), PARAMETER :: EquationsSetUserNumber=12
+  INTEGER(OC_Intg), PARAMETER :: ProblemUserNumber=13
  
   !Program types
   
   !Program variables
 
-  INTEGER(OCIntg) :: NUMBER_OF_ARGUMENTS,ARGUMENT_LENGTH,STATUS
-  INTEGER(OCIntg) :: NUMBER_GLOBAL_X_ELEMENTS,NUMBER_GLOBAL_Y_ELEMENTS,NUMBER_GLOBAL_Z_ELEMENTS, &
+  INTEGER(OC_Intg) :: NUMBER_OF_ARGUMENTS,ARGUMENT_LENGTH,STATUS
+  INTEGER(OC_Intg) :: NUMBER_GLOBAL_X_ELEMENTS,NUMBER_GLOBAL_Y_ELEMENTS,NUMBER_GLOBAL_Z_ELEMENTS, &
     & INTERPOLATION_TYPE,NUMBER_OF_GAUSS_XI
   CHARACTER(LEN=255) :: COMMAND_ARGUMENT,Filename
 
@@ -130,11 +131,11 @@ PROGRAM LaplaceExample
   
   !Generic OpenOC variables
   
-  INTEGER(OCIntg) :: NumberOfComputationNodes,ComputationNodeNumber
-  INTEGER(OCIntg) :: decompositionIndex,EquationsSetIndex
-  INTEGER(OCIntg) :: FirstNodeNumber,LastNodeNumber
-  INTEGER(OCIntg) :: FirstNodeDomain,LastNodeDomain
-  INTEGER(OCIntg) :: Err
+  INTEGER(OC_Intg) :: NumberOfComputationNodes,ComputationNodeNumber
+  INTEGER(OC_Intg) :: decompositionIndex,EquationsSetIndex
+  INTEGER(OC_Intg) :: FirstNodeNumber,LastNodeNumber
+  INTEGER(OC_Intg) :: FirstNodeDomain,LastNodeDomain
+  INTEGER(OC_Intg) :: Err
   
 #ifdef WIN32
   !Initialise QuickWin
@@ -339,7 +340,7 @@ PROGRAM LaplaceExample
   CALL OC_EquationsSet_DependentCreateFinish(EquationsSet,Err)
 
   !Initialise the field with an initial guess
-  CALL OC_Field_ComponentValuesInitialise(DependentField,OC_FIELD_U_VARIABLE_TYPE,OC_FIELD_VALUES_SET_TYPE,1,0.5_OCRP, &
+  CALL OC_Field_ComponentValuesInitialise(DependentField,OC_FIELD_U_VARIABLE_TYPE,OC_FIELD_VALUES_SET_TYPE,1,0.5_OC_RP, &
     & Err)
 
   !Create the equations set equations
@@ -379,8 +380,8 @@ PROGRAM LaplaceExample
   !CALL OC_Solver_OutputTypeSet(Solver,OC_SOLVER_MATRIX_OUTPUT,Err)
   
   CALL OC_Solver_LinearTypeSet(Solver,OC_SOLVER_LINEAR_ITERATIVE_SOLVE_TYPE,Err)
-  CALL OC_Solver_LinearIterativeAbsoluteToleranceSet(Solver,1.0E-12_OCRP,Err)
-  CALL OC_Solver_LinearIterativeRelativeToleranceSet(Solver,1.0E-12_OCRP,Err)
+  CALL OC_Solver_LinearIterativeAbsoluteToleranceSet(Solver,1.0E-12_OC_RP,Err)
+  CALL OC_Solver_LinearIterativeRelativeToleranceSet(Solver,1.0E-12_OC_RP,Err)
 
   !CALL OC_Solver_LinearTypeSet(Solver,OC_SOLVER_LINEAR_DIRECT_SOLVE_TYPE,Err)  
   !CALL OC_Solver_LinearTypeSet(Solver,OC_SOLVER_LINEAR_DIRECT_SOLVE_TYPE,Err)
@@ -418,11 +419,11 @@ PROGRAM LaplaceExample
   CALL OC_Decomposition_NodeDomainGet(Decomposition,LastNodeNumber,1,LastNodeDomain,Err)
   IF(FirstNodeDomain==ComputationNodeNumber) THEN
     CALL OC_BoundaryConditions_SetNode(BoundaryConditions,DependentField,OC_FIELD_U_VARIABLE_TYPE,1,1,FirstNodeNumber,1, &
-      & OC_BOUNDARY_CONDITION_FIXED,0.0_OCRP,Err)
+      & OC_BOUNDARY_CONDITION_FIXED,0.0_OC_RP,Err)
   ENDIF
   IF(LastNodeDomain==ComputationNodeNumber) THEN
     CALL OC_BoundaryConditions_SetNode(BoundaryConditions,DependentField,OC_FIELD_U_VARIABLE_TYPE,1,1,LastNodeNumber,1, &
-      & OC_BOUNDARY_CONDITION_FIXED,1.0_OCRP,Err)
+      & OC_BOUNDARY_CONDITION_FIXED,1.0_OC_RP,Err)
   ENDIF
   !Finish the creation of the equations set boundary conditions
   CALL OC_SolverEquations_BoundaryConditionsCreateFinish(SolverEquations,Err)

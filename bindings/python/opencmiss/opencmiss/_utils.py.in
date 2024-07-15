@@ -74,5 +74,5 @@ def wrap_opencmiss_routine(routine, args=None):
         elif status == _@OpenCMISS_Python_MODULE_NAME@.cvar.OC_ERROR_CONVERTING_POINTER:
             raise OCError("Error converting pointer")
         else:
-            raise OCError(_@OpenCMISS_Python_MODULE_NAME@.oc_ExtractErrorMessage()[1])
+            raise OCError(_@OpenCMISS_Python_MODULE_NAME@.OC_ExtractErrorMessage()[1])
     return return_val

@@ -58,32 +58,32 @@ PROGRAM Analytic1DDiffusionExample
 
   !Test program parameters
 
-  REAL(OCRP), PARAMETER ::    PI=3.141592653589793238462643383279502884197_OCRP
+  REAL(OC_RP), PARAMETER ::    PI=3.141592653589793238462643383279502884197_OC_RP
 
-  INTEGER(OCIntg), PARAMETER :: NUMBER_GLOBAL_X_ELEMENTS=6
-  REAL(OCRP), PARAMETER :: LENGTH=3.0_OCRP
-  REAL(OCRP), PARAMETER :: END_TIME=0.1_OCRP
-  REAL(OCRP), PARAMETER :: TIME_STEP=0.01_OCRP
-  REAL(OCRP), PARAMETER :: A=1.0_OCRP
-  REAL(OCRP), PARAMETER :: B=PI/2.0_OCRP
-  REAL(OCRP), PARAMETER :: C=0.0_OCRP
-  REAL(OCRP), PARAMETER :: K=1.0_OCRP
+  INTEGER(OC_Intg), PARAMETER :: NUMBER_GLOBAL_X_ELEMENTS=6
+  REAL(OC_RP), PARAMETER :: LENGTH=3.0_OC_RP
+  REAL(OC_RP), PARAMETER :: END_TIME=0.1_OC_RP
+  REAL(OC_RP), PARAMETER :: TIME_STEP=0.01_OC_RP
+  REAL(OC_RP), PARAMETER :: A=1.0_OC_RP
+  REAL(OC_RP), PARAMETER :: B=PI/2.0_OC_RP
+  REAL(OC_RP), PARAMETER :: C=0.0_OC_RP
+  REAL(OC_RP), PARAMETER :: K=1.0_OC_RP
   
-  INTEGER(OCIntg), PARAMETER :: ContextUserNumber=1
-  INTEGER(OCIntg), PARAMETER :: CoordinateSystemUserNumber=2
-  INTEGER(OCIntg), PARAMETER :: RegionUserNumber=3
-  INTEGER(OCIntg), PARAMETER :: BasisUserNumber=4
-  INTEGER(OCIntg), PARAMETER :: GeneratedMeshUserNumber=5
-  INTEGER(OCIntg), PARAMETER :: MeshUserNumber=6
-  INTEGER(OCIntg), PARAMETER :: DecompositionUserNumber=7
-  INTEGER(OCIntg), PARAMETER :: DecomposerUserNumber=8
-  INTEGER(OCIntg), PARAMETER :: GeometricFieldUserNumber=9
-  INTEGER(OCIntg), PARAMETER :: DependentFieldUserNumber=10
-  INTEGER(OCIntg), PARAMETER :: MaterialsFieldUserNumber=11
-  INTEGER(OCIntg), PARAMETER :: EquationsSetUserNumber=12
-  INTEGER(OCIntg), PARAMETER :: EquationsSetFieldUserNumber=13
-  INTEGER(OCIntg), PARAMETER :: ProblemUserNumber=14
-  INTEGER(OCIntg), PARAMETER :: AnalyticFieldUserNumber=15
+  INTEGER(OC_Intg), PARAMETER :: ContextUserNumber=1
+  INTEGER(OC_Intg), PARAMETER :: CoordinateSystemUserNumber=2
+  INTEGER(OC_Intg), PARAMETER :: RegionUserNumber=3
+  INTEGER(OC_Intg), PARAMETER :: BasisUserNumber=4
+  INTEGER(OC_Intg), PARAMETER :: GeneratedMeshUserNumber=5
+  INTEGER(OC_Intg), PARAMETER :: MeshUserNumber=6
+  INTEGER(OC_Intg), PARAMETER :: DecompositionUserNumber=7
+  INTEGER(OC_Intg), PARAMETER :: DecomposerUserNumber=8
+  INTEGER(OC_Intg), PARAMETER :: GeometricFieldUserNumber=9
+  INTEGER(OC_Intg), PARAMETER :: DependentFieldUserNumber=10
+  INTEGER(OC_Intg), PARAMETER :: MaterialsFieldUserNumber=11
+  INTEGER(OC_Intg), PARAMETER :: EquationsSetUserNumber=12
+  INTEGER(OC_Intg), PARAMETER :: EquationsSetFieldUserNumber=13
+  INTEGER(OC_Intg), PARAMETER :: ProblemUserNumber=14
+  INTEGER(OC_Intg), PARAMETER :: AnalyticFieldUserNumber=15
   !Program types
   
   !Program variables
@@ -118,9 +118,9 @@ PROGRAM Analytic1DDiffusionExample
   
   !Generic CMISS variables
 
-  INTEGER(OCIntg) :: numberOfComputationNodes, computationNodeNumber
-  INTEGER(OCIntg) :: decompositionIndex, EquationsSetIndex
-  INTEGER(OCIntg) :: err
+  INTEGER(OC_Intg) :: numberOfComputationNodes, computationNodeNumber
+  INTEGER(OC_Intg) :: decompositionIndex, EquationsSetIndex
+  INTEGER(OC_Intg) :: err
   
 #ifdef WIN32
   !Initialise QuickWin
@@ -285,7 +285,7 @@ PROGRAM Analytic1DDiffusionExample
   !Get the control loop
   CALL OC_Problem_ControlLoopGet(Problem,OC_CONTROL_LOOP_NODE,ControlLoop,err)
   !Set the times
-  CALL OC_ControlLoop_TimesSet(ControlLoop,0.0_OCRP,END_TIME,TIME_STEP,err)
+  CALL OC_ControlLoop_TimesSet(ControlLoop,0.0_OC_RP,END_TIME,TIME_STEP,err)
   !Finish creating the problem control loop
   CALL OC_Problem_ControlLoopCreateFinish(Problem,err)
 

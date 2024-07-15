@@ -52,7 +52,7 @@ MODULE OpenCMISSCellML
   USE CellMLAccessRoutines
   
 #ifdef WITH_CELLML
-  USE CELLML_MODEL_DEFINITION
+  USE OpenCMISSCellMLModel
 #endif
   
   ! Moved this usage declaration outside the preprocessor definition,
@@ -584,20 +584,19 @@ CONTAINS
       
 #ifdef WITH_CELLML
         
-      !CALL CELLML_MODEL_DEFINITION_SET_SAVE_TEMP_FILES(cellMLModel%ptr,1)
-      errorCode=CELLML_MODEL_DEFINITION_INSTANTIATE(cellMLModel%ptr)
+      !CALL CellMLModel_SetSaveTemporaryFiles(cellMLModel%ptr,1)
+      errorCode=CellMLModel_Instantiate(cellMLModel%ptr)
       IF(errorCode/=0) THEN
         localError="Error "//TRIM(NumberToVString(errorCode,"*",err,error))// &
           & " while instantiating CellML model index "//TRIM(NumberToVString(modelIdx,"*",err,error))//"."
         CALL FlagError(localError,err,error,*999)
       ENDIF
-      cellMLModel%numberOfState=CELLML_MODEL_DEFINITION_GET_N_RATES(cellMLModel%ptr)
-      IF(cellMLModel%numberOfState>cellML%maximumNumberOfState) &
-        & cellML%maximumNumberOfState=cellMLModel%numberOfState
-      cellMLModel%numberOfParameters=CELLML_MODEL_DEFINITION_GET_N_CONSTANTS(cellMLModel%ptr)
+      cellMLModel%numberOfState=CellMLModel_GetNumberRates(cellMLModel%ptr)
+      IF(cellMLModel%numberOfState>cellML%maximumNumberOfState) cellML%maximumNumberOfState=cellMLModel%numberOfState
+      cellMLModel%numberOfParameters=CellMLMOdel_GetNumberConstantsS(cellMLModel%ptr)
       IF(cellMLModel%numberOfParameters>cellML%maximumNumberOfParameters) &
         & cellML%maximumNumberOfParameters=cellMLModel%numberOfParameters
-      cellMLModel%numberOfIntermediate=CELLML_MODEL_DEFINITION_GET_N_ALGEBRAIC(cellMLModel%ptr)
+      cellMLModel%numberOfIntermediate=CellMLModel_GetNumberAlgebraic(cellMLModel%ptr)
       IF(cellMLModel%numberOfIntermediate>cellML%maximumNumberOfIntermediate)  &
         & cellML%maximumNumberOfIntermediate=cellMLModel%numberOfIntermediate
       
@@ -1270,7 +1269,7 @@ CONTAINS
 #ifdef WITH_CELLML
 
     IF(ASSOCIATED(cellMLModel)) THEN
-      IF(C_ASSOCIATED(cellMLModel%ptr)) CALL DESTROY_CELLML_MODEL_DEFINITION(cellMLModel%ptr)
+      IF(C_ASSOCIATED(cellMLModel%ptr)) CALL CellMLModel_Destroy(cellMLModel%ptr)
       cellMLModel%modelId=""
       DEALLOCATE(cellMLModel)
     ENDIF
@@ -1539,7 +1538,7 @@ CONTAINS
     CALL CellML_ModelInitialise(newModel,err,error,*999)
     cURIL = LEN_TRIM(URI)
     WRITE(cURI,'(A,A)') URI(1:cURIL),C_NULL_CHAR
-    newModel%ptr = CREATE_CELLML_MODEL_DEFINITION(cURI)
+    newModel%ptr=CellMLModel_Create(cURI)
     IF(.NOT.C_ASSOCIATED(newModel%ptr)) CALL FlagError("Error instantiating CellML model.",err,error,*999)
     newModel%globalNumber=cellML%numberOfModels+1
     newModel%modelId=URI(1:cURIL)
@@ -1633,7 +1632,7 @@ CONTAINS
     !All input arguments are ok.
     cNameL = LEN_TRIM(variableID)
     WRITE(cName,'(A,A)') variableID(1:cNameL),C_NULL_CHAR
-    errorCode = CELLML_MODEL_DEFINITION_SET_VARIABLE_AS_KNOWN(cellMLModel%ptr,cName)
+    errorCode=CellMLModel_SetVariableAsKnown(cellMLModel%ptr,cName)
     IF(errorCode/=0) THEN
       localError="Error "//TRIM(NumberToVString(errorCode,"*",err,error))// &
         & ". The specified variable can not be set as known: "//variableID
@@ -1718,15 +1717,15 @@ CONTAINS
     !All input arguments are ok.
     cNameL = LEN_TRIM(variableID)
     WRITE(cName,'(A,A)') variableID(1:cNameL),C_NULL_CHAR
-    errorCode = CELLML_MODEL_DEFINITION_SET_VARIABLE_AS_WANTED(cellMLModel%ptr,cName)
+    errorCode=CellMLModel_SetVariableOfWanted(cellMLModel%ptr,cName)
     IF(errorCode/=0) THEN
       localError="Error "//TRIM(NumberToVString(errorCode,"*",err,error))// &
         & ". The specified variable can not be set as wanted: "//variableID
       CALL FlagError(localError,err,error,*999)
     ENDIF
- 
+    
 #else
-
+    
     CALL FlagError("Must compile with WITH_CELLML ON to use CellML functionality.",err,error,*999)
 
 #endif
@@ -1829,7 +1828,7 @@ CONTAINS
     CALL CellMLFieldMaps_CellMLModelMapsGet(cellMLFieldMaps,modelIndex,cellMLModelMaps,err,error,*999)
     CALL CMISSF2CString(variableID,cName)
     !All input arguments are ok.Get the type of the variable being mapped
-    errorC = CELLML_MODEL_DEFINITION_GET_VARIABLE_TYPE(cellMLModel%ptr,cName,cellMLVariableType)
+    errorC=CellMLModel_GetVariableType(cellMLModel%ptr,cName,cellMLVariableType)
     IF(errorC /= 0) THEN
       localError="Error "//TRIM(NumberToVString(errorC,"*",err,error))// &
         & ". Failed to get the type of CellML variable: "//variableID
@@ -1877,9 +1876,9 @@ CONTAINS
       cellMLFieldMaps%sourceFieldInterpolationType=fieldInterpolationType
     ENDIF
     !Everything is OK so create the model map field. Get the type of the variable being mapped
-    errorC = CELLML_MODEL_DEFINITION_GET_VARIABLE_TYPE(cellMLModel%ptr,cName,cellMLVariableType)
+    errorC=CellMLModel_GetVariableType(cellMLModel%ptr,cName,cellMLVariableType)
     IF(errorC /= 0) THEN
-      localError="Error "//TRIM(NumberToVString(errorC,"*",err,error))//". Failed to get the TYPE of CellML variable: "// &
+      localError="Error "//TRIM(NumberToVString(errorC,"*",err,error))//". Failed to get the type of CellML variable: "// &
         & variableID
       CALL FlagError(localError,err,error,*999)
     ENDIF
@@ -2035,7 +2034,7 @@ CONTAINS
     CALL CellMLFieldMaps_CellMLModelMapsGet(cellMLFieldMaps,modelIndex,cellMLModelMaps,err,error,*999)
     CALL CMISSF2CString(variableID,cName)    
     !All input arguments are ok. Get the type of the variable being mapped
-    errorC = CELLML_MODEL_DEFINITION_GET_VARIABLE_TYPE(cellMLModel%ptr,cName,cellMLVariableType)
+    errorC=CellMLMode; CELLML_MODEL_DEFINITION_GET_VARIABLE_TYPE(cellMLModel%ptr,cName,cellMLVariableType)
     IF(errorC /= 0) THEN
       localError="Error "//TRIM(NumberToVString(errorC,"*",err,error))// &
         & ". Failed to get the type of CellML variable: "//variableID

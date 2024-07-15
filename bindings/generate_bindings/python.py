@@ -195,12 +195,12 @@ def method_name(type, routine):
     c_name = subroutine_c_names(routine)[0]
     if c_name.count('_') > 1:
         name = c_name.split('_')[-1]
-    elif (c_name.startswith('oc_FieldML') and
-            not c_name.startswith('oc_FieldMLIO')):
+    elif (c_name.startswith('OC_FieldML') and
+            not c_name.startswith('OC_FieldMLIO')):
         # Special case for FieldML routines that start
         # with FieldML but take a OCFieldMLIOType, although
         # some start with OCFieldMLIO...
-        name = c_name[len('oc_FieldML'):]
+        name = c_name[len('OC_FieldML'):]
     else:
         # Old code style, no underscore after type name
         name = c_name[len(type.name) - len('Type'):]

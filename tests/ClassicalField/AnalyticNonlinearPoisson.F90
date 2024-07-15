@@ -65,32 +65,32 @@ PROGRAM NonlinearPoissonExample
 
   !Test program parameters
 
-  REAL(OCRP), PARAMETER :: HEIGHT=0.5_OCRP
-  REAL(OCRP), PARAMETER :: WIDTH=0.5_OCRP
-  REAL(OCRP), PARAMETER :: LENGTH=1.0_OCRP
+  REAL(OC_RP), PARAMETER :: HEIGHT=0.5_OC_RP
+  REAL(OC_RP), PARAMETER :: WIDTH=0.5_OC_RP
+  REAL(OC_RP), PARAMETER :: LENGTH=1.0_OC_RP
 
-  INTEGER(OCIntg), PARAMETER :: ContextUserNumber=1
-  INTEGER(OCIntg), PARAMETER :: CoordinateSystemUserNumber=2
-  INTEGER(OCIntg), PARAMETER :: RegionUserNumber=3
-  INTEGER(OCIntg), PARAMETER :: BasisUserNumber=4
-  INTEGER(OCIntg), PARAMETER :: GeneratedMeshUserNumber=5
-  INTEGER(OCIntg), PARAMETER :: MeshUserNumber=6
-  INTEGER(OCIntg), PARAMETER :: DecompositionUserNumber=7
-  INTEGER(OCIntg), PARAMETER :: DecomposerUserNumber=8
-  INTEGER(OCIntg), PARAMETER :: GeometricFieldUserNumber=9
-  INTEGER(OCIntg), PARAMETER :: DependentFieldUserNumber=10
-  INTEGER(OCIntg), PARAMETER :: MaterialsFieldUserNumber=11
-  INTEGER(OCIntg), PARAMETER :: AnalyticFieldUserNumber=12
-  INTEGER(OCIntg), PARAMETER :: EquationsSetUserNumber=13
-  INTEGER(OCIntg), PARAMETER :: ProblemUserNumber=14
-  INTEGER(OCIntg), PARAMETER :: EquationsSetFieldUserNumber=15
+  INTEGER(OC_Intg), PARAMETER :: ContextUserNumber=1
+  INTEGER(OC_Intg), PARAMETER :: CoordinateSystemUserNumber=2
+  INTEGER(OC_Intg), PARAMETER :: RegionUserNumber=3
+  INTEGER(OC_Intg), PARAMETER :: BasisUserNumber=4
+  INTEGER(OC_Intg), PARAMETER :: GeneratedMeshUserNumber=5
+  INTEGER(OC_Intg), PARAMETER :: MeshUserNumber=6
+  INTEGER(OC_Intg), PARAMETER :: DecompositionUserNumber=7
+  INTEGER(OC_Intg), PARAMETER :: DecomposerUserNumber=8
+  INTEGER(OC_Intg), PARAMETER :: GeometricFieldUserNumber=9
+  INTEGER(OC_Intg), PARAMETER :: DependentFieldUserNumber=10
+  INTEGER(OC_Intg), PARAMETER :: MaterialsFieldUserNumber=11
+  INTEGER(OC_Intg), PARAMETER :: AnalyticFieldUserNumber=12
+  INTEGER(OC_Intg), PARAMETER :: EquationsSetUserNumber=13
+  INTEGER(OC_Intg), PARAMETER :: ProblemUserNumber=14
+  INTEGER(OC_Intg), PARAMETER :: EquationsSetFieldUserNumber=15
 
   !Program variables
 
-  INTEGER(OCIntg) :: NUMBER_DIMENSIONS,INTERPOLATION_TYPE,NUMBER_OF_GAUSS_XI
-  INTEGER(OCIntg) :: NUMBER_GLOBAL_X_ELEMENTS,NUMBER_GLOBAL_Y_ELEMENTS,NUMBER_GLOBAL_Z_ELEMENTS
-  INTEGER(OCIntg) :: component_idx
-  INTEGER(OCIntg) :: NUMBER_OF_ARGUMENTS,ARGUMENT_LENGTH,STATUS
+  INTEGER(OC_Intg) :: NUMBER_DIMENSIONS,INTERPOLATION_TYPE,NUMBER_OF_GAUSS_XI
+  INTEGER(OC_Intg) :: NUMBER_GLOBAL_X_ELEMENTS,NUMBER_GLOBAL_Y_ELEMENTS,NUMBER_GLOBAL_Z_ELEMENTS
+  INTEGER(OC_Intg) :: component_idx
+  INTEGER(OC_Intg) :: NUMBER_OF_ARGUMENTS,ARGUMENT_LENGTH,STATUS
   CHARACTER(LEN=255) :: COMMAND_ARGUMENT
 
   LOGICAL :: EXPORT_FIELD
@@ -118,9 +118,9 @@ PROGRAM NonlinearPoissonExample
 
   !Generic CMISS variables
 
-  INTEGER(OCIntg) :: DecompositionIndex,EquationsSetIndex
-  INTEGER(OCIntg) :: Err
-  INTEGER(OCIntg) :: NumberOfComputationNodes,ComputationNodeNumber
+  INTEGER(OC_Intg) :: DecompositionIndex,EquationsSetIndex
+  INTEGER(OC_Intg) :: Err
+  INTEGER(OC_Intg) :: NumberOfComputationNodes,ComputationNodeNumber
 
 #ifdef WIN32
   !Quickwin type
@@ -320,7 +320,7 @@ PROGRAM NonlinearPoissonExample
   CALL OC_EquationsSet_DependentCreateFinish(EquationsSet,Err)
 
   !Initialise the field to zero
-  CALL OC_Field_ComponentValuesInitialise(DependentField,OC_FIELD_U_VARIABLE_TYPE,OC_FIELD_VALUES_SET_TYPE,1,0.0_OCRP, &
+  CALL OC_Field_ComponentValuesInitialise(DependentField,OC_FIELD_U_VARIABLE_TYPE,OC_FIELD_VALUES_SET_TYPE,1,0.0_OC_RP, &
     & Err)
 
   !Create the equations set material field variables

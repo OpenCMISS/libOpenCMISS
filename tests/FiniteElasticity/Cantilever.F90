@@ -63,44 +63,44 @@ PROGRAM CantileverExample
 
 
   !Test program parameters
-  REAL(OCRP), PARAMETER :: Width=60.0_OCRP
-  REAL(OCRP), PARAMETER :: Length=40.0_OCRP
-  REAL(OCRP), PARAMETER :: Height=40.0_OCRP
-  INTEGER(OCIntg) :: DisplacementInterpolationType
-  INTEGER(OCIntg) :: PressureInterpolationType
-  INTEGER(OCIntg) :: PressureMeshComponent
-  INTEGER(OCIntg) :: NumberOfGaussXi
-  INTEGER(OCIntg) :: ScalingType
-  REAL(OCRP), PARAMETER :: Density=9.0E-4_OCRP !in g mm^-3
-  REAL(OCRP), PARAMETER :: Gravity(3)=[0.0_OCRP,0.0_OCRP,-9.8_OCRP] !in m s^-2
-  INTEGER(OCIntg), PARAMETER :: NumberOfLoadIncrements=2
+  REAL(OC_RP), PARAMETER :: Width=60.0_OC_RP
+  REAL(OC_RP), PARAMETER :: Length=40.0_OC_RP
+  REAL(OC_RP), PARAMETER :: Height=40.0_OC_RP
+  INTEGER(OC_Intg) :: DisplacementInterpolationType
+  INTEGER(OC_Intg) :: PressureInterpolationType
+  INTEGER(OC_Intg) :: PressureMeshComponent
+  INTEGER(OC_Intg) :: NumberOfGaussXi
+  INTEGER(OC_Intg) :: ScalingType
+  REAL(OC_RP), PARAMETER :: Density=9.0E-4_OC_RP !in g mm^-3
+  REAL(OC_RP), PARAMETER :: Gravity(3)=[0.0_OC_RP,0.0_OC_RP,-9.8_OC_RP] !in m s^-2
+  INTEGER(OC_Intg), PARAMETER :: NumberOfLoadIncrements=2
 
-  INTEGER(OCIntg), PARAMETER :: ContextUserNumber=1
-  INTEGER(OCIntg), PARAMETER :: CoordinateSystemUserNumber=1
-  INTEGER(OCIntg), PARAMETER :: RegionUserNumber=1
-  INTEGER(OCIntg), PARAMETER :: DisplacementBasisUserNumber=1
-  INTEGER(OCIntg), PARAMETER :: PressureBasisUserNumber=2
-  INTEGER(OCIntg), PARAMETER :: GeneratedMeshUserNumber=1
-  INTEGER(OCIntg), PARAMETER :: MeshUserNumber=1
-  INTEGER(OCIntg), PARAMETER :: DecompositionUserNumber=1
-  INTEGER(OCIntg), PARAMETER :: DecomposerUserNumber=1
-  INTEGER(OCIntg), PARAMETER :: FieldGeometryUserNumber=1
-  INTEGER(OCIntg), PARAMETER :: FieldFibreUserNumber=2
-  INTEGER(OCIntg), PARAMETER :: FieldMaterialUserNumber=3
-  INTEGER(OCIntg), PARAMETER :: FieldDependentUserNumber=4
-  INTEGER(OCIntg), PARAMETER :: FieldSourceUserNumber=5
-  INTEGER(OCIntg), PARAMETER :: EquationsSetFieldUserNumber=6
-  INTEGER(OCIntg), PARAMETER :: EquationSetUserNumber=1
-  INTEGER(OCIntg), PARAMETER :: ProblemUserNumber=1
+  INTEGER(OC_Intg), PARAMETER :: ContextUserNumber=1
+  INTEGER(OC_Intg), PARAMETER :: CoordinateSystemUserNumber=1
+  INTEGER(OC_Intg), PARAMETER :: RegionUserNumber=1
+  INTEGER(OC_Intg), PARAMETER :: DisplacementBasisUserNumber=1
+  INTEGER(OC_Intg), PARAMETER :: PressureBasisUserNumber=2
+  INTEGER(OC_Intg), PARAMETER :: GeneratedMeshUserNumber=1
+  INTEGER(OC_Intg), PARAMETER :: MeshUserNumber=1
+  INTEGER(OC_Intg), PARAMETER :: DecompositionUserNumber=1
+  INTEGER(OC_Intg), PARAMETER :: DecomposerUserNumber=1
+  INTEGER(OC_Intg), PARAMETER :: FieldGeometryUserNumber=1
+  INTEGER(OC_Intg), PARAMETER :: FieldFibreUserNumber=2
+  INTEGER(OC_Intg), PARAMETER :: FieldMaterialUserNumber=3
+  INTEGER(OC_Intg), PARAMETER :: FieldDependentUserNumber=4
+  INTEGER(OC_Intg), PARAMETER :: FieldSourceUserNumber=5
+  INTEGER(OC_Intg), PARAMETER :: EquationsSetFieldUserNumber=6
+  INTEGER(OC_Intg), PARAMETER :: EquationSetUserNumber=1
+  INTEGER(OC_Intg), PARAMETER :: ProblemUserNumber=1
 
   !Program variables
-  INTEGER(OCIntg) :: NumberGlobalXElements,NumberGlobalYElements,NumberGlobalZElements
-  INTEGER(OCIntg) :: decompositionIndex,EquationsSetIndex
-  INTEGER(OCIntg) :: NumberOfComputationNodes,NumberOfDomains,ComputationNodeNumber
-  INTEGER(OCIntg) :: NodeNumber,NodeDomain,node_idx,component_idx,deriv_idx
-  INTEGER(OCIntg),ALLOCATABLE :: LeftSurfaceNodes(:)
-  INTEGER(OCIntg) :: LeftNormalXi
-  INTEGER(OCIntg) :: NumberOfArguments,ArgumentLength,ArgStatus
+  INTEGER(OC_Intg) :: NumberGlobalXElements,NumberGlobalYElements,NumberGlobalZElements
+  INTEGER(OC_Intg) :: decompositionIndex,EquationsSetIndex
+  INTEGER(OC_Intg) :: NumberOfComputationNodes,NumberOfDomains,ComputationNodeNumber
+  INTEGER(OC_Intg) :: NodeNumber,NodeDomain,node_idx,component_idx,deriv_idx
+  INTEGER(OC_Intg),ALLOCATABLE :: LeftSurfaceNodes(:)
+  INTEGER(OC_Intg) :: LeftNormalXi
+  INTEGER(OC_Intg) :: NumberOfArguments,ArgumentLength,ArgStatus
   CHARACTER(LEN=255) :: CommandArgument
 
   !CMISS variables
@@ -125,7 +125,7 @@ PROGRAM CantileverExample
   TYPE(OC_WorkGroupType) :: worldWorkGroup
 
   !Generic CMISS variables
-  INTEGER(OCIntg) :: Err
+  INTEGER(OC_Intg) :: Err
 
 #ifdef WIN32
   !Quickwin type
@@ -369,8 +369,8 @@ PROGRAM CantileverExample
   CALL OC_EquationsSet_MaterialsCreateFinish(EquationsSet,Err)
 
   !Set Mooney-Rivlin constants c10 and c01 to 2.0 and 6.0 respectively
-  CALL OC_Field_ComponentValuesInitialise(MaterialField,OC_FIELD_U_VARIABLE_TYPE,OC_FIELD_VALUES_SET_TYPE,1,2.0_OCRP,Err)
-  CALL OC_Field_ComponentValuesInitialise(MaterialField,OC_FIELD_U_VARIABLE_TYPE,OC_FIELD_VALUES_SET_TYPE,2,6.0_OCRP,Err)
+  CALL OC_Field_ComponentValuesInitialise(MaterialField,OC_FIELD_U_VARIABLE_TYPE,OC_FIELD_VALUES_SET_TYPE,1,2.0_OC_RP,Err)
+  CALL OC_Field_ComponentValuesInitialise(MaterialField,OC_FIELD_U_VARIABLE_TYPE,OC_FIELD_VALUES_SET_TYPE,2,6.0_OC_RP,Err)
   CALL OC_Field_ComponentValuesInitialise(MaterialField,OC_FIELD_V_VARIABLE_TYPE,OC_FIELD_VALUES_SET_TYPE,1,Density,Err)
 
   !Create the source field with the gravity vector
@@ -398,7 +398,7 @@ PROGRAM CantileverExample
   CALL OC_Field_ParametersToFieldParametersComponentCopy(GeometricField,OC_FIELD_U_VARIABLE_TYPE,OC_FIELD_VALUES_SET_TYPE, &
     & 3,DependentField,OC_FIELD_U_VARIABLE_TYPE,OC_FIELD_VALUES_SET_TYPE,3,Err)
   CALL OC_Field_ComponentValuesInitialise(DependentField,OC_FIELD_U_VARIABLE_TYPE,OC_FIELD_VALUES_SET_TYPE,4, &
-    & -14.0_OCRP,Err)
+    & -14.0_OC_RP,Err)
   CALL OC_Field_ParameterSetUpdateStart(DependentField,OC_FIELD_U_VARIABLE_TYPE,OC_FIELD_VALUES_SET_TYPE,Err)
   CALL OC_Field_ParameterSetUpdateFinish(DependentField,OC_FIELD_U_VARIABLE_TYPE,OC_FIELD_VALUES_SET_TYPE,Err)
 
@@ -449,12 +449,12 @@ PROGRAM CantileverExample
     IF(NodeDomain==ComputationNodeNumber) THEN
       DO component_idx=1,3
         CALL OC_BoundaryConditions_AddNode(BoundaryConditions,DependentField,OC_FIELD_U_VARIABLE_TYPE,1,1,NodeNumber, &
-          & component_idx,OC_BOUNDARY_CONDITION_FIXED,0.0_OCRP,Err)
+          & component_idx,OC_BOUNDARY_CONDITION_FIXED,0.0_OC_RP,Err)
         IF(DisplacementInterpolationType==OC_BASIS_CUBIC_HERMITE_INTERPOLATION) THEN
           DO deriv_idx=3,8
             CALL OC_BoundaryConditions_AddNode(BoundaryConditions,DependentField,OC_FIELD_U_VARIABLE_TYPE,1,deriv_idx, &
               & NodeNumber, &
-              & component_idx,OC_BOUNDARY_CONDITION_FIXED,0.0_OCRP,Err)
+              & component_idx,OC_BOUNDARY_CONDITION_FIXED,0.0_OC_RP,Err)
           ENDDO
         ENDIF
       ENDDO

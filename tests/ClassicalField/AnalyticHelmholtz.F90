@@ -68,11 +68,11 @@ PROGRAM ANALYTICHELMHOLTZEXAMPLE
 
   !Test program parameters
 
-  REAL(OCRP), PARAMETER :: ORIGIN(2)=[-3.141592653579_OCRP/2, -3.141592653579_OCRP/2]
-  REAL(OCRP), PARAMETER :: HEIGHT=2.0_OCRP
-  REAL(OCRP), PARAMETER :: WIDTH=2.0_OCRP
-  REAL(OCRP), PARAMETER :: LENGTH=2.0_OCRP
-  REAL(OCRP), PARAMETER :: k=1.0_OCRP
+  REAL(OC_RP), PARAMETER :: ORIGIN(2)=[-3.141592653579_OC_RP/2, -3.141592653579_OC_RP/2]
+  REAL(OC_RP), PARAMETER :: HEIGHT=2.0_OC_RP
+  REAL(OC_RP), PARAMETER :: WIDTH=2.0_OC_RP
+  REAL(OC_RP), PARAMETER :: LENGTH=2.0_OC_RP
+  REAL(OC_RP), PARAMETER :: k=1.0_OC_RP
 
   !Program types
 
@@ -88,7 +88,7 @@ PROGRAM ANALYTICHELMHOLTZEXAMPLE
 #endif
 
   !Generic CMISS variables
-  INTEGER(OCIntg) :: Err
+  INTEGER(OC_Intg) :: Err
 
 #ifdef WIN32
   !Initialise QuickWin
@@ -105,7 +105,7 @@ PROGRAM ANALYTICHELMHOLTZEXAMPLE
   CALL OC_Initialise(Err)
   !Create a context
   CALL OC_Context_Initialise(context,err)
-  CALL OC_Context_Create(1_OCIntg,context,Err)
+  CALL OC_Context_Create(1_OC_Intg,context,Err)
   
   CALL OC_Region_Initialise(worldRegion,err)
   CALL OC_Context_WorldRegionGet(context,worldRegion,err)
@@ -133,9 +133,9 @@ CONTAINS
     & NUMBER_GLOBAL_Z_ELEMENTS)
 
     !Argument variables
-    INTEGER(OCIntg), INTENT(IN) :: NUMBER_GLOBAL_X_ELEMENTS !<number of elements in x direction
-    INTEGER(OCIntg), INTENT(IN) :: NUMBER_GLOBAL_Y_ELEMENTS !<number of elements in y direction
-    INTEGER(OCIntg), INTENT(IN) :: NUMBER_GLOBAL_Z_ELEMENTS !<number of elements in z direction
+    INTEGER(OC_Intg), INTENT(IN) :: NUMBER_GLOBAL_X_ELEMENTS !<number of elements in x direction
+    INTEGER(OC_Intg), INTENT(IN) :: NUMBER_GLOBAL_Y_ELEMENTS !<number of elements in y direction
+    INTEGER(OC_Intg), INTENT(IN) :: NUMBER_GLOBAL_Z_ELEMENTS !<number of elements in z direction
     !Local Variables
     TYPE(OC_FieldType) :: FIELD
 
@@ -157,19 +157,19 @@ CONTAINS
     & NUMBER_OF_ELEMENTS_XI_END,NUMBER_OF_ELEMENTS_XI_INTERVAL)
   
     !Argument variables
-    INTEGER(OCIntg), INTENT(IN) :: NUMBER_OF_ELEMENTS_XI_START !<initial number of elements per axis
-    INTEGER(OCIntg), INTENT(IN) :: NUMBER_OF_ELEMENTS_XI_END !<final number of elements per axis
-    INTEGER(OCIntg), INTENT(IN) :: NUMBER_OF_ELEMENTS_XI_INTERVAL !<increment interval number of elements per axis
+    INTEGER(OC_Intg), INTENT(IN) :: NUMBER_OF_ELEMENTS_XI_START !<initial number of elements per axis
+    INTEGER(OC_Intg), INTENT(IN) :: NUMBER_OF_ELEMENTS_XI_END !<final number of elements per axis
+    INTEGER(OC_Intg), INTENT(IN) :: NUMBER_OF_ELEMENTS_XI_INTERVAL !<increment interval number of elements per axis
     !Local Variables
-    REAL(OCRP) :: VALUE
-    REAL(OCRP), ALLOCATABLE :: X_VALUES(:),Y_VALUES(:)
+    REAL(OC_RP) :: VALUE
+    REAL(OC_RP), ALLOCATABLE :: X_VALUES(:),Y_VALUES(:)
     
     CALL ANALYTICHELMHOLTZ_GENERIC_CONVERGENCE(NUMBER_OF_ELEMENTS_XI_START,NUMBER_OF_ELEMENTS_XI_END, &
       & NUMBER_OF_ELEMENTS_XI_INTERVAL,1,X_VALUES,Y_VALUES)
     
     CALL TEST_FRAMEWORK_GRADIENT_VALUE_GET(X_VALUES,Y_VALUES,VALUE)
 
-    CALL TEST_FRAMEWORK_ASSERT_EQUALS(2.0_OCRP,VALUE,0.5_OCRP,ERR)
+    CALL TEST_FRAMEWORK_ASSERT_EQUALS(2.0_OC_RP,VALUE,0.5_OC_RP,ERR)
     
     WRITE(*,'(A)') "Analytic Helmholtz Example Testcase1 - bilinear lagrange is successfully completed."
     
@@ -184,18 +184,18 @@ CONTAINS
     & NUMBER_OF_ELEMENTS_XI_END,NUMBER_OF_ELEMENTS_XI_INTERVAL)
   
     !Argument variables
-    INTEGER(OCIntg), INTENT(IN) :: NUMBER_OF_ELEMENTS_XI_START !<initial number of elements per axis
-    INTEGER(OCIntg), INTENT(IN) :: NUMBER_OF_ELEMENTS_XI_END !<final number of elements per axis
-    INTEGER(OCIntg), INTENT(IN) :: NUMBER_OF_ELEMENTS_XI_INTERVAL !<increment interval number of elements per axis
+    INTEGER(OC_Intg), INTENT(IN) :: NUMBER_OF_ELEMENTS_XI_START !<initial number of elements per axis
+    INTEGER(OC_Intg), INTENT(IN) :: NUMBER_OF_ELEMENTS_XI_END !<final number of elements per axis
+    INTEGER(OC_Intg), INTENT(IN) :: NUMBER_OF_ELEMENTS_XI_INTERVAL !<increment interval number of elements per axis
     !Local Variables
-    REAL(OCRP) :: VALUE
-    REAL(OCRP), ALLOCATABLE :: X_VALUES(:),Y_VALUES(:)
+    REAL(OC_RP) :: VALUE
+    REAL(OC_RP), ALLOCATABLE :: X_VALUES(:),Y_VALUES(:)
 
     CALL ANALYTICHELMHOLTZ_GENERIC_CONVERGENCE(NUMBER_OF_ELEMENTS_XI_START,NUMBER_OF_ELEMENTS_XI_END, &
       & NUMBER_OF_ELEMENTS_XI_INTERVAL,3,X_VALUES,Y_VALUES)
     
    CALL TEST_FRAMEWORK_GRADIENT_VALUE_GET(X_VALUES,Y_VALUES,VALUE)
-   CALL TEST_FRAMEWORK_ASSERT_EQUALS(4.0_OCRP,VALUE,1.0_OCRP,Err)
+   CALL TEST_FRAMEWORK_ASSERT_EQUALS(4.0_OC_RP,VALUE,1.0_OC_RP,Err)
    IF (Err/=0) THEN
      WRITE(*,'(A,F3.5)') "Analytic Helmholtz Example Testcase2 - bicubic Hermite failure: Convergence should be around 4.0" &
        & //", but it was ", VALUE
@@ -213,15 +213,15 @@ CONTAINS
     & NUMBER_OF_ELEMENTS_XI_INTERVAL,INTERPOLATION_SPECIFICATIONS,X_VALUES,Y_VALUES)
   
     !Argument variables 
-    INTEGER(OCIntg), INTENT(IN) :: NUMBER_OF_ELEMENTS_XI_START !<initial number of elements per axis
-    INTEGER(OCIntg), INTENT(IN) :: NUMBER_OF_ELEMENTS_XI_END !<final number of elements per axis
-    INTEGER(OCIntg), INTENT(IN) :: NUMBER_OF_ELEMENTS_XI_INTERVAL !<increment interval number of elements per axis
-    INTEGER(OCIntg), INTENT(IN) :: INTERPOLATION_SPECIFICATIONS !<interpolation specifications
-    REAL(OCRP), ALLOCATABLE :: X_VALUES(:),Y_VALUES(:)
+    INTEGER(OC_Intg), INTENT(IN) :: NUMBER_OF_ELEMENTS_XI_START !<initial number of elements per axis
+    INTEGER(OC_Intg), INTENT(IN) :: NUMBER_OF_ELEMENTS_XI_END !<final number of elements per axis
+    INTEGER(OC_Intg), INTENT(IN) :: NUMBER_OF_ELEMENTS_XI_INTERVAL !<increment interval number of elements per axis
+    INTEGER(OC_Intg), INTENT(IN) :: INTERPOLATION_SPECIFICATIONS !<interpolation specifications
+    REAL(OC_RP), ALLOCATABLE :: X_VALUES(:),Y_VALUES(:)
     !Local Variables
-    REAL(OCRP) :: VALUE
+    REAL(OC_RP) :: VALUE
     
-    INTEGER(OCIntg) :: i
+    INTEGER(OC_Intg) :: i
     TYPE(OC_FieldType) :: FIELD
     
     ALLOCATE(X_VALUES((NUMBER_OF_ELEMENTS_XI_END-NUMBER_OF_ELEMENTS_XI_START)/NUMBER_OF_ELEMENTS_XI_INTERVAL+1),STAT=ERR)
@@ -247,32 +247,32 @@ CONTAINS
   SUBROUTINE ANALYTICHELMHOLTZ_GENERIC(NUMBER_GLOBAL_X_ELEMENTS,NUMBER_GLOBAL_Y_ELEMENTS,NUMBER_GLOBAL_Z_ELEMENTS, &
     & INTERPOLATION_SPECIFICATIONS,DEPENDENT_FIELD)
     !Argument variables
-    INTEGER(OCIntg), INTENT(IN) :: NUMBER_GLOBAL_X_ELEMENTS !<number of elements on x axis
-    INTEGER(OCIntg), INTENT(IN) :: NUMBER_GLOBAL_Y_ELEMENTS !<number of elements on y axis
-    INTEGER(OCIntg), INTENT(IN) :: NUMBER_GLOBAL_Z_ELEMENTS !<number of elements on z axis
-    INTEGER(OCIntg), INTENT(IN) :: INTERPOLATION_SPECIFICATIONS !<the interpolation specifications
+    INTEGER(OC_Intg), INTENT(IN) :: NUMBER_GLOBAL_X_ELEMENTS !<number of elements on x axis
+    INTEGER(OC_Intg), INTENT(IN) :: NUMBER_GLOBAL_Y_ELEMENTS !<number of elements on y axis
+    INTEGER(OC_Intg), INTENT(IN) :: NUMBER_GLOBAL_Z_ELEMENTS !<number of elements on z axis
+    INTEGER(OC_Intg), INTENT(IN) :: INTERPOLATION_SPECIFICATIONS !<the interpolation specifications
     TYPE(OC_FieldType) :: DEPENDENT_FIELD
     !Local Variables
-    INTEGER(OCIntg) :: NUMBER_OF_DOMAINS
-    INTEGER(OCIntg) :: MPI_IERROR
+    INTEGER(OC_Intg) :: NUMBER_OF_DOMAINS
+    INTEGER(OC_Intg) :: MPI_IERROR
 
-    INTEGER(OCIntg) :: AnalyticFunction
-    INTEGER(OCIntg) :: decompositionIndex,EquationsSetIndex
+    INTEGER(OC_Intg) :: AnalyticFunction
+    INTEGER(OC_Intg) :: decompositionIndex,EquationsSetIndex
 
-    INTEGER(OCIntg), PARAMETER :: CoordinateSystemUserNumber=1
-    INTEGER(OCIntg), PARAMETER :: RegionUserNumber=1
-    INTEGER(OCIntg), PARAMETER :: BasisUserNumber=1
-    INTEGER(OCIntg), PARAMETER :: GeneratedMeshUserNumber=1
-    INTEGER(OCIntg), PARAMETER :: MeshUserNumber=1
-    INTEGER(OCIntg), PARAMETER :: DecompositionUserNumber=1
-    INTEGER(OCIntg), PARAMETER :: DecomposerUserNumber=1
-    INTEGER(OCIntg), PARAMETER :: GeometricFieldUserNumber=1
-    INTEGER(OCIntg), PARAMETER :: EquationsSetFieldUserNumber=2
-    INTEGER(OCIntg), PARAMETER :: MaterialsFieldUserNumber=3
-    INTEGER(OCIntg), PARAMETER :: DependentFieldUserNumber=4
-    INTEGER(OCIntg), PARAMETER :: AnalyticFieldUserNumber=5
-    INTEGER(OCIntg), PARAMETER :: EquationsSetUserNumber=1
-    INTEGER(OCIntg), PARAMETER :: ProblemUserNumber=1
+    INTEGER(OC_Intg), PARAMETER :: CoordinateSystemUserNumber=1
+    INTEGER(OC_Intg), PARAMETER :: RegionUserNumber=1
+    INTEGER(OC_Intg), PARAMETER :: BasisUserNumber=1
+    INTEGER(OC_Intg), PARAMETER :: GeneratedMeshUserNumber=1
+    INTEGER(OC_Intg), PARAMETER :: MeshUserNumber=1
+    INTEGER(OC_Intg), PARAMETER :: DecompositionUserNumber=1
+    INTEGER(OC_Intg), PARAMETER :: DecomposerUserNumber=1
+    INTEGER(OC_Intg), PARAMETER :: GeometricFieldUserNumber=1
+    INTEGER(OC_Intg), PARAMETER :: EquationsSetFieldUserNumber=2
+    INTEGER(OC_Intg), PARAMETER :: MaterialsFieldUserNumber=3
+    INTEGER(OC_Intg), PARAMETER :: DependentFieldUserNumber=4
+    INTEGER(OC_Intg), PARAMETER :: AnalyticFieldUserNumber=5
+    INTEGER(OC_Intg), PARAMETER :: EquationsSetUserNumber=1
+    INTEGER(OC_Intg), PARAMETER :: ProblemUserNumber=1
 
     TYPE(OC_BasisType) :: Basis
     TYPE(OC_BoundaryConditionsType) :: BoundaryConditions
@@ -479,13 +479,13 @@ CONTAINS
     & ProblemUserNumber)
 
     !Argument variables    
-    INTEGER(OCIntg), INTENT(IN) :: CoordinateSystemUserNumber
-    INTEGER(OCIntg), INTENT(IN) :: RegionUserNumber
-    INTEGER(OCIntg), INTENT(IN) :: BasisUserNumber
-    INTEGER(OCIntg), INTENT(IN) :: GeneratedMeshUserNumber
-    INTEGER(OCIntg), INTENT(IN) :: ProblemUserNumber
+    INTEGER(OC_Intg), INTENT(IN) :: CoordinateSystemUserNumber
+    INTEGER(OC_Intg), INTENT(IN) :: RegionUserNumber
+    INTEGER(OC_Intg), INTENT(IN) :: BasisUserNumber
+    INTEGER(OC_Intg), INTENT(IN) :: GeneratedMeshUserNumber
+    INTEGER(OC_Intg), INTENT(IN) :: ProblemUserNumber
 
-    INTEGER(OCIntg) :: contextUserNumber
+    INTEGER(OC_Intg) :: contextUserNumber
 
     CALL OC_Context_UserNumberGet(context,contextUserNumber,err)
 

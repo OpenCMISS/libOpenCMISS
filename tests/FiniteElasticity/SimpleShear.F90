@@ -64,54 +64,54 @@ PROGRAM SimpleShearExample
 #include "mpif.h"
 #endif
 
-  REAL(OCRP) :: VALUE
+  REAL(OC_RP) :: VALUE
 
   !Test program parameters
 
-  REAL(OCRP), PARAMETER :: HEIGHT=1.0_OCRP
-  REAL(OCRP), PARAMETER :: WIDTH=1.0_OCRP
-  REAL(OCRP), PARAMETER :: LENGTH=1.0_OCRP
-!  INTEGER(OCIntg), PARAMETER :: InterpolationType=OC_BASIS_LINEAR_LAGRANGE_INTERPOLATION
-  INTEGER(OCIntg), PARAMETER :: InterpolationType=OC_BASIS_QUADRATIC_LAGRANGE_INTERPOLATION
-  INTEGER(OCIntg), PARAMETER :: PressureInterpolationType=OC_BASIS_LINEAR_LAGRANGE_INTERPOLATION
+  REAL(OC_RP), PARAMETER :: HEIGHT=1.0_OC_RP
+  REAL(OC_RP), PARAMETER :: WIDTH=1.0_OC_RP
+  REAL(OC_RP), PARAMETER :: LENGTH=1.0_OC_RP
+!  INTEGER(OC_Intg), PARAMETER :: InterpolationType=OC_BASIS_LINEAR_LAGRANGE_INTERPOLATION
+  INTEGER(OC_Intg), PARAMETER :: InterpolationType=OC_BASIS_QUADRATIC_LAGRANGE_INTERPOLATION
+  INTEGER(OC_Intg), PARAMETER :: PressureInterpolationType=OC_BASIS_LINEAR_LAGRANGE_INTERPOLATION
 !  LOGICAL, PARAMETER :: UsePressureBasis=.TRUE.
   LOGICAL, PARAMETER :: UsePressureBasis=.FALSE.
-  INTEGER(OCIntg), PARAMETER :: NumberOfGaussXi=3
+  INTEGER(OC_Intg), PARAMETER :: NumberOfGaussXi=3
 
-  INTEGER(OCIntg), PARAMETER :: ContextUserNumber=1
-  INTEGER(OCIntg), PARAMETER :: CoordinateSystemUserNumber=1
-  INTEGER(OCIntg), PARAMETER :: RegionUserNumber=1
-  INTEGER(OCIntg), PARAMETER :: BasisUserNumber=1
-  INTEGER(OCIntg), PARAMETER :: PressureBasisUserNumber=2
-  INTEGER(OCIntg), PARAMETER :: GeneratedMeshUserNumber=1
-  INTEGER(OCIntg), PARAMETER :: MeshUserNumber=1
-  INTEGER(OCIntg), PARAMETER :: DecompositionUserNumber=1
-  INTEGER(OCIntg), PARAMETER :: DecomposerUserNumber=1
-  INTEGER(OCIntg), PARAMETER :: FieldGeometryUserNumber=1
-  INTEGER(OCIntg), PARAMETER :: FieldFibreUserNumber=2
-  INTEGER(OCIntg), PARAMETER :: FieldMaterialUserNumber=3
-  INTEGER(OCIntg), PARAMETER :: FieldDependentUserNumber=4
-  INTEGER(OCIntg), PARAMETER :: EquationSetUserNumber=1
-  INTEGER(OCIntg), PARAMETER :: EquationsSetFieldUserNumber=5
-  INTEGER(OCIntg), PARAMETER :: ProblemUserNumber=1
+  INTEGER(OC_Intg), PARAMETER :: ContextUserNumber=1
+  INTEGER(OC_Intg), PARAMETER :: CoordinateSystemUserNumber=1
+  INTEGER(OC_Intg), PARAMETER :: RegionUserNumber=1
+  INTEGER(OC_Intg), PARAMETER :: BasisUserNumber=1
+  INTEGER(OC_Intg), PARAMETER :: PressureBasisUserNumber=2
+  INTEGER(OC_Intg), PARAMETER :: GeneratedMeshUserNumber=1
+  INTEGER(OC_Intg), PARAMETER :: MeshUserNumber=1
+  INTEGER(OC_Intg), PARAMETER :: DecompositionUserNumber=1
+  INTEGER(OC_Intg), PARAMETER :: DecomposerUserNumber=1
+  INTEGER(OC_Intg), PARAMETER :: FieldGeometryUserNumber=1
+  INTEGER(OC_Intg), PARAMETER :: FieldFibreUserNumber=2
+  INTEGER(OC_Intg), PARAMETER :: FieldMaterialUserNumber=3
+  INTEGER(OC_Intg), PARAMETER :: FieldDependentUserNumber=4
+  INTEGER(OC_Intg), PARAMETER :: EquationSetUserNumber=1
+  INTEGER(OC_Intg), PARAMETER :: EquationsSetFieldUserNumber=5
+  INTEGER(OC_Intg), PARAMETER :: ProblemUserNumber=1
 
   !Program types
 
   !Program variables
 
-  INTEGER(OCIntg) :: NumberGlobalXElements,NumberGlobalYElements,NumberGlobalZElements
-  INTEGER(OCIntg) :: decompositionIndex,EquationsSetIndex
-  INTEGER(OCIntg) :: NumberOfComputationNodes,NumberOfDomains,ComputationNodeNumber
-  INTEGER(OCIntg) :: NodeNumber,NodeDomain,node_idx
-  INTEGER(OCIntg),ALLOCATABLE :: LeftSurfaceNodes(:)
-  INTEGER(OCIntg),ALLOCATABLE :: RightSurfaceNodes(:)
-  INTEGER(OCIntg),ALLOCATABLE :: FrontSurfaceNodes(:)
-  INTEGER(OCIntg),ALLOCATABLE :: BackSurfaceNodes(:)
-  INTEGER(OCIntg),ALLOCATABLE :: BottomSurfaceNodes(:)
-  INTEGER(OCIntg),ALLOCATABLE :: TopSurfaceNodes(:)
-  INTEGER(OCIntg) :: LeftNormalXi,RightNormalXi,FrontNormalXi,BackNormalXi,BottomNormalXi,TopNormalXi
+  INTEGER(OC_Intg) :: NumberGlobalXElements,NumberGlobalYElements,NumberGlobalZElements
+  INTEGER(OC_Intg) :: decompositionIndex,EquationsSetIndex
+  INTEGER(OC_Intg) :: NumberOfComputationNodes,NumberOfDomains,ComputationNodeNumber
+  INTEGER(OC_Intg) :: NodeNumber,NodeDomain,node_idx
+  INTEGER(OC_Intg),ALLOCATABLE :: LeftSurfaceNodes(:)
+  INTEGER(OC_Intg),ALLOCATABLE :: RightSurfaceNodes(:)
+  INTEGER(OC_Intg),ALLOCATABLE :: FrontSurfaceNodes(:)
+  INTEGER(OC_Intg),ALLOCATABLE :: BackSurfaceNodes(:)
+  INTEGER(OC_Intg),ALLOCATABLE :: BottomSurfaceNodes(:)
+  INTEGER(OC_Intg),ALLOCATABLE :: TopSurfaceNodes(:)
+  INTEGER(OC_Intg) :: LeftNormalXi,RightNormalXi,FrontNormalXi,BackNormalXi,BottomNormalXi,TopNormalXi
 
-  INTEGER(OCIntg), PARAMETER :: NUMBER_OF_COMPONENTS = 3 !nearly incompressible
+  INTEGER(OC_Intg), PARAMETER :: NUMBER_OF_COMPONENTS = 3 !nearly incompressible
 
   !CMISS variables
   TYPE(OC_BasisType) :: Basis, PressureBasis
@@ -140,7 +140,7 @@ PROGRAM SimpleShearExample
 #endif
 
   !Generic CMISS variables
-  INTEGER(OCIntg) :: Err
+  INTEGER(OC_Intg) :: Err
 
 #ifdef WIN32
   !Initialise QuickWin
@@ -347,10 +347,10 @@ PROGRAM SimpleShearExample
   CALL OC_EquationsSet_MaterialsCreateFinish(EquationsSet,Err)
 
   !Set Mooney-Rivlin constants c10 and c01 to 0.5 and 0.0 respectively. Third value is kappa (bulk modulus ???)
-  CALL OC_Field_ComponentValuesInitialise(MaterialField,OC_FIELD_U_VARIABLE_TYPE,OC_FIELD_VALUES_SET_TYPE,1,0.5_OCRP,Err)
-  CALL OC_Field_ComponentValuesInitialise(MaterialField,OC_FIELD_U_VARIABLE_TYPE,OC_FIELD_VALUES_SET_TYPE,2,0.0_OCRP,Err)
+  CALL OC_Field_ComponentValuesInitialise(MaterialField,OC_FIELD_U_VARIABLE_TYPE,OC_FIELD_VALUES_SET_TYPE,1,0.5_OC_RP,Err)
+  CALL OC_Field_ComponentValuesInitialise(MaterialField,OC_FIELD_U_VARIABLE_TYPE,OC_FIELD_VALUES_SET_TYPE,2,0.0_OC_RP,Err)
   CALL OC_Field_ComponentValuesInitialise(MaterialField,OC_FIELD_U_VARIABLE_TYPE,OC_FIELD_VALUES_SET_TYPE, &
-    & 3,10000.0_OCRP,Err)
+    & 3,10000.0_OC_RP,Err)
 
   !Create the equations set equations
   CALL OC_Equations_Initialise(Equations,Err)
@@ -418,7 +418,7 @@ PROGRAM SimpleShearExample
       CALL OC_Field_ParameterSetGetNode(GeometricField,OC_FIELD_U_VARIABLE_TYPE,OC_FIELD_VALUES_SET_TYPE,1,1,NodeNumber,1,&
         & VALUE,Err)
       CALL OC_BoundaryConditions_SetNode(BoundaryConditions,DependentField,OC_FIELD_U_VARIABLE_TYPE,1,1,NodeNumber,1, &
-        & OC_BOUNDARY_CONDITION_FIXED,VALUE+0.1_OCRP*WIDTH,Err)
+        & OC_BOUNDARY_CONDITION_FIXED,VALUE+0.1_OC_RP*WIDTH,Err)
       ! y-direction
       CALL OC_Field_ParameterSetGetNode(GeometricField,OC_FIELD_U_VARIABLE_TYPE,OC_FIELD_VALUES_SET_TYPE,1,1,NodeNumber,2,&
         & VALUE,Err)

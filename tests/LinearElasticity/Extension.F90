@@ -66,35 +66,35 @@ PROGRAM AnalyticLinearElasticityExample
 
   !Test program parameters
 
-  REAL(OCRP), PARAMETER :: ORIGIN(3)=[0.0_OCRP,0.0_OCRP,0.0_OCRP]
-  REAL(OCRP), PARAMETER :: LENGTH=20.0_OCRP
-  REAL(OCRP), PARAMETER :: WIDTH=20.0_OCRP
-  REAL(OCRP), PARAMETER :: HEIGHT=5.0_OCRP
+  REAL(OC_RP), PARAMETER :: ORIGIN(3)=[0.0_OC_RP,0.0_OC_RP,0.0_OC_RP]
+  REAL(OC_RP), PARAMETER :: LENGTH=20.0_OC_RP
+  REAL(OC_RP), PARAMETER :: WIDTH=20.0_OC_RP
+  REAL(OC_RP), PARAMETER :: HEIGHT=5.0_OC_RP
 
-  INTEGER(OCIntg), PARAMETER :: NumberOfDomains=1
+  INTEGER(OC_Intg), PARAMETER :: NumberOfDomains=1
 
-  INTEGER(OCIntg), PARAMETER :: ContextUserNumber=1
-  INTEGER(OCIntg), PARAMETER :: CoordinateSystemUserNumber=1
-  INTEGER(OCIntg), PARAMETER :: RegionUserNumber=1
-  INTEGER(OCIntg), PARAMETER :: BasisUserNumber=1
-  INTEGER(OCIntg), PARAMETER :: GeneratedMeshUserNumber = 1
-  INTEGER(OCIntg), PARAMETER :: DecompositionUserNumber=1
-  INTEGER(OCIntg), PARAMETER :: DecomposerUserNumber=1
+  INTEGER(OC_Intg), PARAMETER :: ContextUserNumber=1
+  INTEGER(OC_Intg), PARAMETER :: CoordinateSystemUserNumber=1
+  INTEGER(OC_Intg), PARAMETER :: RegionUserNumber=1
+  INTEGER(OC_Intg), PARAMETER :: BasisUserNumber=1
+  INTEGER(OC_Intg), PARAMETER :: GeneratedMeshUserNumber = 1
+  INTEGER(OC_Intg), PARAMETER :: DecompositionUserNumber=1
+  INTEGER(OC_Intg), PARAMETER :: DecomposerUserNumber=1
 
-  INTEGER(OCIntg), PARAMETER :: FieldGeometryUserNumber=1
-  INTEGER(OCIntg), PARAMETER :: FieldGeometryNumberOfVariables=1
+  INTEGER(OC_Intg), PARAMETER :: FieldGeometryUserNumber=1
+  INTEGER(OC_Intg), PARAMETER :: FieldGeometryNumberOfVariables=1
 
-  INTEGER(OCIntg), PARAMETER :: FieldDependentUserNumber=2
-  INTEGER(OCIntg), PARAMETER :: FieldDependentNumberOfVariables=2
+  INTEGER(OC_Intg), PARAMETER :: FieldDependentUserNumber=2
+  INTEGER(OC_Intg), PARAMETER :: FieldDependentNumberOfVariables=2
 
-  INTEGER(OCIntg), PARAMETER :: FieldMaterialUserNumber=3
-  INTEGER(OCIntg), PARAMETER :: FieldMaterialNumberOfVariables=1
+  INTEGER(OC_Intg), PARAMETER :: FieldMaterialUserNumber=3
+  INTEGER(OC_Intg), PARAMETER :: FieldMaterialNumberOfVariables=1
 
-  INTEGER(OCIntg), PARAMETER :: FieldAnalyticUserNumber=4
+  INTEGER(OC_Intg), PARAMETER :: FieldAnalyticUserNumber=4
 
-  INTEGER(OCIntg), PARAMETER :: EquationSetUserNumber=1
-  INTEGER(OCIntg), PARAMETER :: EquationsSetFieldUserNumber=5
-  INTEGER(OCIntg), PARAMETER :: ProblemUserNumber=1
+  INTEGER(OC_Intg), PARAMETER :: EquationSetUserNumber=1
+  INTEGER(OC_Intg), PARAMETER :: EquationsSetFieldUserNumber=5
+  INTEGER(OC_Intg), PARAMETER :: ProblemUserNumber=1
 
   !Program types
 
@@ -108,7 +108,7 @@ PROGRAM AnalyticLinearElasticityExample
 #endif
 
   !Generic CMISS variables
-  INTEGER(OCIntg) :: Err
+  INTEGER(OC_Intg) :: Err
 
 #ifdef WIN32
   !Initialise QuickWin
@@ -158,9 +158,9 @@ CONTAINS
     & NumberGlobalZElements,OutputFilename)
 
     !Argument variables
-    INTEGER(OCIntg), INTENT(IN) :: NumberGlobalXElements !<initial number of elements per axis
-    INTEGER(OCIntg), INTENT(IN) :: NumberGlobalYElements !<final number of elements per axis
-    INTEGER(OCIntg), INTENT(IN) :: NumberGlobalZElements !<increment interval number of elements per axis
+    INTEGER(OC_Intg), INTENT(IN) :: NumberGlobalXElements !<initial number of elements per axis
+    INTEGER(OC_Intg), INTENT(IN) :: NumberGlobalYElements !<final number of elements per axis
+    INTEGER(OC_Intg), INTENT(IN) :: NumberGlobalZElements !<increment interval number of elements per axis
     CHARACTER(LEN=*), INTENT(IN) :: OutputFilename !<The Error condition string
     !Local Variables
     TYPE(OC_FieldType) :: DependentField
@@ -183,9 +183,9 @@ CONTAINS
     & NumberGlobalZElements,OutputFilename)
 
     !Argument variables
-    INTEGER(OCIntg), INTENT(IN) :: NumberGlobalXElements !<initial number of elements per axis
-    INTEGER(OCIntg), INTENT(IN) :: NumberGlobalYElements !<final number of elements per axis
-    INTEGER(OCIntg), INTENT(IN) :: NumberGlobalZElements !<increment interval number of elements per axis
+    INTEGER(OC_Intg), INTENT(IN) :: NumberGlobalXElements !<initial number of elements per axis
+    INTEGER(OC_Intg), INTENT(IN) :: NumberGlobalYElements !<final number of elements per axis
+    INTEGER(OC_Intg), INTENT(IN) :: NumberGlobalZElements !<increment interval number of elements per axis
     CHARACTER(LEN=*), INTENT(IN) :: OutputFilename !<The Error condition string
     !Local Variables
     TYPE(OC_FieldType) :: DependentField
@@ -208,9 +208,9 @@ CONTAINS
     & NumberGlobalZElements,OutputFilename)
 
     !Argument variables
-    INTEGER(OCIntg), INTENT(IN) :: NumberGlobalXElements !<initial number of elements per axis
-    INTEGER(OCIntg), INTENT(IN) :: NumberGlobalYElements !<final number of elements per axis
-    INTEGER(OCIntg), INTENT(IN) :: NumberGlobalZElements !<increment interval number of elements per axis
+    INTEGER(OC_Intg), INTENT(IN) :: NumberGlobalXElements !<initial number of elements per axis
+    INTEGER(OC_Intg), INTENT(IN) :: NumberGlobalYElements !<final number of elements per axis
+    INTEGER(OC_Intg), INTENT(IN) :: NumberGlobalZElements !<increment interval number of elements per axis
     CHARACTER(LEN=*), INTENT(IN) :: OutputFilename !<The Error condition string
     !Local Variables
     TYPE(OC_FieldType) :: DependentField
@@ -232,19 +232,19 @@ CONTAINS
   SUBROUTINE ANALYTIC_LINEAR_ELASTICITY_GENERIC(NumberGlobalXElements,NumberGlobalYElements,NumberGlobalZElements, &
     & InterpolationSpecifications,DependentField)
     !Argument variables 
-    INTEGER(OCIntg), INTENT(IN) :: NumberGlobalXElements !<number of elements on x axis
-    INTEGER(OCIntg), INTENT(IN) :: NumberGlobalYElements !<number of elements on y axis
-    INTEGER(OCIntg), INTENT(IN) :: NumberGlobalZElements !<number of elements on z axis
-    INTEGER(OCIntg), INTENT(IN) :: InterpolationSpecifications !<the interpolation specifications
+    INTEGER(OC_Intg), INTENT(IN) :: NumberGlobalXElements !<number of elements on x axis
+    INTEGER(OC_Intg), INTENT(IN) :: NumberGlobalYElements !<number of elements on y axis
+    INTEGER(OC_Intg), INTENT(IN) :: NumberGlobalZElements !<number of elements on z axis
+    INTEGER(OC_Intg), INTENT(IN) :: InterpolationSpecifications !<the interpolation specifications
     TYPE(OC_FieldType) :: DependentField
 
     !Program variables
-    REAL(OCRP) :: MeshDimensions(3),MaterialParameters(6)
-    INTEGER(OCIntg) :: AnalyticFunction,Interpolation(3),NumberOfGaussPoints(3),EquationSetSubtype
-    INTEGER(OCIntg) :: FieldGeometryNumberOfComponents,FieldDependentNumberOfComponents,NumberOfElements(3)
-    INTEGER(OCIntg) :: MPI_IERROR
-    INTEGER(OCIntg) :: decompositionIndex,EquationsSetIndex,FieldComponentIndex,FieldMaterialNumberOfComponents,NumberOfXi
-    INTEGER(OCIntg) :: NumberOfComputationNodes,ComputationNodeNumber
+    REAL(OC_RP) :: MeshDimensions(3),MaterialParameters(6)
+    INTEGER(OC_Intg) :: AnalyticFunction,Interpolation(3),NumberOfGaussPoints(3),EquationSetSubtype
+    INTEGER(OC_Intg) :: FieldGeometryNumberOfComponents,FieldDependentNumberOfComponents,NumberOfElements(3)
+    INTEGER(OC_Intg) :: MPI_IERROR
+    INTEGER(OC_Intg) :: decompositionIndex,EquationsSetIndex,FieldComponentIndex,FieldMaterialNumberOfComponents,NumberOfXi
+    INTEGER(OC_Intg) :: NumberOfComputationNodes,ComputationNodeNumber
 
     !CMISS variables
 
@@ -271,21 +271,21 @@ CONTAINS
       AnalyticFunction=OC_EQUATIONS_SET_LINEAR_ELASTICITY_ONE_DIM_1
       !Prescribe material properties Area,E1
       FieldMaterialNumberOfComponents = 2 !Young's Modulus & Poisson's Ratio
-      MaterialParameters = [WIDTH*HEIGHT,10.0E3_OCRP,0.0_OCRP,0.0_OCRP,0.0_OCRP,0.0_OCRP]
+      MaterialParameters = [WIDTH*HEIGHT,10.0E3_OC_RP,0.0_OC_RP,0.0_OC_RP,0.0_OC_RP,0.0_OC_RP]
     ELSEIF (NumberGlobalZElements == 0) THEN
       NumberOfXi = 2
       EquationSetSubtype = OC_EQUATIONS_SET_TWO_DIMENSIONAL_PLANE_STRESS_SUBTYPE
       AnalyticFunction=OC_EQUATIONS_SET_LINEAR_ELASTICITY_TWO_DIM_1
       !Prescribe material properties h,E1,v12
       FieldMaterialNumberOfComponents = 3 !Young's Modulus & Poisson's Ratio
-      MaterialParameters = [HEIGHT,10.0E3_OCRP,0.3_OCRP,0.0_OCRP,0.0_OCRP,0.0_OCRP]
+      MaterialParameters = [HEIGHT,10.0E3_OC_RP,0.3_OC_RP,0.0_OC_RP,0.0_OC_RP,0.0_OC_RP]
     ELSE
       NumberOfXi = 3
       EquationSetSubtype = OC_EQUATIONS_SET_THREE_DIMENSIONAL_ORTHOTROPIC_SUBTYPE
       AnalyticFunction=OC_EQUATIONS_SET_LINEAR_ELASTICITY_THREE_DIM_1
       !Prescribe material properties E1,E2,E3 & v13,v23,v12
       FieldMaterialNumberOfComponents = 6 !Young's Modulus & Poisson's Ratio
-      MaterialParameters = [10.0E3_OCRP,10.0E3_OCRP,10.0E3_OCRP,0.3_OCRP,0.3_OCRP,0.3_OCRP]
+      MaterialParameters = [10.0E3_OC_RP,10.0E3_OC_RP,10.0E3_OC_RP,0.3_OC_RP,0.3_OC_RP,0.3_OC_RP]
     ENDIF
     Interpolation = [InterpolationSpecifications,InterpolationSpecifications,InterpolationSpecifications]
     NumberOfElements = [NumberGlobalXElements,NumberGlobalYElements,NumberGlobalZElements]
@@ -506,13 +506,13 @@ CONTAINS
     & GeneratedMeshUserNumber,ProblemUserNumber)
 
     !Argument variables
-    INTEGER(OCIntg), INTENT(IN) :: CoordinateSystemUserNumber
-    INTEGER(OCIntg), INTENT(IN) :: RegionUserNumber
-    INTEGER(OCIntg), INTENT(IN) :: BasisUserNumber
-    INTEGER(OCIntg), INTENT(IN) :: GeneratedMeshUserNumber
-    INTEGER(OCIntg), INTENT(IN) :: ProblemUserNumber
+    INTEGER(OC_Intg), INTENT(IN) :: CoordinateSystemUserNumber
+    INTEGER(OC_Intg), INTENT(IN) :: RegionUserNumber
+    INTEGER(OC_Intg), INTENT(IN) :: BasisUserNumber
+    INTEGER(OC_Intg), INTENT(IN) :: GeneratedMeshUserNumber
+    INTEGER(OC_Intg), INTENT(IN) :: ProblemUserNumber
 
-    INTEGER(OCIntg) :: contextUserNumber
+    INTEGER(OC_Intg) :: contextUserNumber
 
     CALL OC_Context_UserNumberGet(context,contextUserNumber,err)
     CALL OC_Problem_Destroy(contextUserNumber,ProblemUserNumber,Err)

@@ -68,10 +68,10 @@ PROGRAM AnalyticLaplaceExample
 
   !Test program parameters
 
-  REAL(OCRP), PARAMETER :: ORIGIN(2)=[-3.141592653579_OCRP/2.0_OCRP, -3.141592653579_OCRP/2.0_OCRP]
-  REAL(OCRP), PARAMETER :: HEIGHT=2.0_OCRP
-  REAL(OCRP), PARAMETER :: WIDTH=2.0_OCRP
-  REAL(OCRP), PARAMETER :: LENGTH=2.0_OCRP
+  REAL(OC_RP), PARAMETER :: ORIGIN(2)=[-3.141592653579_OC_RP/2.0_OC_RP, -3.141592653579_OC_RP/2.0_OC_RP]
+  REAL(OC_RP), PARAMETER :: HEIGHT=2.0_OC_RP
+  REAL(OC_RP), PARAMETER :: WIDTH=2.0_OC_RP
+  REAL(OC_RP), PARAMETER :: LENGTH=2.0_OC_RP
 
   !Program types
 
@@ -82,7 +82,7 @@ PROGRAM AnalyticLaplaceExample
   TYPE(OC_RegionType) :: worldRegion
   TYPE(OC_WorkGroupType) :: worldWorkGroup
 
-  INTEGER(OCIntg) :: NUMBER_OF_ARGUMENTS,ARGUMENT_LENGTH,STATUS,INTERPOLATION
+  INTEGER(OC_Intg) :: NUMBER_OF_ARGUMENTS,ARGUMENT_LENGTH,STATUS,INTERPOLATION
   CHARACTER(LEN=255) :: COMMAND_ARGUMENT
 
 #ifdef WIN32
@@ -92,7 +92,7 @@ PROGRAM AnalyticLaplaceExample
 #endif
 
   !Generic CMISS variables
-  INTEGER(OCIntg) :: Err
+  INTEGER(OC_Intg) :: Err
 
 #ifdef WIN32
   !Initialise QuickWin
@@ -111,7 +111,7 @@ PROGRAM AnalyticLaplaceExample
   
   !Create a context
   CALL OC_Context_Initialise(context,err)
-  CALL OC_Context_Create(1_OCIntg,context,Err)
+  CALL OC_Context_Create(1_OC_Intg,context,Err)
 
   CALL OC_Region_Initialise(worldRegion,err)
   CALL OC_Context_WorldRegionGet(context,worldRegion,err)
@@ -167,11 +167,11 @@ CONTAINS
     & NUMBER_GLOBAL_Z_ELEMENTS)
 
     !Argument variables
-    INTEGER(OCIntg), INTENT(IN) :: NUMBER_GLOBAL_X_ELEMENTS !<initial number of elements per axis
-    INTEGER(OCIntg), INTENT(IN) :: NUMBER_GLOBAL_Y_ELEMENTS !<final number of elements per axis
-    INTEGER(OCIntg), INTENT(IN) :: NUMBER_GLOBAL_Z_ELEMENTS !<increment interval number of elements per axis
+    INTEGER(OC_Intg), INTENT(IN) :: NUMBER_GLOBAL_X_ELEMENTS !<initial number of elements per axis
+    INTEGER(OC_Intg), INTENT(IN) :: NUMBER_GLOBAL_Y_ELEMENTS !<final number of elements per axis
+    INTEGER(OC_Intg), INTENT(IN) :: NUMBER_GLOBAL_Z_ELEMENTS !<increment interval number of elements per axis
     !Local Variables
-    INTEGER(OCIntg) :: contextUserNumber
+    INTEGER(OC_Intg) :: contextUserNumber
     TYPE(OC_FieldType) :: FIELD
 
     CALL OC_Context_UserNumberGet(context,contextUserNumber,err)
@@ -194,11 +194,11 @@ CONTAINS
     & NUMBER_GLOBAL_Z_ELEMENTS)
 
     !Argument variables
-    INTEGER(OCIntg), INTENT(IN) :: NUMBER_GLOBAL_X_ELEMENTS !<initial number of elements per axis
-    INTEGER(OCIntg), INTENT(IN) :: NUMBER_GLOBAL_Y_ELEMENTS !<final number of elements per axis
-    INTEGER(OCIntg), INTENT(IN) :: NUMBER_GLOBAL_Z_ELEMENTS !<increment interval number of elements per axis
+    INTEGER(OC_Intg), INTENT(IN) :: NUMBER_GLOBAL_X_ELEMENTS !<initial number of elements per axis
+    INTEGER(OC_Intg), INTENT(IN) :: NUMBER_GLOBAL_Y_ELEMENTS !<final number of elements per axis
+    INTEGER(OC_Intg), INTENT(IN) :: NUMBER_GLOBAL_Z_ELEMENTS !<increment interval number of elements per axis
     !Local Variables
-    INTEGER(OCIntg) :: contextUserNumber
+    INTEGER(OC_Intg) :: contextUserNumber
     TYPE(OC_FieldType) :: FIELD
 
     CALL OC_Context_UserNumberGet(context,contextUserNumber,err)
@@ -221,11 +221,11 @@ CONTAINS
     & NUMBER_GLOBAL_Z_ELEMENTS)
 
     !Argument variables
-    INTEGER(OCIntg), INTENT(IN) :: NUMBER_GLOBAL_X_ELEMENTS !<initial number of elements per axis
-    INTEGER(OCIntg), INTENT(IN) :: NUMBER_GLOBAL_Y_ELEMENTS !<final number of elements per axis
-    INTEGER(OCIntg), INTENT(IN) :: NUMBER_GLOBAL_Z_ELEMENTS !<increment interval number of elements per axis
+    INTEGER(OC_Intg), INTENT(IN) :: NUMBER_GLOBAL_X_ELEMENTS !<initial number of elements per axis
+    INTEGER(OC_Intg), INTENT(IN) :: NUMBER_GLOBAL_Y_ELEMENTS !<final number of elements per axis
+    INTEGER(OC_Intg), INTENT(IN) :: NUMBER_GLOBAL_Z_ELEMENTS !<increment interval number of elements per axis
     !Local Variables
-    INTEGER(OCIntg) :: contextUserNumber
+    INTEGER(OC_Intg) :: contextUserNumber
     TYPE(OC_FieldType) :: FIELD
 
     CALL OC_Context_UserNumberGet(context,contextUserNumber,err)
@@ -248,19 +248,19 @@ CONTAINS
     & NUMBER_OF_ELEMENTS_XI_END,NUMBER_OF_ELEMENTS_XI_INTERVAL)
   
     !Argument variables
-    INTEGER(OCIntg), INTENT(IN) :: NUMBER_OF_ELEMENTS_XI_START !<initial number of elements per axis
-    INTEGER(OCIntg), INTENT(IN) :: NUMBER_OF_ELEMENTS_XI_END !<final number of elements per axis
-    INTEGER(OCIntg), INTENT(IN) :: NUMBER_OF_ELEMENTS_XI_INTERVAL !<increment interval number of elements per axis
+    INTEGER(OC_Intg), INTENT(IN) :: NUMBER_OF_ELEMENTS_XI_START !<initial number of elements per axis
+    INTEGER(OC_Intg), INTENT(IN) :: NUMBER_OF_ELEMENTS_XI_END !<final number of elements per axis
+    INTEGER(OC_Intg), INTENT(IN) :: NUMBER_OF_ELEMENTS_XI_INTERVAL !<increment interval number of elements per axis
     !Local Variables
-    REAL(OCRP) :: VALUE
-    REAL(OCRP), ALLOCATABLE :: X_VALUES(:),Y_VALUES(:)
+    REAL(OC_RP) :: VALUE
+    REAL(OC_RP), ALLOCATABLE :: X_VALUES(:),Y_VALUES(:)
     
     CALL ANALYTICLAPLACE_GENERIC_CONVERGENCE(NUMBER_OF_ELEMENTS_XI_START,NUMBER_OF_ELEMENTS_XI_END, &
       & NUMBER_OF_ELEMENTS_XI_INTERVAL,7,X_VALUES,Y_VALUES)
     
     CALL TEST_FRAMEWORK_GRADIENT_VALUE_GET(X_VALUES,Y_VALUES,VALUE)
 
-    CALL TEST_FRAMEWORK_ASSERT_EQUALS(2.0_OCRP,VALUE,0.5_OCRP,ERR)
+    CALL TEST_FRAMEWORK_ASSERT_EQUALS(2.0_OC_RP,VALUE,0.5_OC_RP,ERR)
     
     WRITE(*,'(A)') "Analytic Laplace Example Testcase 1 - bilinear Simplex has successfully completed."
     
@@ -275,19 +275,19 @@ CONTAINS
     & NUMBER_OF_ELEMENTS_XI_END,NUMBER_OF_ELEMENTS_XI_INTERVAL)
   
     !Argument variables
-    INTEGER(OCIntg), INTENT(IN) :: NUMBER_OF_ELEMENTS_XI_START !<initial number of elements per axis
-    INTEGER(OCIntg), INTENT(IN) :: NUMBER_OF_ELEMENTS_XI_END !<final number of elements per axis
-    INTEGER(OCIntg), INTENT(IN) :: NUMBER_OF_ELEMENTS_XI_INTERVAL !<increment interval number of elements per axis
+    INTEGER(OC_Intg), INTENT(IN) :: NUMBER_OF_ELEMENTS_XI_START !<initial number of elements per axis
+    INTEGER(OC_Intg), INTENT(IN) :: NUMBER_OF_ELEMENTS_XI_END !<final number of elements per axis
+    INTEGER(OC_Intg), INTENT(IN) :: NUMBER_OF_ELEMENTS_XI_INTERVAL !<increment interval number of elements per axis
     !Local Variables
-    REAL(OCRP) :: VALUE
-    REAL(OCRP), ALLOCATABLE :: X_VALUES(:),Y_VALUES(:)
+    REAL(OC_RP) :: VALUE
+    REAL(OC_RP), ALLOCATABLE :: X_VALUES(:),Y_VALUES(:)
     
     CALL ANALYTICLAPLACE_GENERIC_CONVERGENCE(NUMBER_OF_ELEMENTS_XI_START,NUMBER_OF_ELEMENTS_XI_END, &
       & NUMBER_OF_ELEMENTS_XI_INTERVAL,1,X_VALUES,Y_VALUES)
     
     CALL TEST_FRAMEWORK_GRADIENT_VALUE_GET(X_VALUES,Y_VALUES,VALUE)
 
-    CALL TEST_FRAMEWORK_ASSERT_EQUALS(2.0_OCRP,VALUE,0.5_OCRP,ERR)
+    CALL TEST_FRAMEWORK_ASSERT_EQUALS(2.0_OC_RP,VALUE,0.5_OC_RP,ERR)
     
     WRITE(*,'(A)') "Analytic Laplace Example Testcase 2 - bilinear Lagrange has successfully completed."
     
@@ -302,12 +302,12 @@ CONTAINS
     & NUMBER_OF_ELEMENTS_XI_END,NUMBER_OF_ELEMENTS_XI_INTERVAL)
   
     !Argument variables
-    INTEGER(OCIntg), INTENT(IN) :: NUMBER_OF_ELEMENTS_XI_START !<initial number of elements per axis
-    INTEGER(OCIntg), INTENT(IN) :: NUMBER_OF_ELEMENTS_XI_END !<final number of elements per axis
-    INTEGER(OCIntg), INTENT(IN) :: NUMBER_OF_ELEMENTS_XI_INTERVAL !<increment interval number of elements per axis
+    INTEGER(OC_Intg), INTENT(IN) :: NUMBER_OF_ELEMENTS_XI_START !<initial number of elements per axis
+    INTEGER(OC_Intg), INTENT(IN) :: NUMBER_OF_ELEMENTS_XI_END !<final number of elements per axis
+    INTEGER(OC_Intg), INTENT(IN) :: NUMBER_OF_ELEMENTS_XI_INTERVAL !<increment interval number of elements per axis
     !Local Variables
-    REAL(OCRP) :: VALUE
-    REAL(OCRP), ALLOCATABLE :: X_VALUES(:),Y_VALUES(:)
+    REAL(OC_RP) :: VALUE
+    REAL(OC_RP), ALLOCATABLE :: X_VALUES(:),Y_VALUES(:)
 
     !Note INTERPOLATION_SPECIFICATIONS of 4 is Cubic Hermite
     CALL ANALYTICLAPLACE_GENERIC_CONVERGENCE(NUMBER_OF_ELEMENTS_XI_START,NUMBER_OF_ELEMENTS_XI_END, &
@@ -315,7 +315,7 @@ CONTAINS
     
     CALL TEST_FRAMEWORK_GRADIENT_VALUE_GET(X_VALUES,Y_VALUES,VALUE)
     !This test is superconvergent so look for a slope of 5 rather than 4. Should really test >= 4
-    CALL TEST_FRAMEWORK_ASSERT_EQUALS(5.0_OCRP,VALUE,1.0_OCRP,Err)
+    CALL TEST_FRAMEWORK_ASSERT_EQUALS(5.0_OC_RP,VALUE,1.0_OC_RP,Err)
     IF (Err/=0) THEN
       WRITE(*,'(A,F6.3)') "Analytic Laplace Example Testcase 3 - bicubic Hermite failure: Convergence should be around 4.0" &
         & //", but it was ", VALUE
@@ -333,15 +333,15 @@ CONTAINS
     & NUMBER_OF_ELEMENTS_XI_INTERVAL,INTERPOLATION_SPECIFICATIONS,X_VALUES,Y_VALUES)
   
     !Argument variables 
-    INTEGER(OCIntg), INTENT(IN) :: NUMBER_OF_ELEMENTS_XI_START !<initial number of elements per axis
-    INTEGER(OCIntg), INTENT(IN) :: NUMBER_OF_ELEMENTS_XI_END !<final number of elements per axis
-    INTEGER(OCIntg), INTENT(IN) :: NUMBER_OF_ELEMENTS_XI_INTERVAL !<increment interval number of elements per axis
-    INTEGER(OCIntg), INTENT(IN) :: INTERPOLATION_SPECIFICATIONS !<interpolation specifications
-    REAL(OCRP), ALLOCATABLE :: X_VALUES(:),Y_VALUES(:)
+    INTEGER(OC_Intg), INTENT(IN) :: NUMBER_OF_ELEMENTS_XI_START !<initial number of elements per axis
+    INTEGER(OC_Intg), INTENT(IN) :: NUMBER_OF_ELEMENTS_XI_END !<final number of elements per axis
+    INTEGER(OC_Intg), INTENT(IN) :: NUMBER_OF_ELEMENTS_XI_INTERVAL !<increment interval number of elements per axis
+    INTEGER(OC_Intg), INTENT(IN) :: INTERPOLATION_SPECIFICATIONS !<interpolation specifications
+    REAL(OC_RP), ALLOCATABLE :: X_VALUES(:),Y_VALUES(:)
     !Local Variables
-    REAL(OCRP) :: VALUE
+    REAL(OC_RP) :: VALUE
     
-    INTEGER(OCIntg) :: i,contextUserNumber
+    INTEGER(OC_Intg) :: i,contextUserNumber
     TYPE(OC_FieldType) :: FIELD
 
 
@@ -370,15 +370,15 @@ CONTAINS
   SUBROUTINE ANALYTICLAPLACE_GENERIC(NUMBER_GLOBAL_X_ELEMENTS,NUMBER_GLOBAL_Y_ELEMENTS,NUMBER_GLOBAL_Z_ELEMENTS, &
     & INTERPOLATION_SPECIFICATIONS,DEPENDENT_FIELD)
     !Argument variables 
-    INTEGER(OCIntg), INTENT(IN) :: NUMBER_GLOBAL_X_ELEMENTS !<number of elements on x axis
-    INTEGER(OCIntg), INTENT(IN) :: NUMBER_GLOBAL_Y_ELEMENTS !<number of elements on y axis
-    INTEGER(OCIntg), INTENT(IN) :: NUMBER_GLOBAL_Z_ELEMENTS !<number of elements on z axis
-    INTEGER(OCIntg), INTENT(IN) :: INTERPOLATION_SPECIFICATIONS !<the interpolation specifications
+    INTEGER(OC_Intg), INTENT(IN) :: NUMBER_GLOBAL_X_ELEMENTS !<number of elements on x axis
+    INTEGER(OC_Intg), INTENT(IN) :: NUMBER_GLOBAL_Y_ELEMENTS !<number of elements on y axis
+    INTEGER(OC_Intg), INTENT(IN) :: NUMBER_GLOBAL_Z_ELEMENTS !<number of elements on z axis
+    INTEGER(OC_Intg), INTENT(IN) :: INTERPOLATION_SPECIFICATIONS !<the interpolation specifications
     TYPE(OC_FieldType) :: DEPENDENT_FIELD
     !Local Variables
-    INTEGER(OCIntg) :: MPI_IERROR
-    INTEGER(OCIntg) :: ANALYTIC_FUNCTION
-    INTEGER(OCIntg) :: decompositionIndex, EquationsSetIndex
+    INTEGER(OC_Intg) :: MPI_IERROR
+    INTEGER(OC_Intg) :: ANALYTIC_FUNCTION
+    INTEGER(OC_Intg) :: decompositionIndex, EquationsSetIndex
 
     TYPE(OC_BasisType) :: Basis
     TYPE(OC_ComputationEnvironmentType) :: computationEnvironment
@@ -572,8 +572,8 @@ CONTAINS
     CALL OC_Problem_SolverGet(Problem,OC_CONTROL_LOOP_NODE,1,Solver,Err)
     !Set solver to direct type
     CALL OC_Solver_LinearTypeSet(Solver,OC_SOLVER_LINEAR_ITERATIVE_SOLVE_TYPE,Err)
-    CALL OC_Solver_LinearIterativeAbsoluteToleranceSet(Solver,1.0E-12_OCRP,Err)
-    CALL OC_Solver_LinearIterativeRelativeToleranceSet(Solver,1.0E-12_OCRP,Err)
+    CALL OC_Solver_LinearIterativeAbsoluteToleranceSet(Solver,1.0E-12_OC_RP,Err)
+    CALL OC_Solver_LinearIterativeRelativeToleranceSet(Solver,1.0E-12_OC_RP,Err)
     !CALL OC_Solver_LinearTypeSet(Solver,OC_SOLVER_LINEAR_DIRECT_SOLVE_TYPE,Err)
     !CALL OC_Solver_LibraryTypeSet(Solver,OC_SOLVER_MUMPS_LIBRARY,Err)
     !Finish the creation of the problem solver
@@ -609,12 +609,12 @@ CONTAINS
     & BasisUserNumber,GeneratedMeshUserNumber,ProblemUserNumber)
 
     !Argument variables
-    INTEGER(OCIntg), INTENT(IN) :: contextUserNumber
-    INTEGER(OCIntg), INTENT(IN) :: CoordinateSystemUserNumber
-    INTEGER(OCIntg), INTENT(IN) :: RegionUserNumber
-    INTEGER(OCIntg), INTENT(IN) :: BasisUserNumber
-    INTEGER(OCIntg), INTENT(IN) :: GeneratedMeshUserNumber
-    INTEGER(OCIntg), INTENT(IN) :: ProblemUserNumber
+    INTEGER(OC_Intg), INTENT(IN) :: contextUserNumber
+    INTEGER(OC_Intg), INTENT(IN) :: CoordinateSystemUserNumber
+    INTEGER(OC_Intg), INTENT(IN) :: RegionUserNumber
+    INTEGER(OC_Intg), INTENT(IN) :: BasisUserNumber
+    INTEGER(OC_Intg), INTENT(IN) :: GeneratedMeshUserNumber
+    INTEGER(OC_Intg), INTENT(IN) :: ProblemUserNumber
 
     CALL OC_Problem_Destroy(contextUserNumber,ProblemUserNumber,Err)
     CALL OC_GeneratedMesh_Destroy(contextUserNumber,RegionUserNumber,GeneratedMeshUserNumber,Err)

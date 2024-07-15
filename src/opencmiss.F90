@@ -129,29 +129,29 @@ MODULE OpenCMISS
   !> \brief Kind parameters for integer data types.
   !> \see OpenCMISS::Constants::Kinds,OpenCMISS
   !>@{
-  INTEGER, PARAMETER :: OCIntg = INTG !<Standard integer kind. \see OpenCMISS_IntegerKinds,OpenCMISS
-  INTEGER, PARAMETER :: OCSIntg = SINTG !<Short integer kind. \see OpenCMISS_IntegerKinds,OpenCMISS
-  INTEGER, PARAMETER :: OCLIntg = LINTG !<Long integer kind. \see OpenCMISS_IntegerKinds,OpenCMISS
-  INTEGER, PARAMETER :: OCPtr = PTR !<Pointer integer kind. \see OpenCMISS_IntegerKinds,OpenCMISS
-  INTEGER, PARAMETER :: OCIdx = IDX !<Index integer kind. \see OpenCMISS_IntegerKinds,OpenCMISS
-  INTEGER, PARAMETER :: OCLIdx = LIDX !<Long index integer kind. \see OpenCMISS_IntegerKinds,OpenCMISS
+  INTEGER, PARAMETER :: OC_Intg = INTG !<Standard integer kind. \see OpenCMISS_IntegerKinds,OpenCMISS
+  INTEGER, PARAMETER :: OC_SIntg = SINTG !<Short integer kind. \see OpenCMISS_IntegerKinds,OpenCMISS
+  INTEGER, PARAMETER :: OC_LIntg = LINTG !<Long integer kind. \see OpenCMISS_IntegerKinds,OpenCMISS
+  INTEGER, PARAMETER :: OC_Ptr = PTR !<Pointer integer kind. \see OpenCMISS_IntegerKinds,OpenCMISS
+  INTEGER, PARAMETER :: OC_Idx = IDX !<Index integer kind. \see OpenCMISS_IntegerKinds,OpenCMISS
+  INTEGER, PARAMETER :: OC_LIdx = LIDX !<Long index integer kind. \see OpenCMISS_IntegerKinds,OpenCMISS
   !>@}
   !> \addtogroup OpenCMISS_RealKinds OpenCMISS::Constants::Kinds::Reals
   !> \brief Kind parameters for real data types.
   !> \see OpenCMISS::Constants::Kinds,OpenCMISS
   !>@{
-  INTEGER, PARAMETER :: OCSP = SP !<Single precision real kind. \see OpenCMISS_RealKinds,OpenCMISS
-  INTEGER, PARAMETER :: OCDP = DP !<Double precision real kind. \see OpenCMISS_RealKinds,OpenCMISS
-  INTEGER, PARAMETER :: OCQP = QP !<Quadruple precision real kind. \see OpenCMISS_RealKinds,OpenCMISS
-  INTEGER, PARAMETER :: OCRP = RP !<Working precision real kind. \see OpenCMISS_RealKinds,OpenCMISS
+  INTEGER, PARAMETER :: OC_SP = SP !<Single precision real kind. \see OpenCMISS_RealKinds,OpenCMISS
+  INTEGER, PARAMETER :: OC_DP = DP !<Double precision real kind. \see OpenCMISS_RealKinds,OpenCMISS
+  INTEGER, PARAMETER :: OC_QP = QP !<Quadruple precision real kind. \see OpenCMISS_RealKinds,OpenCMISS
+  INTEGER, PARAMETER :: OC_RP = RP !<Working precision real kind. \see OpenCMISS_RealKinds,OpenCMISS
   !>@}
   !> \addtogroup OpenCMISS_ComplexKinds OpenCMISS::Constants::Kinds::Complex
   !> \brief Kind parameters for complex data types
   !> \see OpenCMISS::Constants::Kinds,OpenCMISS
   !>@{
-  INTEGER, PARAMETER :: OCSPC = SPC !<Single precision complex kind. \see OpenCMISS_ComplexKinds,OpenCMISS
-  INTEGER, PARAMETER :: OCDPC = DPC !<Double precision complex kind. \see OpenCMISS_ComplexKinds,OpenCMISS
-  INTEGER, PARAMETER :: OCRPC = RPC !<Working precision complex kind. \see OpenCMISS_ComplexKinds,OpenCMISS
+  INTEGER, PARAMETER :: OC_SPC = SPC !<Single precision complex kind. \see OpenCMISS_ComplexKinds,OpenCMISS
+  INTEGER, PARAMETER :: OC_DPC = DPC !<Double precision complex kind. \see OpenCMISS_ComplexKinds,OpenCMISS
+  INTEGER, PARAMETER :: OC_RPC = RPC !<Working precision complex kind. \see OpenCMISS_ComplexKinds,OpenCMISS
   !>@}
   !>@}
   
@@ -380,11 +380,11 @@ MODULE OpenCMISS
 
   PUBLIC OC_MAJOR_VERSION,OC_MINOR_VERSION,OC_PATCH_VERSION
 
-  PUBLIC OCIntg,OCSIntg,OCLIntg,OCPtr,OCIdx,OCLIdx
+  PUBLIC OC_Intg,OC_SIntg,OC_LIntg,OC_Ptr,OC_Idx,OC_LIdx
 
-  PUBLIC OCSP,OCDP,OCQP,OCRP
+  PUBLIC OC_SP,OC_DP,OC_QP,OC_RP
 
-  PUBLIC OCSPC,OCDPC,OCRPC
+  PUBLIC OC_SPC,OC_DPC,OC_RPC
 
   INTERFACE OC_Fields_Create
     MODULE PROCEDURE OC_Fields_CreateInterface
