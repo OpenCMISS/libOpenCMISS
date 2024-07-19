@@ -61,7 +61,7 @@ MODULE GeneratedMeshAccessRoutines
 
   !> \addtogroup GeneratedMeshRoutines_GeneratedMeshTypes GeneratedMeshRoutines::GeneratedMeshTypes
   !> \brief Generated mesh types.
-  !> \see GeneratedMeshRoutines,OPENCMISS_GeneratedMeshTypes
+  !> \see GeneratedMeshRoutines,OpenCMISS_GeneratedMeshTypes
   !>@{
   INTEGER(INTG), PARAMETER :: GENERATED_MESH_REGULAR_MESH_TYPE=1 !<A regular generated mesh. \see GeneratedMeshRoutines_GeneratedMeshTypes,GeneratedMeshRoutines
   INTEGER(INTG), PARAMETER :: GENERATED_MESH_POLAR_MESH_TYPE=2 !<A polar generated mesh. \see GeneratedMeshRoutines_GeneratedMeshTypes,GeneratedMeshRoutines
@@ -278,7 +278,7 @@ CONTAINS
   !================================================================================================================================
   !
 
-  !>Gets the basis of a generated mesh. \see OpenCMISS::Iron::cmfe_GeneratedMesh_BasisGet
+  !>Gets the basis of a generated mesh. \see OpenCMISS::OC_GeneratedMesh_BasisGet
   SUBROUTINE GeneratedMesh_BasisGet(generatedMesh,bases,err,error,*)
 
     !Argument variables
@@ -505,7 +505,7 @@ CONTAINS
   !================================================================================================================================
   !
 
-  !>Gets the extent of a generated mesh. \see OpenCMISS::Iron::cmfe_GeneratedMesh_ExtentGet
+  !>Gets the extent of a generated mesh. \see OpenCMISS::OC_GeneratedMesh_ExtentGet
   SUBROUTINE GeneratedMesh_ExtentGet(generatedMesh,extent,err,error,*)
 
     !Argument variables
@@ -667,7 +667,7 @@ CONTAINS
   !================================================================================================================================
   !
 
-  !>Gets the number of elements in a generated mesh.  \see OpenCMISS::Iron::cmfe_GeneratedMesh_NumberOfElementsGet
+  !>Gets the number of elements in a generated mesh.  \see OpenCMISS::OC_GeneratedMesh_NumberOfElementsGet
   SUBROUTINE GeneratedMesh_NumberOfElementsGet(generatedMesh,numberOfElements,err,error,*)
 
     !Argument variables
@@ -748,7 +748,7 @@ CONTAINS
   !================================================================================================================================
   !
 
-  !>Get the origin of a generated mesh. \see OpenCMISS::Iron::cmfe_GeneratedMesh_OriginGet
+  !>Get the origin of a generated mesh. \see OpenCMISS::OC_GeneratedMesh_OriginGet
   SUBROUTINE GeneratedMesh_OriginGet(generatedMesh,origin,err,error,*)
 
     !Argument variables
@@ -920,7 +920,7 @@ CONTAINS
   !================================================================================================================================
   !
 
-  !>Gets the type of a generated mesh. \see OpenCMISS::Iron::cmfe_GeneratedMesh_TypeGet
+  !>Gets the type of a generated mesh. \see OpenCMISS::OC_GeneratedMesh_TypeGet
   SUBROUTINE GeneratedMesh_TypeGet(generatedMesh,type,err,error,*)
 
     !Argument variables

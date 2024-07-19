@@ -101,7 +101,7 @@ CONTAINS
   !================================================================================================================================
   !
 
-  !>Sets the coordinate system of region.  \see OPENCMISS::Iron::cmfe_Region_CoordinateSystemSet
+  !>Sets the coordinate system of region.  \see OpenCMISS::OC_Region_CoordinateSystemSet
   SUBROUTINE Region_CoordinateSystemSet(region,coordinateSystem,err,error,*)
 
     !Argument variables
@@ -129,7 +129,7 @@ CONTAINS
   !================================================================================================================================
   !
 
-  !>Finishes the creation of a region. \see OPENCMISS::Iron::cmfe_Region_CreateFinish
+  !>Finishes the creation of a region. \see OpenCMISS::OC_Region_CreateFinish
   SUBROUTINE Region_CreateFinish(region,err,error,*)
 
     !Argument variables
@@ -167,7 +167,7 @@ CONTAINS
   !
   
   !>Starts the creation a new region number userNumber as a sub region to the given parentRegion, initialises all
-  !>variables and inherits the parentRegionS coordinate system. \see OPENCMISS::Iron::cmfe_Region_CreateFinish
+  !>variables and inherits the parentRegionS coordinate system. \see OpenCMISS::OC_Region_CreateFinish
   !>Default values set for the region's attributes are:
   !>- coordinateSystem: parent coordinate system. See \ref COORDINATE_SYSTEM_TYPE
   !>- DATA_POINTS: null
@@ -250,7 +250,7 @@ CONTAINS
   !================================================================================================================================
   !
 
-  !>Destroys a region given by userNumber and all sub-regions under it. \todo create destroy by pointer method. \see OpenCMISS::Iron::cmfe_Region_Destroy
+  !>Destroys a region given by userNumber and all sub-regions under it. \todo create destroy by pointer method. \see OpenCMISS::OC_Region_Destroy
   RECURSIVE SUBROUTINE Region_DestroyNumber(regions,userNumber,err,error,*)
 
     !Argument variables
@@ -320,7 +320,7 @@ CONTAINS
   !================================================================================================================================
   !
 
-  !>Destroys a region identified by a pointer and all sub-regions under it. \see OPENCMISS::Iron::cmfe_Region_Destroy
+  !>Destroys a region identified by a pointer and all sub-regions under it. \see OpenCMISS::OC_Region_Destroy
   SUBROUTINE Region_Destroy(region,err,error,*)
 
     !Argument variables
@@ -443,7 +443,7 @@ CONTAINS
   !================================================================================================================================
   !
 
-  !>Sets the label of a region. \see OPENCMISS::Iron::cmfe_Region_LabelSet
+  !>Sets the label of a region. \see OpenCMISS::OC_Region_LabelSet
   SUBROUTINE Region_LabelSetC(region,label,err,error,*)
 
     !Argument variables
@@ -470,7 +470,7 @@ CONTAINS
   !================================================================================================================================
   !
 
-  !>Sets the label of a region. \see OPENCMISS::Iron::cmfe_Region_LabelSet
+  !>Sets the label of a region. \see OpenCMISS::OC_Region_LabelSet
   SUBROUTINE Region_LabelSetVS(region,label,err,error,*)
 
     !Argument variables

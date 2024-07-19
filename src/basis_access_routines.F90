@@ -41,7 +41,7 @@
 !> the terms of any one of the MPL, the GPL or the LGPL.
 !>
 
-!> \addtogroup OpenCMISS_Basis OpenCMISS::Iron::Basis
+!> \addtogroup OpenCMISS_Basis OpenCMISS::Basis
 !> This module contains all basis access method routines.
 MODULE BasisAccessRoutines
   
@@ -477,7 +477,7 @@ CONTAINS
   !================================================================================================================================
   !
   
-  !>Gets the collapsed xi flags for a basis is identified by a a pointer. \see OpenCMISS::Iron::cmfe_Basis_CollapsedXiGet
+  !>Gets the collapsed xi flags for a basis is identified by a a pointer. \see OpenCMISS::OC_Basis_CollapsedXiGet
   SUBROUTINE Basis_CollapsedXiGet(basis,collapsedXi,err,error,*)
 
     !Argument variables
@@ -1237,7 +1237,7 @@ CONTAINS
   !================================================================================================================================
   !
   
-  !>Gets/changes the interpolation type in each xi direction for a basis identified by a pointer. \see OpenCMISS::Iron::cmfe_Basis_InterpolationXiGet
+  !>Gets/changes the interpolation type in each xi direction for a basis identified by a pointer. \see OpenCMISS::OC_Basis_InterpolationXiGet
   SUBROUTINE Basis_InterpolationXiGet(basis,interpolationXi,err,error,*)
 
     !Argument variables
@@ -1584,10 +1584,7 @@ CONTAINS
     TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
     !Local Variables
     INTEGER(INTG) :: lineXiNormals(1)
-#ifdef WITH_PRECHECKS    
-    TYPE(VARYING_STRING) :: localError
-#endif    
- 
+
     ENTERS("Basis_LineXiNormalsGet0",err,error,*999)
 
     CALL Basis_LineXiNormalsGet1(basis,localLineNumber,lineXiNormals,err,error,*999)    
@@ -1998,7 +1995,7 @@ CONTAINS
   !================================================================================================================================
   !
 
-  !>Returns the number of local nodes in the specified basis \see OpenCMISS::Iron::cmfe_Basis_NumberOfLocalNodesGet
+  !>Returns the number of local nodes in the specified basis \see OpenCMISS::OC_Basis_NumberOfLocalNodesGet
   SUBROUTINE Basis_NumberOfLocalNodesGet(basis,numberOfLocalNodes,err,error,*)
 
     !Argument variables
@@ -2070,7 +2067,7 @@ CONTAINS
   !================================================================================================================================
   !
   
-  !>Gets the number of xi directions for a basis. \see OpenCMISS::Iron::cmfe_Basis_NumberOfXiGet
+  !>Gets the number of xi directions for a basis. \see OpenCMISS::OC_Basis_NumberOfXiGet
   SUBROUTINE Basis_NumberOfXiGet(basis,numberOfXi,err,error,*)
 
     !Argument variables
@@ -2187,7 +2184,7 @@ CONTAINS
   !================================================================================================================================
   !
   
-  !>Returns the xi positions of a Gauss point on a basis quadrature identified by a pointer. \see OpenCMISS::Iron::cmfe_Basis_QuadratureGaussXiGet
+  !>Returns the xi positions of a Gauss point on a basis quadrature identified by a pointer. \see OpenCMISS::OC_Basis_QuadratureGaussXiGet
   SUBROUTINE Basis_QuadratureGaussXiGet0(basis,quadratureSchemeIdx,gaussPointNumber,gaussXi,err,error,*)
 
     !Argument variables
@@ -2218,7 +2215,7 @@ CONTAINS
   !================================================================================================================================
   !
   
-  !>Returns the xi positions of Gauss points on a basis quadrature identified by a pointer. If no Gauss points are specified then xi positions of all Gauss points are returned. \see OpenCMISS::Iron::cmfe_Basis_QuadratureGaussXiGet
+  !>Returns the xi positions of Gauss points on a basis quadrature identified by a pointer. If no Gauss points are specified then xi positions of all Gauss points are returned. \see OpenCMISS::OC_Basis_QuadratureGaussXiGet
   SUBROUTINE Basis_QuadratureGaussXiGet1(basis,quadratureSchemeIdx,gaussPointNumbers,gaussXi,err,error,*)
 
     !Argument variables
@@ -2297,7 +2294,7 @@ CONTAINS
   !================================================================================================================================
   !
   
-  !>Get the number of Gauss points in each xi direction on a basis quadrature identified by a pointer. \see OpenCMISS::Iron::cmfe_Basis_QuadratureNumberOfGaussXiGet
+  !>Get the number of Gauss points in each xi direction on a basis quadrature identified by a pointer. \see OpenCMISS::OC_Basis_QuadratureNumberOfGaussXiGet
   SUBROUTINE Basis_QuadratureNumberOfGaussXiGet(basis,quadratureNumberOfGaussXi,err,error,*)
 
     !Argument variables
@@ -2336,7 +2333,7 @@ CONTAINS
   !================================================================================================================================
   !
 
-  !>Get the order of a quadrature for a basis quadrature identified by a pointer. \see OpenCMISS::Iron::cmfe_Basis_QuadratureOrderGet
+  !>Get the order of a quadrature for a basis quadrature identified by a pointer. \see OpenCMISS::OC_Basis_QuadratureOrderGet
   SUBROUTINE Basis_QuadratureOrderGet(basis,quadratureOrder,err,error,*)
 
     !Argument variables
@@ -2417,7 +2414,7 @@ CONTAINS
   !================================================================================================================================
   !
   
-  !>get the quadrature type on a basis identified by a pointer. \see OpenCMISS::Iron::cmfe_Basis_QuadratureTypeGet
+  !>get the quadrature type on a basis identified by a pointer. \see OpenCMISS::OC_Basis_QuadratureTypeGet
   SUBROUTINE Basis_QuadratureTypeGet(basis,quadratureType,err,error,*)
 
     !Argument variables
@@ -2454,7 +2451,7 @@ CONTAINS
   !================================================================================================================================
   !
   
-  !>get the type for a basis is identified by a a pointer. \see OpenCMISS::Iron::cmfe_Basis_TypeGet
+  !>get the type for a basis is identified by a a pointer. \see OpenCMISS::OC_Basis_TypeGet
   SUBROUTINE Basis_TypeGet(basis,type,err,error,*)
 
     !Argument variables

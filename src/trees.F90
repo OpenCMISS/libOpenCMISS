@@ -59,7 +59,7 @@ MODULE Trees
 
   !Module parameters
 
-  !> \addtogroup OpenCMISS_TreeConstants OpenCMISS::Iron::Trees::Constants
+  !> \addtogroup OpenCMISS_TreeConstants OpenCMISS::Trees::Constants
   !> \brief Trees constants.
   !>@{
   !> \addtogroup Trees_TreeNodeColourTypes Trees::TreeNodeColourTypes
@@ -409,7 +409,6 @@ CONTAINS
     INTEGER(INTG), INTENT(OUT) :: err !<The error code
     TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
     !Local Variables
-    TYPE(VARYING_STRING) :: localError
 
     ENTERS("Tree_DataTypeGet",err,error,*999)
 
@@ -1095,7 +1094,6 @@ CONTAINS
     INTEGER(INTG), INTENT(OUT) :: err !<The error code
     TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string.
     !Local Variables
-    TYPE(VARYING_STRING) :: localError
     
     ENTERS("Tree_InsertTypeGet",err,error,*999)
 
@@ -1608,7 +1606,8 @@ CONTAINS
     RETURN
 999 IF(ASSOCIATED(newTreeNode)) DEALLOCATE(newTreeNode)
     IF(ALLOCATED(newValues)) DEALLOCATE(newValues)
-998 ERRORSEXITS("Tree_ItemInsertIntg1",err,error)
+998 CONTINUE
+    ERRORSEXITS("Tree_ItemInsertIntg1",err,error)
     RETURN 1
     
   END SUBROUTINE Tree_ItemInsertIntg1
@@ -1832,7 +1831,8 @@ CONTAINS
     RETURN
 999 IF(ASSOCIATED(newTreeNode)) DEALLOCATE(newTreeNode)
     IF(ALLOCATED(newValues)) DEALLOCATE(newValues)
-998 ERRORSEXITS("Tree_ItemInsertDP1",err,error)
+998 CONTINUE
+    ERRORSEXITS("Tree_ItemInsertDP1",err,error)
     RETURN 1
     
   END SUBROUTINE Tree_ItemInsertDP1

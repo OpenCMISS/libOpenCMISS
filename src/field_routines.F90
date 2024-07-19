@@ -973,7 +973,7 @@ CONTAINS
   !================================================================================================================================
   !
 
-  !>Sets/changes the interpolation type for a field variable component. \see OpenCMISS::Iron::cmfe_Field_ComponentInterpolationSet
+  !>Sets/changes the interpolation type for a field variable component. \see OpenCMISS::OC_Field_ComponentInterpolationSet
   SUBROUTINE Field_ComponentInterpolationSet(field,variableType,componentNumber,interpolationType,err,error,*)
 
     !Argument variables
@@ -1081,7 +1081,7 @@ CONTAINS
   !================================================================================================================================
   !
 
-  !>Sets/changes the label for a field variable component for character labels. \see OpenCMISS::Iron::cmfe_Field_ComponentLabelSet
+  !>Sets/changes the label for a field variable component for character labels. \see OpenCMISS::OC_Field_ComponentLabelSet
   SUBROUTINE Field_ComponentLabelSetC(field,variableType,componentNumber,label,err,error,*)
 
     !Argument variables
@@ -1140,7 +1140,7 @@ CONTAINS
   !================================================================================================================================
   !
 
-  !>Sets/changes the label for a field variable component for varying string labels. \see OpenCMISS::Iron::cmfe_Field_ComponentLabelSet
+  !>Sets/changes the label for a field variable component for varying string labels. \see OpenCMISS::OC_Field_ComponentLabelSet
   SUBROUTINE Field_ComponentLabelSetVS(field,variableType,componentNumber,label,err,error,*)
 
     !Argument variables
@@ -1263,7 +1263,7 @@ CONTAINS
   !================================================================================================================================
   !
 
-  !>Sets/changes the mesh component number for a field variable component. \see OpenCMISS::Iron::cmfe_Field_ComponentMeshComponentSet
+  !>Sets/changes the mesh component number for a field variable component. \see OpenCMISS::OC_Field_ComponentMeshComponentSet
   SUBROUTINE Field_ComponentMeshComponentSet(field,variableType,componentNumber,meshComponentNumber,err,error,*)
 
     !Argument variables
@@ -1376,7 +1376,7 @@ CONTAINS
   !================================================================================================================================
   !
 
-  !>Initialises the values of parameter set of a field variable component to a constant integer value. \see OpenCMISS::Iron::cmfe_Field_ComponentValuesInitialise
+  !>Initialises the values of parameter set of a field variable component to a constant integer value. \see OpenCMISS::OC_Field_ComponentValuesInitialise
   SUBROUTINE Field_ComponentValuesInitialiseIntg(field,variableType,fieldSetType,componentNumber,initValue,err,error,*)
 
     !Argument variables
@@ -1408,7 +1408,7 @@ CONTAINS
   !================================================================================================================================
   !
 
-  !>Initialises the values of parameter set of a field variable component to a single precision constant value. \see OpenCMISS::Iron::cmfe_Field_ComponentValuesInitialise
+  !>Initialises the values of parameter set of a field variable component to a single precision constant value. \see OpenCMISS::OC_Field_ComponentValuesInitialise
   SUBROUTINE Field_ComponentValuesInitialiseSP(field,variableType,fieldSetType,componentNumber,initValue,err,error,*)
 
     !Argument variables
@@ -1440,7 +1440,7 @@ CONTAINS
   !================================================================================================================================
   !
 
-  !>Initialises the values of parameter set of a field variable component to a double precision constant value. \see OpenCMISS::Iron::cmfe_Field_ComponentValuesInitialise
+  !>Initialises the values of parameter set of a field variable component to a double precision constant value. \see OpenCMISS::OC_Field_ComponentValuesInitialise
   SUBROUTINE Field_ComponentValuesInitialiseDP(field,variableType,fieldSetType,componentNumber,initValue,err,error,*)
 
     !Argument variables
@@ -1472,7 +1472,7 @@ CONTAINS
   !================================================================================================================================
   !
 
-  !>Initialises the values of parameter set of a field variable component to a logical constant value. \see OpenCMISS::Iron::cmfe_Field_ComponentValuesInitialise
+  !>Initialises the values of parameter set of a field variable component to a logical constant value. \see OpenCMISS::OC_Field_ComponentValuesInitialise
   SUBROUTINE Field_ComponentValuesInitialiseL(field,variableType,fieldSetType,componentNumber,initValue,err,error,*)
 
     !Argument variables
@@ -1504,7 +1504,7 @@ CONTAINS
   !================================================================================================================================
   !
 
-  !>Finishes the creation of a field. \see OpenCMISS::Iron::cmfe_Field_CreateFinish
+  !>Finishes the creation of a field. \see OpenCMISS::OC_Field_CreateFinish
   SUBROUTINE Field_CreateFinish(field,err,error,*)
 
     !Argument variables
@@ -1684,7 +1684,7 @@ CONTAINS
   !================================================================================================================================
   !
 
-  !>Starts the creation of a field defined by a user number in the specified interface. \see OpenCMISS::Iron::cmfe_Field_CreateStart
+  !>Starts the creation of a field defined by a user number in the specified interface. \see OpenCMISS::OC_Field_CreateStart
   !>Default values set for the FIELD's attributes are:
   !>- DEPENDENT_TYPE: 1 (FIELD_INDEPENDENT_TYPE)
   !>- DIMENSION: 2 (FIELD_VECTOR_DIMENSION_TYPE)
@@ -1731,7 +1731,7 @@ CONTAINS
   !================================================================================================================================
   !
 
-  !>Starts the creation of a field defined by a user number in the specified region. \see OpenCMISS::Iron::cmfe_Field_CreateStart
+  !>Starts the creation of a field defined by a user number in the specified region. \see OpenCMISS::OC_Field_CreateStart
   !>Default values set for the FIELD's attributes are:
   !>- DEPENDENT_TYPE: 1 (FIELD_INDEPENDENT_TYPE)
   !>- DIMENSION: 2 (FIELD_VECTOR_DIMENSION_TYPE)
@@ -2071,7 +2071,7 @@ CONTAINS
   !================================================================================================================================
   !
 
-  !>Sets/changes the data projection for a field. \see OpenCMISS::Iron::cmfe_Field_DataProjectionSet
+  !>Sets/changes the data projection for a field. \see OpenCMISS::OC_Field_DataProjectionSet
   SUBROUTINE Field_DataProjectionSet(field,dataProjection,err,error,*)
 
     !Argument variables
@@ -2108,7 +2108,7 @@ CONTAINS
   !================================================================================================================================
   !
 
-  !>Sets/changes the data type for a field variable. \see OpenCMISS::Iron::cmfe_Field_DataTypeSet
+  !>Sets/changes the data type for a field variable. \see OpenCMISS::OC_Field_DataTypeSet
   SUBROUTINE Field_DataTypeSet(field,variableType,dataType,err,error,*)
 
     !Argument variables
@@ -2201,7 +2201,7 @@ CONTAINS
   !================================================================================================================================
   !
 
-  !>Sets/changes the decomposition for a field. \see OpenCMISS::Iron::cmfe_Field_DecompositionSet
+  !>Sets/changes the decomposition for a field. \see OpenCMISS::OC_Field_DecompositionSet
   SUBROUTINE Field_DecompositionSet(field,decomposition,err,error,*)
 
     !Argument variables
@@ -2339,7 +2339,7 @@ CONTAINS
   !================================================================================================================================
   !
 
-  !>Sets/changes the dependent type for a field. \see OpenCMISS::Iron::cmfe_Field_DependentTypeSet
+  !>Sets/changes the dependent type for a field. \see OpenCMISS::OC_Field_DependentTypeSet
   SUBROUTINE Field_DependentTypeSet(field,dependentType,err,error,*)
 
     !Argument variables
@@ -2413,7 +2413,7 @@ CONTAINS
   !================================================================================================================================
   !
 
-  !>Destroys a field. \see OpenCMISS::Iron::cmfe_Field_Destroy
+  !>Destroys a field. \see OpenCMISS::OC_Field_Destroy
   SUBROUTINE Field_Destroy(field,err,error,*)
 
     !Argument variables
@@ -2495,7 +2495,7 @@ CONTAINS
   !================================================================================================================================
   !
 
-  !>Sets/changes the field dimension for a field variable. \see OpenCMISS::Iron::cmfe_Field_DimensionSet
+  !>Sets/changes the field dimension for a field variable. \see OpenCMISS::OC_Field_DimensionSet
   SUBROUTINE Field_DimensionSet(field,variableType,fieldDimension,err,error,*)
 
     !Argument variables
@@ -2636,7 +2636,7 @@ CONTAINS
   !================================================================================================================================
   !
 
-  !>Sets/changes the DOF order type for a field variable. Note: for contiguous component DOF ordering all the components of the field variable must have the same interpolation type. \see OpenCMISS::Iron::cmfe_Field_DOFOrderTypeSet
+  !>Sets/changes the DOF order type for a field variable. Note: for contiguous component DOF ordering all the components of the field variable must have the same interpolation type. \see OpenCMISS::OC_Field_DOFOrderTypeSet
   SUBROUTINE Field_DOFOrderTypeSet(field,variableType,dofOrderType,err,error,*)
 
     !Argument variables
@@ -2779,7 +2779,7 @@ CONTAINS
   !================================================================================================================================
   !
 
-  !>Sets/changes the geometric field for a field. \see OpenCMISS::Iron::cmfe_Field_GeometricFieldSet
+  !>Sets/changes the geometric field for a field. \see OpenCMISS::OC_Field_GeometricFieldSet
   SUBROUTINE Field_GeometricFieldSet(field,geometricField,err,error,*)
 
     !Argument variables
@@ -3027,7 +3027,7 @@ CONTAINS
   !================================================================================================================================
   !
 
-  !>Gets the line length between nodes of a geometric field for a given user element number and element basis line number. \see OpenCMISS::Iron::cmfe_Field_GeometricParametersElementLineLengthGet
+  !>Gets the line length between nodes of a geometric field for a given user element number and element basis line number. \see OpenCMISS::OC_Field_GeometricParametersElementLineLengthGet
   SUBROUTINE Field_GeometricParametersElementLineLengthGet(field,userElementNumber,normalXiDirections,lineLength,err,error,*)
 
     !Argument variables
@@ -4815,12 +4815,7 @@ CONTAINS
     INTEGER(INTG) :: componentIdx,dimensionIdx,endComponentIdx,numberOfDimensions,partialDerivativeIndex, &
       & physicalDerivativeIndex,startComponentIdx,xiIdx
     REAL(DP) :: dXdXi(3,3),dXidX(3,3),detdXdXi
-    TYPE(BasisType), POINTER :: basis
     TYPE(CoordinateSystemType), POINTER :: coordinateSystem
-    TYPE(DomainType), POINTER :: domain
-    TYPE(DomainElementsType), POINTER :: domainElements
-    TYPE(DomainNodesType), POINTER :: domainNodes
-    TYPE(DomainTopologyType), POINTER :: domainTopology
     TYPE(FieldType), POINTER :: field,geometricField
     TYPE(FieldInterpolatedPointType), POINTER :: fieldInterpPoint,geometricInterpPoint
     TYPE(FieldInterpolationParametersType), POINTER :: fieldInterpParameters,geometricInterpParameters
@@ -8347,7 +8342,7 @@ CONTAINS
   !================================================================================================================================
   !
 
-  !>Sets/changes the field label for a field for character labels. \see OpenCMISS::Iron::cmfe_Field_LabelSet
+  !>Sets/changes the field label for a field for character labels. \see OpenCMISS::OC_Field_LabelSet
   SUBROUTINE Field_LabelSetC(field,label,err,error,*)
 
     !Argument variables
@@ -8383,7 +8378,7 @@ CONTAINS
   !================================================================================================================================
   !
 
-  !>Sets/changes the field label for a field for varying string labels. \see OpenCMISS::Iron::cmfe_Field_LabelSet
+  !>Sets/changes the field label for a field for varying string labels. \see OpenCMISS::OC_Field_LabelSet
   SUBROUTINE Field_LabelSetVS(field,label,err,error,*)
 
     !Argument variables
@@ -8479,7 +8474,7 @@ CONTAINS
   !================================================================================================================================
   !
 
-  !>Sets/changes the number of field components for a field variable. \see OpenCMISS::Iron::cmfe_Field_NumberOfComponentsSet
+  !>Sets/changes the number of field components for a field variable. \see OpenCMISS::OC_Field_NumberOfComponentsSet
   SUBROUTINE Field_NumberOfComponentsSet(field,variableType,numberOfComponents,err,error,*)
 
     !Argument variables
@@ -8654,7 +8649,7 @@ CONTAINS
   !================================================================================================================================
   !
 
-  !>Sets/changes the number of variables for a field. \see OpenCMISS::Iron::cmfe_Field_NumberOfVariablesSet
+  !>Sets/changes the number of variables for a field. \see OpenCMISS::OC_Field_NumberOfVariablesSet
   SUBROUTINE Field_NumberOfVariablesSet(field,numberOfVariables,err,error,*)
 
     !Argument variables
@@ -8982,7 +8977,7 @@ CONTAINS
   !================================================================================================================================
   !
 
-  !>Adds the given integer value to the given parameter set for the constant of the field variable component. \see OpenCMISS::Iron::cmfe_Field_ParameterSetAddConstant
+  !>Adds the given integer value to the given parameter set for the constant of the field variable component. \see OpenCMISS::OC_Field_ParameterSetAddConstant
   SUBROUTINE Field_ParameterSetAddConstantIntg(field,variableType,fieldSetType,componentNumber,value,err,error,*)
 
     !Argument variables
@@ -9014,7 +9009,7 @@ CONTAINS
   !================================================================================================================================
   !
 
-  !>Adds the given single precision value to the given parameter set for the constant of the field variable component. \see OpenCMISS::Iron::cmfe_Field_ParameterSetAddConstant
+  !>Adds the given single precision value to the given parameter set for the constant of the field variable component. \see OpenCMISS::OC_Field_ParameterSetAddConstant
   SUBROUTINE Field_ParameterSetAddConstantSP(field,variableType,fieldSetType,componentNumber,value,err,error,*)
 
     !Argument variables
@@ -9046,7 +9041,7 @@ CONTAINS
   !================================================================================================================================
   !
 
-  !>Adds the given double precision value to the given parameter set for the constant of the field variable component. \see OpenCMISS::Iron::cmfe_Field_ParameterSetAddConstant
+  !>Adds the given double precision value to the given parameter set for the constant of the field variable component. \see OpenCMISS::OC_Field_ParameterSetAddConstant
   SUBROUTINE Field_ParameterSetAddConstantDP(field,variableType,fieldSetType,componentNumber,value,err,error,*)
 
     !Argument variables
@@ -9078,7 +9073,7 @@ CONTAINS
   !================================================================================================================================
   !
 
-  !>Adds the given logical value to the given parameter set for the constant of the field variable component. \see OpenCMISS::Iron::cmfe_Field_ParameterSetAddConstant
+  !>Adds the given logical value to the given parameter set for the constant of the field variable component. \see OpenCMISS::OC_Field_ParameterSetAddConstant
   SUBROUTINE Field_ParameterSetAddConstantL(field,variableType,fieldSetType,componentNumber,value,err,error,*)
 
     !Argument variables
@@ -9242,7 +9237,7 @@ CONTAINS
   !================================================================================================================================
   !
 
-  !>Adds the given integer value to the given parameter set for a particular user element of the field variable component. \see OpenCMISS::Iron::cmfe_Field_ParameterSetAddElement
+  !>Adds the given integer value to the given parameter set for a particular user element of the field variable component. \see OpenCMISS::OC_Field_ParameterSetAddElement
   SUBROUTINE Field_ParameterSetAddElementIntg(field,variableType,fieldSetType,userElementNumber,componentNumber, &
     & value,err,error,*)
 
@@ -9276,7 +9271,7 @@ CONTAINS
   !================================================================================================================================
   !
 
-  !>Adds the given single precision value to the given parameter set for a particular user element of the field variable component.\see OpenCMISS::Iron::cmfe_Field_ParameterSetAddElement 
+  !>Adds the given single precision value to the given parameter set for a particular user element of the field variable component.\see OpenCMISS::OC_Field_ParameterSetAddElement 
   SUBROUTINE Field_ParameterSetAddElementSP(field,variableType,fieldSetType,userElementNumber,componentNumber, &
     & VALUE,err,error,*)
 
@@ -9310,7 +9305,7 @@ CONTAINS
   !================================================================================================================================
   !
 
-  !>Adds the given double precision value to the given parameter set for a particular user element of the field variable component.\see OpenCMISS::Iron::cmfe_Field_ParameterSetAddElement 
+  !>Adds the given double precision value to the given parameter set for a particular user element of the field variable component.\see OpenCMISS::OC_Field_ParameterSetAddElement 
   SUBROUTINE Field_ParameterSetAddElementDP(field,variableType,fieldSetType,userElementNumber,componentNumber, &
     & VALUE,err,error,*)
 
@@ -9344,7 +9339,7 @@ CONTAINS
   !================================================================================================================================
   !
 
-  !>Adds the given logical value to the given parameter set for a particular user element of the field variable component. \see OpenCMISS::Iron::cmfe_Field_ParameterSetAddElement
+  !>Adds the given logical value to the given parameter set for a particular user element of the field variable component. \see OpenCMISS::OC_Field_ParameterSetAddElement
   SUBROUTINE Field_ParameterSetAddElementL(field,variableType,fieldSetType,userElementNumber,componentNumber, &
     & VALUE,err,error,*)
 
@@ -9378,7 +9373,7 @@ CONTAINS
   !================================================================================================================================
   !
 
-  !>Adds the given integer value to the given parameter set for a particular Gauss point of a user element of the field variable component. \see OpenCMISS::Iron::cmfe_Field_ParameterSetAddGaussPoint
+  !>Adds the given integer value to the given parameter set for a particular Gauss point of a user element of the field variable component. \see OpenCMISS::OC_Field_ParameterSetAddGaussPoint
   SUBROUTINE Field_ParameterSetAddGaussPointIntg(field,variableType,fieldSetType,gaussPointNumber,userElementNumber, &
     & componentNumber,value,err,error,*)
 
@@ -9414,7 +9409,7 @@ CONTAINS
   !================================================================================================================================
   !
 
-  !>Adds the given single precision value to the given parameter set for a particular Gauss point of a user element of the field variable component. \see OpenCMISS::Iron::cmfe_Field_ParameterSetAddGaussPoint
+  !>Adds the given single precision value to the given parameter set for a particular Gauss point of a user element of the field variable component. \see OpenCMISS::OC_Field_ParameterSetAddGaussPoint
   SUBROUTINE Field_ParameterSetAddGaussPointSP(field,variableType,fieldSetType,gaussPointNumber,userElementNumber, &
     & componentNumber,value,err,error,*)
 
@@ -9450,7 +9445,7 @@ CONTAINS
   !================================================================================================================================
   !
 
-  !>Adds the given double precision value to the given parameter set for a particular Gauss point of a user element of the field variable component. \see OpenCMISS::Iron::cmfe_Field_ParameterSetAddGaussPoint
+  !>Adds the given double precision value to the given parameter set for a particular Gauss point of a user element of the field variable component. \see OpenCMISS::OC_Field_ParameterSetAddGaussPoint
   SUBROUTINE Field_ParameterSetAddGaussPointDP(field,variableType,fieldSetType,gaussPointNumber,userElementNumber, &
     & componentNumber,value,err,error,*)
 
@@ -9486,7 +9481,7 @@ CONTAINS
   !================================================================================================================================
   !
 
-  !>Adds the given logical value to the given parameter set for a particular Gauss point of a user element of the field variable component. \see OpenCMISS::Iron::cmfe_Field_ParameterSetAddGaussPoint
+  !>Adds the given logical value to the given parameter set for a particular Gauss point of a user element of the field variable component. \see OpenCMISS::OC_Field_ParameterSetAddGaussPoint
   SUBROUTINE Field_ParameterSetAddGaussPointL(field,variableType,fieldSetType,gaussPointNumber,userElementNumber, &
     & componentNumber,value,err,error,*)
 
@@ -9662,7 +9657,7 @@ CONTAINS
   !================================================================================================================================
   !
 
-  !>Adds the given integer value to the given parameter set for a particular user node, derivative and version of the field variable component. \see OpenCMISS::Iron::cmfe_Field_ParameterSetAddNode
+  !>Adds the given integer value to the given parameter set for a particular user node, derivative and version of the field variable component. \see OpenCMISS::OC_Field_ParameterSetAddNode
   SUBROUTINE Field_ParameterSetAddNodeIntg(field,variableType,fieldSetType,versionNumber,derivativeNumber, &
     & userNodeNumber,componentNumber,value,err,error,*)
 
@@ -9699,7 +9694,7 @@ CONTAINS
   !================================================================================================================================
   !
 
-  !>Adds the given single precision value to the given parameter set for a particular user node, derivative and version of the field variable component. \see OpenCMISS::Iron::cmfe_Field_ParameterSetAddNode
+  !>Adds the given single precision value to the given parameter set for a particular user node, derivative and version of the field variable component. \see OpenCMISS::OC_Field_ParameterSetAddNode
   SUBROUTINE Field_ParameterSetAddNodeSP(field,variableType,fieldSetType,versionNumber,derivativeNumber, &
     & userNodeNumber,componentNumber,value,err,error,*)
 
@@ -9736,7 +9731,7 @@ CONTAINS
   !================================================================================================================================
   !
 
-  !>Adds the given double precision value to the given parameter set for a particular user node, derivative and version of the field variable component. \see OpenCMISS::Iron::cmfe_Field_ParameterSetAddNode
+  !>Adds the given double precision value to the given parameter set for a particular user node, derivative and version of the field variable component. \see OpenCMISS::OC_Field_ParameterSetAddNode
   SUBROUTINE Field_ParameterSetAddNodeDP(field,variableType,fieldSetType,versionNumber,derivativeNumber, &
     & userNodeNumber,componentNumber,value,err,error,*)
 
@@ -9773,7 +9768,7 @@ CONTAINS
   !================================================================================================================================
   !
 
-  !>Adds the given logical value to the given parameter set for a particular user node, derivative and version of the field variable component. \see OpenCMISS::Iron::cmfe_Field_ParameterSetAddNode
+  !>Adds the given logical value to the given parameter set for a particular user node, derivative and version of the field variable component. \see OpenCMISS::OC_Field_ParameterSetAddNode
   SUBROUTINE Field_ParameterSetAddNodeL(field,variableType,fieldSetType,versionNumber,derivativeNumber, &
     & userNodeNumber,componentNumber,value,err,error,*)
 
@@ -9959,7 +9954,7 @@ CONTAINS
   !
 
   !>Creates a new parameter set of type set type for a field variable. If the field parameter set has already been
-  !>created then an error will be raised. \see OpenCMISS::Iron::cmfe_Field_ParameterSetCreate
+  !>created then an error will be raised. \see OpenCMISS::OC_Field_ParameterSetCreate
   SUBROUTINE Field_ParameterSetCreate(field,variableType,fieldSetType,err,error,*)
 
     !Argument variables
@@ -10048,7 +10043,7 @@ CONTAINS
   !================================================================================================================================
   !
 
-  !>Destroys the parameter set of type set type for a field variable and deallocates all memory. \see OpenCMISS::Iron::cmfe_Field_ParameterSetDestroy
+  !>Destroys the parameter set of type set type for a field variable and deallocates all memory. \see OpenCMISS::OC_Field_ParameterSetDestroy
   SUBROUTINE Field_ParameterSetDestroy(field,variableType,fieldSetType,err,error,*)
 
     !Argument variables
@@ -10105,7 +10100,7 @@ CONTAINS
   !================================================================================================================================
   !
 
-  !>Returns a pointer to the specified field integer parameter set array. The pointer must be restored with a call to FieldRoutines::Field_ParameterSetDataRestore call. Note: the values can be used for read operations but a FieldRoutines::Field_ParameterSetUpdate call must be used to change any values. \see OpenCMISS::Iron::cmfe_Field_ParameterSetDataGet
+  !>Returns a pointer to the specified field integer parameter set array. The pointer must be restored with a call to FieldRoutines::Field_ParameterSetDataRestore call. Note: the values can be used for read operations but a FieldRoutines::Field_ParameterSetUpdate call must be used to change any values. \see OpenCMISS::OC_Field_ParameterSetDataGet
   SUBROUTINE Field_ParameterSetDataGetIntg(field,variableType,fieldSetType,parameters,err,error,*)
 
     !Argument variables
@@ -10136,7 +10131,7 @@ CONTAINS
   !================================================================================================================================
   !
 
-  !>Returns a pointer to the specified field single precision parameter set array. The pointer must be restored with a call to FieldRoutines::Field_ParameterSetDataRestore call. Note: the values can be used for read operations but a FieldRoutines::Field_ParameterSetUpdate call must be used to change any values. \see OpenCMISS::Iron::cmfe_Field_ParameterSetDataGet
+  !>Returns a pointer to the specified field single precision parameter set array. The pointer must be restored with a call to FieldRoutines::Field_ParameterSetDataRestore call. Note: the values can be used for read operations but a FieldRoutines::Field_ParameterSetUpdate call must be used to change any values. \see OpenCMISS::OC_Field_ParameterSetDataGet
   SUBROUTINE Field_ParameterSetDataGetSP(field,variableType,fieldSetType,parameters,err,error,*)
 
     !Argument variables
@@ -10167,7 +10162,7 @@ CONTAINS
   !================================================================================================================================
   !
 
-  !>Returns a pointer to the specified field double precision parameter set array. The pointer must be restored with a call to FieldRoutines::Field_ParameterSetDataRestore call. Note: the values can be used for read operations but a FieldRoutines::Field_ParameterSetUpdate call must be used to change any values. \see OpenCMISS::Iron::cmfe_Field_ParameterSetDataGet
+  !>Returns a pointer to the specified field double precision parameter set array. The pointer must be restored with a call to FieldRoutines::Field_ParameterSetDataRestore call. Note: the values can be used for read operations but a FieldRoutines::Field_ParameterSetUpdate call must be used to change any values. \see OpenCMISS::OC_Field_ParameterSetDataGet
   SUBROUTINE Field_ParameterSetDataGetDP(field,variableType,fieldSetType,parameters,err,error,*)
 
     !Argument variables
@@ -10198,7 +10193,7 @@ CONTAINS
   !================================================================================================================================
   !
 
-  !>Returns a pointer to the specified field logical parameter set array. The pointer must be restored with a call to FieldRoutines::Field_ParameterSetDataRestore call. Note: the values can be used for read operations but a FieldRoutines::Field_ParameterSetUpdate call must be used to change any values. \see OpenCMISS::Iron::cmfe_Field_ParameterSetDataGet
+  !>Returns a pointer to the specified field logical parameter set array. The pointer must be restored with a call to FieldRoutines::Field_ParameterSetDataRestore call. Note: the values can be used for read operations but a FieldRoutines::Field_ParameterSetUpdate call must be used to change any values. \see OpenCMISS::OC_Field_ParameterSetDataGet
   SUBROUTINE Field_ParameterSetDataGetL(field,variableType,fieldSetType,parameters,err,error,*)
 
     !Argument variables
@@ -10229,7 +10224,7 @@ CONTAINS
   !================================================================================================================================
   !
 
-  !>Restores the specified field variable integer parameter set array that was obtained with FieldRoutines::Field_ParameterSetDataGet. \see OpenCMISS::Iron::cmfe_Field_ParameterSetDataRestore
+  !>Restores the specified field variable integer parameter set array that was obtained with FieldRoutines::Field_ParameterSetDataGet. \see OpenCMISS::OC_Field_ParameterSetDataRestore
   SUBROUTINE Field_ParameterSetDataRestoreIntg(field,variableType,fieldSetType,parameters,err,error,*)
 
     !Argument variables
@@ -10260,7 +10255,7 @@ CONTAINS
   !================================================================================================================================
   !
 
-  !>Restores the specified field variable single precision parameter set array that was obtained with FieldRoutines::Field_ParameterSetDataGet. \see OpenCMISS::Iron::cmfe_Field_ParameterSetDataRestore
+  !>Restores the specified field variable single precision parameter set array that was obtained with FieldRoutines::Field_ParameterSetDataGet. \see OpenCMISS::OC_Field_ParameterSetDataRestore
   SUBROUTINE Field_ParameterSetDataRestoreSP(field,variableType,fieldSetType,parameters,err,error,*)
 
     !Argument variables
@@ -10291,7 +10286,7 @@ CONTAINS
   !================================================================================================================================
   !
 
-  !>Restores the specified field variable double precision parameter set array that was obtained with FieldRoutines::Field_ParameterSetDataGet. \see OpenCMISS::Iron::cmfe_Field_ParameterSetDataRestore
+  !>Restores the specified field variable double precision parameter set array that was obtained with FieldRoutines::Field_ParameterSetDataGet. \see OpenCMISS::OC_Field_ParameterSetDataRestore
   SUBROUTINE Field_ParameterSetDataRestoreDP(field,variableType,fieldSetType,parameters,err,error,*)
 
     !Argument variables
@@ -10322,7 +10317,7 @@ CONTAINS
   !================================================================================================================================
   !
 
-  !>Restores the specified field variable logical parameter set array that was obtained with FieldRoutines::Field_ParameterSetDataGet. \see OpenCMISS::Iron::cmfe_Field_ParameterSetDataRestore
+  !>Restores the specified field variable logical parameter set array that was obtained with FieldRoutines::Field_ParameterSetDataGet. \see OpenCMISS::OC_Field_ParameterSetDataRestore
   SUBROUTINE Field_ParameterSetDataRestoreL(field,variableType,fieldSetType,parameters,err,error,*)
 
     !Argument variables
@@ -10353,7 +10348,7 @@ CONTAINS
   !================================================================================================================================
   !
 
-  !>Returns from the given parameter set an integer value for the specified constant of a field variable component. \see OpenCMISS::Iron::cmfe_Field_ParameterSetGetConstant
+  !>Returns from the given parameter set an integer value for the specified constant of a field variable component. \see OpenCMISS::OC_Field_ParameterSetGetConstant
   SUBROUTINE Field_ParameterSetGetConstantIntg(field,variableType,fieldSetType,componentNumber,VALUE,err,error,*)
 
     !Argument variables
@@ -10385,7 +10380,7 @@ CONTAINS
   !================================================================================================================================
   !
 
-  !>Returns from the given parameter set a single precision value for the specified constant of a field variable component. \see OpenCMISS::Iron::cmfe_FieldParameterSetGetConstant
+  !>Returns from the given parameter set a single precision value for the specified constant of a field variable component. \see OpenCMISS::OC_FieldParameterSetGetConstant
   SUBROUTINE Field_ParameterSetGetConstantSP(field,variableType,fieldSetType,componentNumber,VALUE,err,error,*)
 
     !Argument variables
@@ -10417,7 +10412,7 @@ CONTAINS
   !================================================================================================================================
   !
 
-  !>Returns from the given parameter set a double precision value for the specified constant of a field variable component. \see OpenCMISS::Iron::cmfe_FieldParameterSetGetConstant
+  !>Returns from the given parameter set a double precision value for the specified constant of a field variable component. \see OpenCMISS::OC_FieldParameterSetGetConstant
   SUBROUTINE Field_ParameterSetGetConstantDP(field,variableType,fieldSetType,componentNumber,VALUE,err,error,*)
 
     !Argument variables
@@ -10449,7 +10444,7 @@ CONTAINS
   !================================================================================================================================
   !
 
-  !>Returns from the given parameter set a logical value for the specified constant of a field variable component. \see OpenCMISS::Iron::cmfe_FieldParameterSetGetConstant
+  !>Returns from the given parameter set a logical value for the specified constant of a field variable component. \see OpenCMISS::OC_FieldParameterSetGetConstant
   SUBROUTINE Field_ParameterSetGetConstantL(field,variableType,fieldSetType,componentNumber,VALUE,err,error,*)
 
     !Argument variables
@@ -10481,7 +10476,7 @@ CONTAINS
   !================================================================================================================================
   !
 
-  !>Returns from the given parameter set an integer value for the specified data point of a field variable component. \see OpenCMISS::Iron::cmfe_Field_ParameterSetGetDataPoint
+  !>Returns from the given parameter set an integer value for the specified data point of a field variable component. \see OpenCMISS::OC_Field_ParameterSetGetDataPoint
   SUBROUTINE Field_ParameterSetGetDataPointIntg(field,variableType,fieldSetType,userDataPointNumber,componentNumber,value, &
     & err,error,*)
 
@@ -10515,7 +10510,7 @@ CONTAINS
   !================================================================================================================================
   !
 
-  !>Returns from the given parameter set a single precision value for the specified data point of a field variable component. \see OpenCMISS::Iron::cmfe_Field_ParameterSetGetDataPoint
+  !>Returns from the given parameter set a single precision value for the specified data point of a field variable component. \see OpenCMISS::OC_Field_ParameterSetGetDataPoint
   SUBROUTINE Field_ParameterSetGetDataPointSP(field,variableType,fieldSetType,userDataPointNumber,componentNumber,value,err,error,*)
 
     !Argument variables
@@ -10548,7 +10543,7 @@ CONTAINS
   !================================================================================================================================
   !
 
-  !>Returns from the given parameter set a double precision value for the specified data point of a field variable component. \see OpenCMISS::Iron::cmfe_Field_ParameterSetGetDataPoint
+  !>Returns from the given parameter set a double precision value for the specified data point of a field variable component. \see OpenCMISS::OC_Field_ParameterSetGetDataPoint
   SUBROUTINE Field_ParameterSetGetDataPointDP(field,variableType,fieldSetType,userDataPointNumber,componentNumber,value,err,error,*)
 
     !Argument variables
@@ -10581,7 +10576,7 @@ CONTAINS
   !================================================================================================================================
   !
 
-  !>Returns from the given parameter set a logical value for the specified data point of a field variable component. \see OpenCMISS::Iron::cmfe_Field_ParameterSetGetDataPoint
+  !>Returns from the given parameter set a logical value for the specified data point of a field variable component. \see OpenCMISS::OC_Field_ParameterSetGetDataPoint
   SUBROUTINE Field_ParameterSetGetDataPointL(field,variableType,fieldSetType,userDataPointNumber,componentNumber,value,err,error,*)
 
     !Argument variables
@@ -10614,7 +10609,7 @@ CONTAINS
   !================================================================================================================================
   !
 
-  !>Returns from the given parameter set an integer value for the specified element of a field variable component. \see OpenCMISS::Iron::cmfe_Field_ParameterSetGetElement
+  !>Returns from the given parameter set an integer value for the specified element of a field variable component. \see OpenCMISS::OC_Field_ParameterSetGetElement
   SUBROUTINE Field_ParameterSetGetElementIntg(field,variableType,fieldSetType,userElementNumber,componentNumber, &
     & VALUE,err,error,*)
 
@@ -10649,7 +10644,7 @@ CONTAINS
   !
 
 
-  !>Returns from the given parameter set a single precision value for the specified element of a field variable component. \see OpenCMISS::Iron::cmfe_Field_ParameterSetGetElement
+  !>Returns from the given parameter set a single precision value for the specified element of a field variable component. \see OpenCMISS::OC_Field_ParameterSetGetElement
   SUBROUTINE Field_ParameterSetGetElementSP(field,variableType,fieldSetType,userElementNumber,componentNumber, &
     & VALUE,err,error,*)
 
@@ -10683,7 +10678,7 @@ CONTAINS
   !================================================================================================================================
   !
 
-  !>Returns from the given parameter set a double precision value for the specified element of a field variable component. \see OpenCMISS::Iron::cmfe_Field_ParameterSetGetElement
+  !>Returns from the given parameter set a double precision value for the specified element of a field variable component. \see OpenCMISS::OC_Field_ParameterSetGetElement
   SUBROUTINE Field_ParameterSetGetElementDP(field,variableType,fieldSetType,userElementNumber,componentNumber, &
     & VALUE,err,error,*)
 
@@ -10717,7 +10712,7 @@ CONTAINS
   !================================================================================================================================
   !
 
-  !>Returns from the given parameter set a logical value for the specified element of a field variable component. \see OpenCMISS::Iron::cmfe_Field_ParameterSetGetElement
+  !>Returns from the given parameter set a logical value for the specified element of a field variable component. \see OpenCMISS::OC_Field_ParameterSetGetElement
   SUBROUTINE Field_ParameterSetGetElementL(field,variableType,fieldSetType,userElementNumber,componentNumber, &
     & VALUE,err,error,*)
 
@@ -10751,7 +10746,7 @@ CONTAINS
   !================================================================================================================================
   !
 
-  !>Returns from the given parameter set an integer value for the specified gauss point of a user element of a field variable component. \see OpenCMISS::Iron::cmfe_Field_ParameterSetGetGaussPoint
+  !>Returns from the given parameter set an integer value for the specified gauss point of a user element of a field variable component. \see OpenCMISS::OC_Field_ParameterSetGetGaussPoint
   SUBROUTINE Field_ParameterSetGetGaussPointIntg(field,variableType,fieldSetType,gaussPointNumber,userElementNumber, &
     & componentNumber,value,err,error,*)
 
@@ -10787,7 +10782,7 @@ CONTAINS
   !================================================================================================================================
   !
 
-  !>Returns from the given parameter set a single precision value for the specified gauss point of a user element of a field variable component. \see OpenCMISS::Iron::cmfe_Field_ParameterSetGetGaussPoint
+  !>Returns from the given parameter set a single precision value for the specified gauss point of a user element of a field variable component. \see OpenCMISS::OC_Field_ParameterSetGetGaussPoint
   SUBROUTINE Field_ParameterSetGetGaussPointSP(field,variableType,fieldSetType,gaussPointNumber,userElementNumber, &
     & componentNumber,value,err,error,*)
 
@@ -10823,7 +10818,7 @@ CONTAINS
   !================================================================================================================================
   !
 
-  !>Returns from the given parameter set a double precision value for the specified gauss point of a user element of a field variable component. \see OpenCMISS::Iron::cmfe_Field_ParameterSetGetGaussPoint
+  !>Returns from the given parameter set a double precision value for the specified gauss point of a user element of a field variable component. \see OpenCMISS::OC_Field_ParameterSetGetGaussPoint
   SUBROUTINE Field_ParameterSetGetGaussPointDP(field,variableType,fieldSetType,gaussPointNumber,userElementNumber, &
     & componentNumber,value,err,error,*)
 
@@ -10859,7 +10854,7 @@ CONTAINS
   !================================================================================================================================
   !
 
-  !>Returns from the given parameter set a logical value for the specified gauss point of a user element of a field variable component. \see OpenCMISS::Iron::cmfe_Field_ParameterSetGetGaussPoint
+  !>Returns from the given parameter set a logical value for the specified gauss point of a user element of a field variable component. \see OpenCMISS::OC_Field_ParameterSetGetGaussPoint
   SUBROUTINE Field_ParameterSetGetGaussPointL(field,variableType,fieldSetType,gaussPointNumber,userElementNumber, &
     & componentNumber,value,err,error,*)
 
@@ -11464,7 +11459,7 @@ CONTAINS
   !================================================================================================================================
   !
 
-  !>Returns from the given parameter set a integer value for the specified local node, derivative and version of a field variable component. \see OpenCMISS::Iron::cmfe_Field_ParameterSetGetNode
+  !>Returns from the given parameter set a integer value for the specified local node, derivative and version of a field variable component. \see OpenCMISS::OC_Field_ParameterSetGetNode
   SUBROUTINE Field_ParameterSetGetNodeIntg(field,variableType,fieldSetType,versionNumber,derivativeNumber, &
     & userNodeNumber,componentNumber,value,err,error,*)
 
@@ -11501,7 +11496,7 @@ CONTAINS
   !================================================================================================================================
   !
 
-  !>Returns from the given parameter set a single precision value for the specified local node, derivative and version of a field variable component. \see OpenCMISS::Iron::cmfe_Field_ParameterSetGetNode
+  !>Returns from the given parameter set a single precision value for the specified local node, derivative and version of a field variable component. \see OpenCMISS::OC_Field_ParameterSetGetNode
   SUBROUTINE Field_ParameterSetGetNodeSP(field,variableType,fieldSetType,versionNumber,derivativeNumber, &
     & userNodeNumber,componentNumber,VALUE,err,error,*)
 
@@ -11538,7 +11533,7 @@ CONTAINS
   !================================================================================================================================
   !
 
-  !>Returns from the given parameter set a double precision value for the specified local node, derivative and version of a field variable component. \see OpenCMISS::Iron::cmfe_Field_ParameterSetGetNode
+  !>Returns from the given parameter set a double precision value for the specified local node, derivative and version of a field variable component. \see OpenCMISS::OC_Field_ParameterSetGetNode
   SUBROUTINE Field_ParameterSetGetNodeDP(field,variableType,fieldSetType,versionNumber,derivativeNumber, &
     & userNodeNumber,componentNumber,VALUE,err,error,*)
 
@@ -11575,7 +11570,7 @@ CONTAINS
   !================================================================================================================================
   !
 
-  !>Returns from the given parameter set a logical value for the specified local node, derivative and version of a field variable component. \see OpenCMISS::Iron::cmfe_Field_ParameterSetGetNode
+  !>Returns from the given parameter set a logical value for the specified local node, derivative and version of a field variable component. \see OpenCMISS::OC_Field_ParameterSetGetNode
   SUBROUTINE Field_ParameterSetGetNodeL(field,variableType,fieldSetType,versionNumber,derivativeNumber, &
     & userNodeNumber,componentNumber,VALUE,err,error,*)
 
@@ -11641,7 +11636,7 @@ CONTAINS
   !================================================================================================================================
   !
 
-  !>Interpolates the given parameter set at a specified Gauss point for the specified element and derviative and returns double precision values. \see OpenCMISS::Iron::cmfe_Field_ParameterSetInterpolateGauss
+  !>Interpolates the given parameter set at a specified Gauss point for the specified element and derviative and returns double precision values. \see OpenCMISS::OC_Field_ParameterSetInterpolateGauss
   SUBROUTINE Field_ParameterSetInterpolateGaussDP0(field,variableType,fieldSetType,partialDerivativeType,userElementNumber, &
     & quadratureScheme,gaussPoint,values,err,error,*)
 
@@ -11676,7 +11671,7 @@ CONTAINS
   !================================================================================================================================
   !
 
-  !>Interpolates the given parameter set at a specified set of Gauss points for the specified element and derviative and returns double precision values. If no Gauss points are specified then all Gauss points are interpolated. \see OpenCMISS::Iron::cmfe_Field_ParameterSetInterpolateGauss
+  !>Interpolates the given parameter set at a specified set of Gauss points for the specified element and derviative and returns double precision values. If no Gauss points are specified then all Gauss points are interpolated. \see OpenCMISS::OC_Field_ParameterSetInterpolateGauss
   SUBROUTINE Field_ParameterSetInterpolateGaussDP1(field,variableType,fieldSetType,partialDerivativeType,userElementNumber, &
     & quadSchemeType,gaussPoints,values,err,error,*)
 
@@ -11714,7 +11709,7 @@ CONTAINS
   !================================================================================================================================
   !
 
-  !>Interpolates the given parameter set at a specified xi location for the specified element and derviative and returns double precision values. \see OpenCMISS::Iron::cmfe_Field_ParameterSetInterpolateXi
+  !>Interpolates the given parameter set at a specified xi location for the specified element and derviative and returns double precision values. \see OpenCMISS::OC_Field_ParameterSetInterpolateXi
   SUBROUTINE Field_ParameterSetInterpolateXiDP0(field,variableType,fieldSetType,partialDerivativeType,userElementNumber,xi, &
     & values,err,error,*)
 
@@ -11749,7 +11744,7 @@ CONTAINS
   !================================================================================================================================
   !
 
-  !>Interpolates the given parameter set at a specified set of xi locations for the specified element and derviative and returns double precision values. \see OpenCMISS::Iron::cmfe_Field_ParameterSetInterpolateXI
+  !>Interpolates the given parameter set at a specified set of xi locations for the specified element and derviative and returns double precision values. \see OpenCMISS::OC_Field_ParameterSetInterpolateXI
   SUBROUTINE Field_ParameterSetInterpolateXiDP1(field,variableType,fieldSetType,partialDerivativeType,userElementNumber, &
     & xi,values,err,error,*)
 
@@ -11816,7 +11811,7 @@ CONTAINS
   !================================================================================================================================
   !
 
-  !>Updates the given parameter set with the given integer value for the constant of the field variable component. \see OpenCMISS::Iron::cmfe_Field_ParameterSetUpdateConstant
+  !>Updates the given parameter set with the given integer value for the constant of the field variable component. \see OpenCMISS::OC_Field_ParameterSetUpdateConstant
   SUBROUTINE Field_ParameterSetUpdateConstantIntg(field,variableType,fieldSetType,componentNumber,value,err,error,*)
 
     !Argument variables
@@ -11848,7 +11843,7 @@ CONTAINS
   !================================================================================================================================
   !
 
-  !>Updates the given parameter set with the given single precision value for the constant of the field variable component. \see OpenCMISS::Iron::cmfe_Field_ParameterSetUpdateConstant
+  !>Updates the given parameter set with the given single precision value for the constant of the field variable component. \see OpenCMISS::OC_Field_ParameterSetUpdateConstant
   SUBROUTINE Field_ParameterSetUpdateConstantSP(field,variableType,fieldSetType,componentNumber,value,err,error,*)
 
     !Argument variables
@@ -11880,7 +11875,7 @@ CONTAINS
   !================================================================================================================================
   !
 
-  !>Updates the given parameter set with the given double precision value for the constant of the field variable component. \see OpenCMISS::Iron::cmfe_FieldParameterSetUpdateConstant
+  !>Updates the given parameter set with the given double precision value for the constant of the field variable component. \see OpenCMISS::OC_FieldParameterSetUpdateConstant
   SUBROUTINE Field_ParameterSetUpdateConstantDP(field,variableType,fieldSetType,componentNumber,value,err,error,*)
 
     !Argument variables
@@ -11912,7 +11907,7 @@ CONTAINS
   !================================================================================================================================
   !
 
-  !>Updates the given parameter set with the given logical value for the constant of the field variable component. \see OpenCMISS::Iron::cmfe_Field_ParameterSetUpdateConstant
+  !>Updates the given parameter set with the given logical value for the constant of the field variable component. \see OpenCMISS::OC_Field_ParameterSetUpdateConstant
   SUBROUTINE Field_ParameterSetUpdateConstantL(field,variableType,fieldSetType,componentNumber,value,err,error,*)
 
     !Argument variables
@@ -11944,7 +11939,7 @@ CONTAINS
   !================================================================================================================================
   !
 
-  !>Update the given parameter set an integer value for the specified data point of a field variable component. \see OpenCMISS::Iron::cmfe_Field_ParameterSetUpdateDataPoint
+  !>Update the given parameter set an integer value for the specified data point of a field variable component. \see OpenCMISS::OC_Field_ParameterSetUpdateDataPoint
   SUBROUTINE Field_ParameterSetUpdateDataPointIntg(field,variableType,fieldSetType,userDataPointNumber,componentNumber,value, &
     & err,error,*)
 
@@ -11993,7 +11988,7 @@ CONTAINS
   !================================================================================================================================
   !
 
-  !>Update the given parameter set a single precision value for the specified data point of a field variable component. \see OpenCMISS::Iron::cmfe_Field_ParameterSetUpdateDataPoint
+  !>Update the given parameter set a single precision value for the specified data point of a field variable component. \see OpenCMISS::OC_Field_ParameterSetUpdateDataPoint
   SUBROUTINE Field_ParameterSetUpdateDataPointSP(field,variableType,fieldSetType,userDataPointNumber,componentNumber,value, & 
     & err,error,*)
 
@@ -12042,7 +12037,7 @@ CONTAINS
   !================================================================================================================================
   !
 
-  !>Update the given parameter set a double precision value for the specified data point of a field variable component. \see OpenCMISS::Iron::cmfe_Field_ParameterSetUpdateDataPoint
+  !>Update the given parameter set a double precision value for the specified data point of a field variable component. \see OpenCMISS::OC_Field_ParameterSetUpdateDataPoint
   SUBROUTINE Field_ParameterSetUpdateDataPointDP(field,variableType,fieldSetType,userDataPointNumber,componentNumber,value, &
     & err,error,*)
 
@@ -12077,7 +12072,7 @@ CONTAINS
   !================================================================================================================================
   !
 
-  !>Update the given parameter set a logical value for the specified data point of a field variable component. \see OpenCMISS::Iron::cmfe_Field_ParameterSetUpdateDataPoint
+  !>Update the given parameter set a logical value for the specified data point of a field variable component. \see OpenCMISS::OC_Field_ParameterSetUpdateDataPoint
   SUBROUTINE Field_ParameterSetUpdateDataPointL(field,variableType,fieldSetType,userDataPointNumber,componentNumber,value, &
     & err,error,*)
 
@@ -12112,7 +12107,7 @@ CONTAINS
   !================================================================================================================================
   !
 
-  !>Updates the given parameter set with the given integer value for a particular user element of the field variable component. \see cmfe_Field_ParameterSetUpdateElement
+  !>Updates the given parameter set with the given integer value for a particular user element of the field variable component. \see OC_Field_ParameterSetUpdateElement
   SUBROUTINE Field_ParameterSetUpdateElementIntg(field,variableType,fieldSetType,userElementNumber,componentNumber, &
     & value,err,error,*)
 
@@ -12147,7 +12142,7 @@ CONTAINS
   !================================================================================================================================
   !
 
-  !>Updates the given parameter set with the given single precision value for a particular user element of the field variable component.  \see cmfe_Field_ParameterSetUpdateElement
+  !>Updates the given parameter set with the given single precision value for a particular user element of the field variable component.  \see OC_Field_ParameterSetUpdateElement
   SUBROUTINE Field_ParameterSetUpdateElementSP(field,variableType,fieldSetType,userElementNumber,componentNumber, &
     & VALUE,err,error,*)
 
@@ -12182,7 +12177,7 @@ CONTAINS
   !================================================================================================================================
   !
 
-  !>Updates the given parameter set with the given double precision value for a particular user element of the field variable component.  \see cmfe_Field_ParameterSetUpdateElement
+  !>Updates the given parameter set with the given double precision value for a particular user element of the field variable component.  \see OC_Field_ParameterSetUpdateElement
   SUBROUTINE Field_ParameterSetUpdateElementDP(field,variableType,fieldSetType,userElementNumber,componentNumber, &
     & VALUE,err,error,*)
 
@@ -12217,7 +12212,7 @@ CONTAINS
   !================================================================================================================================
   !
 
-  !>Updates the given parameter set with the given logical value for a particular user element of the field variable component. \see cmfe_Field_ParameterSetUpdateElement
+  !>Updates the given parameter set with the given logical value for a particular user element of the field variable component. \see OC_Field_ParameterSetUpdateElement
   SUBROUTINE Field_ParameterSetUpdateElementL(field,variableType,fieldSetType,userElementNumber,componentNumber, &
     & VALUE,err,error,*)
 
@@ -12252,7 +12247,7 @@ CONTAINS
   !================================================================================================================================
   !
 
-  !>Updates the given parameter set with the given integer value for a particular data point of the field variable component.  \see cmfe_Field_ParameterSetUpdateElementDataPoint
+  !>Updates the given parameter set with the given integer value for a particular data point of the field variable component.  \see OC_Field_ParameterSetUpdateElementDataPoint
   SUBROUTINE Field_ParameterSetUpdateElementDataPointIntg(field,variableType,fieldSetType,userElementNumber,dataPointIndex, &
     & componentNumber,value,err,error,*)
 
@@ -12289,7 +12284,7 @@ CONTAINS
   !================================================================================================================================
   !
 
-  !>Updates the given parameter set with the given single precision value for a particular data point of the field variable component.  \see cmfe_Field_ParameterSetUpdateElementDataPoint
+  !>Updates the given parameter set with the given single precision value for a particular data point of the field variable component.  \see OC_Field_ParameterSetUpdateElementDataPoint
   SUBROUTINE Field_ParameterSetUpdateElementDataPointSP(field,variableType,fieldSetType,userElementNumber,dataPointIndex, &
     & componentNumber,value,err,error,*)
 
@@ -12325,7 +12320,7 @@ CONTAINS
   !================================================================================================================================
   !
 
-  !>Updates the given parameter set with the given double precision value for a particular data point of the field variable component.  \see cmfe_Field_ParameterSetUpdateElementDataPoint
+  !>Updates the given parameter set with the given double precision value for a particular data point of the field variable component.  \see OC_Field_ParameterSetUpdateElementDataPoint
   SUBROUTINE Field_ParameterSetUpdateElementDataPointDP(field,variableType,fieldSetType,userElementNumber,dataPointIndex, &
     & componentNumber,value,err,error,*)
 
@@ -12361,7 +12356,7 @@ CONTAINS
   !================================================================================================================================
   !
 
-  !>Updates the given parameter set with the given logical value for a particular data point of the field variable component.  \see cmfe_Field_ParameterSetUpdateElementDataPoint
+  !>Updates the given parameter set with the given logical value for a particular data point of the field variable component.  \see OC_Field_ParameterSetUpdateElementDataPoint
   SUBROUTINE Field_ParameterSetUpdateElementDataPointL(field,variableType,fieldSetType,userElementNumber,dataPointIndex, &
     & componentNumber,value,err,error,*)
 
@@ -12397,7 +12392,7 @@ CONTAINS
   !================================================================================================================================
   !
 
-  !>Finishes the parameter set update for a field variable. \see OpenCMISS::Iron::cmfe_Field_ParameterSetUpdateFinish
+  !>Finishes the parameter set update for a field variable. \see OpenCMISS::OC_Field_ParameterSetUpdateFinish
   SUBROUTINE Field_ParameterSetUpdateFinish(field,variableType,fieldSetType,err,error,*)
 
     !Argument variables
@@ -12429,7 +12424,7 @@ CONTAINS
 
 !!\todo Should also think about quadrature schemes?
 
-  !>Updates the given parameter set with the given integer value for a particular gauss point of the field variable component.  \see cmfe_Field_ParameterSetUpdateGaussPoint
+  !>Updates the given parameter set with the given integer value for a particular gauss point of the field variable component.  \see OC_Field_ParameterSetUpdateGaussPoint
   SUBROUTINE Field_ParameterSetUpdateGaussPointIntg(field,variableType,fieldSetType,gaussPointNumber,userElementNumber, &
     & componentNumber,value,err,error,*)
 
@@ -12467,7 +12462,7 @@ CONTAINS
 
 !!\todo Should also think about quadrature schemes?
 
-  !>Updates the given parameter set with the given single precision value for a particular gauss point of the field variable component.  \see cmfe_Field_ParameterSetUpdateGaussPoint
+  !>Updates the given parameter set with the given single precision value for a particular gauss point of the field variable component.  \see OC_Field_ParameterSetUpdateGaussPoint
   SUBROUTINE Field_ParameterSetUpdateGaussPointSP(field,variableType,fieldSetType,gaussPointNumber,userElementNumber, &
     & componentNumber,value,err,error,*)
 
@@ -12505,7 +12500,7 @@ CONTAINS
 
 !!\todo Should also think about quadrature schemes?
 
-  !>Updates the given parameter set with the given double precision value for a particular gauss point of the field variable component.  \see cmfe_Field_ParameterSetUpdateGaussPoint
+  !>Updates the given parameter set with the given double precision value for a particular gauss point of the field variable component.  \see OC_Field_ParameterSetUpdateGaussPoint
   SUBROUTINE Field_ParameterSetUpdateGaussPointDP(field,variableType,fieldSetType,gaussPointNumber,userElementNumber, &
     & componentNumber,value,err,error,*)
 
@@ -12543,7 +12538,7 @@ CONTAINS
 
 !!\todo Should also think about quadrature schemes?
 
-  !>Updates the given parameter set with the given logical value for a particular gauss point of the field variable component.  \see cmfe_Field__ParameterSetUpdateGaussPoint
+  !>Updates the given parameter set with the given logical value for a particular gauss point of the field variable component.  \see OC_Field__ParameterSetUpdateGaussPoint
   SUBROUTINE Field_ParameterSetUpdateGaussPointL(field,variableType,fieldSetType,gaussPointNumber,userElementNumber, &
     & componentNumber,value,err,error,*)
 
@@ -13283,7 +13278,7 @@ CONTAINS
   !================================================================================================================================
   !
 
-  !>Updates the given parameter set with the given integer value for a particular user node, derivative and version of the field variable component. \see OpenCMISS::Iron::cmfe_Field_ParameterSetUpdateNode
+  !>Updates the given parameter set with the given integer value for a particular user node, derivative and version of the field variable component. \see OpenCMISS::OC_Field_ParameterSetUpdateNode
   SUBROUTINE Field_ParameterSetUpdateNodeIntg(field,variableType,fieldSetType,versionNumber,derivativeNumber, &
     & userNodeNumber,componentNumber,value,err,error,*)
 
@@ -13320,7 +13315,7 @@ CONTAINS
   !================================================================================================================================
   !
 
-  !>Updates the given parameter set with the given single precision value for a particular user node, derivative and version of the field variable component. \see OpenCMISS::Iron::cmfe_Field_ParameterSetUpdateNode
+  !>Updates the given parameter set with the given single precision value for a particular user node, derivative and version of the field variable component. \see OpenCMISS::OC_Field_ParameterSetUpdateNode
   SUBROUTINE Field_ParameterSetUpdateNodeSP(field,variableType,fieldSetType,versionNumber,derivativeNumber, &
     & userNodeNumber,componentNumber,value,err,error,*)
 
@@ -13357,7 +13352,7 @@ CONTAINS
   !================================================================================================================================
   !
 
-  !>Updates the given parameter set with the given double precision value for a particular user node, derivative and version of the field variable component. \see OpenCMISS::Iron::cmfe_Field_ParameterSetUpdateNode
+  !>Updates the given parameter set with the given double precision value for a particular user node, derivative and version of the field variable component. \see OpenCMISS::OC_Field_ParameterSetUpdateNode
   SUBROUTINE Field_ParameterSetUpdateNodeDP(field,variableType,fieldSetType,versionNumber,derivativeNumber, &
     & userNodeNumber,componentNumber,value,err,error,*)
 
@@ -13394,7 +13389,7 @@ CONTAINS
   !================================================================================================================================
   !
 
-  !>Updates the given parameter set with the given logical value for a particular user node, derivative and version of the field variable component. \see OpenCMISS::Iron::cmfe_Field_ParameterSetUpdateNode
+  !>Updates the given parameter set with the given logical value for a particular user node, derivative and version of the field variable component. \see OpenCMISS::OC_Field_ParameterSetUpdateNode
   SUBROUTINE Field_ParameterSetUpdateNodeL(field,variableType,fieldSetType,versionNumber,derivativeNumber, &
     & userNodeNumber,componentNumber,VALUE,err,error,*)
 
@@ -13431,7 +13426,7 @@ CONTAINS
   !================================================================================================================================
   !
 
-  !>Starts the parameter set update for a field variable. \see OpenCMISS::Iron::cmfe_Field_ParameterSetUpdateStart
+  !>Starts the parameter set update for a field variable. \see OpenCMISS::OC_Field_ParameterSetUpdateStart
   SUBROUTINE Field_ParameterSetUpdateStart(field,variableType,fieldSetType,err,error,*)
 
     !Argument variables
@@ -14424,7 +14419,7 @@ CONTAINS
   !================================================================================================================================
   !
 
-  !>Sets/changes the scaling type for a field. \see OpenCMISS::Iron::cmfe_FieldScalingTypeSet
+  !>Sets/changes the scaling type for a field. \see OpenCMISS::OC_FieldScalingTypeSet
   SUBROUTINE Field_ScalingTypeSet(field,scalingType,err,error,*)
 
     !Argument variables
@@ -14506,7 +14501,7 @@ CONTAINS
   !================================================================================================================================
   !
 
-  !>Sets/changes the field type for a field. \see OpenCMISS::Iron::cmfe_FieldTypeSet
+  !>Sets/changes the field type for a field. \see OpenCMISS::OC_FieldTypeSet
   SUBROUTINE Field_TypeSet(field,TYPE,err,error,*)
 
     !Argument variables
@@ -14712,7 +14707,7 @@ CONTAINS
   !================================================================================================================================
   !
 
-  !>Sets/changes the label for a field variable for character labels. \see OpenCMISS::Iron::cmfe_Field_VariableLabelSet
+  !>Sets/changes the label for a field variable for character labels. \see OpenCMISS::OC_Field_VariableLabelSet
   SUBROUTINE Field_VariableLabelSetC(field,variableType,label,err,error,*)
 
     !Argument variables
@@ -14761,7 +14756,7 @@ CONTAINS
   !================================================================================================================================
   !
 
-  !>Sets/changes the label for a field variable for varying string labels. \see OpenCMISS::Iron::cmfe_Field_VariableLabelSet
+  !>Sets/changes the label for a field variable for varying string labels. \see OpenCMISS::OC_Field_VariableLabelSet
   SUBROUTINE Field_VariableLabelSetVS(field,variableType,label,err,error,*)
 
     !Argument variables
@@ -14872,7 +14867,7 @@ CONTAINS
   !================================================================================================================================
   !
 
-  !>Sets/changes the field variable types for a field. \see OpenCMISS::Iron::cmfe_Field_VariableTypesSet
+  !>Sets/changes the field variable types for a field. \see OpenCMISS::OC_Field_VariableTypesSet
   SUBROUTINE Field_VariableTypesSet0(field,variableType,err,error,*)
 
     !Argument variables
@@ -14897,7 +14892,7 @@ CONTAINS
   !================================================================================================================================
   !
 
-  !>Sets/changes the field variable types for a field. \see OpenCMISS::Iron::cmfe_Field_VariableTypesSet
+  !>Sets/changes the field variable types for a field. \see OpenCMISS::OC_Field_VariableTypesSet
   SUBROUTINE Field_VariableTypesSet1(field,variableTypes,err,error,*)
 
     !Argument variables
@@ -17398,7 +17393,7 @@ CONTAINS
   !================================================================================================================================
   !
 
-  !>Destroys the parameter set of type set type for a field variable and deallocates all memory. \see OpenCMISS::Iron::cmfe_FieldParameterSetDestroy
+  !>Destroys the parameter set of type set type for a field variable and deallocates all memory. \see OpenCMISS::OC_FieldParameterSetDestroy
   SUBROUTINE FieldVariable_ParameterSetDestroy(fieldVariable,fieldSetType,err,error,*)
 
     !Argument variables
@@ -17741,7 +17736,7 @@ CONTAINS
   !================================================================================================================================
   !
 
-  !>Returns from the given parameter set a single precision value for the specified constant of a field variable component. \see OpenCMISS::Iron::cmfe_FieldParameterSetGetConstant
+  !>Returns from the given parameter set a single precision value for the specified constant of a field variable component. \see OpenCMISS::OC_FieldParameterSetGetConstant
   SUBROUTINE FieldVariable_ParameterSetGetConstantSP(fieldVariable,fieldSetType,componentNumber,value,err,error,*)
 
     !Argument variables
@@ -21818,11 +21813,10 @@ CONTAINS
     INTEGER(INTG), INTENT(OUT) :: err !<The error code
     TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
     !Local Variables
-    INTEGER(INTG) :: basisFamilyType,componentIdx,derivativeIdx,element,elementIdx,faceIdx,faceNode,index,indexMatch, &
-      & interpolationType,lineIdx,lineNode,localElementNumber,localNode,localNodeIdx,nodeFaceNumber,nodeLineNumber, &
-      & nodePositionIdx,numberOfAdjacentElements,numberOfDimensions,numberOfDomainDimensions,numberOfElements,numberOfNodeFaces, &
-      & numberOfNodeLines,numberOfNodesXiC(4),numberOfNormals,numberOfSurroundingElements,numberOfTangents,numberOfXi, &
-      & numberOfXiCoordinates,tangentIdx,tangentXiIdx,variableType,xiCoordIdx,xiIdx
+    INTEGER(INTG) :: basisFamilyType,elementIdx,faceIdx,faceNode,index,interpolationType,lineIdx,lineNode, &
+      & localElementNumber,localNode,nodeFaceNumber,nodeLineNumber,numberOfDimensions,numberOfDomainDimensions, &
+      & numberOfNodeFaces,numberOfNodeLines,numberOfNormals,numberOfSurroundingElements,numberOfTangents,numberOfXi, &
+      & numberOfXiCoordinates,tangentIdx,variableType
     REAL(DP) :: dXdXi(3,3),vector1(3),vector2(3),xi(3)
     LOGICAL :: boundaryFace,boundaryLine,boundaryNode
     TYPE(BasisType), POINTER :: basis
@@ -22577,8 +22571,6 @@ CONTAINS
     TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
     !Local Variables
     INTEGER(INTG) :: variableIdx
-    LOGICAL :: variableFound
-    TYPE(FieldVariablePtrType), ALLOCATABLE :: newVariablesList(:)
 
     ENTERS("FieldVariablesList_VariableInListCheck",err,error,*999)
 
@@ -22905,7 +22897,7 @@ CONTAINS
   !================================================================================================================================
   !
   
-  !>Returns from the given parameter set a double precision value for the specified gauss point of a field variable component. \see OpenCMISS::Iron::cmfe_FieldParameterSetGetGaussPoint
+  !>Returns from the given parameter set a double precision value for the specified gauss point of a field variable component. \see OpenCMISS::OC_FieldParameterSetGetGaussPoint
   SUBROUTINE Field_ParameterSetGetGaussPointCoord(meshEmbedding,componentNumber,numberOfGauss,coordValue, &
     & err,error,*)
     

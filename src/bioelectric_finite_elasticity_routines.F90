@@ -41,7 +41,7 @@
 !> the terms of any one of the MPL, the GPL or the LGPL.
 !>
 
-!> \defgroup OpenCMISS_BioelectricFiniteElasticity OpenCMISS::Iron::BioelectricFiniteElasticity
+!> \defgroup OpenCMISS_BioelectricFiniteElasticity OpenCMISS::BioelectricFiniteElasticity
 !>This module handles all routines pertaining to bioelectrics coupled with finite elasticity.
 MODULE BioelectricFiniteElasticityRoutines
 

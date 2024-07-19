@@ -582,7 +582,7 @@ CONTAINS
   !================================================================================================================================
   !
 
-  !>Gets the label for a data projection for varying string labels. \see OpenCMISS::Iron::cmfe_DataProjection_LabelGet
+  !>Gets the label for a data projection for varying string labels. \see OpenCMISS::OC_DataProjection_LabelGet
   SUBROUTINE DataProjection_LabelGetVS(dataProjection,label,err,error,*)
 
     !Argument variables
@@ -611,7 +611,7 @@ CONTAINS
   !================================================================================================================================
   !
 
-  !>Gets the label for a data projection for character labels. \see OpenCMISS::Iron::cmfe_DataProjection_LabelGet
+  !>Gets the label for a data projection for character labels. \see OpenCMISS::OC_DataProjection_LabelGet
   SUBROUTINE DataProjection_LabelGetC(dataProjection,label,err,error,*)
 
     !Argument variables

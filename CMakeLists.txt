@@ -48,49 +48,23 @@ set(OpenCMISS_GEN_BINDINGS_DIR "${CMAKE_CURRENT_BINARY_DIR}/bindings")
 set(OpenCMISS_GEN_INC_DIR "${CMAKE_CURRENT_BINARY_DIR}/include")
 set(OpenCMISS_Fortran_MODULES_DIR "${CMAKE_CURRENT_BINARY_DIR}/fortran_modules")
 set(OpenCMISS_GEN_SRC_DIR "${CMAKE_CURRENT_BINARY_DIR}/src")
+set(OpenCMISS_GEN_DOC_DIR "${CMAKE_CURRENT_BINARY_DIR}/doc")
+set(OpenCMISS_GEN_Doxygen_DIR "${OpenCMISS_GEN_DOC_DIR}/doxygen")
 
 # Add in library cmake modules to the module path
 set(CMAKE_MODULE_PATH ${CMAKE_MODULE_PATH} "${OpenCMISS_CMAKE_DIR}")
-
-# set(_CORRECT_CMAKE_MODULE_PATH FALSE)
-# # First check if the CMAKE_MODULE_PATH is already set properly.
-# foreach(_PATH ${CMAKE_MODULE_PATH})
-#     if (EXISTS "${_PATH}/OpenCMISS/OCMiscFunctions.cmake")
-#         set(_CORRECT_CMAKE_MODULE_PATH TRUE)
-#         if (NOT DEFINED IRON_CMAKE_MODULE_PATH)
-#             set(IRON_CMAKE_MODULE_PATH "${_PATH}" CACHE STRING "Location of OpenCMISS CMake modules.")
-#         endif ()
-#         break()
-#     endif ()
-# endforeach()
-
-# if (NOT _CORRECT_CMAKE_MODULE_PATH)
-#     # Check bare minimum configuration
-#     set(IRON_CMAKE_MODULE_PATH "${IRON_CMAKE_MODULE_PATH}" CACHE STRING "Location of OpenCMISS CMake modules.")
-#     if (EXISTS "${IRON_CMAKE_MODULE_PATH}/OpenCMISS/OCMiscFunctions.cmake")
-#         list(APPEND CMAKE_MODULE_PATH "${IRON_CMAKE_MODULE_PATH}/FindModuleWrappers")
-#         list(APPEND CMAKE_MODULE_PATH "${IRON_CMAKE_MODULE_PATH}")
-#         list(APPEND CMAKE_MODULE_PATH "${IRON_CMAKE_MODULE_PATH}/OpenCMISS")
-#         set(_CORRECT_CMAKE_MODULE_PATH TRUE)
-#     endif ()
-# endif ()
-
-# if (NOT _CORRECT_CMAKE_MODULE_PATH)
-#     message(STATUS "CMAKE_MODULE_PATH: '${CMAKE_MODULE_PATH}'")
-#     message(STATUS "IRON_CMAKE_MODULE_PATH: '${IRON_CMAKE_MODULE_PATH}'")
-#     message(FATAL_ERROR "'OCMiscFunctions.cmake' was not found on the module path.  Check the value of CMAKE_MODULE_PATH and/or IRON_CMAKE_MODULE_PATH.")
-# endif ()
 
 # Check multi-config environment
 get_property(OpenCMISS_HAVE_MULTICONFIG_ENV GLOBAL PROPERTY GENERATOR_IS_MULTI_CONFIG)
 if(OpenCMISS_HAVE_MULTICONFIG_ENV)
   string(TOUPPER "$<$<CONFIG>>" OpenCMISS_CONFIG_TYPE)
+else()
   string(TOUPPER "${CMAKE_BUILD_TYPE}" OpenCMISS_CONFIG_TYPE)
 endif()
-if(OpenCMISS_CONFIG_TYPE MATCHES "^(DEBUG|RELWITHDEBINFO)$")
-  set(OpenCMISS_IS_DEBUG_BUILD TRUE)
+IF(OpenCMISS_CONFIG_TYPE MATCHES "^(DEBUG|RELWITHDEBINFO)")
+  set(OpenCMISS_DEBUG_INFO_BUILD ON)
 else()
-  set(OpenCMISS_IS_DEBUG_BUILD FALSE)
+  set(OpenCMISS_DEBUG_INFO_BUILD OFF)
 endif()
 
 # Options for OpenCMISS
@@ -138,7 +112,7 @@ option(OpenCMISS_WITH_CUDA "Build OpenCMISS with CUDA support." ON)
 
 # Options for diagnostics, checking, profiling etc. 
 if(NOT DEFINED OpenCMISS_WITH_DIAGNOSTICS)
-  if(OpenCMISS_IS_DEBUG_BUILD)
+  if(OpenCMISS_DEBUG_INFO_BUILD)
     set(OpenCMISS_WITH_DIAGNOSTICS ON)
   else()
     set(OpenCMISS_WITH_DIAGNOSTICS OFF)
@@ -172,7 +146,7 @@ option(OpenCMISS_WITH_NO_POSTCHECKS "Build OpenCMISS with no post-checks." OFF)
 
 # Options for compiling
 if(NOT DEFINED OpenCMISS_WITH_CHECK_ALL)
-  if(OpenCMISS_IS_DEBUG_BUILD)
+  if(OpenCMISS_FULL_DEBUG_BUILD)
     set(OpenCMISS_WITH_CHECK_ALL ON)
   else()
     set(OpenCMISS_WITH_CHECK_ALL OFF)
@@ -180,7 +154,8 @@ if(NOT DEFINED OpenCMISS_WITH_CHECK_ALL)
 else()
   set(OpenCMISS_WITH_CHECK_ALL ${OpenCMISS_WITH_CHECK_ALL})
 endif()
-option(OpenCMISS_WITH_CHECK_ALL "Build OpenCMISS with all checks enabled." OFF)
+#option(OpenCMISS_WITH_CHECK_ALL "Build OpenCMISS with all checks enabled." ${OpenCMISS_WITH_CHECK_ALL})
+option(OpenCMISS_WITH_CHECK_ALL "Build OpenCMISS with all checks enabled." ON)
 option(OpenCMISS_WITH_WARN_ALL "Build OpenCMISS with all warnings enabled." ON)
 option(OpenCMISS_WITH_PROFILING "Build OpenCMISS with profiling enbabled." OFF)
 
@@ -198,6 +173,7 @@ option(OpenCMISS_WITH_MUMPS "Build OpenCMISS with MUMPS integration." OFF)
 option(OpenCMISS_WITH_ParMETIS "Build OpenCMISS with ParMETIS integration." ON)
 option(OpenCMISS_WITH_PETSc "Build OpenCMISS with PETSc integration." ON)
 option(OpenCMISS_WITH_SLEPc "Build OpenCMISS with SLEPc integration." ON)
+option(OpenCMISS_WITH_ScaLAPACK "Build OpenCMISS with ScaLAPACK integration." ON)
 option(OpenCMISS_WITH_SUNDIALS "Build OpenCMISS with SUNDIALS integration." OFF)
 
 set(OpenCMISS_WITH_CellML OFF)
@@ -339,9 +315,49 @@ if(OpenCMISS_WITH_PETSc)
   find_package(PETSc ${OpenCMISS_PETSc_VERSION} REQUIRED)
 endif()
 
+# ScaLAPACK
+if(OpenCMISS_WITH_ScaLAPACK)
+  find_package(ScaLAPACK ${OpenCMISS_ScaLAPACK_VERSION} REQUIRED)
+endif()
+
 # SLEPc
 if(OpenCMISS_WITH_SLEPc)
   find_package(SLEPc ${OpenCMISS_SLEPc_VERSION} REQUIRED)
+endif()
+
+# Set compiler flags
+
+# C compiler flags
+if(CMAKE_C_COMPILER_ID STREQUAL "IntelLLVM")
+  add_compile_options( "$<$<COMPILE_LANGUAGE:C>:-traceback>" )
+  add_compile_options( "$<$<AND:$<COMPILE_LANGUAGE:C>,$<OR:$<CONFIG:Debug>,$<CONFIG:RelWithDebInfo>>>:-debug>" )
+  add_compile_options( "$<$<AND:$<COMPILE_LANGUAGE:C>,$<BOOL:${OpenCMISS_WITH_OpenMP}>>:-fopenmp>" )
+  add_compile_options( "$<$<AND:$<COMPILE_LANGUAGE:C>,$<BOOL:${OpenCMISS_WITH_WARN_ALL}>>:-Wall>" )
+  add_compile_options( "$<$<AND:$<COMPILE_LANGUAGE:C>,$<BOOL:${OpenCMISS_WITH_CHECK_ALL}>>:-check;all,nouninit>" )
+  add_compile_options( "$<$<AND:$<COMPILE_LANGUAGE:C>,$<CONFIG:Release>>:-fast>" )
+  add_compile_options( "$<$<AND:$<COMPILE_LANGUAGE:C>,$<CONFIG:Debug>>:-O0>" )
+elseif(CMAKE_C_COMPILER_ID STREQUAL "GNU")
+  add_compile_options( "$<$<AND:$<COMPILE_LANGUAGE:C>,$<BOOL:${OpenCMISS_WITH_WARN_ALL}>>:-Wall>" )
+  add_compile_options( "$<$<AND:$<COMPILE_LANGUAGE:C>,$<CONFIG:Release>>:-Ofast>" )
+  add_compile_options( "$<$<AND:$<COMPILE_LANGUAGE:C>,$<CONFIG:Debug>>:-O0>" )
+elseif(CMAKE_C_COMPILER_ID STREQUAL "Clang")
+endif()
+
+# Fortran compiler flags
+if(CMAKE_Fortran_COMPILER_ID STREQUAL "IntelLLVM")
+  add_compile_options( "$<$<COMPILE_LANGUAGE:Fortran>:-traceback>" )
+  add_compile_options( "$<$<AND:$<COMPILE_LANGUAGE:Fortran>,$<OR:$<CONFIG:Debug>,$<CONFIG:RelWitDebInfo>>>:-debug>" )
+  add_compile_options( "$<$<AND:$<COMPILE_LANGUAGE:Fortran>,$<BOOL:${OpenCMISS_WITH_WARN_ALL}>>:-warn;all>" )
+  add_compile_options( "$<$<AND:$<COMPILE_LANGUAGE:Fortran>,$<BOOL:${OpenCMISS_WITH_CHECK_ALL}>>:-check;all,nouninit>" )
+  add_compile_options( "$<$<AND:$<COMPILE_LANGUAGE:Fortran>,$<CONFIG:Release>>:-fast>" )
+  add_compile_options( "$<$<AND:$<COMPILE_LANGUAGE:Fortran>,$<CONFIG:Debug>>:-O0>" )
+elseif(CMAKE_Fortran_COMPILER_ID STREQUAL "GNU")
+  add_compile_options( "$<$<COMPILE_LANGUAGE:Fortran>:-fbacktrace>" )
+  add_compile_options( "$<$<AND:$<COMPILE_LANGUAGE:Fortran>,$<BOOL:${OpenCMISS_WITH_WARN_ALL}>>:-Wall>" )
+  add_compile_options( "$<$<AND:$<COMPILE_LANGUAGE:Fortran>,$<BOOL:${OpenCMISS_WITH_CHECK_ALL}>>:-fcheck=all;-ffpe-trap=invalid,zero,overflow>" )
+  add_compile_options( "$<$<AND:$<COMPILE_LANGUAGE:Fortran>,$<CONFIG:Release>>:-Ofast>" )
+  add_compile_options( "$<$<AND:$<COMPILE_LANGUAGE:Fortran>,$<CONFIG:Debug>>:-O0>" )
+elseif(CMAKE_Fortran_COMPILER_ID STREQUAL "Flang")
 endif()
 
 # Populates the OpenCMISS_XX_SRC variables
@@ -361,7 +377,6 @@ set(OpenCMISS_Python_PACKAGE_MODULE_NAME "opencmiss")
 set(OpenCMISS_Python_MODULE_NAME "${OpenCMISS_TARGET_NAME}${OpenCMISS_Python_SUFFIX}")
 
 # Install directories
-
 
 # Main target names
 set(OpenCMISS_SHARED_Fortran_TARGET "${OpenCMISS_TARGET_NAME}${OpenCMISS_SHARED_SUFFIX}${OpenCMISS_Fortran_SUFFIX}")
@@ -441,10 +456,6 @@ foreach(_target ${OpenCMISS_Fortran_TARGETS})
     INTERFACE
     $<INSTALL_INTERFACE:${CMAKE_INSTALL_PREFIX}/${OpenCMISS_INSTALL_INCLUDE_SUBDIR}>
   )
-  # Dont use "USE MPI" instructions if the precompiled mpi module files are incompatible.
-  # This happens when the fortran compiler used to build mpi differs from the currently used one.
-  # This holds on windows (only pre-compiled mpi implementations available; MPICH2 and MSMPI)
-  # and on e.g. clusters with inappropriately configured toolchain environments.
   if(OpenCMISS_IS_DEBUG_BUILD)
     target_compile_definitions(${_target} PRIVATE DEBUG)
   endif()
@@ -508,6 +519,10 @@ foreach(_target ${OpenCMISS_Fortran_TARGETS})
     target_compile_definitions(${_target} PUBLIC WITH_PETSC)
     target_link_libraries(${_target} PUBLIC PETSc::PETSc)
   endif()
+  if(OpenCMISS_WITH_ScaLAPACK)
+    message(STATUS "Adding ScaLAPACK to target ${_target}...")
+    target_compile_definitions(${_target} PUBLIC WITH_SCALAPACK)
+  endif()
   if(OpenCMISS_WITH_SLEPc)
     message(STATUS "Adding SLEPc to target ${_target}...")
     target_compile_definitions(${_target} PUBLIC WITH_SLEPC)
@@ -523,6 +538,7 @@ endforeach()
 # Handle bindings generation with target
 set(OpenCMISS_GEN_BINDINGS_C_DIR "${OpenCMISS_GEN_BINDINGS_DIR}/c")
 set(OpenCMISS_OPENCMISS_H "${OpenCMISS_GEN_BINDINGS_C_DIR}${OpenCMISS_INSTALL_INC_SUBSUBDIR}/opencmiss.h")
+set(OpenCMISS_OPENCMISS_VERSION_H "${OpenCMISS_INC_DIR}/opencmiss_version.h")
 set(OpenCMISS_OPENCMISS_C_F90 "${OpenCMISS_GEN_SRC_DIR}/opencmiss_c.F90")
 set(LibOpemCMISS_GEN_C_BINDINGS_TARGETS OpenCMISS_OPENCMISS_H OpenCMISS_OPENCMISS_C_F90)
 
@@ -544,7 +560,7 @@ add_custom_command(
 # Handle the C bindings and C library
 if(OpenCMISS_WITH_C_BINDINGS)
   add_custom_target(generate_c_bindings DEPENDS ${OpenCMISS_GEN_C_BINDINGS_TARGETS})
-  set(OpenCMISS_INSTALL_C_INCLUDE_FILES ${OpenCMISS_OPENCMISS_H})
+  set(OpenCMISS_INSTALL_C_INCLUDE_FILES ${OpenCMISS_OPENCMISS_H} ${OpenCMISS_OPENCMISS_VERSION_H})
   list(APPEND OpenCMISS_CLEANUP_FILES "${OpenCMISS_OPENCMISS_H}")
   list(APPEND OpenCMISS_CLEANUP_FILES "${OpenCMISS_OPENCMISS_C_F90}")
   set(OpenCMISS_C_TARGETS )
@@ -651,6 +667,7 @@ if(OpenCMISS_WITH_Python_BINDINGS)
   )
   target_include_directories(${OpenCMISS_Python_MODULE_TARGET}
     PRIVATE
+    ${OpenCMISS_INC_DIR}
     ${OpenCMISS_GEN_BINDINGS_C_DIR}
     Python::NumPy
     Python::Python)
@@ -705,40 +722,72 @@ endif()
 
 if(OpenCMISS_WITH_Doxygen)
   # Generate Doxygen documentation
+  set(OpenCMISS_Doxygen_User_SUBDIR "User")
+  set(OpenCMISS_Doxygen_Developer_SUBDIR "Developer")
+  set(OpenCMISS_Doxygen_HTML_SUBDIR "html")
   set(OpenCMISS_Doxygen_TARGET "${OpenCMISS_TARGET_NAME}${OpenCMISS_Doxygen_SUFFIX}")
   set(OpenCMISS_Doxygen_Fortran_TARGET "${OpenCMISS_TARGET_NAME}${OpenCMISS_Doxygen_SUFFIX}${OpenCMISS_Fortran_SUFFIX}")
-  set(OpenCMISS_Doxygen_Programmer_TARGET "${OpenCMISS_TARGET_NAME}${OpenCMISS_Doxygen_SUFFIX}_Programmer")
+  set(OpenCMISS_Doxygen_Developer_TARGET "${OpenCMISS_TARGET_NAME}${OpenCMISS_Doxygen_SUFFIX}_Developer")
+  set(OpenCMISS_Doxyfile_PREFIX "Doxyfile")
+  set(OpenCMISS_Developer_SUFFIX "_Developer")
+  set(OpenCMISS_Doxyfile_Fortran "${OpenCMISS_Doxyfile_PREFIX}${OpenCMISS_Fortran_SUFFIX}")
+  set(OpenCMISS_Doxyfile_Developer "${OpenCMISS_Doxyfile_PREFIX}${OpenCMISS_Developer_SUFFIX}")
+  
+  set(OpenCMISS_GEN_Doxygen_Fortran_INPUT_DIR "${OpenCMISS_GEN_Doxygen_DIR}/${OpenCMISS_Doxygen_User_SUBDIR}${OpenCMISS_Fortran_SUFFIX}")
+  set(OpenCMISS_GEN_Doxygen_Fortran_OUTPUT_DIR "${OpenCMISS_GEN_Doxygen_Fortran_INPUT_DIR}")
+  set(OpenCMISS_GEN_Doxygen_Developer_INPUT_DIR "${OpenCMISS_GEN_Doxygen_DIR}/${OpenCMISS_Doxygen_Developer_SUBDIR}")
+  set(OpenCMISS_GEN_Doxygen_Developer_OUTPUT_DIR "${OpenCMISS_GEN_Doxygen_Developer_INPUT_DIR}")
+
+  configure_file("${OpenCMISS_Doxygen_DIR}/${OpenCMISS_Doxyfile_Fortran}.in"
+    "${OpenCMISS_GEN_Doxygen_DIR}/${OpenCMISS_Doxyfile_Fortran}"
+  )
   doxygen_add_docs(${OpenCMISS_Doxygen_Fortran_TARGET}
     COMMENT "Generating ${PROJECT_NAME} Fortran API Doxygen documentation..."
-    WORKING_DIR ${OpenCMISS_Doxygen_DIR}
-    CONFIG_FILE ${OpenCMISS_Doxygen_DIR}/Doxyfile_Fortran
+    WORKING_DIR "${OpenCMISS_GEN_Doxygen_Fortran_INPUT_DIR}"
+    CONFIG_FILE "${OpenCMISS_GEN_Doxygen_DIR}/${OpenCMISS_Doxyfile_Fortran}"
   )
-  doxygen_add_docs(${OpenCMISS_Doxygen_Programmer_TARGET}
-    COMMENT "Generating ${PROJECT_NAME} Programmer Doxygen documentation..."
-    WORKING_DIR ${OpenCMISS_Doxygen_DIR}
-    CONFIG_FILE ${OpenCMISS_Doxygen_DIR}/Doxyfile_Programmer
+  configure_file("${OpenCMISS_Doxygen_DIR}/${OpenCMISS_Doxyfile_Developer}.in"
+    "${OpenCMISS_GEN_Doxygen_DIR}/${OpenCMISS_Doxyfile_Developer}"
+  )
+  doxygen_add_docs(${OpenCMISS_Doxygen_Developer_TARGET}
+    COMMENT "Generating ${PROJECT_NAME} Developer Doxygen documentation..."
+    WORKING_DIR "${OpenCMISS_GEN_Doxygen_Developer_INPUT_DIR}"
+    CONFIG_FILE "${OpenCMISS_GEN_Doxygen_DIR}/${OpenCMISS_Doxyfile_Developer}"
   )
   set(OpenCMISS_Doxygen_TARGETS ${OpenCMISS_Doxygen_Fortran_TARGET} ${OpenCMISS_Doxygen_Programmer_TARGET})
   if(OpenCMISS_WITH_C_BINDINGS)
     set(OpenCMISS_Doxygen_C_TARGET "${OpenCMISS_TARGET_NAME}${OpenCMISS_Doxygen_SUFFIX}${OpenCMISS_C_SUFFIX}")
+    set(OpenCMISS_Doxyfile_C "${OpenCMISS_Doxyfile_PREFIX}${OpenCMISS_C_SUFFIX}")
+    set(OpenCMISS_GEN_Doxygen_C_INPUT_DIR "${OpenCMISS_GEN_Doxygen_DIR}/${OpenCMISS_Doxygen_User_SUBDIR}${OpenCMISS_C_SUFFIX}")
+    set(OpenCMISS_GEN_Doxygen_C_OUTPUT_DIR "${OpenCMISS_GEN_Doxygen_C_INPUT_DIR}")
+    configure_file("${OpenCMISS_Doxygen_DIR}/${OpenCMISS_Doxyfile_C}.in"
+      "${OpenCMISS_GEN_Doxygen_DIR}/${OpenCMISS_Doxyfile_C}"
+    )
     doxygen_add_docs(${OpenCMISS_Doxygen_C_TARGET}
       COMMENT "Generating ${PROJECT_NAME} C API Doxygen documentation..."
-      WORKING_DIR ${OpenCMISS_Doxygen_DIR}
-      CONFIG_FILE ${OpenCMISS_Doxygen_DIR}/Doxyfile_C
+      WORKING_DIR "${OpenCMISS_GEN_Doxygen_C_INPUT_DIR}"
+      CONFIG_FILE "${OpenCMISS_GEN_Doxygen_DIR}/${OpenCMISS_Doxyfile_C}"
     )
     list(APPEND OpenCMISS_Doxygen_TARGETS ${OpenCMISS_Doxygen_C_TARGET})
   endif()
   if(OpenCMISS_WITH_Python_BINDINGS)
     set(OpenCMISS_Doxygen_Python_TARGET "${OpenCMISS_TARGET_NAME}${OpenCMISS_Doxygen_SUFFIX}${OpenCMISS_Python_SUFFIX}")
+    set(OpenCMISS_Doxyfile_Python "${OpenCMISS_Doxyfile_PREFIX}${OpenCMISS_Python_SUFFIX}")
+    set(OpenCMISS_GEN_Doxygen_Python_INPUT_DIR "${OpenCMISS_GEN_Doxygen_DIR}/${OpenCMISS_Doxygen_User_SUBDIR}${OpenCMISS_Python_SUFFIX}")
+    set(OpenCMISS_GEN_Doxygen_Python_OUTPUT_DIR "${OpenCMISS_GEN_Doxygen_Python_INPUT_DIR}")
+    configure_file("${OpenCMISS_Doxygen_DIR}/${OpenCMISS_Doxyfile_Python}.in"
+      "${OpenCMISS_GEN_Doxygen_DIR}/${OpenCMISS_Doxyfile_Python}"
+    )
     doxygen_add_docs(${OpenCMISS_Doxygen_Python_TARGET}
       COMMENT "Generating ${PROJECT_NAME} Python API Doxygen documentation..."
-      WORKING_DIR ${OpenCMISS_Doxygen_DIR}
-      CONFIG_FILE ${OpenCMISS_Doxygen_DIR}/Doxyfile_Python
+      WORKING_DIR "${OpenCMISS_GEN_Doxygen_Python_INPUT_DIR}"
+      CONFIG_FILE "${OpenCMISS_GEN_Doxygen_DIR}/${OpenCMISS_Doxyfile_Python}"
     )
     list(APPEND OpenCMISS_Doxygen_TARGETS ${OpenCMISS_Doxygen_Python_TARGET})
   endif()
   add_custom_target(${OpenCMISS_Doxygen_TARGET} DEPENDS ${OpenCMISS_Doxygen_TARGETS})
 endif()
+
 # Install steps
 
 install(TARGETS ${OpenCMISS_INSTALL_TARGETS}

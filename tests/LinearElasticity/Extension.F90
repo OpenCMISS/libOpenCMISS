@@ -47,10 +47,15 @@
 
 !> Main program
 PROGRAM AnalyticLinearElasticityExample
-#ifndef NOMPIMOD
-  USE MPI
-#endif
+  
   USE OpenCMISS
+#ifdef WITH_MPI
+#ifdef WITH_F08_MPI
+  USE MPI_F08
+#elif WITH_F90_MPI
+  USE MPI
+#endif  
+#endif  
   USE TEST_FRAMEWORK_ROUTINES
 
 #ifdef WIN32
@@ -59,10 +64,11 @@ PROGRAM AnalyticLinearElasticityExample
 
   IMPLICIT NONE
 
-#ifdef NOMPIMOD
+#ifdef WITH_MPI  
+#ifdef WITH_F77_MPI
 #include "mpif.h"
 #endif
-
+#endif  
 
   !Test program parameters
 

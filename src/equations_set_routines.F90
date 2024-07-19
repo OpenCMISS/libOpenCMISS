@@ -164,7 +164,7 @@ CONTAINS
   !================================================================================================================================
   !
       
-  !>Finish the creation of a analytic solution for equations set. \see OpenCMISS::Iron::cmfe_EquationsSet_AnalyticCreateFinish
+  !>Finish the creation of a analytic solution for equations set. \see OpenCMISS::OC_EquationsSet_AnalyticCreateFinish
   SUBROUTINE EquationsSet_AnalyticCreateFinish(equationsSet,err,error,*)
 
     !Argument variables
@@ -206,7 +206,7 @@ CONTAINS
   !================================================================================================================================
   !
 
-  !>Start the creation of a analytic solution for a equations set. \see OpenCMISS::Iron::cmfe_EquationsSet_AnalyticCreateStart
+  !>Start the creation of a analytic solution for a equations set. \see OpenCMISS::OC_EquationsSet_AnalyticCreateStart
   SUBROUTINE EquationsSet_AnalyticCreateStart(equationsSet,analyticFunctionType,analyticFieldUserNumber,analyticField, &
     & err,error,*)
 
@@ -263,7 +263,7 @@ CONTAINS
   !================================================================================================================================
   !
   
-  !>Destroy the analytic solution for an equations set. \see OpenCMISS::Iron::cmfe_EquationsSet_AnalyticDestroy
+  !>Destroy the analytic solution for an equations set. \see OpenCMISS::OC_EquationsSet_AnalyticDestroy
   SUBROUTINE EquationsSet_AnalyticDestroy(equationsSet,err,error,*)
 
     !Argument variables
@@ -289,7 +289,7 @@ CONTAINS
   !================================================================================================================================
   !
 
-  !>Evaluates the current analytic solution for an equations set. \see OpenCMISS::Iron::cmfe_EquationsSet_AnalyticEvaluate
+  !>Evaluates the current analytic solution for an equations set. \see OpenCMISS::OC_EquationsSet_AnalyticEvaluate
   SUBROUTINE EquationsSet_AnalyticEvaluate(equationsSet,err,error,*)
 
     !Argument variables
@@ -1755,7 +1755,7 @@ CONTAINS
   !================================================================================================================================
   !
 
-  !>Set boundary conditions for an equation set according to the analytic equations. \see OpenCMISS::cmfe_EquationsSet_BoundaryConditionsAnalytic
+  !>Set boundary conditions for an equation set according to the analytic equations. \see OpenCMISS::OC_EquationsSet_BoundaryConditionsAnalytic
   SUBROUTINE EquationsSet_BoundaryConditionsAnalytic(equationsSet,boundaryConditions,err,error,*)
 
     !Argument variables
@@ -1894,7 +1894,7 @@ CONTAINS
   !================================================================================================================================
   !
 
-  !>Finishes the process of creating an equation set on a region. \see OpenCMISS::Iron::cmfe_EquationsSet_CreateStart
+  !>Finishes the process of creating an equation set on a region. \see OpenCMISS::OC_EquationsSet_CreateStart
   SUBROUTINE EquationsSet_CreateFinish(equationsSet,err,error,*)
 
     !Argument variables
@@ -1932,7 +1932,7 @@ CONTAINS
   !================================================================================================================================
   !
 
-  !>Starts the process of creating an equations set defined by userNumber in the region identified by REGION. \see OpenCMISS::Iron::cmfe_EquationsSet_CreateStart
+  !>Starts the process of creating an equations set defined by userNumber in the region identified by REGION. \see OpenCMISS::OC_EquationsSet_CreateStart
   !>Default values set for the EQUATIONS_SET's attributes are:
   !>- LINEARITY: 1 (EQUATIONS_SET_LINEAR)
   !>- TIME_DEPENDENCE: 1 (EQUATIONS_SET_STATIC)
@@ -2080,7 +2080,7 @@ CONTAINS
   !================================================================================================================================
   !
 
-  !>Destroys an equations set identified by a pointer and deallocates all memory. \see OpenCMISS::Iron::cmfe_EquationsSet_Destroy
+  !>Destroys an equations set identified by a pointer and deallocates all memory. \see OpenCMISS::OC_EquationsSet_Destroy
   SUBROUTINE EquationsSet_Destroy(equationsSet,err,error,*)
 
     !Argument variables
@@ -2727,7 +2727,7 @@ CONTAINS
   !================================================================================================================================
   !
 
-  !>Finish the creation of independent variables for an equations set. \see OpenCMISS::Iron::cmfe_EquationsSet_IndependentCreateFinish
+  !>Finish the creation of independent variables for an equations set. \see OpenCMISS::OC_EquationsSet_IndependentCreateFinish
   SUBROUTINE EquationsSet_IndependentCreateFinish(equationsSet,err,error,*)
 
     !Argument variables
@@ -2769,7 +2769,7 @@ CONTAINS
   !================================================================================================================================
   !
 
-  !>Start the creation of independent variables for an equations set. \see OpenCMISS::Iron::cmfe_EquationsSet_IndependentCreateStart
+  !>Start the creation of independent variables for an equations set. \see OpenCMISS::OC_EquationsSet_IndependentCreateStart
   SUBROUTINE EquationsSet_IndependentCreateStart(equationsSet,independentFieldUserNumber,independentField,err,error,*)
 
     !Argument variables
@@ -2823,7 +2823,7 @@ CONTAINS
   !================================================================================================================================
   !
 
-  !>Destroy the independent field for an equations set. \see OpenCMISS::Iron::cmfe_EquationsSet_IndependentDestroy
+  !>Destroy the independent field for an equations set. \see OpenCMISS::OC_EquationsSet_IndependentDestroy
   SUBROUTINE EquationsSet_IndependentDestroy(equationsSet,err,error,*)
 
     !Argument variables
@@ -3011,7 +3011,7 @@ CONTAINS
   !================================================================================================================================
   !
 
-  !>Finish the creation of materials for an equations set. \see OpenCMISS::Iron::cmfe_EquationsSet_MaterialsCreateFinish
+  !>Finish the creation of materials for an equations set. \see OpenCMISS::OC_EquationsSet_MaterialsCreateFinish
   SUBROUTINE EquationsSet_MaterialsCreateFinish(equationsSet,err,error,*)
 
     !Argument variables
@@ -3053,7 +3053,7 @@ CONTAINS
   !================================================================================================================================
   !
 
-  !>Start the creation of materials for a problem. \see OpenCMISS::Iron::cmfe_EquationsSet_MaterialsCreateStart
+  !>Start the creation of materials for a problem. \see OpenCMISS::OC_EquationsSet_MaterialsCreateStart
   SUBROUTINE EquationsSet_MaterialsCreateStart(equationsSet,materialsFieldUserNumber,materialsField,err,error,*)
 
     !Argument variables
@@ -3107,7 +3107,7 @@ CONTAINS
   !================================================================================================================================
   !
 
-  !>Destroy the materials for an equations set. \see OpenCMISS::Iron::cmfe_EquationsSet_MaterialsDestroy
+  !>Destroy the materials for an equations set. \see OpenCMISS::OC_EquationsSet_MaterialsDestroy
   SUBROUTINE EquationsSet_MaterialsDestroy(equationsSet,err,error,*)
 
     !Argument variables
@@ -3191,7 +3191,7 @@ CONTAINS
   !================================================================================================================================
   !
 
-  !>Finish the creation of a dependent variables for an equations set. \see OpenCMISS::cmfe_EquationsSet_DependentCreateFinish
+  !>Finish the creation of a dependent variables for an equations set. \see OpenCMISS::OC_EquationsSet_DependentCreateFinish
   SUBROUTINE EquationsSet_DependentCreateFinish(equationsSet,err,error,*)
     
     !Argument variables
@@ -3232,7 +3232,7 @@ CONTAINS
   !================================================================================================================================
   !
 
-  !>Start the creation of dependent variables for an equations set. \see OpenCMISS::Iron::cmfe_EquationsSet_DependentCreateStart
+  !>Start the creation of dependent variables for an equations set. \see OpenCMISS::OC_EquationsSet_DependentCreateStart
   SUBROUTINE EquationsSet_DependentCreateStart(equationsSet,dependentFieldUserNumber,dependentField,err,error,*)
 
     !Argument variables
@@ -3284,7 +3284,7 @@ CONTAINS
   !================================================================================================================================
   !
   
-  !>Destroy the dependent variables for an equations set. \see OpenCMISS::Iron::cmfe_EquationsSet_DependentDestroy
+  !>Destroy the dependent variables for an equations set. \see OpenCMISS::OC_EquationsSet_DependentDestroy
   SUBROUTINE EquationsSet_DependentDestroy(equationsSet,err,error,*)
 
     !Argument variables
@@ -3366,7 +3366,7 @@ CONTAINS
   !================================================================================================================================
   !
 
-  !>Finish the creation of a derived variables field for an equations set. \see OpenCMISS::Iron::cmfe_EquationsSet_DerivedCreateFinish
+  !>Finish the creation of a derived variables field for an equations set. \see OpenCMISS::OC_EquationsSet_DerivedCreateFinish
   SUBROUTINE EquationsSet_DerivedCreateFinish(equationsSet,err,error,*)
 
     !Argument variables
@@ -3407,7 +3407,7 @@ CONTAINS
   !================================================================================================================================
   !
 
-  !>Start the creation of derived variables field for an equations set. \see OpenCMISS::Iron::cmfe_EquationsSet_DerivedCreateStart
+  !>Start the creation of derived variables field for an equations set. \see OpenCMISS::OC_EquationsSet_DerivedCreateStart
   SUBROUTINE EquationsSet_DerivedCreateStart(equationsSet,derivedFieldUserNumber,derivedField,err,error,*)
 
     !Argument variables
@@ -3460,7 +3460,7 @@ CONTAINS
   !================================================================================================================================
   !
 
-  !>Destroy the derived variables for an equations set. \see OpenCMISS::Iron::cmfe_EquationsSet_DerivedDestroy
+  !>Destroy the derived variables for an equations set. \see OpenCMISS::OC_EquationsSet_DerivedDestroy
   SUBROUTINE EquationsSet_DerivedDestroy(equationsSet,err,error,*)
 
     !Argument variables
@@ -3667,7 +3667,7 @@ CONTAINS
   !================================================================================================================================
   !
 
- !>Finish the creation of equations for the equations set. \see OpenCMISS::Iron::cmfe_EquationsSet_EquationsCreateFinish
+ !>Finish the creation of equations for the equations set. \see OpenCMISS::OC_EquationsSet_EquationsCreateFinish
   SUBROUTINE EquationsSet_EquationsCreateFinish(equationsSet,err,error,*)
 
     !Argument variables
@@ -3701,7 +3701,7 @@ CONTAINS
   !================================================================================================================================
   !
 
-  !>Start the creation of equations for the equation set. \see OpenCMISS::Iron::cmfe_EquationsSet_EquationsCreateStart
+  !>Start the creation of equations for the equation set. \see OpenCMISS::OC_EquationsSet_EquationsCreateStart
   !>Default values set for the EQUATIONS's attributes are:
   !>- OUTPUT_TYPE: 0 (EQUATIONS_SET_NO_OUTPUT)
   !>- SPARSITY_TYPE: 1 (EQUATIONS_SET_SPARSE_MATRICES)
@@ -3749,7 +3749,7 @@ CONTAINS
   !================================================================================================================================
   !
 
-  !>Destroy the equations for an equations set. \see OpenCMISS::Iron::cmfe_EquationsSet_EquationsDestroy
+  !>Destroy the equations for an equations set. \see OpenCMISS::OC_EquationsSet_EquationsDestroy
   SUBROUTINE EquationsSet_EquationsDestroy(equationsSet,err,error,*)
 
     !Argument variables
@@ -4726,7 +4726,7 @@ CONTAINS
   !================================================================================================================================
   !
 
-  !>Sets/changes the solution method for an equations set. \see OpenCMISS::Iron::cmfe_EquationsSet_SolutionMethodSet
+  !>Sets/changes the solution method for an equations set. \see OpenCMISS::OC_EquationsSet_SolutionMethodSet
   SUBROUTINE EquationsSet_SolutionMethodSet(equationsSet,solutionMethod,err,error,*)
 
     !Argument variables
@@ -4786,7 +4786,7 @@ CONTAINS
   !================================================================================================================================
   !
 
-  !>Finish the creation of a source for an equation set. \see OpenCMISS::Iron::cmfe_EquationsSet_SourceCreateFinish
+  !>Finish the creation of a source for an equation set. \see OpenCMISS::OC_EquationsSet_SourceCreateFinish
   SUBROUTINE EquationsSet_SourceCreateFinish(equationsSet,err,error,*)
 
     !Argument variables
@@ -4827,7 +4827,7 @@ CONTAINS
   !================================================================================================================================
   !
 
-  !>Start the creation of a source for an equations set. \see OpenCMISS::Iron::cmfe_EquationsSet_SourceCreateStart
+  !>Start the creation of a source for an equations set. \see OpenCMISS::OC_EquationsSet_SourceCreateStart
   SUBROUTINE EquationsSet_SourceCreateStart(equationsSet,sourceFieldUserNumber,sourceField,err,error,*)
 
     !Argument variables
@@ -4881,7 +4881,7 @@ CONTAINS
   !================================================================================================================================
   !
 
-  !>Destroy the source for an equations set. \see OpenCMISS::Iron::cmfe_EquationsSet_SourceDestroy
+  !>Destroy the source for an equations set. \see OpenCMISS::OC_EquationsSet_SourceDestroy
   SUBROUTINE EquationsSet_SourceDestroy(equationsSet,err,error,*)
 
     !Argument variables
@@ -4965,7 +4965,7 @@ CONTAINS
   !================================================================================================================================
   !
 
-  !>Sets/changes the current times for an equations set. \see OpenCMISS::Iron::cmfe_EquationsSet_TimesSet
+  !>Sets/changes the current times for an equations set. \see OpenCMISS::OC_EquationsSet_TimesSet
   SUBROUTINE EquationsSet_TimesSet(equationsSet,currentTime,deltaTime,err,error,*)
 
     !Argument variables
@@ -4995,7 +4995,7 @@ CONTAINS
   !================================================================================================================================
   !
 
-  !>Calculates a derived variable value for the equations set. \see OpenCMISS::Iron::cmfe_EquationsSet_DerivedVariableCalculate
+  !>Calculates a derived variable value for the equations set. \see OpenCMISS::OC_EquationsSet_DerivedVariableCalculate
   SUBROUTINE EquationsSet_DerivedVariableCalculate(equationsSet,derivedType,err,error,*)
 
     !Argument variables
@@ -5047,7 +5047,7 @@ CONTAINS
   !================================================================================================================================
   !
 
-  !>Sets the field variable type of the derived field to be used to store a derived variable. \see OpenCMISS::Iron::cmfe_EquationsSet_DerivedVariableSet
+  !>Sets the field variable type of the derived field to be used to store a derived variable. \see OpenCMISS::OC_EquationsSet_DerivedVariableSet
   SUBROUTINE EquationsSet_DerivedVariableSet(equationsSet,derivedType,variableType,err,error,*)
 
     !Argument variables

@@ -41,7 +41,7 @@
 !> the terms of any one of the MPL, the GPL or the LGPL.
 !>
 
-!> \defgroup OpenCMISS_Base OpenCMISS::Iron::Base
+!> \defgroup OpenCMISS_Base OpenCMISS::Base
 !> This module contains all the low-level base routines e.g., all debug, control, and low-level communication routines.
 MODULE BaseRoutines
 
@@ -57,11 +57,11 @@ MODULE BaseRoutines
 
   !Module parameters
 
-  !> \addtogroup BaseRoutines_Constants OpenCMISS::Iron::Base::Constants
+  !> \addtogroup BaseRoutines_Constants OpenCMISS::Base::Constants
   !> \brief Base rourtines constants
   !> \see BaseRoutines
   !>@{  
-  !> \addtogroup BaseRoutines_OutputFormat OpenCMISS::Iron::Base::Constants::OutputFormat
+  !> \addtogroup BaseRoutines_OutputFormat OpenCMISS::Base::Constants::OutputFormat
   !> \brief Output format parameters
   !> \see BaseRoutines
   !>@{  
@@ -69,7 +69,7 @@ MODULE BaseRoutines
   INTEGER(INTG), PARAMETER :: MAX_OUTPUT_WIDTH=132 !<Maximum width of output line \see BaseRoutines::WriteStr
   !>@}
 
-  !> \addtogroup BaseRoutines_OutputType OpenCMISS::Iron::Base::Constants::OutputType
+  !> \addtogroup BaseRoutines_OutputType OpenCMISS::Base::Constants::OutputType
   !> \brief Output type parameter
   !> \see BaseRoutines
   !>@{  
@@ -81,7 +81,7 @@ MODULE BaseRoutines
   INTEGER(INTG), PARAMETER :: HELP_OUTPUT_TYPE=6 !<Help output type \see BaseRoutines_OutputType,BaseRoutines
   !>@}
 
-  !> \addtogroup BaseRoutines_FileUnits OpenCMISS::Iron::Base::Constants::FileUnits
+  !> \addtogroup BaseRoutines_FileUnits OpenCMISS::Base::Constants::FileUnits
   !> \brief File unit parameters
   !> \see BaseRoutines
   !>@{  
@@ -100,7 +100,7 @@ MODULE BaseRoutines
   INTEGER(INTG), PARAMETER :: STOP_READ_COMFILE_UNIT=99 !<Last file unit for read command files \see BaseRoutines_FileUnits,BaseRoutines
   !>@}
 
-  !> \addtogroup BaseRoutines_DiagnosticTypes OpenCMISS::Iron::Base::Constants::DiagnosticTypes
+  !> \addtogroup BaseRoutines_DiagnosticTypes OpenCMISS::Base::Constants::DiagnosticTypes
   !> \brief Diganostic type parameters
   !> \see BaseRoutines,OpenCMISS_DiagnosticTypes
   !>@{  
@@ -109,7 +109,7 @@ MODULE BaseRoutines
   INTEGER(INTG), PARAMETER :: FROM_DIAG_TYPE=3 !<Type for setting diagnostic output from one routine downwards \see BaseRoutines_DiagnosticTypes,BaseRoutines
   !>@}
 
-  !> \addtogroup BaseRoutines_TimingTypes OpenCMISS::Iron::Base::Constants::TimingTypes
+  !> \addtogroup BaseRoutines_TimingTypes OpenCMISS::Base::Constants::TimingTypes
   !> \brief Timing type parameters
   !> \see BaseRoutines,OpenCMISS_TimingTypes
   !>@{  
@@ -121,7 +121,7 @@ MODULE BaseRoutines
 
   !Module types
 
-  !> \addtogroup BaseRoutines_Types OpenCMISS::Iron::Base::Types
+  !> \addtogroup BaseRoutines_Types OpenCMISS::Base::Types
   !> \brief Base routines types
   !> \see BaseRoutines
   !>@{  
@@ -275,7 +275,7 @@ CONTAINS
   !================================================================================================================================
   !
 
-  !>Records the entry into the named procedure and initialises the error code \see OpenCMISS::Iron::Base::Exits
+  !>Records the entry into the named procedure and initialises the error code \see OpenCMISS::Base::Exits
   SUBROUTINE Enters(name,err,error,*)
 
     !Argument variables
@@ -841,7 +841,7 @@ CONTAINS
   !================================================================================================================================
   !
 
-  !>Sets diagnositics off. \see Base::DiagnosticsSetOn,OpenCMISS::Iron::cmfe_DiagnosticsSetOn
+  !>Sets diagnositics off. \see Base::DiagnosticsSetOn,OpenCMISS::OC_DiagnosticsSetOn
   SUBROUTINE DiagnosticsSetOff(err,error,*)
 
     !Argument variables
@@ -896,7 +896,7 @@ CONTAINS
   !================================================================================================================================
   !
 
-  !>Sets diagnositics on. \see Base::DiagnosticsSetOff,OpenCMISS::Iron::cmfe_DiagnosticsSetOff
+  !>Sets diagnositics on. \see Base::DiagnosticsSetOff,OpenCMISS::OC_DiagnosticsSetOff
   SUBROUTINE DiagnosticsSetOn(diagType,levelList,diagFilename,routineList,err,error,*)
 
     !Argument variables
@@ -1024,7 +1024,7 @@ CONTAINS
   !================================================================================================================================
   !
 
-  !>Sets writes file echo output off. \see Base::OutputSetOn,OpenCMISS::Iron::cmfe_OutputSetOff
+  !>Sets writes file echo output off. \see Base::OutputSetOn,OpenCMISS::OC_OutputSetOff
   SUBROUTINE OutputSetOff(err,error,*)
 
     !Argument variables
@@ -1052,7 +1052,7 @@ CONTAINS
   !================================================================================================================================
   !
 
-  !>Sets writes file echo output on. \see Base::OutputSetOff,OpenCMISS::Iron::cmfe_OutputSetOn
+  !>Sets writes file echo output on. \see Base::OutputSetOff,OpenCMISS::OC_OutputSetOn
   SUBROUTINE OutputSetOn(echoFilename,err,error,*)
 
     !Argument variables
@@ -1088,7 +1088,7 @@ CONTAINS
   !================================================================================================================================
   !
 
-  !>Sets timing off. \see Base:TimingSetOn,OpenCMISS::Iron::cmfe_TimingSetOff
+  !>Sets timing off. \see Base:TimingSetOn,OpenCMISS::OC_TimingSetOff
   SUBROUTINE TimingSetOff(err,error,*)
 
    !Argument variables
@@ -1134,7 +1134,7 @@ CONTAINS
   !================================================================================================================================
   !
 
-  !>Sets timing on. \see Base:TimingSetOff,OpenCMISS::Iron::cmfe_TimingSetOn
+  !>Sets timing on. \see Base:TimingSetOff,OpenCMISS::OC_TimingSetOn
   SUBROUTINE TimingSetOn(timingType,timingSummaryFlag,timingFilename,routineList,err,error,*)
 
     !Argument variables
@@ -1249,7 +1249,7 @@ CONTAINS
   !================================================================================================================================
   !
 
-  !>Outputs the timing summary. \see OpenCMISS::Iron::cmfe_TimingSummaryOutput
+  !>Outputs the timing summary. \see OpenCMISS::OC_TimingSummaryOutput
   SUBROUTINE TimingSummaryOutput(err,error,*)    
 
     !Argument variables

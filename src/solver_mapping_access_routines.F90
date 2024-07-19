@@ -1400,7 +1400,7 @@ CONTAINS
  
     ENTERS("SolverMapping_InterfaceColToSolverRowsMapGet",err,error,*998)
 
-#ifdef WITH_PRECHEKS    
+#ifdef WITH_PRECHECKS    
     IF(ASSOCIATED(interfaceColToSolverRowsMap)) &
       & CALL FlagError("Interface col to solver rows map is already associated.",err,error,*998)
     NULLIFY(interfaceConditionToSolverMatricesMap)
@@ -6506,9 +6506,6 @@ CONTAINS
     INTEGER(INTG), INTENT(OUT) :: err !<The error code
     TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
     !Local Variables
-#ifdef WITH_CHECKS
-    TYPE(VARYING_STRING) :: localError
-#endif    
  
     ENTERS("SolverMappingVariables_NumberOfVariablesGet",err,error,*999)
 

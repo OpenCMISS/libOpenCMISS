@@ -73,7 +73,8 @@ def write_c_header(library, output):
         '    } \\\n'
         '    exit(E); \\\n'
         '  }\n\n'
-        '#include "opencmiss_c_export.h"\n\n')
+        '#include "opencmiss_c_export.h"\n\n'
+        '#include "opencmiss_version.h"\n\n')
 
     output.write(C_DEFINES)
 

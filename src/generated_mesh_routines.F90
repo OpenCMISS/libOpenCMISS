@@ -120,7 +120,7 @@ CONTAINS
   !================================================================================================================================
   !
 
-  !>Sets/changes the basis of a generated mesh. \see OpenCMISS::Iron::cmfe_GeneratedMesh_BasisSet
+  !>Sets/changes the basis of a generated mesh. \see OpenCMISS::OC_GeneratedMesh_BasisSet
   SUBROUTINE GeneratedMesh_BasisSet(generatedMesh,bases,err,error,*)
 
     !Argument variables
@@ -223,7 +223,7 @@ CONTAINS
   !================================================================================================================================
   !
 
-  !>Sets/changes the base vectors of a generated mesh. \see OpenCMISS::Iron::cmfe_GeneratedMesh_BaseVectorsSet
+  !>Sets/changes the base vectors of a generated mesh. \see OpenCMISS::OC_GeneratedMesh_BaseVectorsSet
   SUBROUTINE GeneratedMesh_BaseVectorsSet(generatedMesh,baseVectors,err,error,*)
 
     !Argument variables
@@ -294,7 +294,7 @@ CONTAINS
   !================================================================================================================================
   !
 
-  !>Finishes the creation of a generated mesh. \see OpenCMISS::Iron::cmfe_GeneratedMesh_CreateFinish
+  !>Finishes the creation of a generated mesh. \see OpenCMISS::OC_GeneratedMesh_CreateFinish
   SUBROUTINE GeneratedMesh_CreateFinish(generatedMesh,meshUserNumber,mesh,err,error,*)
 
     !Argument variables
@@ -399,7 +399,7 @@ CONTAINS
   !================================================================================================================================
   !
 
-  !>Starts the creation of a generated mesh. \see OpenCMISS::Iron::cmfe_GeneratedMesh_CreateFinish
+  !>Starts the creation of a generated mesh. \see OpenCMISS::OC_GeneratedMesh_CreateFinish
   SUBROUTINE GeneratedMesh_CreateStartInterface(userNumber,interface,generatedMesh,err,error,*)
 
     !Argument variables
@@ -438,7 +438,7 @@ CONTAINS
   !================================================================================================================================
   !
 
-  !>Starts the creation of a generated mesh. \see OpenCMISS::Iron::cmfe_GeneratedMesh_CreateFinish
+  !>Starts the creation of a generated mesh. \see OpenCMISS::OC_GeneratedMesh_CreateFinish
   SUBROUTINE GeneratedMesh_CreateStartRegion(userNumber,region,generatedMesh,err,error,*)
 
     !Argument variables
@@ -479,7 +479,7 @@ CONTAINS
   !================================================================================================================================
   !
 
-  !>Destroys a generated mesh. \see OpenCMISS::Iron::cmfe_GeneratedMesh_CreateDestroy
+  !>Destroys a generated mesh. \see OpenCMISS::OC_GeneratedMesh_CreateDestroy
   SUBROUTINE GeneratedMesh_Destroy(generatedMesh,err,error,*)
 
     !Argument variables
@@ -534,7 +534,7 @@ CONTAINS
   !================================================================================================================================
   !
 
-  !>Sets/changes the extent of a generated mesh. \see OpenCMISS::Iron::cmfe_GeneratedMesh_ExtentSet
+  !>Sets/changes the extent of a generated mesh. \see OpenCMISS::OC_GeneratedMesh_ExtentSet
   SUBROUTINE GeneratedMesh_ExtentSet(generatedMesh,extent,err,error,*)
 
     !Argument variables
@@ -620,7 +620,7 @@ CONTAINS
   !================================================================================================================================
   !
 
-  !>Get one of the surfaces of a generated mesh. \see OpenCMISS::Iron::cmfe_GeneratedMesh_SurfaceGet
+  !>Get one of the surfaces of a generated mesh. \see OpenCMISS::OC_GeneratedMesh_SurfaceGet
   SUBROUTINE GeneratedMesh_SurfaceGet(generatedMesh,meshComponent,surfaceType,surfaceNodes,normalXi,err,error,*)
 
     !Argument variables
@@ -742,7 +742,7 @@ CONTAINS
   !================================================================================================================================
   !
 
-  !>Sets/changes the number of elements in a generated mesh. \see OpenCMISS::Iron::cmfe_GeneratedMesh_NumberOfElementsSet
+  !>Sets/changes the number of elements in a generated mesh. \see OpenCMISS::OC_GeneratedMesh_NumberOfElementsSet
   SUBROUTINE GeneratedMesh_NumberOfElementsSet(generatedMesh,numberOfElementsXi,err,error,*)
 
     !Argument variables
@@ -816,7 +816,7 @@ CONTAINS
   !================================================================================================================================
   !
 
-  !>Sets/changes the origin of a generated mesh. \see OpenCMISS::Iron::cmfe_GeneratedMesh_OriginSet
+  !>Sets/changes the origin of a generated mesh. \see OpenCMISS::OC_GeneratedMesh_OriginSet
   SUBROUTINE GeneratedMesh_OriginSet(generatedMesh,origin,err,error,*)
 
     !Argument variables
@@ -2171,7 +2171,7 @@ CONTAINS
   !================================================================================================================================
   !
 
-  !>Sets/changes the type of a generated mesh. \see OpenCMISS::Iron::cmfe_GeneratedMesh_TypeSet
+  !>Sets/changes the type of a generated mesh. \see OpenCMISS::OC_GeneratedMesh_TypeSet
   SUBROUTINE GeneratedMesh_TypeSet(generatedMesh,generatedType,err,error,*)
 
     !Argument variables
@@ -2356,7 +2356,7 @@ CONTAINS
   !================================================================================================================================
   !
 
-  !>Updates the geometric field parameters from the initial nodal positions of the mesh. \see OpenCMISS::Iron::cmfe_GeneratedMesh_GeometricParametersCalculate
+  !>Updates the geometric field parameters from the initial nodal positions of the mesh. \see OpenCMISS::OC_GeneratedMesh_GeometricParametersCalculate
   SUBROUTINE GeneratedMesh_GeometricParametersCalculate(generatedMesh,field,err,error,*)
 
     !Argument variables

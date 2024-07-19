@@ -350,7 +350,6 @@ CONTAINS
     INTEGER(INTG), INTENT(OUT) :: err !<The error code
     TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
     !Local Variables
-    TYPE(VARYING_STRING) :: localError
  
     ENTERS("InterfaceMatrices_NumberOfInterfaceMatricesGet",err,error,*999)
 

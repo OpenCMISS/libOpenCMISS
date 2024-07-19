@@ -344,7 +344,7 @@ CONTAINS
   !================================================================================================================================
   !
 
-  !>Starts the process of creating data points in an interface. \see OpenCMISS::Iron::cmfe_DataPoints_CreateStart
+  !>Starts the process of creating data points in an interface. \see OpenCMISS::OC_DataPoints_CreateStart
   SUBROUTINE DataPoints_CreateStartInterface(userNumber,interface,numberOfDataPoints,dataPoints,err,error,*)
 
     !Argument variables
@@ -401,7 +401,7 @@ CONTAINS
   !================================================================================================================================
   !
 
-  !>Starts the process of creating data points in an region. \see OpenCMISS::Iron::cmfe_DataPoints_CreateStart
+  !>Starts the process of creating data points in an region. \see OpenCMISS::OC_DataPoints_CreateStart
   SUBROUTINE DataPoints_CreateStartRegion(userNumber,region,numberOfDataPoints,dataPoints,err,error,*)
 
     !Argument variables
@@ -455,7 +455,7 @@ CONTAINS
   !================================================================================================================================
   !
 
-  !>Destroys data points. \see OpenCMISS::Iron::cmfe_DataPoints_Destroy
+  !>Destroys data points. \see OpenCMISS::OC_DataPoints_Destroy
   SUBROUTINE DataPoints_Destroy(dataPoints,err,error,*)
 
     !Argument variables

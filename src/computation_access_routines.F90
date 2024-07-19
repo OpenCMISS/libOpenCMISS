@@ -41,7 +41,7 @@
 !> the terms of any one of the MPL, the GPL or the LGPL.
 !>
 
-!> \addtogroup OpenCMISS_Computation OpenCMISS::Iron::Computation
+!> \addtogroup OpenCMISS_Computation OpenCMISS::Computation
 !> This module contains all computation access method routines.
 MODULE ComputationAccessRoutines
   
@@ -529,7 +529,7 @@ CONTAINS
   !=================================================================================================================================
   !
 
-  !>Returns the character label of a work group \see OpenCMISS::Iron::cmfe_WorkGroup_LabelGet
+  !>Returns the character label of a work group \see OpenCMISS::OC_WorkGroup_LabelGet
   SUBROUTINE WorkGroup_LabelGetC(workGroup,label,err,error,*)
 
     !Argument Variables
@@ -558,7 +558,7 @@ CONTAINS
   !=================================================================================================================================
   !
 
-  !>Returns the varying string label of a work group \see OpenCMISS::Iron::cmfe_WorkGroup_LabelGet
+  !>Returns the varying string label of a work group \see OpenCMISS::OC_WorkGroup_LabelGet
   SUBROUTINE WorkGroup_LabelGetVS(workGroup,label,err,error,*)
 
     !Argument Variables

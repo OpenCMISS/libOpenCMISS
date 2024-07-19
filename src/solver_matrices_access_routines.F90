@@ -514,12 +514,8 @@ CONTAINS
     INTEGER(INTG), INTENT(OUT) :: err !<The error code
     TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
     !Local Variables
-    INTEGER(INTG) :: matrixIdx,storageTypes(1)
-    TYPE(SolverMatrixType), POINTER :: solverMatrix
-#ifdef WITH_PRECHECKS    
-    TYPE(VARYING_STRING) :: localError
-#endif    
-    
+    INTEGER(INTG) :: storageTypes(1)
+   
     ENTERS("SolverMatrices_StorageTypesGet0",err,error,*999)
 
     CALL SolverMatrices_StorageTypesGet1(solverMatrices,storageTypes,err,error,*999)
@@ -589,11 +585,7 @@ CONTAINS
     INTEGER(INTG), INTENT(OUT) :: err !<The error code
     TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
     !Local Variables
-    INTEGER(INTG) :: matrixIdx,symmetryTypes(1)
-    TYPE(SolverMatrixType), POINTER :: solverMatrix
-#ifdef WITH_PRECHECKS    
-    TYPE(VARYING_STRING) :: localError
-#endif    
+    INTEGER(INTG) :: symmetryTypes(1)
     
     ENTERS("SolverMatrices_SymmetryTypesGet0",err,error,*999)
 

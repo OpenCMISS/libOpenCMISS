@@ -41,7 +41,7 @@
 !> the terms of any one of the MPL, the GPL or the LGPL.
 !>
 
-!> \defgroup OpenCMISS_AnalyticAnalysis OpenCMISS::Iron::AnalyticAnalysis
+!> \defgroup OpenCMISS_Developer_AnalyticAnalysis OpenCMISS::Developer::AnalyticAnalysis
 !> This module handles all analytic analysis routines.
 MODULE AnalyticAnalysisRoutines
 
@@ -81,19 +81,19 @@ MODULE AnalyticAnalysisRoutines
 #ifdef WITH_F77_MPI
 #include "mpif.h"
 #endif
-#endif  
+#endif 
 
   !Module parameters
 
-  !> \addtogroup AnalyticAnalysis_Constants AnalyticAnalysis::Constants
+  !> \addtogroup AnalyticAnalysis_Constants OpenCMISS::Developer::AnalyticAnalysis::Constants
   !>@{
-  !> \addtogroup AnalyticAnalysisRoutines_ErrorTypes AnalyticAnalysis::Constants::ErrorTypes
+  !> \addtogroup AnalyticAnalysis_ErrorTypes OpenCMISS::Developer::AnalyticAnalysis::Constants::ErrorTypes
   !> \brief errors definition type parameters
-  !> \see AnalyticAnalysisRoutines,OPENCMISS_ErrorTypes
+  !> \see AnalyticAnalysisRoutines,OpenCMISS_ErrorTypes
   !>@{
-  INTEGER(INTG), PARAMETER :: ANALYTIC_ABSOLUTE_ERROR_TYPE=1 !<The absolute type \see AnalyticAnalysisRoutines_ErrorTypes,AnalyticAnalysisRoutines
-  INTEGER(INTG), PARAMETER :: ANALYTIC_PERCENTAGE_ERROR_TYPE=2 !<The percentage type \see AnalyticAnalysisRoutines_ErrorTypes,AnalyticAnalysisRoutines
-  INTEGER(INTG), PARAMETER :: ANALYTIC_RELATIVE_ERROR_TYPE=3 !<The relative type \see AnalyticAnalysisRoutines_ErrorTypes,AnalyticAnalysisRoutines
+  INTEGER(INTG), PARAMETER :: ANALYTIC_ABSOLUTE_ERROR_TYPE=1 !<The absolute type \see AnalyticAnalysis_ErrorTypes,AnalyticAnalysisRoutines
+  INTEGER(INTG), PARAMETER :: ANALYTIC_PERCENTAGE_ERROR_TYPE=2 !<The percentage type \see AnalyticAnalysis_ErrorTypes,AnalyticAnalysisRoutines
+  INTEGER(INTG), PARAMETER :: ANALYTIC_RELATIVE_ERROR_TYPE=3 !<The relative type \see AnalyticAnalysis_ErrorTypes,AnalyticAnalysisRoutines
   !>@}
   !>@}
 
@@ -127,7 +127,7 @@ CONTAINS
   !=================================================================================================================================
   !  
 
-  !>Output the analytic error analysis for a dependent field compared to the analytic values parameter set. \see OpenCMISS::Iron::cmfe_AnalyticAnalytisOutput
+  !>Output the analytic error analysis for a dependent field compared to the analytic values parameter set. \see OpenCMISS::OC_AnalyticAnalytisOutput
   SUBROUTINE AnalyticAnalysis_Output(field,filename,err,error,*)
   
     !Argument variables 
@@ -802,12 +802,12 @@ CONTAINS
       & numberOfElementParameters(MAX_NUMBER_OF_COMPONENTS),numberOfElements,numberOfGauss,numberOfXi,scalingType, &
       & totalNumberOfElements,variableType
     REAL(DP) :: analyticIntegral,gaussWeight,jacobian,jacobianGaussWeight,numericalIntegral,phi
-    TYPE(BasisType), POINTER :: basis,geometricBasis
+    TYPE(BasisType), POINTER :: geometricBasis
     TYPE(BasisPtrType) :: dependentBasis(MAX_NUMBER_OF_COMPONENTS)
     TYPE(DecompositionType), POINTER :: dependentDecomposition,geometricDecomposition
-    TYPE(DomainType), POINTER :: domain,dependentDomain,geometricDomain
-    TYPE(DomainElementsType), POINTER :: domainElements,dependentDomainElements,geometricDomainElements
-    TYPE(DomainTopologyType), POINTER :: domainTopology,dependentDomainTopology,geometricDomainTopology
+    TYPE(DomainType), POINTER :: dependentDomain,geometricDomain
+    TYPE(DomainElementsType), POINTER :: dependentDomainElements,geometricDomainElements
+    TYPE(DomainTopologyType), POINTER :: dependentDomainTopology,geometricDomainTopology
     TYPE(FieldType), POINTER :: dependentField,geometricField
     TYPE(FieldInterpolatedPointType), POINTER :: geometricInterpPoint
     TYPE(FieldInterpolatedPointMetricsType), POINTER :: geometricInterpPointMetrics
@@ -1811,7 +1811,7 @@ CONTAINS
     TYPE(FieldType), POINTER :: field !<A pointer to the field to get the RMS error for.
     INTEGER(INTG), INTENT(IN) :: variableType !<The field variable type to get the RMS error for \see \see FieldRoutines_VariableTypes,FieldRoutines
     INTEGER(INTG), INTENT(IN) :: componentNumber !<The field variable component number to get the RMS error for. 
-    INTEGER(INTG), INTENT(IN) :: errorType !<The error type to get the RMS error for \see AnalyticAnalysisRoutines_ErrorTypes,AnalyticAnalysisRoutines
+    INTEGER(INTG), INTENT(IN) :: errorType !<The error type to get the RMS error for \see AnalyticAnalysis_ErrorTypes,AnalyticAnalysisRoutines
     REAL(DP), INTENT(OUT) :: localRMS(:) !<localRMS(derivativeIdx). On return, the local RMS error
     REAL(DP), INTENT(OUT) :: localGhostRMS(:) !<localGhostRMS(derivativeIdx). On return, the local + ghost RMS error
     REAL(DP), INTENT(OUT) :: globalRMS(:) !<globalRMS(derivativeIdx). On return, the global RMS error
@@ -1995,7 +1995,7 @@ CONTAINS
     TYPE(FieldType), POINTER :: field !<A pointer to the field to get the RMS error for.
     INTEGER(INTG), INTENT(IN) :: variableType !<The field variable type to get the RMS error for \see FieldRoutines_VariableTypes,FieldRoutines
     INTEGER(INTG), INTENT(IN) :: componentNumber !<The field variable component number to get the RMS error for. 
-    INTEGER(INTG), INTENT(IN) :: errorType !<The error type to get the RMS error for \see AnalyticAnalysisRoutines_ErrorTypes,AnalyticAnalysisRoutines
+    INTEGER(INTG), INTENT(IN) :: errorType !<The error type to get the RMS error for \see AnalyticAnalysis_ErrorTypes,AnalyticAnalysisRoutines
     REAL(DP), INTENT(OUT) :: localRMS !<On return, the local RMS error
     REAL(DP), INTENT(OUT) :: localGhostRMS !<On return, the local + ghost RMS error
     REAL(DP), INTENT(OUT) :: globalRMS !<On return, the global RMS error

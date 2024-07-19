@@ -134,7 +134,7 @@ CONTAINS
   !================================================================================================================================
   !
 
-  !>Finish the creation of the CellML equations for the problem solver. \see OpenCMISS::Iron::cmfe_Problem_SolverCellMLEquationsCreateFinish
+  !>Finish the creation of the CellML equations for the problem solver. \see OpenCMISS::OC_Problem_SolverCellMLEquationsCreateFinish
   SUBROUTINE Problem_CellMLEquationsCreateFinish(problem,err,error,*)
 
     !Argument variables
@@ -168,7 +168,7 @@ CONTAINS
   !================================================================================================================================
   !
 
-  !>Start the creation of CellML equations for a problem solver. \see OpenCMISS::Iron::cmfe_Problem_SolverCellMLEquationsCreateStart
+  !>Start the creation of CellML equations for a problem solver. \see OpenCMISS::OC_Problem_SolverCellMLEquationsCreateStart
   SUBROUTINE Problem_CellMLEquationsCreateStart(problem,err,error,*)
 
     !Argument variablesg
@@ -723,7 +723,7 @@ CONTAINS
   !================================================================================================================================
   !
 
-  !>Finishes the process of creating a problem. \see OpenCMISS::Iron::cmfe_Problem_CreateFinish
+  !>Finishes the process of creating a problem. \see OpenCMISS::OC_Problem_CreateFinish
   SUBROUTINE Problem_CreateFinish(problem,err,error,*)
 
     !Argument variables
@@ -778,7 +778,7 @@ CONTAINS
   !================================================================================================================================
   !
 
-  !>Starts the process of creating a problem defined by userNumber. \see OpenCMISS::Iron::cmfe_Problem_CreateStart
+  !>Starts the process of creating a problem defined by userNumber. \see OpenCMISS::OC_Problem_CreateStart
   SUBROUTINE Problem_CreateStart(userNumber,problems,problemSpecification,problem,err,error,*)
 
     !Argument variables
@@ -862,7 +862,7 @@ CONTAINS
   !================================================================================================================================
   !
 
-  !>Destroys a problem. \see OpenCMISS::Iron::cmfe_Problem_Destroy
+  !>Destroys a problem. \see OpenCMISS::OC_Problem_Destroy
   SUBROUTINE Problem_Destroy(problem,err,error,*)
 
     !Argument variables
@@ -1031,7 +1031,7 @@ CONTAINS
   !================================================================================================================================
   !
 
-  !>Finish the creation of the control for the problem. \see OpenCMISS::Iron::cmfe_Problem_ControlLoopCreateFinish
+  !>Finish the creation of the control for the problem. \see OpenCMISS::OC_Problem_ControlLoopCreateFinish
   SUBROUTINE Problem_ControlLoopCreateFinish(problem,err,error,*)
 
     !Argument variables
@@ -1071,7 +1071,7 @@ CONTAINS
   !================================================================================================================================
   !
 
-  !>Start the creation of a control loop for a problem. \see OpenCMISS::Iron::cmfe_Problem_ControlLoopCreateStart
+  !>Start the creation of a control loop for a problem. \see OpenCMISS::OC_Problem_ControlLoopCreateStart
   !>The default values of the PROBLEM CONTROL LOOP attributes are:
   !>- LOOP_TYPE: PROBLEM_CONTROL_SIMPLE_TYPE
   !>- CONTROL_LOOP_LEVEL: 1
@@ -1110,7 +1110,7 @@ CONTAINS
   !================================================================================================================================
   !
 
-  !>Destroy the control loop for a problem. \see OpenCMISS::Iron::cmfe_Problem_ControlLoopDestroy
+  !>Destroy the control loop for a problem. \see OpenCMISS::OC_Problem_ControlLoopDestroy
   SUBROUTINE Problem_ControlLoopDestroy(problem,err,error,*)
 
     !Argument variables
@@ -1727,7 +1727,7 @@ CONTAINS
   !================================================================================================================================
   !
 
-  !>Finish the creation of solvers for a problem. \see OpenCMISS::Iron::cmfe_Problem_SolversCreateFinish
+  !>Finish the creation of solvers for a problem. \see OpenCMISS::OC_Problem_SolversCreateFinish
   SUBROUTINE Problem_SolversCreateFinish(problem,err,error,*)
 
     !Argument variables
@@ -1761,7 +1761,7 @@ CONTAINS
   !================================================================================================================================
   !
 
-  !>Start the creation of a solvers for the problem. \see OpenCMISS::Iron::cmfe_Problem_SolversCreateStart
+  !>Start the creation of a solvers for the problem. \see OpenCMISS::OC_Problem_SolversCreateStart
   SUBROUTINE Problem_SolversCreateStart(problem,err,error,*)
 
     !Argument variables
@@ -1795,7 +1795,7 @@ CONTAINS
   !================================================================================================================================
   !
 
-  !>Solves a problem. \see OpenCMISS::Iron::cmfe_Problem_Solve
+  !>Solves a problem. \see OpenCMISS::OC_Problem_Solve
   SUBROUTINE Problem_Solve(problem,err,error,*)
 
     !Argument variables
@@ -2778,7 +2778,7 @@ CONTAINS
   !================================================================================================================================
   !
 
-  !>Destroy the solvers for a problem. \see OpenCMISS::Iron::cmfe_Problem_SolversDestroy
+  !>Destroy the solvers for a problem. \see OpenCMISS::OC_Problem_SolversDestroy
   SUBROUTINE Problem_SolversDestroy(problem,err,error,*)
 
     !Argument variables
@@ -2807,7 +2807,7 @@ CONTAINS
   !================================================================================================================================
   !
 
-  !>Set boundary conditions for solver equations according to the analytic equations. \see OpenCMISS::Iron::cmfe_Problem_SolverEquationsBoundaryConditionsAnalytic
+  !>Set boundary conditions for solver equations according to the analytic equations. \see OpenCMISS::OC_Problem_SolverEquationsBoundaryConditionsAnalytic
   SUBROUTINE Problem_SolverEquationsBoundaryConditionsAnalytic(solverEquations,err,error,*)
 
     !Argument variables
@@ -2846,7 +2846,7 @@ CONTAINS
   !================================================================================================================================
   !
 
-  !>Finish the creation of the solver equations for the problem. \see OpenCMISS::Iron::cmfe_Problem_SolverEquationsCreateFinish
+  !>Finish the creation of the solver equations for the problem. \see OpenCMISS::OC_Problem_SolverEquationsCreateFinish
   SUBROUTINE Problem_SolverEquationsCreateFinish(problem,err,error,*)
 
     !Argument variables
@@ -2880,7 +2880,7 @@ CONTAINS
   !================================================================================================================================
   !
 
-  !>Start the creation of solver equations for a problem. \see OpenCMISS::Iron::cmfe_Problem_SolverEquationsCreateStart
+  !>Start the creation of solver equations for a problem. \see OpenCMISS::OC_Problem_SolverEquationsCreateStart
   !>The default values of the solver attributes are:
   !>- SOLVE_TYPE: 1 (SOLVER_LINEAR_TYPE)
   !>- OUTPUT_TYPE: 0 (SOLVER_NO_OUTPUT)
@@ -2920,7 +2920,7 @@ CONTAINS
 
   !!TODO: this should be removed - just call the solver equations destroy directly???
   
-  !>Destroy the solver equations for a problem. \see OpenCMISS::Iron::cmfe_Problem_SolverEquationsDestroy
+  !>Destroy the solver equations for a problem. \see OpenCMISS::OC_Problem_SolverEquationsDestroy
   SUBROUTINE Problem_SolverEquationsDestroy(problem,err,error,*)
 
     !Argument variables
@@ -3621,7 +3621,7 @@ CONTAINS
   !================================================================================================================================
   !
 
-  !>Sets the work group for a problem. \see OpenCMISS::Iron::cmfe_Problem_WorkGroupSet
+  !>Sets the work group for a problem. \see OpenCMISS::OC_Problem_WorkGroupSet
   SUBROUTINE Problem_WorkGroupSet(problem,workGroup,err,error,*)
 
     !Argument variables

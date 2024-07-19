@@ -108,7 +108,7 @@ class LibrarySource(object):
             # match at least one whitespace character before the ! to make sure
             # we don't get stuff from the file header
             line_re = re.compile(
-                r'^\s+!\s*>\s*(\\(addtogroup|brief|see)|@[\{\}])(.*$)',
+                r'^\s+!\s*>\s*(\\(addtogroup|brief|defgroup|see)|@[\{\}])(.*$)',
                 re.IGNORECASE)
 
             def add(self, match, line_number):

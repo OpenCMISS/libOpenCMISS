@@ -664,7 +664,8 @@ CONTAINS
 
     EXITS("Sorting_ShellSortDP")
     RETURN
-999 ERRORSEXITS("Sorting_ShellSortDP",err,error)
+999 CONTINUE
+    ERRORSEXITS("Sorting_ShellSortDP",err,error)
     RETURN 1
     
   END SUBROUTINE Sorting_ShellSortDP

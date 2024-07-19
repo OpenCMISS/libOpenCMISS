@@ -416,7 +416,7 @@ CONTAINS
   !================================================================================================================================
   !
 
-  !>Calculates a derived value for the elasticity equations set. \see OpenCMISS::Iron::cmfe_EquationsSet_DerivedCalculate
+  !>Calculates a derived value for the elasticity equations set. \see OpenCMISS::OC_EquationsSet_DerivedCalculate
   SUBROUTINE Elasticity_EquationsSetDerivedVariableCalculate(equationsSet,derivedType,err,error,*)
 
     !Argument variables

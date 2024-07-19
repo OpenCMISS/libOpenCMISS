@@ -60,7 +60,7 @@ MODULE MatrixVectorAccessRoutines
   !Module parameters
   
 
-  !> \addtogroup OpenCMISS_MatrixVectorConstants OpenCMISS::Iron::MatrixVector::Constants
+  !> \addtogroup OpenCMISS_MatrixVectorConstants OpenCMISS::MatrixVector::Constants
   !> \brief Matrix vector constants.
   !>@{
   !> \addtogroup MatrixVector_DataTypes MatrixVector::Constants::DataTypes

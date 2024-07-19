@@ -41,7 +41,7 @@
 !> the terms of any one of the MPL, the GPL or the LGPL.
 !>
 
-!> \addtogroup OpenCMISS_CoordinateSystem OpenCMISS::Iron::CoordinateSystem
+!> \addtogroup OpenCMISS_CoordinateSystem OpenCMISS::CoordinateSystem
 !> This module contains all coordinate system access method routines.
 MODULE CoordinateSystemAccessRoutines
   
@@ -59,11 +59,11 @@ MODULE CoordinateSystemAccessRoutines
 
   !Module parameters
 
-  !> \addtogroup OpenCMISS_CoordinateSystemConstants OpenCMISS::Iron::CoordinateSystem::Constants
+  !> \addtogroup OpenCMISS_CoordinateSystemConstants OpenCMISS::CoordinateSystem::Constants
   !> \see CoordinateRoutines
   !> Coordinate system type parameters
   !>@{ 
-  !> \addtogroup CoordinateSystem_CoordinateSystemTypes OpenCMISS::Iron::CoordinateSystem::Constants::CoordinateSystemTypes
+  !> \addtogroup CoordinateSystem_CoordinateSystemTypes OpenCMISS::CoordinateSystem::Constants::CoordinateSystemTypes
   !> \see CoordinateRoutines
   !> Coordinate system type parameters
   !>@{ 
@@ -74,7 +74,7 @@ MODULE CoordinateSystemAccessRoutines
   INTEGER(INTG), PARAMETER :: COORDINATE_OBLATE_SPHEROIDAL_TYPE=5 !<Oblate spheroidal coordinate system type \see CoordinateRoutines_CoordinateSystemTypes,CoordinateRoutines
   !>@}
 
-  !> \addtogroup CoordinateRoutines_RadialInterpolations  OpenCMISS::Iron::CoordinateSystem::Constants::RadialInterpolations
+  !> \addtogroup CoordinateRoutines_RadialInterpolations  OpenCMISS::CoordinateSystem::Constants::RadialInterpolations
   !> \see CoordinateRoutines
   !> \brief The type of radial interpolation for polar coordinate systems
   !>@{
@@ -84,7 +84,7 @@ MODULE CoordinateSystemAccessRoutines
   INTEGER(INTG), PARAMETER :: COORDINATE_RADIAL_CUBED_INTERPOLATION_TYPE=3 !<r^3 radial interpolation \see CoordinateRoutines_RadialInterpolations,CoordinateRoutines
   !>@}
   
-  !> \addtogroup CoordinateRoutines_JacobianType OpenCMISS::Iron::CoordinateSystem::Constants::JacobianType
+  !> \addtogroup CoordinateRoutines_JacobianType OpenCMISS::CoordinateSystem::Constants::JacobianType
   !> \see CoordinateRoutines
   !> \brief The type of Jacobian to return when coordinate metrics are calculated.
   !>@{
@@ -353,7 +353,7 @@ CONTAINS
   !================================================================================================================================
   !
 
-  !>Returns the origin of a coordinate system. \see OpenCMISS::Iron::cmfe_CoordinateSystem_OriginGet
+  !>Returns the origin of a coordinate system. \see OpenCMISS::OC_CoordinateSystem_OriginGet
   SUBROUTINE CoordinateSystem_OriginGet(coordinateSystem,origin,err,error,*)
 
     !Argument variables
@@ -390,7 +390,7 @@ CONTAINS
   !================================================================================================================================
   !
 
-  !>Returns the orientation of a coordinate system. \see OpenCMISS::Iron::cmfe_CoordinateSystem_OrientationGet
+  !>Returns the orientation of a coordinate system. \see OpenCMISS::OC_CoordinateSystem_OrientationGet
   SUBROUTINE CoordinateSystem_OrientationGet(coordinateSystem,orientation,err,error,*)
 
     !Argument variables

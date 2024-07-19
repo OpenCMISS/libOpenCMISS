@@ -3604,7 +3604,7 @@ CONTAINS
 
     !Argument variables
     TYPE(DataProjectionType), POINTER :: dataProjection !<A pointer to the data projection to cancel projections for
-    INTEGER(INTG), INTENT(IN) :: distanceRelation !<The distance relation to use to cancel projections \see OPENCMISS_DataProjectionDistanceRelations
+    INTEGER(INTG), INTENT(IN) :: distanceRelation !<The distance relation to use to cancel projections \see OpenCMISS_DataProjectionDistanceRelations
     REAL(DP), INTENT(IN) :: distance !<The distance by which to select the data points to cancel.
     INTEGER(INTG), INTENT(OUT) :: err !<The error code
     TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
@@ -4560,7 +4560,7 @@ CONTAINS
   !================================================================================================================================
   !
   
-  !>Sets the label for a data projection for varying string labels. \see OpenCMISS::Iron::cmfe_DataProjection_LabelSet
+  !>Sets the label for a data projection for varying string labels. \see OpenCMISS::OC_DataProjection_LabelSet
   SUBROUTINE DataProjection_LabelSetC(dataProjection,label,err,error,*)
 
     !Argument variables
@@ -4587,7 +4587,7 @@ CONTAINS
   !================================================================================================================================
   !
 
-  !>Sets the label for a data projection for varying string labels. \see OpenCMISS::Iron::cmfe_DataProjection_LabelSet
+  !>Sets the label for a data projection for varying string labels. \see OpenCMISS::OC_DataProjection_LabelSet
   SUBROUTINE DataProjection_LabelSetVS(dataProjection,label,err,error,*)
 
     !Argument variables
@@ -4614,7 +4614,7 @@ CONTAINS
   !================================================================================================================================
   !
 
-  !>Outputs the analysis of data projection results. \see OpenCMISS::Iron::cmfe_DataProjection_ResultAnalysisOutput
+  !>Outputs the analysis of data projection results. \see OpenCMISS::OC_DataProjection_ResultAnalysisOutput
   SUBROUTINE DataProjection_ResultAnalysisOutput(dataProjection,filename,err,error,*)
 
     !Argument variables

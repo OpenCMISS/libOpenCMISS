@@ -6850,7 +6850,6 @@ CONTAINS
     INTEGER(INTG), INTENT(OUT) :: err !<The error code
     TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
     !Local variables
-    TYPE(VARYING_STRING) :: localError
 
     ENTERS("VoigtToTensor2SP0",err,error,*999)
 
@@ -6981,7 +6980,6 @@ CONTAINS
     INTEGER(INTG), INTENT(OUT) :: err !<The error code
     TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
     !Local variables
-    TYPE(VARYING_STRING) :: localError
 
     ENTERS("VoigtToTensor2DP0",err,error,*999)
 

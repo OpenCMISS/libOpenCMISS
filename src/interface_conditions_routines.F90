@@ -290,7 +290,7 @@ CONTAINS
   !==================================================================================================================================
   !
 
-  !>Finishes the process of creating an interface condition. \see OpenCMISS::Iron::cmfe_InterfaceCondition_CreateFinish
+  !>Finishes the process of creating an interface condition. \see OpenCMISS::OC_InterfaceCondition_CreateFinish
   SUBROUTINE InterfaceCondition_CreateFinish(interfaceCondition,err,error,*)
 
     !Argument variables
@@ -414,7 +414,7 @@ CONTAINS
   !================================================================================================================================
   !
 
-  !>Starts the process of creating an interface condition on an interface. \see OpenCMISS::Iron::cmfe_InterfaceCondition_CreateStart
+  !>Starts the process of creating an interface condition on an interface. \see OpenCMISS::OC_InterfaceCondition_CreateStart
   SUBROUTINE InterfaceCondition_CreateStart(userNumber,interface,geometricField,interfaceCondition,err,error,*)
 
     !Argument variables
@@ -560,7 +560,7 @@ CONTAINS
   !================================================================================================================================
   !
 
-  !>Adds an equations set to an interface condition. \see OpenCMISS::Iron::cmfe_InterfaceCondition_DependentVariableAdd
+  !>Adds an equations set to an interface condition. \see OpenCMISS::OC_InterfaceCondition_DependentVariableAdd
   SUBROUTINE InterfaceCondition_DependentVariableAdd(interfaceCondition,meshIndex,equationsSet,variableType,err,error,*)
 
     !Argument variables
@@ -685,7 +685,7 @@ CONTAINS
   !================================================================================================================================
   !
 
-  !>Destroys an interface condition. \see OpenCMISS::Iron::cmfe_InterfaceCondition_Destroy
+  !>Destroys an interface condition. \see OpenCMISS::OC_InterfaceCondition_Destroy
   SUBROUTINE InterfaceCondition_Destroy(interfaceCondition,err,error,*)
 
     !Argument variables
@@ -741,7 +741,7 @@ CONTAINS
   !================================================================================================================================
   !
 
-  !>Finish the creation of interface equations for the interface condition. \see OpenCMISS::Iron::cmfe_InterfaceCondition_EquationsCreateFinish
+  !>Finish the creation of interface equations for the interface condition. \see OpenCMISS::OC_InterfaceCondition_EquationsCreateFinish
   SUBROUTINE InterfaceCondition_EquationsCreateFinish(interfaceCondition,err,error,*)
 
     !Argument variables
@@ -862,7 +862,7 @@ CONTAINS
   !================================================================================================================================
   !
 
-  !>Start the creation of interface equations for the interface condition. \see OpenCMISS::Iron::cmfe_InterfaceCondition_EquationsCreateStart
+  !>Start the creation of interface equations for the interface condition. \see OpenCMISS::OC_InterfaceCondition_EquationsCreateStart
   !>Default values set for the interfaceEquations's attributes are:
   !>- OUTPUT_TYPE: 0 (INTERFACE_EQUATIONS_NO_OUTPUT)
   !>- SPARSITY_TYPE: 1 (INTERFACE_EQUATIONS_SPARSE_MATRICES)
@@ -928,7 +928,7 @@ CONTAINS
   !================================================================================================================================
   !
 
-  !>Destroy the interface equations for an interface condition. \see OpenCMISS::Iron::cmfe_InterfaceCondition_EquationsDestroy
+  !>Destroy the interface equations for an interface condition. \see OpenCMISS::OC_InterfaceCondition_EquationsDestroy
   SUBROUTINE InterfaceCondition_EquationsDestroy(interfaceCondition,err,error,*)
 
     !Argument variables
@@ -1123,7 +1123,7 @@ CONTAINS
   !================================================================================================================================
   !
 
-  !>Finishes the process of creating an interface condition's Lagrange multiplier field \see OpenCMISS::Iron::cmfe_InterfaceCondition_LagrangeFieldCreateFinish
+  !>Finishes the process of creating an interface condition's Lagrange multiplier field \see OpenCMISS::OC_InterfaceCondition_LagrangeFieldCreateFinish
   SUBROUTINE InterfaceCondition_LagrangeFieldCreateFinish(interfaceCondition,err,error,*)
 
     !Argument variables
@@ -1156,7 +1156,7 @@ CONTAINS
   !================================================================================================================================
   !
 
-  !>Starts the process of creating the Lagrange multiplyer field for interface condition. \see OpenCMISS::Iron::cmfe_InterfaceCondition_LagrangeFieldCreateStart
+  !>Starts the process of creating the Lagrange multiplyer field for interface condition. \see OpenCMISS::OC_InterfaceCondition_LagrangeFieldCreateStart
   SUBROUTINE InterfaceCondition_LagrangeFieldCreateStart(interfaceCondition,lagrangeFieldUserNumber,lagrangeField,err,error,*)
 
     !Argument variables
@@ -1377,7 +1377,7 @@ CONTAINS
   !================================================================================================================================
   !
 
-  !>Finishes the process of creating an interface condition's penalty field'. \see OpenCMISS::Iron::cmfe_InterfaceCondition_PenaltyConditionCreateFinish
+  !>Finishes the process of creating an interface condition's penalty field'. \see OpenCMISS::OC_InterfaceCondition_PenaltyConditionCreateFinish
   SUBROUTINE InterfaceCondition_PenaltyFieldCreateFinish(interfaceCondition,err,error,*)
 
     !Argument variables
@@ -1407,7 +1407,7 @@ CONTAINS
   !================================================================================================================================
   !
 
-  !>Starts the process of creating the penalty field for interface condition. \see OpenCMISS::Iron::cmfe_InterfaceCondition_PenaltyFieldCreateStart
+  !>Starts the process of creating the penalty field for interface condition. \see OpenCMISS::OC_InterfaceCondition_PenaltyFieldCreateStart
   SUBROUTINE InterfaceCondition_PenaltyFieldCreateStart(interfaceCondition,penaltyFieldUserNumber,penaltyField,err,error,*)
 
     !Argument variables
@@ -1586,7 +1586,7 @@ CONTAINS
   !================================================================================================================================
   !
 
-  !>Sets/changes the interface condition method \see OpenCMISS::Iron::cmfe_InterfaceCondition_MethodSet
+  !>Sets/changes the interface condition method \see OpenCMISS::OC_InterfaceCondition_MethodSet
   SUBROUTINE InterfaceCondition_MethodSet(interfaceCondition,interfaceConditionMethod,err,error,*)
 
     !Argument variables
@@ -1627,7 +1627,7 @@ CONTAINS
   !================================================================================================================================
   !
 
-  !>Sets/changes the interface condition operator \see OpenCMISS::Iron::cmfe_InterfaceCondition_OperatorSet
+  !>Sets/changes the interface condition operator \see OpenCMISS::OC_InterfaceCondition_OperatorSet
   SUBROUTINE InterfaceCondition_OperatorSet(interfaceCondition,interfaceConditionOperator,err,error,*)
 
     !Argument variables

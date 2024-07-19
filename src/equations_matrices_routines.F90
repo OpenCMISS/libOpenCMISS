@@ -244,7 +244,7 @@ MODULE EquationsMatricesRoutines
     TYPE(EquationsMatrixToVarMapType), POINTER :: equationsMatrixToVarMap
     TYPE(JacobianMatrixType), POINTER :: jacobianMatrix
     TYPE(JacobianMatrixToVarMapType), POINTER :: jacobianMatrixToVarMap
-    TYPE(VARYING_STRING) :: dummyError,localError
+    TYPE(VARYING_STRING) :: dummyError
     TYPE(LinkedList), POINTER :: list(:)
     
     NULLIFY(rowIndices)
@@ -951,7 +951,6 @@ MODULE EquationsMatricesRoutines
     TYPE(DomainElementsType), POINTER :: domainElements
     TYPE(DomainMappingType), POINTER :: domainMapping
     TYPE(DomainTopologyType), POINTER :: domainTopology
-    TYPE(DomainElementsType), POINTER :: elementsTopology
     TYPE(VARYING_STRING) :: localError
     
     ENTERS("EquationsMatrices_ElementVectorCalculate",err,error,*999)
@@ -1532,7 +1531,6 @@ MODULE EquationsMatricesRoutines
     TYPE(EquationsMappingLinearType), POINTER :: linearMapping
     TYPE(EquationsMappingNonlinearType), POINTER :: nonlinearMapping
     TYPE(EquationsMappingResidualType), POINTER :: residualMapping
-    TYPE(EquationsMappingRHSType), POINTER :: rhsMapping
     TYPE(EquationsMatricesDynamicType), POINTER :: dynamicMatrices
     TYPE(EquationsMatricesLinearType), POINTER :: linearMatrices
     TYPE(EquationsMatricesNonlinearType), POINTER :: nonlinearMatrices
@@ -1653,7 +1651,6 @@ MODULE EquationsMatricesRoutines
     TYPE(EquationsMappingLinearType), POINTER :: linearMapping
     TYPE(EquationsMappingNonlinearType), POINTER :: nonlinearMapping
     TYPE(EquationsMappingResidualType), POINTER :: residualMapping
-    TYPE(EquationsMappingRHSType), POINTER :: rhsMapping
     TYPE(EquationsMatricesDynamicType), POINTER :: dynamicMatrices
     TYPE(EquationsMatricesLinearType), POINTER :: linearMatrices
     TYPE(EquationsMatricesNonlinearType), POINTER :: nonlinearMatrices
@@ -1772,11 +1769,8 @@ MODULE EquationsMatricesRoutines
     INTEGER(INTG), INTENT(OUT) :: err !<The error code
     TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
     !Local Variables
-    INTEGER(INTG) :: colsVariableType,componentIdx,derivativeIdx,globalColumn,globalRow,interpolationType,localColumn,localRow, &
+    INTEGER(INTG) :: colsVariableType,componentIdx,derivativeIdx,globalColumn,interpolationType,localColumn,localRow, &
       & numberOfComponents,numberOfDerivatives,numberOfVersions,rowsVariableType,totalNumberOfNodes,versionIdx
-    TYPE(DecompositionType), POINTER :: decomposition
-    TYPE(DecompositionDataPointsType), POINTER :: dataPoints
-    TYPE(DecompositionTopologyType), POINTER :: decompositionTopology
     TYPE(DomainType), POINTER :: domain
     TYPE(DomainMappingType), POINTER :: domainMapping
     TYPE(DomainNodesType), POINTER :: domainNodes
@@ -2226,7 +2220,6 @@ MODULE EquationsMatricesRoutines
     TYPE(EquationsMappingLinearType), POINTER :: linearMapping
     TYPE(EquationsMappingNonlinearType), POINTER :: nonlinearMapping
     TYPE(EquationsMappingResidualType), POINTER :: residualMapping
-    TYPE(EquationsMappingRHSType), POINTER :: rhsMapping
     TYPE(EquationsMappingVectorType), POINTER :: vectorMapping
     TYPE(EquationsMatricesDynamicType), POINTER :: dynamicMatrices
     TYPE(EquationsMatricesLinearType), POINTER :: linearMatrices
@@ -3142,7 +3135,6 @@ MODULE EquationsMatricesRoutines
     INTEGER(INTG) :: hessianMatrixIdx
     TYPE(HessianMatrixType), POINTER :: hessianMatrix
     TYPE(EquationsMatricesOptimisationType), POINTER :: optimisationMatrices
-    TYPE(VARYING_STRING) :: localError
 
     ENTERS("EquationsMatricesVector_HessianElementAdd",err,error,*999)
 
@@ -3187,7 +3179,6 @@ MODULE EquationsMatricesRoutines
     INTEGER(INTG) :: hessianMatrixIdx
     TYPE(HessianMatrixType), POINTER :: hessianMatrix
     TYPE(EquationsMatricesOptimisationType), POINTER :: optimisationMatrices
-    TYPE(VARYING_STRING) :: localError
     
     ENTERS("EquationsMatricesVector_HessianOutput",err,error,*999)
 
@@ -3325,7 +3316,7 @@ MODULE EquationsMatricesRoutines
     INTEGER(INTG), INTENT(OUT) :: err !<The error code
     TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
     !Local Variables
-    INTEGER(INTG) :: matrixIdx,variableIdx
+    INTEGER(INTG) :: matrixIdx
     TYPE(EquationsMappingNonlinearType), POINTER :: nonlinearMapping
     TYPE(EquationsMappingResidualType), POINTER :: residualMapping
     TYPE(EquationsMappingVectorType), POINTER :: vectorMapping
@@ -3394,7 +3385,7 @@ MODULE EquationsMatricesRoutines
     INTEGER(INTG), INTENT(OUT) :: err !<The error code
     TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
     !Local Variables
-    INTEGER(INTG) :: matrixIdx,variableIdx
+    INTEGER(INTG) :: matrixIdx
     TYPE(EquationsMappingNonlinearType), POINTER :: nonlinearMapping
     TYPE(EquationsMappingResidualType), POINTER :: residualMapping
     TYPE(EquationsMappingVectorType), POINTER :: vectorMapping
@@ -3579,7 +3570,7 @@ MODULE EquationsMatricesRoutines
     INTEGER(INTG), INTENT(OUT) :: err !<The error code
     TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
     !Local Variables
-    INTEGER(INTG) :: dummyErr,matrixIdx,numberOfResiduals,residualIdx
+    INTEGER(INTG) :: dummyErr,numberOfResiduals,residualIdx
     TYPE(EquationsMappingVectorType), POINTER :: vectorMapping
     TYPE(EquationsMappingNonlinearType), POINTER :: nonlinearMapping
     TYPE(VARYING_STRING) :: dummyError
@@ -4748,7 +4739,6 @@ MODULE EquationsMatricesRoutines
     REAL(DP) :: residualCoefficient
     TYPE(EquationsMappingNonlinearType), POINTER :: nonlinearMapping
     TYPE(EquationsMappingResidualType), POINTER :: residualMapping
-    TYPE(EquationsMappingVectorType), POINTER :: vectorMapping
     TYPE(EquationsMatricesResidualType), POINTER :: residualVector
     TYPE(VARYING_STRING) :: dummyError,localError
     
@@ -4919,7 +4909,6 @@ MODULE EquationsMatricesRoutines
     INTEGER(INTG), INTENT(OUT) :: err !<The error code
     TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
     !Local Variables
-    INTEGER(INTG) :: matrixIdx
     
     ENTERS("EquationsMatricesSources_SourceVectorFinalise",err,error,*999)
 
@@ -5117,11 +5106,11 @@ MODULE EquationsMatricesRoutines
     INTEGER(INTG), INTENT(OUT) :: err !<The error code
     TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
     !Local Variables
-    INTEGER(INTG) :: columnIdx,componentIdx,componentNumber,derivativeIdx,derivativeNumber,derivativeNumber2,dofIdx,dofType, &
+    INTEGER(INTG) :: columnIdx,componentIdx,componentNumber,derivativeIdx,derivativeNumber,derivativeNumber2,dofType, &
       & dofTypeIdx,dummyErr,elementIdx,elementNumber,globalColumn,interpolationType,localColumn,localDOF,localDOFIdx, &
       & localNodeIdx,matrixNumber,maxElementInterpParameters,nodeNumber,nodeNumber2,numberOfColumns,numberOfColumnComponents, &
       & numberOfDerivatives,numberOfGlobalColumns,numberOfLocalNodes,numberOfNodeDerivatives,numberOfRowComponents, &
-      & numberOfSurroundingElements,numberOfVersions,residualNumber,totalNumberOfColumns,totalNumberOfRows,versionIdx, &
+      & numberOfSurroundingElements,numberOfVersions,totalNumberOfColumns,totalNumberOfRows,versionIdx, &
       & versionNumber,versionNumber2
     INTEGER(INTG), ALLOCATABLE :: columns(:)
     REAL(DP) :: sparsity
@@ -5144,12 +5133,9 @@ MODULE EquationsMatricesRoutines
     TYPE(EquationsMatricesVectorType), POINTER :: vectorMatrices
     TYPE(EquationsMatricesDynamicType), POINTER :: dynamicMatrices
     TYPE(EquationsMatricesLinearType), POINTER :: linearMatrices
-    TYPE(EquationsMatricesNonlinearType), POINTER :: nonlinearMatrices
-    TYPE(EquationsMatricesResidualType), POINTER :: residualVector
     TYPE(EquationsMatrixToVarMapType), POINTER :: equationsMatrixToVarMap
     TYPE(EquationsSetType), POINTER :: equationsSet
     TYPE(FieldType), POINTER :: dependentField
-    TYPE(FieldDOFToParamMapType), POINTER :: dependentDofsParamMapping
     TYPE(FieldVariableType), POINTER :: colsVariable,rowsVariable
     TYPE(ListPtrType), ALLOCATABLE :: columnIndicesLists(:)
     TYPE(VARYING_STRING) :: dummyError,localError
@@ -5586,7 +5572,7 @@ MODULE EquationsMatricesRoutines
     INTEGER(INTG), INTENT(OUT) :: err !<The error code
     TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
     !Local Variables
-    INTEGER(INTG) :: columnIdx,componentIdx,componentNumber,derivativeIdx,derivativeNumber,derivativeNumber2,dofIdx,dofType, &
+    INTEGER(INTG) :: columnIdx,componentIdx,componentNumber,derivativeIdx,derivativeNumber,derivativeNumber2,dofType, &
       & dofTypeIdx,dummyErr,elementIdx,elementNumber,globalColumn,interpolationType,localColumn,localDOFIdx,localNodeIdx, &
       & matrixNumber,maxElementInterpParameters,nodeNumber,nodeNumber2,numberOfColumns,numberOfColumnComponents, &
       & numberOfDerivatives,numberOfGlobalColumns,numberOfLocalNodes,numberOfNodeDerivatives,numberOfRowComponents, &
@@ -5611,7 +5597,6 @@ MODULE EquationsMatricesRoutines
     TYPE(EquationsSetType), POINTER :: equationsSet
     TYPE(EquationsVectorType), POINTER :: vectorEquations
     TYPE(FieldType), POINTER :: dependentField
-    TYPE(FieldDOFToParamMapType), POINTER :: colsDOFsParamMapping,rowDOFsParamMapping
     TYPE(FieldVariableType), POINTER :: colsVariable,rowsVariable
     TYPE(ListPtrType), ALLOCATABLE :: columnIndicesLists(:)
     TYPE(VARYING_STRING) :: dummyError,localError

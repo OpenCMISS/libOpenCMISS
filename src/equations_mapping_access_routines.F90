@@ -2328,9 +2328,6 @@ CONTAINS
     INTEGER(INTG), INTENT(OUT) :: err !<The error code
     TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
     !Local Variables
-#ifdef WITH_CHECKS
-    TYPE(VARYING_STRING) :: localError
-#endif 
  
     ENTERS("EquationsMappingSources_NumberOfSourcesGet",err,error,*999)
 

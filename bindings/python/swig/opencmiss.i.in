@@ -161,7 +161,7 @@
 
 /* Boolean output */
 %typemap(in,numinputs=0) (OC_Bool *DummyOutputScalar)(int temp) {
-  $1 = &temp;
+  $1 = (OC_Bool *)&temp;
 }
 %typemap(argout) (OC_Bool *DummyOutputScalar) {
   PyObject *output_bool;

@@ -41,7 +41,7 @@
 !> the terms of any one of the MPL, the GPL or the LGPL.
 !>
 
-!> \addtogroup OpenCMISS_ControlLoop OpenCMISS::Iron::Context
+!> \addtogroup OpenCMISS_ControlLoop OpenCMISS::Context
 !> This module contains all control loop access method routines.
 MODULE ControlLoopAccessRoutines
   
@@ -59,15 +59,15 @@ MODULE ControlLoopAccessRoutines
 
   !Module parameters
 
-  !> \addtogroup OpenCMISS_ControlLoopConstants OpenCMISS::Iron::ControlLoop::Constants
+  !> \addtogroup OpenCMISS_ControlLoopConstants OpenCMISS::ControlLoop::Constants
   !> \brief Control loop constants.
   !>@{
-  !> \addtogroup ControlLoopRoutines_ControlLoopIdentifiers OpenCMISS::Iron::ControlLoop::Constants::ControlLoopIdentifiers
+  !> \addtogroup ControlLoopRoutines_ControlLoopIdentifiers OpenCMISS::ControlLoop::Constants::ControlLoopIdentifiers
   !> \brief The control loop identification parameters
   !>@{
   INTEGER(INTG), PARAMETER :: CONTROL_LOOP_NODE=0 !<The identifier for a each "leaf" node in a control loop. \see ControlLoopRoutines_ControlLoopIdentifiers,ControlLoopRoutines
   !>@}
-  !> \addtogroup ControlLoopRoutines_ControlLoopTypes OpenCMISS::Iron::ControlLoop::Constants::ControlLoopTypes
+  !> \addtogroup ControlLoopRoutines_ControlLoopTypes OpenCMISS::ControlLoop::Constants::ControlLoopTypes
   !> \brief Control loop type parameters
   !> \see ControlLoopRoutines
   !>@{
@@ -77,7 +77,7 @@ MODULE ControlLoopAccessRoutines
   INTEGER(INTG), PARAMETER :: CONTROL_WHILE_LOOP_TYPE=4 !<While control loop. \see ControlLoopRoutines_ControlLoopTypes,ControlLoopRoutines
   INTEGER(INTG), PARAMETER :: CONTROL_LOAD_INCREMENT_LOOP_TYPE=5 !<Load increment control loop. \see ControlLoopRoutines_ControlLoopTypes,ControlLoopRoutines
   !>@}
-  !> \addtogroup ControlLoop_OutputTypes OpenCMISS::Iron::ControlLoop::Constants::OutputTypes
+  !> \addtogroup ControlLoop_OutputTypes OpenCMISS::ControlLoop::Constants::OutputTypes
   !> \brief The types of output for a control loop.
   !> \see ControlLoop
   !>@{
@@ -86,7 +86,7 @@ MODULE ControlLoopAccessRoutines
   INTEGER(INTG), PARAMETER :: CONTROL_LOOP_TIMING_OUTPUT=2 !<Timing output from the control loop \see ControlLoop_OutputTypes,ControlLoop
   !>@}
 
-  !> \addtogroup ControlLoop_FieldVariableLinearityTypes OpenCMISS::Iron::ControlLoop::Constants::FieldVariableLinearityTypes
+  !> \addtogroup ControlLoop_FieldVariableLinearityTypes OpenCMISS::ControlLoop::Constants::FieldVariableLinearityTypes
   !> \brief The linearity type of control loop field variables
   !> \see ControlLoop
   !>@{
@@ -94,7 +94,7 @@ MODULE ControlLoopAccessRoutines
   INTEGER(INTG), PARAMETER :: CONTROL_LOOP_FIELD_VARIABLE_NONLINEAR=2 !<The control loop field variable is nonlinear \see ControlLoop_FieldVariableLinearityTypes,ControlLoop
   !>@}
 
-  !> \addtogroup ControlLoop_FieldVariableTimeDependenceTypes OpenCMISS::Iron::ControlLoop::Constants::FieldVariableTimeDependenceTypes
+  !> \addtogroup ControlLoop_FieldVariableTimeDependenceTypes OpenCMISS::ControlLoop::Constants::FieldVariableTimeDependenceTypes
   !> \brief The time dependence type of control loop field variables
   !> \see ControlLoop
   !>@{
@@ -111,7 +111,7 @@ MODULE ControlLoopAccessRoutines
   
   !Interfaces
 
-  !>Returns the specified control loop as indexed by the control loop identifier from the control loop root. \see OpenCMISS::Iron::cmfe_ControlLoop_Get
+  !>Returns the specified control loop as indexed by the control loop identifier from the control loop root. \see OpenCMISS::OC_ControlLoop_Get
   INTERFACE ControlLoop_Get
     MODULE PROCEDURE ControlLoop_Get0
     MODULE PROCEDURE ControlLoop_Get1
@@ -213,7 +213,7 @@ CONTAINS
   !================================================================================================================================
   !
 
-  !>Gets the absolute tolerance (convergence condition tolerance) for a while control loop. \see OpenCMISS::Iron::cmfe_ControlLoop_AbsoluteToleranceSet
+  !>Gets the absolute tolerance (convergence condition tolerance) for a while control loop. \see OpenCMISS::OC_ControlLoop_AbsoluteToleranceSet
   SUBROUTINE ControlLoop_AbsoluteToleranceGet(controlLoop,absoluteTolerance,err,error,*)
 
     !Argument variables
@@ -597,7 +597,7 @@ CONTAINS
   !================================================================================================================================
   !
 
-  !>Gets the continue loop status for a while control loop  \see OpenCMISS::Iron::cmfe_ControlLoop_ContinueLoopGet
+  !>Gets the continue loop status for a while control loop  \see OpenCMISS::OC_ControlLoop_ContinueLoopGet
   SUBROUTINE ControlLoop_ContinueLoopGet(controlLoop,continueLoop,err,error,*)
 
     !Argument variables
@@ -773,7 +773,7 @@ CONTAINS
   !================================================================================================================================
   !
 
-  !>Gets the current time parameters for a time control loop. If the specified loop is not a time loop the next time loop up the chain will be used. \see OpenCMISS::Iron::cmfe_ControlLoop_CurrentTimesGet
+  !>Gets the current time parameters for a time control loop. If the specified loop is not a time loop the next time loop up the chain will be used. \see OpenCMISS::OC_ControlLoop_CurrentTimesGet
   SUBROUTINE ControlLoop_CurrentTimesGet(controlLoop,currentTime,timeIncrement,err,error,*)
 
     !Argument variables
@@ -802,7 +802,7 @@ CONTAINS
   !================================================================================================================================
   !
 
-  !>Gets the current loop information for a time control loop. If the specified loop is not a time loop the next time loop up the chain will be used. \see OpenCMISS::Iron::cmfe_ControlLoop_TimesGet
+  !>Gets the current loop information for a time control loop. If the specified loop is not a time loop the next time loop up the chain will be used. \see OpenCMISS::OC_ControlLoop_TimesGet
   SUBROUTINE ControlLoop_CurrentTimeInformationGet(controlLoop,currentTime,timeIncrement,startTime,stopTime,currentIteration, &
     & outputIteration,inputIteration,err,error,*)
     
@@ -959,7 +959,7 @@ CONTAINS
   !================================================================================================================================
   !
 
-  !>Returns the label of a control loop. \see OpenCMISS::Iron::cmfe_ControlLoop_LabelGet
+  !>Returns the label of a control loop. \see OpenCMISS::OC_ControlLoop_LabelGet
   SUBROUTINE ControlLoop_LabelGetC(controlLoop,label,err,error,*)
 
     !Argument variables
@@ -995,7 +995,7 @@ CONTAINS
   !================================================================================================================================
   !
 
-  !>Returns the label of a control loop. \see OpenCMISS::Iron::cmfe_ControlLoop_LabelGet
+  !>Returns the label of a control loop. \see OpenCMISS::OC_ControlLoop_LabelGet
   SUBROUTINE ControlLoop_LabelGetVS(controlLoop,label,err,error,*)
 
     !Argument variables
@@ -1059,7 +1059,7 @@ CONTAINS
   !================================================================================================================================
   !
 
-  !>Gets the iteration number for a control loop. \see OpenCMISS::Iron::cmfe_ControlLoop_IterationNumberGet
+  !>Gets the iteration number for a control loop. \see OpenCMISS::OC_ControlLoop_IterationNumberGet
   SUBROUTINE ControlLoop_IterationNumberGet(controlLoop,iterationNumber,err,error,*)
 
     !Argument variables
@@ -1230,7 +1230,7 @@ CONTAINS
   !================================================================================================================================
   !
 
-  !>Gets the number of sub loops for a control loop. \see OpenCMISS::Iron::cmfe_ControlLoop_NumberOfSubLoopsGet
+  !>Gets the number of sub loops for a control loop. \see OpenCMISS::OC_ControlLoop_NumberOfSubLoopsGet
   SUBROUTINE ControlLoop_NumberOfSubLoopsGet(controlLoop,numberOfSubLoops,err,error,*)
 
     !Argument variables
@@ -1257,7 +1257,7 @@ CONTAINS
   !================================================================================================================================
   !
 
-  !>Gets the output type for a control loop. \see OpenCMISS::Iron::cmfe_ControlLoop_OutputTypeGet
+  !>Gets the output type for a control loop. \see OpenCMISS::OC_ControlLoop_OutputTypeGet
   SUBROUTINE ControlLoop_OutputTypeGet(controlLoop,outputType,err,error,*)
 
     !Argument variables
@@ -1385,7 +1385,7 @@ CONTAINS
   !================================================================================================================================
   !
 
-  !>Returns the relative tolerance (convergence condition tolerance) for a while control loop. \see OpenCMISS::Iron::cmfe_ControlLoopRelativeToleranceGet
+  !>Returns the relative tolerance (convergence condition tolerance) for a while control loop. \see OpenCMISS::OC_ControlLoopRelativeToleranceGet
   SUBROUTINE ControlLoop_RelativeToleranceGet(controlLoop,relativeTolerance,err,error,*)
 
     !Argument variables
@@ -1594,7 +1594,7 @@ CONTAINS
   !================================================================================================================================
   !
 
-  !>Gets the loop type for a control loop. \see OpenCMISS::Iron::cmfe_ControlLoop_TypeGet
+  !>Gets the loop type for a control loop. \see OpenCMISS::OC_ControlLoop_TypeGet
   SUBROUTINE ControlLoop_TypeGet(controlLoop,loopType,err,error,*)
 
     !Argument variables

@@ -183,7 +183,7 @@ CONTAINS
   !================================================================================================================================
   !
 
-  !>Finishes the process of creating a mesh. \see OpenCMISS::Iron::cmfe_Mesh_CreateFinish
+  !>Finishes the process of creating a mesh. \see OpenCMISS::OC_Mesh_CreateFinish
   SUBROUTINE Mesh_CreateFinish(mesh,err,error,*)
 
     !Argument variables
@@ -292,7 +292,7 @@ CONTAINS
   !================================================================================================================================
   !
 
-  !>Starts the process of creating a mesh defined by a user number with the specified numberOfDimensions in an interface. \see OpenCMISS::Iron::cmfe_Mesh_CreateStart
+  !>Starts the process of creating a mesh defined by a user number with the specified numberOfDimensions in an interface. \see OpenCMISS::OC_Mesh_CreateStart
   !>Default values set for the meshes's attributes are:
   !>- NUMBER_OF_COMPONENTS: 1
   SUBROUTINE Mesh_CreateStartInterface(userNumber,interface,numberOfMeshDimensions,mesh,err,error,*)
@@ -353,7 +353,7 @@ CONTAINS
   !================================================================================================================================
   !
 
-  !>Starts the process of creating a mesh defined by a user number with the specified numberOfDimensions in the region identified by region. \see OpenCMISS::Iron::cmfe_Mesh_CreateStart
+  !>Starts the process of creating a mesh defined by a user number with the specified numberOfDimensions in the region identified by region. \see OpenCMISS::OC_Mesh_CreateStart
   !>Default values set for the mesh's attributes are:
   !>- NUMBER_OF_COMPONENTS: 1
   SUBROUTINE Mesh_CreateStartRegion(userNumber,region,numberOfMeshDimensions,mesh,err,error,*)
@@ -477,7 +477,7 @@ CONTAINS
   !================================================================================================================================
   !
 
-  !>Destroys the mesh and deallocates all memory. \see OpenCMISS::Iron::cmfe_Mesh_Destroy
+  !>Destroys the mesh and deallocates all memory. \see OpenCMISS::OC_Mesh_Destroy
   SUBROUTINE Mesh_Destroy(mesh,err,error,*)
 
     !Argument variables
@@ -600,7 +600,7 @@ CONTAINS
   !================================================================================================================================
   !
 
-  !>Changes/sets the number of mesh components for a mesh. \see OpenCMISS::Iron::cmfe_Mesh_NumberOfComponentsSet
+  !>Changes/sets the number of mesh components for a mesh. \see OpenCMISS::OC_Mesh_NumberOfComponentsSet
   SUBROUTINE Mesh_NumberOfComponentsSet(mesh,numberOfComponents,err,error,*)
 
     !Argument variables
@@ -655,7 +655,7 @@ CONTAINS
   !================================================================================================================================
   !
 
-  !>Changes/sets the number of elements for a mesh. \see OpenCMISS::Iron::cmfe_Mesh_NumberOfElementsSet
+  !>Changes/sets the number of elements for a mesh. \see OpenCMISS::OC_Mesh_NumberOfElementsSet
   SUBROUTINE Mesh_NumberOfElementsSet(mesh,numberOfElements,err,error,*)
 
     !Argument variables
@@ -703,7 +703,7 @@ CONTAINS
   !================================================================================================================================
   !
 
-  !>Changes/sets the surrounding elements calculate flag. \see OpenCMISS::Iron::cmfe_Mesh_SurroundingElementsCalculateSet
+  !>Changes/sets the surrounding elements calculate flag. \see OpenCMISS::OC_Mesh_SurroundingElementsCalculateSet
   SUBROUTINE Mesh_SurroundingElementsCalculateSet(mesh,surroundingElementsCalculateFlag,err,error,*)
 
     !Argument variables
@@ -976,7 +976,7 @@ CONTAINS
   !================================================================================================================================
   !
 
-  !>Finishes the process of creating elements for a specified mesh component in a mesh topology. \see OpenCMISS::Iron::cmfe_MeshElements_CreateFinish
+  !>Finishes the process of creating elements for a specified mesh component in a mesh topology. \see OpenCMISS::OC_MeshElements_CreateFinish
   SUBROUTINE MeshElements_CreateFinish(meshElements,err,error,*)
 
     !Argument variables
@@ -1041,7 +1041,7 @@ CONTAINS
   !================================================================================================================================
   !
 
-  !>Starts the process of creating elements in the mesh component identified by MESH and componentIdx. The elements will be created with a default basis of BASIS. ELEMENTS is the returned pointer to the MESH_ELEMENTS data structure. \see OpenCMISS::Iron::cmfe_MeshElementsCreateStart
+  !>Starts the process of creating elements in the mesh component identified by MESH and componentIdx. The elements will be created with a default basis of BASIS. ELEMENTS is the returned pointer to the MESH_ELEMENTS data structure. \see OpenCMISS::OC_MeshElementsCreateStart
   SUBROUTINE MeshElements_CreateStart(mesh,meshComponentNumber,basis,meshElements,err,error,*)
 
     !Argument variables
@@ -1199,7 +1199,7 @@ CONTAINS
   !================================================================================================================================
   !
 
-  !>Changes/sets the basis for a mesh element identified by a given global number. \see OpenCMISS::Iron::cmfe_MeshElements_BasisSet
+  !>Changes/sets the basis for a mesh element identified by a given global number. \see OpenCMISS::OC_MeshElements_BasisSet
   SUBROUTINE MeshElements_ElementBasisSet(meshElements,globalElementNumber,basis,err,error,*)
 
     !Argument variables
@@ -1269,7 +1269,7 @@ CONTAINS
   !================================================================================================================================
   !
 
-  !>Gets the element nodes for a mesh element identified by a given global number. \see OpenCMISS::Iron::cmfe_MeshElements_NodesGet
+  !>Gets the element nodes for a mesh element identified by a given global number. \see OpenCMISS::OC_MeshElements_NodesGet
   SUBROUTINE MeshElements_ElementNodesGet(meshElements,userElementNumber,userElementNodes,err,error,*)
 
     !Argument variables
@@ -1307,7 +1307,7 @@ CONTAINS
   !================================================================================================================================
   !
 
-  !>Changes/sets the element nodes for a mesh element identified by a given global number. \see OpenCMISS::Iron::cmfe_MeshElements_NodesSet
+  !>Changes/sets the element nodes for a mesh element identified by a given global number. \see OpenCMISS::OC_MeshElements_NodesSet
   SUBROUTINE MeshElements_ElementNodesSet(meshElements,userElementNumber,userElementNodes,err,error,*)
 
     !Argument variables
@@ -1419,7 +1419,7 @@ CONTAINS
   !================================================================================================================================
   !
 
-  !>Changes/sets an element node's version for a mesh element identified by a given user number. \see OpenCMISS::Iron::cmfe_MeshElements_LocalElementNodeVersionSet
+  !>Changes/sets an element node's version for a mesh element identified by a given user number. \see OpenCMISS::OC_MeshElements_LocalElementNodeVersionSet
   SUBROUTINE MeshElements_ElementNodeVersionSet(meshElements,userElementNumber,versionNumber,derivativeNumber, &
     & userElementNodeIndex,err,error,*)
 
@@ -1474,7 +1474,7 @@ CONTAINS
   !================================================================================================================================
   !
 
-  !>Changes/sets an element node's version for a mesh element identified by a given user number. \see OpenCMISS::Iron::cmfe_MeshElements_UserNodeVersionSet
+  !>Changes/sets an element node's version for a mesh element identified by a given user number. \see OpenCMISS::OC_MeshElements_UserNodeVersionSet
   SUBROUTINE MeshElements_UserNodeVersionSet(meshElements,userElementNumber,versionNumber,derivativeNumber, &
     & userNodeNumber,err,error,*)
 
@@ -1940,7 +1940,7 @@ CONTAINS
   !================================================================================================================================
   !
 
-  !>Changes/sets the user number for a global element identified by a given global number. \see OpenCMISS::Iron::cmfe_MeshElements_UserNumberSet
+  !>Changes/sets the user number for a global element identified by a given global number. \see OpenCMISS::OC_MeshElements_UserNumberSet
   SUBROUTINE MeshElements_ElementUserNumberSet(meshElements,globalNumber,userNumber,err,error,*)
 
     !Argument variables

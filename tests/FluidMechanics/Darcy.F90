@@ -61,9 +61,6 @@ PROGRAM DarcyAnalyticExample
 
   USE OpenCMISS
   USE FLUID_MECHANICS_IO_ROUTINES
-#ifndef NOMPIMOD
-  USE MPI
-#endif
 
 #ifdef WIN32
   USE IFQWINCMISS
@@ -76,11 +73,6 @@ PROGRAM DarcyAnalyticExample
   !PROGRAM VARIABLES AND TYPES
 
   IMPLICIT NONE
-
-#ifdef NOMPIMOD
-#include "mpif.h"
-#endif
-
 
   !Test program parameters
 

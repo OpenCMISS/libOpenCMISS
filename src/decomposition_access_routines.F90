@@ -2846,9 +2846,6 @@ CONTAINS
     INTEGER(INTG), INTENT(OUT) :: err !<The error code
     TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
     !Local Variables
-#ifdef WITH_PRECHECKS    
-    TYPE(VARYING_STRING) :: localError
-#endif    
 
     ENTERS("DecompositionElement_LocalNumberGet",err,error,*999)
 
@@ -7364,7 +7361,6 @@ CONTAINS
 #ifdef WITH_PRECHECKS
     TYPE(DomainNodeType), POINTER :: domainNode
     TYPE(DomainNodeDerivativeType), POINTER :: domainNodeDerivative
-    TYPE(VARYING_STRING) :: localError
 #endif    
 
     ENTERS("DomainNodes_DerivativeGlobalIndexGet",err,error,*999)
@@ -7441,7 +7437,6 @@ CONTAINS
 #ifdef WITH_PRECHECKS
     TYPE(DomainNodeType), POINTER :: domainNode
     TYPE(DomainNodeDerivativeType), POINTER :: domainNodeDerivative
-    TYPE(VARYING_STRING) :: localError
 #endif    
 
     ENTERS("DomainNodes_DerivativePartialIndexGet",err,error,*999)

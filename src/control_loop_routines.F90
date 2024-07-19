@@ -41,7 +41,7 @@
 !> the terms of any one of the MPL, the GPL or the LGPL.
 !>
 
-!> \defgroup OpenCMISS_ControlLoop OpenCMISS::Iron::ControlLoop
+!> \defgroup OpenCMISS_ControlLoop OpenCMISS::ControlLoop
 !> This module handles all control loop routines.
 MODULE ControlLoopRoutines
 
@@ -249,7 +249,7 @@ CONTAINS
   !================================================================================================================================
   !
 
-  !>Destroy a control loop \see OpenCMISS::Iron::cmfe_ControlLoop_Destroy
+  !>Destroy a control loop \see OpenCMISS::OC_ControlLoop_Destroy
   SUBROUTINE ControlLoop_Destroy(controlLoop,err,error,*)
 
     !Argument variables
@@ -823,7 +823,7 @@ CONTAINS
   !================================================================================================================================
   !
 
-  !>Sets the input parameters for a fixed loop. \see OpenCMISS::Iron::cmfe_ControlLoop_FixedInputSet
+  !>Sets the input parameters for a fixed loop. \see OpenCMISS::OC_ControlLoop_FixedInputSet
   SUBROUTINE ControlLoop_FixedInputSet(controlLoop,inputFrequency,err,error,*)
 
     !Argument variables
@@ -854,7 +854,7 @@ CONTAINS
   !================================================================================================================================
   !
 
-  !>Sets/changes the output for a fixedcontrol loop identified by an object. \see OpenCMISS_cmfe_ControlLoop_FixedOutputSet
+  !>Sets/changes the output for a fixedcontrol loop identified by an object. \see OpenCMISS_OC_ControlLoop_FixedOutputSet
   SUBROUTINE ControlLoop_FixedOutputSet(controlLoop,outputFrequency,err,error,*)
 
     !Argument variables
@@ -885,7 +885,7 @@ CONTAINS
   !================================================================================================================================
   !
 
-  !>Sets the iteration parameters for a fixed control loop. \see OpenCMISS::Iron::cmfe_ControlLoop_IterationsSet
+  !>Sets the iteration parameters for a fixed control loop. \see OpenCMISS::OC_ControlLoop_IterationsSet
   SUBROUTINE ControlLoop_IterationsSet(controlLoop,startIteration,stopIteration,iterationIncrement,err,error,*)
 
     !Argument variables
@@ -945,7 +945,7 @@ CONTAINS
   !================================================================================================================================
   !
 
-  !>Sets the label of a control loop. \see OpenCMISS::Iron::cmfe_ControlLoop_LabelSet
+  !>Sets the label of a control loop. \see OpenCMISS::OC_ControlLoop_LabelSet
   SUBROUTINE ControlLoop_LabelSetC(controlLoop,label,err,error,*)
 
     !Argument variables
@@ -972,7 +972,7 @@ CONTAINS
   !================================================================================================================================
   !
 
-  !>Sets the label of a control loop. \see OpenCMISS::Iron::cmfe_ControlLoop_LabelSet
+  !>Sets the label of a control loop. \see OpenCMISS::OC_ControlLoop_LabelSet
   SUBROUTINE ControlLoop_LabelSetVS(controlLoop,label,err,error,*)
 
     !Argument variables
@@ -1062,7 +1062,7 @@ CONTAINS
   !================================================================================================================================
   !
 
-  !>Sets the maximum number of iterations for a while or load increment control loop. \see OpenCMISS_cmfe_ControlLoop_MaximumIterationsSet
+  !>Sets the maximum number of iterations for a while or load increment control loop. \see OpenCMISS_OC_ControlLoop_MaximumIterationsSet
   SUBROUTINE ControlLoop_MaximumIterationsSet(controlLoop,maximumIterations,err,error,*)
 
     !Argument variables
@@ -1119,7 +1119,7 @@ CONTAINS
   !================================================================================================================================
   !
 
-  !>Sets/changes the output for a load incremented control loop identified by an object. \see OpenCMISS_cmfe_ControlLoop_LoadOutputSet
+  !>Sets/changes the output for a load incremented control loop identified by an object. \see OpenCMISS_OC_ControlLoop_LoadOutputSet
   SUBROUTINE ControlLoop_LoadOutputSet(controlLoop,outputFrequency,err,error,*)
 
     !Argument variables
@@ -1150,7 +1150,7 @@ CONTAINS
   !================================================================================================================================
   !
 
-  !>Sets the absolute tolerance (convergence condition tolerance) for a while control loop. \see OpenCMISS::Iron::cmfe_ControlLoop_AbsoluteToleranceSet
+  !>Sets the absolute tolerance (convergence condition tolerance) for a while control loop. \see OpenCMISS::OC_ControlLoop_AbsoluteToleranceSet
   SUBROUTINE ControlLoop_AbsoluteToleranceSet(controlLoop,absoluteTolerance,err,error,*)
 
     !Argument variables
@@ -1188,7 +1188,7 @@ CONTAINS
   !================================================================================================================================
   !
 
-  !>Sets the relative tolerance (convergence condition tolerance) for a while control loop. \see OpenCMISS::Iron::cmfe_ControlLoopRelativeToleranceSet
+  !>Sets the relative tolerance (convergence condition tolerance) for a while control loop. \see OpenCMISS::OC_ControlLoopRelativeToleranceSet
   SUBROUTINE ControlLoop_RelativeToleranceSet(controlLoop,relativeTolerance,err,error,*)
 
     !Argument variables
@@ -1266,7 +1266,7 @@ CONTAINS
   !================================================================================================================================
   !
   
-  !>Sets/changes the number of sub loops in a control loop. \see OpenCMISS::Iron::cmfe_ControlLoop_NumberOfSubLoopsSet
+  !>Sets/changes the number of sub loops in a control loop. \see OpenCMISS::OC_ControlLoop_NumberOfSubLoopsSet
   SUBROUTINE ControlLoop_NumberOfSubLoopsSet(controlLoop,numberOfSubLoops,err,error,*)
 
     !Argument variables
@@ -1335,7 +1335,7 @@ CONTAINS
   !================================================================================================================================
   !
 
-  !>Sets/changes the output type for a control loop. \see OpenCMISS::Iron::cmfe_ControlLoop_OutputTypeSet
+  !>Sets/changes the output type for a control loop. \see OpenCMISS::OC_ControlLoop_OutputTypeSet
   SUBROUTINE ControlLoop_OutputTypeSet(controlLoop,outputType,err,error,*)
 
     !Argument variables
@@ -1706,7 +1706,7 @@ CONTAINS
   !================================================================================================================================
   !
 
-  !>Sets the input frequency for a time control loop. \see OpenCMISS::Iron::cmfe_ControlLoop_TimeInputSet
+  !>Sets the input frequency for a time control loop. \see OpenCMISS::OC_ControlLoop_TimeInputSet
   SUBROUTINE ControlLoop_TimeInputSet(controlLoop,inputFrequency,err,error,*)
 
     !Argument variables
@@ -1737,7 +1737,7 @@ CONTAINS
   !================================================================================================================================
   !
 
-  !>Sets the output parameters for a time control loop. \see OpenCMISS::Iron::cmfe_ControlLoop_TimeOutputSet
+  !>Sets the output parameters for a time control loop. \see OpenCMISS::OC_ControlLoop_TimeOutputSet
   SUBROUTINE ControlLoop_TimeOutputSet(controlLoop,outputFrequency,err,error,*)
 
     !Argument variables
@@ -1772,7 +1772,7 @@ CONTAINS
   !================================================================================================================================
   !
 
-  !>Sets the time parameters for a time control loop. \see OpenCMISS::Iron::cmfe_ControlLoop_TimesSet
+  !>Sets the time parameters for a time control loop. \see OpenCMISS::OC_ControlLoop_TimesSet
   SUBROUTINE ControlLoop_TimesSet(controlLoop,startTime,stopTime,timeIncrement,err,error,*)
 
     !Argument variables

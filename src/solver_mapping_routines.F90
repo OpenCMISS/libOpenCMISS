@@ -115,17 +115,17 @@ MODULE SolverMappingRoutines
       & globalRow,globalRowIdx,interfaceColumn,interfaceColumnNumber,interfaceConditionIdx,interfaceConditionIdx2, &
       & interfaceConditionIndex,interfaceEquationsListItem(2),interfaceMatrixIdx,interfaceMatrixNumber,interfaceRow, &
       & interfaceRowNumber,interfaceConditionUserNumber,interfaceUserNumber,jacobianColumn,jacobianMatrixNumber, &
-      & larangeVariableType,localColumn,localDOF,localDOFsOffset,localRow,matricesType,matrixNumber,matrixType,matrixTypeIdx, &
+      & localColumn,localDOF,localDOFsOffset,localRow,matricesType,matrixNumber,matrixType,matrixTypeIdx, &
       & matrixVariableIdx,myrank,numberOfColumns,numberOfConstraints,numberOfDOFs,numberOfDependentVariables, &
       & numberOfDynamicMatrices,numberOfEquations,numberOfEquationsColumns,numberOfEquationDOFs,numberOfEquationsSets, &
       & numberOfEquationsSetRows,numberOfEquationsVariables,numberOfGlobalDOFs,numberOfInterfaceConditions, &
       & numberOfInterfaceColumns,numberOfInterfaceMatrices,numberOfInterfaceRows,numberOfInterfaceVariables,numberOfJacobians, &
-      & numberOfJacobianMatrices,numberOfGlobalSolverDOFs,numberOfGlobalSolverRows,numberOfLinearMatrices,numberOfLocalSolverDOFs, &
-      & numberOfLocalSolverRows,numberOfSolverMatrices,numberOfRankColumns,numberOfRankRows,numberOfResiduals,numberOfRows, &
-      & numberOfVariables,parentRegionUserNumber,rank,rankIdx,regionUserNumber,residualIdx,rowIdx,rowListItem(4),rowRank, &
-      & solverGlobalDOF,solverMatrixIdx,solverMatrixNumber,solverVariableIdx,totalNumberOfColumns, &
-      & totalNumberOfDOFs,totalNumberOfLocalSolverDOFs,totalNumberOfRows, &
-      & variableIdx,variableIdx2,variableIndex,variableListItem(3),variablePositionIdx,variableType,numberOfGroupComputationNodes, &
+      & numberOfJacobianMatrices,numberOfGlobalSolverDOFs,numberOfGlobalSolverRows,numberOfLinearMatrices, &
+      & numberOfLocalSolverDOFs,numberOfLocalSolverRows,numberOfSolverMatrices,numberOfRankColumns,numberOfRankRows, &
+      & numberOfResiduals,numberOfRows,numberOfVariables,parentRegionUserNumber,rank,rankIdx,regionUserNumber,residualIdx, &
+      & rowIdx,rowListItem(4),rowRank,solverGlobalDOF,solverMatrixIdx,solverMatrixNumber,solverVariableIdx,totalNumberOfColumns, &
+      & totalNumberOfDOFs,totalNumberOfLocalSolverDOFs,totalNumberOfRows,variableIdx,variableIdx2,variableIndex, &
+      & variableListItem(3),variablePositionIdx,variableType,numberOfGroupComputationNodes, &
       & numberRowEquationsRows,numberColEquationsCols,rowEquationsRowIdx,colEquationsColIdx, &
       & globalDofCouplingNumber,equationsRow,eqnLocalDof,numberOfEquationsRHSVariables,rhsVariableType
     INTEGER(INTG) :: tempOffset, tempSolverVariableIdx
@@ -134,7 +134,7 @@ MODULE SolverMappingRoutines
       & equationsRHSVariables(:,:)
     INTEGER(INTG), ALLOCATABLE :: numberOfVariableGlobalSolverDOFs(:),numberOfVariableLocalSolverDOFs(:), &
       & totalNumberOfVariableLocalSolverDOFs(:),subMatrixInformation(:,:,:),subMatrixList(:,:,:),variableTypes(:)
-    REAL(DP) :: additiveConstant,couplingCoefficient,variableCoefficient
+    REAL(DP) :: couplingCoefficient,variableCoefficient
     LOGICAL :: found,haveDynamic,haveLinear,haveNonlinear,includeColumn,includeRow,constrainedDOF
     LOGICAL, ALLOCATABLE :: variableProcessed(:),variableRankProcessed(:,:)
     TYPE(BoundaryConditionsType), POINTER :: boundaryConditions
@@ -178,8 +178,8 @@ MODULE SolverMappingRoutines
     TYPE(ListType), POINTER :: equationsSetVariableList
     TYPE(ListPtrType), ALLOCATABLE :: interfaceEquationsLists(:),rankGlobalRowsLists(:,:), &
       & rankGlobalColumnLists(:,:,:,:),variablesList(:)
-    TYPE(MatrixRowColCouplingType), POINTER :: equationsRowToSolverRowsMap(:),interfaceColToSolverColsMap(:), &
-      & interfaceColToSolverRowsMap(:),interfaceRowToSolverColsMap(:)
+    TYPE(MatrixRowColCouplingType), POINTER :: equationsRowToSolverRowsMap(:),interfaceColToSolverRowsMap(:), &
+      & interfaceRowToSolverColsMap(:)
     TYPE(RegionType), POINTER :: parentRegion,region
     TYPE(SolverType), POINTER :: solver
     TYPE(SolverColToDynamicEquationsMapType), POINTER :: solverColToDynamicEquationsMap
@@ -4243,9 +4243,8 @@ MODULE SolverMappingRoutines
     TYPE(EquationsSetType), POINTER :: equationsSet,variableEquationsSet
     TYPE(FieldType), POINTER :: dependentField,variableDependentField
     TYPE(ListType),  POINTER :: equationsVariableList
-    TYPE(RegionType), POINTER :: dependentRegion,variableRegion,variableDependentRegion
+    TYPE(RegionType), POINTER :: dependentRegion,variableDependentRegion
     TYPE(SolverMappingCreateValuesCacheType), POINTER :: createValuesCache
-    TYPE(VARYING_STRING) :: localError
 
     ENTERS("SolverMapping_CreateValuesCacheEqnVarListAdd",err,error,*999)
 
@@ -4503,7 +4502,7 @@ MODULE SolverMappingRoutines
     INTEGER(INTG), INTENT(OUT) :: err !<The error code
     TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
     !Local Variables
-    INTEGER(INTG) :: equationsSetIndex,linearMappingIndex,linearVariableIndex,variableIdx
+    INTEGER(INTG) :: linearMappingIndex,variableIdx
     TYPE(EquationsType), POINTER :: equations
     TYPE(EquationsVectorType), POINTER :: vectorEquations
     TYPE(EquationsMappingVectorType), POINTER :: vectorMapping
@@ -4550,8 +4549,8 @@ MODULE SolverMappingRoutines
            & " in the array is invalid. That variable type is not mapped to any equations matrices."
        ENDIF
      ENDDO !variableIdx
-     createValuesCache%matrixVariableTypes(0,equationsSetIndex,solverMatrixNumber)=SIZE(variableTypes,1)
-     createValuesCache%matrixVariableTypes(1:SIZE(variableTypes,1),equationsSetIndex,solverMatrixNumber)=variableTypes
+     createValuesCache%matrixVariableTypes(0,equationsSetIdx,solverMatrixNumber)=SIZE(variableTypes,1)
+     createValuesCache%matrixVariableTypes(1:SIZE(variableTypes,1),equationsSetIdx,solverMatrixNumber)=variableTypes
    
     EXITS("SolverMapping_EquatsVarsToSolverMatrixSet")
     RETURN
@@ -4576,8 +4575,8 @@ MODULE SolverMappingRoutines
     !Local Variables
     INTEGER(INTG) :: dynamicVariableType,equationsSetIdx,linearVariableType,matrixIdx,newNumberOfResiduals,newNumberOfSources, &
       & numberOfEquationsMatrices,numberOfLinearVariables,numberOfResiduals,numberOfResidualVariables,numberOfSources, &
-      & numberOfSourceVariables,residualIdx,residualVariableType,rhsVariableType,solverMatrixIdx,sourceIdx,sourceVariableType, &
-      & variableIdx,variableIndex,variableTypeIdx
+      & residualIdx,residualVariableType,rhsVariableType,solverMatrixIdx,sourceIdx,sourceVariableType,variableIdx, &
+      & variableIndex,variableTypeIdx
     INTEGER(INTG), ALLOCATABLE :: newDynamicVariableTypes(:),newMatrixVariableTypes(:,:,:),newRHSVariableTypes(:), &
       & newResidualVariableTypes(:,:,:),newSourceVariableTypes(:,:,:)
     LOGICAL :: matrixDone

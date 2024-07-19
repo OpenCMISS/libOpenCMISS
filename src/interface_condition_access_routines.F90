@@ -458,7 +458,7 @@ CONTAINS
   !================================================================================================================================
   !
 
-  !>Returns the label of an interface condition into a character string. \see OpenCMISS::Iron::cmfe_InterfaceCondition_LabelGet
+  !>Returns the label of an interface condition into a character string. \see OpenCMISS::OC_InterfaceCondition_LabelGet
   SUBROUTINE InterfaceCondition_LabelGetC(interfaceCondition,label,err,error,*)
 
     !Argument variables
@@ -494,7 +494,7 @@ CONTAINS
   !================================================================================================================================
   !
 
-  !>Returns the label of a interface condition into a varying string. \see OpenCMISS::Iron::cmfe_InterfaceCondition_LabelGet
+  !>Returns the label of a interface condition into a varying string. \see OpenCMISS::OC_InterfaceCondition_LabelGet
   SUBROUTINE InterfaceCondition_LabelGetVS(interfaceCondition,label,err,error,*)
 
     !Argument variables
@@ -523,7 +523,7 @@ CONTAINS
   !================================================================================================================================
   !
 
-  !>Sets the label of an interface condition from a character string. \see OpenCMISS::Iron::cmfe_InterfaceCondition_LabelSet
+  !>Sets the label of an interface condition from a character string. \see OpenCMISS::OC_InterfaceCondition_LabelSet
   SUBROUTINE InterfaceCondition_LabelSetC(interfaceCondition,label,err,error,*)
 
     !Argument variables
@@ -552,7 +552,7 @@ CONTAINS
   !================================================================================================================================
   !
 
-  !>Sets the label of an interface condition from a varying string. \see OpenCMISS::Iron::cmfe_InterfaceCondition_LabelSet
+  !>Sets the label of an interface condition from a varying string. \see OpenCMISS::OC_InterfaceCondition_LabelSet
   SUBROUTINE InterfaceCondition_LabelSetVS(interfaceCondition,label,err,error,*)
 
     !Argument variables
@@ -796,10 +796,7 @@ CONTAINS
     INTEGER(INTG), INTENT(OUT) :: err !<The error code
     TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
     !Local Variables
-#ifdef WITH_PRECHECKS    
-    TYPE(VARYING_STRING) :: localError
-#endif
-    
+   
     ENTERS("InterfaceCondition_PenaltyFieldExists",err,error,*998)
 
 #ifdef WITH_PRECHECKS    
@@ -1064,10 +1061,7 @@ CONTAINS
     INTEGER(INTG), INTENT(OUT) :: err !<The error code
     TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
     !Local Variables
-#ifdef WITH_CHECKS    
-    TYPE(VARYING_STRING) :: localError
-#endif    
- 
+
     ENTERS("InterfaceDependent_InterfaceConditionGet",err,error,*998)
 
 #ifdef WITH_PRECHECKS 
@@ -1103,9 +1097,6 @@ CONTAINS
     INTEGER(INTG), INTENT(OUT) :: err !<The error code
     TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
     !Local Variables
-#ifdef WITH_CHECKS    
-    TYPE(VARYING_STRING) :: localError
-#endif    
  
     ENTERS("InterfaceDependent_NumberOfDependentVariablesGet",err,error,*999)
 

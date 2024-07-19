@@ -1261,7 +1261,7 @@ CONTAINS
   !================================================================================================================================
   !
 
-  !>Returns the output type for a decomposer \see OpenCMISS::Iron::cmfe_Decomposer_OutputTypeGet
+  !>Returns the output type for a decomposer \see OpenCMISS::OC_Decomposer_OutputTypeGet
   SUBROUTINE Decomposer_OutputTypeGet(decomposer,outputType,err,error,*)
 
     !Argument variables
@@ -1288,7 +1288,7 @@ CONTAINS
   !================================================================================================================================
   !
 
-  !>Sets/changes the output type for a decomposer \see OpenCMISS::Iron::cmfe_Decomposer_OutputTypeSet
+  !>Sets/changes the output type for a decomposer \see OpenCMISS::OC_Decomposer_OutputTypeSet
   SUBROUTINE Decomposer_OutputTypeSet(decomposer,outputType,err,error,*)
 
     !Argument variables
@@ -1837,7 +1837,7 @@ CONTAINS
   !================================================================================================================================
   !
 
-  !>Finishes the creation of a domain decomposition on a given mesh. \see OpenCMISS::Iron::cmfe_Decomposition_CreateFinish
+  !>Finishes the creation of a domain decomposition on a given mesh. \see OpenCMISS::OC_Decomposition_CreateFinish
   SUBROUTINE Decomposition_CreateFinish(decomposition,err,error,*)
 
     !Argument variables
@@ -1883,7 +1883,7 @@ CONTAINS
   !================================================================================================================================
   !
 
-  !>Starts the creation of a domain decomposition for a given mesh. \see OpenCMISS::Iron::cmfe_Decomposition_CreateStart
+  !>Starts the creation of a domain decomposition for a given mesh. \see OpenCMISS::OC_Decomposition_CreateStart
   SUBROUTINE Decomposition_CreateStart(userNumber,mesh,decomposition,err,error,*)
 
     !Argument variables
@@ -1958,7 +1958,7 @@ CONTAINS
   !================================================================================================================================
   !
 
-  !>Destroys a domain decomposition identified by an object and deallocates all memory. \see OpenCMISS::Iron::cmfe_Decomposition_Destroy
+  !>Destroys a domain decomposition identified by an object and deallocates all memory. \see OpenCMISS::OC_Decomposition_Destroy
   SUBROUTINE Decomposition_Destroy(decomposition,err,error,*)
 
     !Argument variables
@@ -2127,7 +2127,7 @@ CONTAINS
   !================================================================================================================================
   !
 
-!   !>Calculates the element domains for a decomposition of a mesh. \see OpenCMISS::Iron::cmfe_Decomposition_ElementDomainCalculate
+!   !>Calculates the element domains for a decomposition of a mesh. \see OpenCMISS::OC_Decomposition_ElementDomainCalculate
 !   SUBROUTINE Decomposition_ElementDomainCalculate(decomposition,err,error,*)
 
 !     !Argument variables
@@ -2348,7 +2348,7 @@ CONTAINS
   !================================================================================================================================
   !
 
-  !>Gets the domain for a given element in a decomposition of a mesh. \todo should be able to specify lists of elements. \see OpenCMISS::Iron::cmfe_Decomposition_ElementDomainGet
+  !>Gets the domain for a given element in a decomposition of a mesh. \todo should be able to specify lists of elements. \see OpenCMISS::OC_Decomposition_ElementDomainGet
   SUBROUTINE Decomposition_ElementDomainGet(decomposition,userElementNumber,domainNumber,err,error,*)
 
     !Argument variables
@@ -2387,7 +2387,7 @@ CONTAINS
   !================================================================================================================================
   !
 
-  !>Sets the domain for a given element in a decomposition of a mesh. \todo should be able to specify lists of elements. \see OpenCMISS::Iron::cmfe_Decomposition_ElementDomainSet 
+  !>Sets the domain for a given element in a decomposition of a mesh. \todo should be able to specify lists of elements. \see OpenCMISS::OC_Decomposition_ElementDomainSet 
   SUBROUTINE Decomposition_ElementDomainSet(decomposition,userElementNumber,domainNumber,err,error,*)
 
     !Argument variables
@@ -2511,7 +2511,7 @@ CONTAINS
   !================================================================================================================================
   !
  
-  !>Gets the mesh component number which will be used for the decomposition of a mesh. \see OpenCMISS::Iron::cmfe_Decomposition_MeshComponentGet
+  !>Gets the mesh component number which will be used for the decomposition of a mesh. \see OpenCMISS::OC_Decomposition_MeshComponentGet
   SUBROUTINE Decomposition_MeshComponentNumberGet(decomposition,meshComponentNumber,err,error,*)
 
     !Argument variables
@@ -2539,7 +2539,7 @@ CONTAINS
   !================================================================================================================================
   !
 
-  !>Sets/changes the mesh component number which will be used for the decomposition of a mesh. \see OpenCMISS::Iron::cmfe_DecompositionMeshComponentSet
+  !>Sets/changes the mesh component number which will be used for the decomposition of a mesh. \see OpenCMISS::OC_DecompositionMeshComponentSet
   SUBROUTINE Decomposition_MeshComponentNumberSet(decomposition,meshComponentNumber,err,error,*)
 
     !Argument variables
@@ -2573,7 +2573,7 @@ CONTAINS
   !================================================================================================================================
   !
 
-  !>Gets the domain for a given node in a decomposition of a mesh. \todo should be able to specify lists of elements. \see OpenCMISS::Iron::cmfe_Decomposition_NodeDomainGet
+  !>Gets the domain for a given node in a decomposition of a mesh. \todo should be able to specify lists of elements. \see OpenCMISS::OC_Decomposition_NodeDomainGet
   SUBROUTINE Decomposition_NodeDomainGet(decomposition,userNodeNumber,meshComponentNumber,domainNumber,err,error,*)
 
     !Argument variables
@@ -2623,7 +2623,7 @@ CONTAINS
   !================================================================================================================================
   !
 
-  !>Sets the workgroup to use for a decomposition on a given mesh. \see OpenCMISS::Iron::cmfe_Decomposition_WorkGroupSet
+  !>Sets the workgroup to use for a decomposition on a given mesh. \see OpenCMISS::OC_Decomposition_WorkGroupSet
   SUBROUTINE Decomposition_WorkGroupSet(decomposition,workGroup,err,error,*)
 
     !Argument variables
@@ -4906,7 +4906,7 @@ CONTAINS
   !================================================================================================================================
   !
 
-  !>Gets the decomposition type for a decomposition. \see OpenCMISS::Iron::cmfe_Decomposition_TypeGet
+  !>Gets the decomposition type for a decomposition. \see OpenCMISS::OC_Decomposition_TypeGet
   SUBROUTINE Decomposition_TypeGet(decomposition,type,err,error,*)
 
     !Argument variables
@@ -4933,7 +4933,7 @@ CONTAINS
   !================================================================================================================================
   !
 
-  !>Sets/changes the decomposition type for a decomposition.  \see OpenCMISS::Iron::cmfe_Decomposition_TypeSet
+  !>Sets/changes the decomposition type for a decomposition.  \see OpenCMISS::OC_Decomposition_TypeSet
   SUBROUTINE Decomposition_TypeSet(decomposition,type,err,error,*)
 
     !Argument variables
@@ -4971,7 +4971,7 @@ CONTAINS
   !================================================================================================================================
   !
 
-  !>Sets/changes whether lines should be calculated in the the decomposition. \see OpenCMISS::Iron::cmfe_Decomposition_CalculateLinesSet
+  !>Sets/changes whether lines should be calculated in the the decomposition. \see OpenCMISS::OC_Decomposition_CalculateLinesSet
   SUBROUTINE Decomposition_CalculateLinesSet(decomposition,calculateLinesFlag,err,error,*)
 
     !Argument variables
@@ -4997,7 +4997,7 @@ CONTAINS
   !================================================================================================================================
   !
 
-  !>Sets/changes whether faces should be calculated in the the decomposition. \see OpenCMISS::Iron::cmfe_Decomposition_CalculateFacesSet
+  !>Sets/changes whether faces should be calculated in the the decomposition. \see OpenCMISS::OC_Decomposition_CalculateFacesSet
   SUBROUTINE Decomposition_CalculateFacesSet(decomposition,calculateFacesFlag,err,error,*)
 
     !Argument variables

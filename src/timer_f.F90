@@ -60,7 +60,7 @@ MODULE Timer
   !Module variables
   
   !CPU time parameters
-  !> \addtogroup Timer_TimerTypes OpenCMISS::Iron:Timer::Constants::TimerTypes
+  !> \addtogroup Timer_TimerTypes OpenCMISS::Timer::Constants::TimerTypes
   !> \brief Timer type parameter
   !> \see Timer
   !>@{  

@@ -41,7 +41,7 @@
 !> the terms of any one of the MPL, the GPL or the LGPL.
 !>
 
-!> \defgroup OpenCMISS_Context OpenCMISS::Iron::Context
+!> \defgroup OpenCMISS_Context OpenCMISS::Context
 !> This module handles all contex routines.
 MODULE ContextRoutines
 
@@ -278,7 +278,7 @@ CONTAINS
   !================================================================================================================================
   !
 
-  !>Sets the random seeds for a context \see OpenCMISS::Iron::cmfe_Context_RandomSeedsSet
+  !>Sets the random seeds for a context \see OpenCMISS::OC_Context_RandomSeedsSet
   SUBROUTINE Context_RandomSeedsSet(context,randomSeeds,err,error,*)
   
     !Argument variables 

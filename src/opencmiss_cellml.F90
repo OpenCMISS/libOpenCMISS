@@ -41,7 +41,7 @@
 !> the terms of any one of the MPL, the GPL or the LGPL.
 !>
 
-!> \defgroup OpenCMISS_CellML OpenCMISS::Iron::CellML
+!> \defgroup OpenCMISS_CellML OpenCMISS::CellML
 !> This module is a OpenCMISS buffer module to CellML.
 MODULE OpenCMISSCellML
 

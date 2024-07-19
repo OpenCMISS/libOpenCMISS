@@ -291,7 +291,7 @@ CONTAINS
   !================================================================================================================================
   !
 
-  !>Returns a pointer to the decomposition for a given user number in a mesh. \see OpenCMISS::Iron::cmfe_Mesh_DecompositionGet
+  !>Returns a pointer to the decomposition for a given user number in a mesh. \see OpenCMISS::OC_Mesh_DecompositionGet
   SUBROUTINE Mesh_DecompositionGet(mesh,userNumber,decomposition,err,error,*)
 
     !Argument variables
@@ -758,7 +758,7 @@ CONTAINS
   !================================================================================================================================
   !
   
-  !>Gets the number of mesh components for a mesh identified by a pointer. \see OpenCMISS::Iron::cmfe_Mesh_NumberOfComponentsGet
+  !>Gets the number of mesh components for a mesh identified by a pointer. \see OpenCMISS::OC_Mesh_NumberOfComponentsGet
   SUBROUTINE Mesh_NumberOfComponentsGet(mesh,numberOfComponents,err,error,*)
 
     !Argument variables
@@ -812,7 +812,7 @@ CONTAINS
   !================================================================================================================================
   !
   
-  !>Gets the number of elements for a mesh identified by a pointer. \see OpenCMISS::Iron::cmfe_Mesh_NumberOfElementsGet
+  !>Gets the number of elements for a mesh identified by a pointer. \see OpenCMISS::OC_Mesh_NumberOfElementsGet
   SUBROUTINE Mesh_NumberOfElementsGet(mesh,numberOfElements,err,error,*)
 
     !Argument variables
@@ -1186,7 +1186,7 @@ CONTAINS
   !================================================================================================================================
   !
 
-  !>Returns the adjacent element number for a mesh element identified by a global number. \see OpenCMISS::Iron::cmfe_MeshElements_AdjacentElementGet
+  !>Returns the adjacent element number for a mesh element identified by a global number. \see OpenCMISS::OC_MeshElements_AdjacentElementGet
   SUBROUTINE MeshElements_ElementAdjacentElementGet(meshElements,globalElementNumber,adjacentElementXi, &
     & adjacentGlobalNumber,err,error,*)
 
@@ -1242,7 +1242,7 @@ CONTAINS
   !================================================================================================================================
   !
 
-  !>Get the basis for an element in the mesh elements identified by its global number. \see OpenCMISS::Iron::cmfe_MeshElements_BasisGet
+  !>Get the basis for an element in the mesh elements identified by its global number. \see OpenCMISS::OC_MeshElements_BasisGet
   SUBROUTINE MeshElements_ElementBasisGet(meshElements,globalElementNumber,basis,err,error,*)
 
     !Argument variables
@@ -1371,7 +1371,7 @@ CONTAINS
   !================================================================================================================================
   !
   
-  !>Returns the user element number for an element in mesh elements. \see OpenCMISS::Iron::cmfe_MeshElements_UserNumberGet
+  !>Returns the user element number for an element in mesh elements. \see OpenCMISS::OC_MeshElements_UserNumberGet
   SUBROUTINE MeshElements_ElementUserNumberGet(meshElements,elementNumber,userElementNumber,err,error,*)
 
     !Argument variables

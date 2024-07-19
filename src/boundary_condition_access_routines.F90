@@ -41,7 +41,7 @@
 !> the terms of any one of the MPL, the GPL or the LGPL.
 !>
 
-!> \addtogroup OpenCMISS_BoundaryConditions OpenCMISS::Iron::BoundaryConditions
+!> \addtogroup OpenCMISS_BoundaryConditions OpenCMISS::BoundaryConditions
 !> This module contains all boundary condition access method routines.
 MODULE BoundaryConditionAccessRoutines
   
@@ -60,10 +60,10 @@ MODULE BoundaryConditionAccessRoutines
 
   !Module parameters
 
-  !> \addtogroup BoundaryConditionsRoutines_Constants OpenCMISS::Iron::BoundaryConditions::Constants
+  !> \addtogroup BoundaryConditionsRoutines_Constants OpenCMISS::BoundaryConditions::Constants
   !> \brief Boundary conditions constants.
   !>@{
-  !> \addtogroup BoundaryConditionsRoutines_RowTypes OpenCMISS::Iron::BoundaryConditions::Constants::RowTypes
+  !> \addtogroup BoundaryConditionsRoutines_RowTypes OpenCMISS::BoundaryConditions::Constants::RowTypes
   !> \brief Boundary conditions type for rows.
   !>@{
   INTEGER(INTG), PARAMETER :: BOUNDARY_CONDITION_FREE_ROW=0 !<The row is free. \see BoundaryConditionsRoutines_RowTypes,BoundaryConditionsRoutines
@@ -76,7 +76,7 @@ MODULE BoundaryConditionAccessRoutines
   INTEGER(INTG), PARAMETER :: BOUNDARY_CONDITION_CONSTRAINED_ROW=6 !<The row has a constraint boundary condition. \see BoundaryConditionsRoutines_RowTypes,BoundaryConditionsRoutines
   !>@}
   
-  !> \addtogroup BoundaryConditionsRoutines_DOFTypes OpenCMISS::Iron:::BoundaryConditions::Constants::DOFTypes
+  !> \addtogroup BoundaryConditionsRoutines_DOFTypes OpenCMISS:::BoundaryConditions::Constants::DOFTypes
   !> \brief DOF type for boundary conditions.
   !>@{
   INTEGER(INTG), PARAMETER :: BOUNDARY_CONDITION_DOF_FREE=0 !<The dof is free. \see BoundaryConditionsRoutines_DOFTypes,BoundaryConditionsRoutines
@@ -86,7 +86,7 @@ MODULE BoundaryConditionAccessRoutines
   INTEGER(INTG), PARAMETER :: BOUNDARY_CONDITION_DOF_CONSTRAINED=4 !<The dof is constrained to be a linear combination of other DOFs. \see BoundaryConditionsRoutines_DOFTypes,BoundaryConditionsRoutines
   !>@}
   
-  !> \addtogroup BoundaryConditionsRoutines_BoundaryConditionsTypes OpenCMISS::Iron:::BoundaryConditions::Constants::BoundaryConditionTypes
+  !> \addtogroup BoundaryConditionsRoutines_BoundaryConditionsTypes OpenCMISS:::BoundaryConditions::Constants::BoundaryConditionTypes
   !> \brief Boundary conditions types. These may be specific to a particular equation type and the solver routines should not need to use these.
   !>@{
   INTEGER(INTG), PARAMETER :: BOUNDARY_CONDITION_NONE=0 !<The DOF has no boundary condition. \see BoundaryConditionsRoutines_BoundaryConditionsTypes,BoundaryConditionsRoutines
@@ -120,7 +120,7 @@ MODULE BoundaryConditionAccessRoutines
   INTEGER(INTG), PARAMETER :: MAX_BOUNDARY_CONDITION_NUMBER=29 !The maximum boundary condition type identifier, used for allocating an array with an entry for each type
   !>@}
   
-  !> \addtogroup BoundaryConditionsRoutines_SparsityTypes OpenCMISS::Iron::BoundaryConditions::Constants::SparsityTypes
+  !> \addtogroup BoundaryConditionsRoutines_SparsityTypes OpenCMISS::BoundaryConditions::Constants::SparsityTypes
   !> \brief Storage type for matrices used by boundary conditions.
   !>@{
   INTEGER(INTG), PARAMETER :: BOUNDARY_CONDITION_SPARSE_MATRICES=1 !<The matrices are stored as sparse matrices.
@@ -252,7 +252,6 @@ CONTAINS
     INTEGER(INTG), INTENT(OUT) :: err !<The error code
     TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
     !Local Variables
-    TYPE(VARYING_STRING) :: localError
  
     ENTERS("BoundaryConditions_AssertIsFinished",err,error,*999)
 
@@ -282,7 +281,6 @@ CONTAINS
     INTEGER(INTG), INTENT(OUT) :: err !<The error code
     TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
     !Local Variables
-    TYPE(VARYING_STRING) :: localError
  
     ENTERS("BoundaryConditions_AssertNotFinished",err,error,*999)
 

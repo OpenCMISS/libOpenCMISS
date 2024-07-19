@@ -41,7 +41,7 @@
 !> the terms of any one of the MPL, the GPL or the LGP  L.
 !>
 
-!> \defgroup OpenCMISS_Basis OpenCMISS::Iron::Basis
+!> \defgroup OpenCMISS_Basis OpenCMISS::Basis
 !> This module contains all basis function routines.
 MODULE BasisRoutines
 
@@ -231,7 +231,7 @@ CONTAINS
   !================================================================================================================================
   !
 
-  !>Finishes the creation of a new basis \see BasisRoutines::Basis_CreateStart,OpenCMISS::Iron::cmfe_Basis_CreateFinish
+  !>Finishes the creation of a new basis \see BasisRoutines::Basis_CreateStart,OpenCMISS::OC_Basis_CreateFinish
   SUBROUTINE Basis_CreateFinish(basis,err,error,*)
 
     !Argument variables
@@ -456,7 +456,7 @@ CONTAINS
   !================================================================================================================================
   !
 
-  !>Starts the creation of a new basis \see BasisRoutines::Basis_CreateFinish,OpenCMISS::Iron::cmfe_Basis_CreateStart
+  !>Starts the creation of a new basis \see BasisRoutines::Basis_CreateFinish,OpenCMISS::OC_Basis_CreateStart
   !>The default values of the BASIS attributes are:
   !>- TYPE: 1 (BASIS_LAGRANGE_HERMITE_TP_TYPE)
   !>- NUMBER_OF_XI: 3
@@ -540,7 +540,7 @@ CONTAINS
   !================================================================================================================================
   !
 
-  !>Destroys a basis identified by its basis user number \see BasisRoutines::BASIS_DESTROY_FAMILY,OpenCMISS::Iron::cmfe_Basis_Destroy
+  !>Destroys a basis identified by its basis user number \see BasisRoutines::BASIS_DESTROY_FAMILY,OpenCMISS::OC_Basis_Destroy
   RECURSIVE SUBROUTINE Basis_DestroyNumber(basisFunctions,userNumber,err,error,*)
 
     !Argument variables
@@ -565,7 +565,7 @@ CONTAINS
   !================================================================================================================================
   !
 
-  !>Destroys a basis. \see BasisRoutines::BASIS_DESTROY_FAMILY,OpenCMISS::Iron::cmfe_Basis_Destroy
+  !>Destroys a basis. \see BasisRoutines::BASIS_DESTROY_FAMILY,OpenCMISS::OC_Basis_Destroy
   RECURSIVE SUBROUTINE Basis_Destroy(basis,err,error,*)
 
     !Argument variables
@@ -1919,7 +1919,7 @@ CONTAINS
   !================================================================================================================================
   !
 
-  !>Sets/changes the interpolation type in each xi directions for a basis identified by a pointer. \see OpenCMISS::Iron::cmfe_Basis_InterpolationXiSet
+  !>Sets/changes the interpolation type in each xi directions for a basis identified by a pointer. \see OpenCMISS::OC_Basis_InterpolationXiSet
   SUBROUTINE Basis_InterpolationXiSet(basis,interpolationXi,err,error,*)
 
     !Argument variables
@@ -3165,7 +3165,7 @@ CONTAINS
   !================================================================================================================================
   !
 
-  !>Sets/changes the number of xi directions for a basis. \see OpenCMISS::Iron::cmfe_Basis_NumberOfXiSet
+  !>Sets/changes the number of xi directions for a basis. \see OpenCMISS::OC_Basis_NumberOfXiSet
   SUBROUTINE Basis_NumberOfXiSet(basis,numberOfXi,err,error,*)
 
     !Argument variables
@@ -3789,7 +3789,7 @@ CONTAINS
   !================================================================================================================================
   !
 
-  !>Sets/changes the number of Gauss points in each xi direction on a basis quadrature identified by a pointer. \see OpenCMISS::Iron::cmfe_Basis_QuadratureNumberOfGaussSet
+  !>Sets/changes the number of Gauss points in each xi direction on a basis quadrature identified by a pointer. \see OpenCMISS::OC_Basis_QuadratureNumberOfGaussSet
   SUBROUTINE Basis_QuadratureNumberOfGaussXiSet(basis,numberOfGaussXi,err,error,*)
 
     !Argument variables
@@ -3870,7 +3870,7 @@ CONTAINS
   !================================================================================================================================
   !
 
-  !>Sets/changes the order of a quadrature for a basis quadrature identified by a pointer. \see OpenCMISS::Iron::cmfe_Basis_QuadratureOrderSet
+  !>Sets/changes the order of a quadrature for a basis quadrature identified by a pointer. \see OpenCMISS::OC_Basis_QuadratureOrderSet
   SUBROUTINE Basis_QuadratureOrderSet(basis,order,err,error,*)
 
     !Argument variables
@@ -5619,7 +5619,7 @@ CONTAINS
   !================================================================================================================================
   !
 
-  !>Sets/changes the type for a basis is identified by a a pointer. \see OpenCMISS::Iron::cmfe_Basis_TypeSet
+  !>Sets/changes the type for a basis is identified by a a pointer. \see OpenCMISS::OC_Basis_TypeSet
   SUBROUTINE Basis_TypeSet(basis,type,err,error,*)
 
     !Argument variables
@@ -5661,7 +5661,7 @@ CONTAINS
   !================================================================================================================================
   !
 
-  !>Sets/changes the collapsed xi flags for a basis is identified by a a pointer. \see OpenCMISS::Iron::cmfe_Basis_CollapsedXiSet
+  !>Sets/changes the collapsed xi flags for a basis is identified by a a pointer. \see OpenCMISS::OC_Basis_CollapsedXiSet
   SUBROUTINE Basis_CollapsedXiSet(basis,collapsedXi,err,error,*)
 
     !Argument variables

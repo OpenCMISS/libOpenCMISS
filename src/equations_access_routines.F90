@@ -84,7 +84,7 @@ MODULE EquationsAccessRoutines
 
   !> \addtogroup EquationsRoutines_EquationTypes EquationsRoutines::EquationTypes
   !> \brief The types of equations
-  !> \see EquationsRoutines,OPENCMISS_EquationsTypes
+  !> \see EquationsRoutines,OpenCMISS_EquationsTypes
   !>@{
   INTEGER(INTG), PARAMETER :: EQUATIONS_SCALAR_TYPE=1 !<Single scalar equation. \see EquationsRoutines_EquationTypes,EquationsRoutines
   INTEGER(INTG), PARAMETER :: EQUATIONS_VECTOR_TYPE=2 !<Vector of multiple equations. \see EquationsRoutines_EquationsTypes,EquationsRoutines
@@ -93,7 +93,7 @@ MODULE EquationsAccessRoutines
 
   !> \addtogroup EquationsRoutines_EquationEqualityTypes EquationsRoutines::EquationEqualityTypes
   !> \brief The types of equality for the equations
-  !> \see EquationsRoutines,OPENCMISS_EquationsEqualityTypes
+  !> \see EquationsRoutines,OpenCMISS_EquationsEqualityTypes
   !>@{
   INTEGER(INTG), PARAMETER :: EQUATIONS_EQUALS_TYPE=1 !<The equations equal zero \see EquationsRoutines_EquationEqualityTypes,EquationsRoutines
   INTEGER(INTG), PARAMETER :: EQUATIONS_LESS_THAN_TYPE=2 !<The equations are less than zero. \see EquationsRoutines_EquationsEqualityTypes,EquationsRoutines
@@ -104,7 +104,7 @@ MODULE EquationsAccessRoutines
 
   !> \addtogroup EquationsRoutines_OutputTypes EquationsRoutines::OutputTypes
   !> \brief The equations output types
-  !> \see EquationsRoutines,OPENCMISS_EquationsConstants
+  !> \see EquationsRoutines,OpenCMISS_EquationsConstants
   !>@{
   INTEGER(INTG), PARAMETER :: EQUATIONS_NO_OUTPUT=0 !<No output. \see EquationsRoutines_OutputTypes,EquationsRoutines
   INTEGER(INTG), PARAMETER :: EQUATIONS_TIMING_OUTPUT=1 !<Timing information output. \see EquationsRoutines_OutputTypes,EquationsRoutines
@@ -115,7 +115,7 @@ MODULE EquationsAccessRoutines
 
   !> \addtogroup EquationsRoutines_SparsityTypes EquationsRoutines::SparsityTypes
   !> \brief Equations matrices sparsity types
-  !> \see EquationsRoutines,OPENCMISS_EquationsSparsityTypes
+  !> \see EquationsRoutines,OpenCMISS_EquationsSparsityTypes
   !>@{
   INTEGER(INTG), PARAMETER :: EQUATIONS_SPARSE_MATRICES=1 !<Use sparse matrices for the equations. \see EquationsRoutines_SparsityTypes,EquationsRoutines
   INTEGER(INTG), PARAMETER :: EQUATIONS_FULL_MATRICES=2 !<Use fully populated matrices for the equations. \see EquationsRoutines_SparsityTypes,EquationsRoutines
@@ -123,7 +123,7 @@ MODULE EquationsAccessRoutines
  
   !> \addtogroup EquationsRoutines_LumpingTypes EquationsRoutines::LumpingTypes
   !> \brief Equations matrices lumping types
-  !> \see EquationsRoutines,OPENCMISS_EquationsLumpingTypes
+  !> \see EquationsRoutines,OpenCMISS_EquationsLumpingTypes
   !>@{
   INTEGER(INTG), PARAMETER :: EQUATIONS_UNLUMPED_MATRICES=1 !<The equations matrices are not lumped. \see EquationsRoutines_LumpingTypes,EquationsRoutines
   INTEGER(INTG), PARAMETER :: EQUATIONS_LUMPED_MATRICES=2 !<The equations matrices are "mass" lumped. \see EquationsRoutines_LumpingTypes,EquationsRoutines

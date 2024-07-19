@@ -422,7 +422,7 @@ MODULE EquationsSetAccessRoutines
 
   !> \addtogroup EquationsSetRoutines_OutputTypes EquationsSet::Constants::OutputTypes
   !> \brief The equations set output types
-  !> \see EquationsSetRoutines,OPENCMISS_EquationsConstants
+  !> \see EquationsSetRoutines,OpenCMISS_EquationsConstants
   !>@{
   INTEGER(INTG), PARAMETER :: EQUATIONS_SET_NO_OUTPUT=0 !<No output. \see EquationsSetRoutines_OutputTypes,EquationsSetRoutines
   INTEGER(INTG), PARAMETER :: EQUATIONS_SET_PROGRESS_OUTPUT=1 !<Progress information output. \see EquationsSetRoutines_OutputTypes,EquationsSetRoutines
@@ -1185,7 +1185,7 @@ CONTAINS
   !================================================================================================================================
   !
 
-  !>Returns the analytic time for an equations set. \see OpenCMISS::cmfe_EquationsSet_AnalyticTimeGet
+  !>Returns the analytic time for an equations set. \see OpenCMISS::OC_EquationsSet_AnalyticTimeGet
   SUBROUTINE EquationsSet_AnalyticTimeGet(equationsSet,analyticTime,err,error,*)
 
     !Argument variables
@@ -1215,7 +1215,7 @@ CONTAINS
   !================================================================================================================================
   !
 
-  !>Sets the analytic time for an equations set. \see OpenCMISS::cmfe_EquationsSet_AnalyticTimeSet
+  !>Sets the analytic time for an equations set. \see OpenCMISS::OC_EquationsSet_AnalyticTimeSet
   SUBROUTINE EquationsSet_AnalyticTimeSet(equationsSet,analyticTime,err,error,*)
 
     !Argument variables
@@ -2631,7 +2631,6 @@ CONTAINS
     INTEGER(INTG), INTENT(OUT) :: err !<The error code
     TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
     !Local Variables
-    TYPE(VARYING_STRING) :: localError
  
     ENTERS("EquationsSet_DependentFieldExists",err,error,*998)
 
@@ -3265,7 +3264,7 @@ END SUBROUTINE EquationsSet_GlobalNumberGet
   !================================================================================================================================
   !
 
-  !>Returns the label of an equations set into a character string. \see OpenCMISS::cmfe_EquationsSet_LabelGet
+  !>Returns the label of an equations set into a character string. \see OpenCMISS::OC_EquationsSet_LabelGet
   SUBROUTINE EquationsSet_LabelGetC(equationsSet,label,err,error,*)
 
     !Argument variables
@@ -3301,7 +3300,7 @@ END SUBROUTINE EquationsSet_GlobalNumberGet
   !================================================================================================================================
   !
 
-  !>Returns the label of a equations set into a varying string. \see OpenCMISS::cmfe_EquationsSet_LabelGet
+  !>Returns the label of a equations set into a varying string. \see OpenCMISS::OC_EquationsSet_LabelGet
   SUBROUTINE EquationsSet_LabelGetVS(equationsSet,label,err,error,*)
 
     !Argument variables
@@ -3330,7 +3329,7 @@ END SUBROUTINE EquationsSet_GlobalNumberGet
   !================================================================================================================================
   !
 
-  !>Sets the label of an equations set from a character string. \see OpenCMISS::cmfe_EquationsSet_LabelSet
+  !>Sets the label of an equations set from a character string. \see OpenCMISS::OC_EquationsSet_LabelSet
   SUBROUTINE EquationsSet_LabelSetC(equationsSet,label,err,error,*)
 
     !Argument variables
@@ -3357,7 +3356,7 @@ END SUBROUTINE EquationsSet_GlobalNumberGet
   !================================================================================================================================
   !
 
-  !>Sets the label of an equations set from a varying string. \see OpenCMISS::cmfe_EquationsSet_LabelSet
+  !>Sets the label of an equations set from a varying string. \see OpenCMISS::OC_EquationsSet_LabelSet
   SUBROUTINE EquationsSet_LabelSetVS(equationsSet,label,err,error,*)
 
     !Argument variables
@@ -3657,7 +3656,7 @@ END SUBROUTINE EquationsSet_GlobalNumberGet
   !================================================================================================================================
   !
 
-  !>Returns the solution method for an equations set. \see OpenCMISS::Iron::cmfe_EquationsSet_SolutionMethodGet
+  !>Returns the solution method for an equations set. \see OpenCMISS::OC_EquationsSet_SolutionMethodGet
   SUBROUTINE EquationsSet_SolutionMethodGet(equationsSet,solutionMethod,err,error,*)
 
     !Argument variables
@@ -3847,7 +3846,7 @@ END SUBROUTINE EquationsSet_GlobalNumberGet
   !================================================================================================================================
   !
 
-  !>Returns the equations set specification i.e., equations set class, type and subtype for an equations set. \see OpenCMISS::Iron::cmfe_EquationsSet_SpecificationGet
+  !>Returns the equations set specification i.e., equations set class, type and subtype for an equations set. \see OpenCMISS::OC_EquationsSet_SpecificationGet
   SUBROUTINE EquationsSet_SpecificationGet(equationsSet,minSpecificationLength,equationsSetSpecification,err,error,*)
 
     !Argument variables
@@ -3993,7 +3992,7 @@ END SUBROUTINE EquationsSet_GlobalNumberGet
   !================================================================================================================================
   !
 
-  !>Gets the size of the equations set specification array for a problem identified by a pointer. \see OpenCMISS::Iron::cmfe_EquationsSet_SpecificationSizeGet
+  !>Gets the size of the equations set specification array for a problem identified by a pointer. \see OpenCMISS::OC_EquationsSet_SpecificationSizeGet
   SUBROUTINE EquationsSet_SpecificationSizeGet(equationsSet,specificationSize,err,error,*)
 
     !Argument variables
@@ -4024,7 +4023,7 @@ END SUBROUTINE EquationsSet_GlobalNumberGet
   !================================================================================================================================
   !
 
-  !>Gets the current times for an equations set. \see OpenCMISS::Iron::cmfe_EquationsSet_TimesGet
+  !>Gets the current times for an equations set. \see OpenCMISS::OC_EquationsSet_TimesGet
   SUBROUTINE EquationsSet_TimesGet(equationsSet,currentTime,deltaTime,err,error,*)
 
     !Argument variables

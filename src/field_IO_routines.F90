@@ -84,7 +84,7 @@ MODULE FIELD_IO_ROUTINES
   IMPLICIT NONE
 
 #ifdef WITH_MPI  
-#ifdef USE_F77_MPI
+#ifdef WITH_F77_MPI
 #include "mpif.h"
 #endif
 #endif  
@@ -6419,7 +6419,7 @@ CONTAINS
   !================================================================================================================================
   !
 
-  !>Export nodal information \see{FIELD_IO::FIELD_IO_NODES_EXPORT}. \see OPENCMISS::CMISSFieldIOElementsExportObj.
+  !>Export nodal information \see{FIELD_IO::FIELD_IO_NODES_EXPORT}. \see OpenCMISS::CMISSFieldIOElementsExportObj.
   SUBROUTINE FIELD_IO_NODES_EXPORT(FIELDS, FILE_NAME, METHOD, ERR,ERROR,*)
     !Argument variables
     TYPE(FieldsType), POINTER :: FIELDS !<the field object
@@ -6473,7 +6473,7 @@ CONTAINS
   !================================================================================================================================
   !
 
-  !>Export elemental information into multiple files \see{FIELD_IO::FIELD_IO_ELEMENTS_EXPORT} \see OPENCMISS::CMISSFieldIONodesExportObj.
+  !>Export elemental information into multiple files \see{FIELD_IO::FIELD_IO_ELEMENTS_EXPORT} \see OpenCMISS::CMISSFieldIONodesExportObj.
   SUBROUTINE FIELD_IO_ELEMENTS_EXPORT(FIELDS, FILE_NAME, METHOD,ERR,ERROR,*)
   !checking the input data for IO and initialize the nodal information set
   !the following items will be checked: the region (the same?), all the pointer(valid?)

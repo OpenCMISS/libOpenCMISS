@@ -26,7 +26,7 @@
 !> Auckland, the University of Oxford and King's College, London.
 !> All Rights Reserved.
 !>
-!> Contributor(s): Kumar Mithraratne
+!> Contributor(s): Chris Bradley, Kumar Mithraratne
 !>
 !> Alternatively, the contents of this file may be used under the terms of
 !> either the GNU General Public License Version 2 or later (the "GPL"), or
@@ -41,7 +41,7 @@
 !> the terms of any one of the MPL, the GPL or the LGPL.
 !>
 
-!> \defgroup OpenCMISS_CoordinateSystem OpenCMISS::Iron::CoordinateSystem
+!> \defgroup OpenCMISS_CoordinateSystem OpenCMISS::CoordinateSystem
 !> This module contains all coordinate transformation and support routines.
 MODULE CoordinateSystemRoutines
 
@@ -1242,7 +1242,7 @@ CONTAINS
   !================================================================================================================================
   !
 
-  !>Sets/changes the dimension of the coordinate system. \see OpenCMISS::Iron::cmfe_CoordinateSystem_DimensionSet
+  !>Sets/changes the dimension of the coordinate system. \see OpenCMISS::OC_CoordinateSystem_DimensionSet
   SUBROUTINE CoordinateSystem_DimensionSet(coordinateSystem,dimension,err,error,*)
 
     !Argument variables
@@ -1310,7 +1310,7 @@ CONTAINS
   !================================================================================================================================
   !
 
-  !>Sets/changes the focus of a coordinate system. \see OpenCMISS::Iron::cmfe_CoordinateSystem_FocusSet
+  !>Sets/changes the focus of a coordinate system. \see OpenCMISS::OC_CoordinateSystem_FocusSet
   SUBROUTINE CoordinateSystem_FocusSet(coordinateSystem,focus,err,error,*)
 
     !Argument variables
@@ -1350,7 +1350,7 @@ CONTAINS
   !================================================================================================================================
   !
 
-  !>Sets/changes the radial interpolation type of a coordinate system. \see OpenCMISS::Iron::cmfe_CoordinateSystem_RadialInterpolationTypeSet
+  !>Sets/changes the radial interpolation type of a coordinate system. \see OpenCMISS::OC_CoordinateSystem_RadialInterpolationTypeSet
   SUBROUTINE CoordinateSystem_RadialInterpolationTypeSet(coordinateSystem,radialInterpolationType,err,error,*)
 
     !Argument variables
@@ -1418,7 +1418,7 @@ CONTAINS
   !================================================================================================================================
   !
 
-  !>Sets/changes the type of a coordinate system. \see OpenCMISS::Iron::cmfe_CoordinateSystem_TypeSet
+  !>Sets/changes the type of a coordinate system. \see OpenCMISS::OC_CoordinateSystem_TypeSet
   SUBROUTINE CoordinateSystem_TypeSet(coordinateSystem,systemType,err,error,*)
 
     !Argument variables
@@ -1461,7 +1461,7 @@ CONTAINS
   !================================================================================================================================
   !
 
-  !>Sets/changes the origin of a coordinate system. \see OpenCMISS::Iron::cmfe_CoordinateSystem_OriginSet
+  !>Sets/changes the origin of a coordinate system. \see OpenCMISS::OC_CoordinateSystem_OriginSet
   SUBROUTINE CoordinateSystem_OriginSet(coordinateSystem,origin,err,error,*)
 
     !Argument variables
@@ -1494,7 +1494,7 @@ CONTAINS
   !================================================================================================================================
   !
 
-  !>Sets/changes the orientation of a coordinate system. \see OpenCMISS::Iron::cmfe_CoordinateSystem_OrientationSet
+  !>Sets/changes the orientation of a coordinate system. \see OpenCMISS::OC_CoordinateSystem_OrientationSet
   SUBROUTINE CoordinateSystem_OrientationSet(coordinateSystem,orientation,err,error,*)
 
     !Argument variables
@@ -1528,7 +1528,7 @@ CONTAINS
   !================================================================================================================================
   !
 
-  !>Starts the creation of and initialises a new coordinate system. \see OpenCMISS::Iron::cmfe_CoordinateSystem_CreateStart
+  !>Starts the creation of and initialises a new coordinate system. \see OpenCMISS::OC_CoordinateSystem_CreateStart
   !>The default values of the coordinateSystem's attributes are:
   !>- TYPE: 1 (COORDINATE_RECTANGULAR_CARTESIAN_TYPE)
   !>- radialInterpolationType: 0 (COORDINATE_NO_RADIAL_INTERPOLATION_TYPE)
@@ -1610,7 +1610,7 @@ CONTAINS
   !================================================================================================================================
   !
 
-  !>Finishes the creation of a new coordinate system. \see OpenCMISS::Iron::cmfe_CoordinateSystem_CreateFinish
+  !>Finishes the creation of a new coordinate system. \see OpenCMISS::OC_CoordinateSystem_CreateFinish
   SUBROUTINE CoordinateSystem_CreateFinish(coordinateSystem,err,error,*)
 
     !Argument variables
@@ -1654,7 +1654,7 @@ CONTAINS
   !================================================================================================================================
   !
 
-  !>Destroys a coordinate system. \see OpenCMISS::Iron::cmfe_CoordinateSystem_Destroy
+  !>Destroys a coordinate system. \see OpenCMISS::OC_CoordinateSystem_Destroy
   SUBROUTINE CoordinateSystem_Destroy(coordinateSystem,err,error,*)
 
     !Argument variables

@@ -792,9 +792,9 @@ CONTAINS
           CALL ControlLoop_SubLoopGet(subiterationLoop,1,solidSubLoop,err,error,*999)
           CALL ControlLoop_TypeSet(solidSubLoop,CONTROL_LOAD_INCREMENT_LOOP_TYPE,err,error,*999)
           !For problems that require it, the user can get the solid subloop using:
-          !CALL cmfe_Problem_ControlLoopGet(problem,[1,1,CMFE_CONTROL_LOOP_NODE],controlLoopSolid,err)
+          !CALL OC_Problem_ControlLoopGet(problem,[1,1,OC_CONTROL_LOOP_NODE],controlLoopSolid,err)
           !And then set the number of load increments to 3 for example with:
-          !CALL cmfe_ControlLoop_MaximumIterationsSet(controlLoopSolid,3,err)
+          !CALL OC_ControlLoop_MaximumIterationsSet(controlLoopSolid,3,err)
           CALL ControlLoop_MaximumIterationsSet(solidSubLoop,1,err,error,*999)
 !!TODO: DEFAULT SHOULD BE NO OUPUT???
           CALL ControlLoop_OutputTypeSet(solidSubLoop,CONTROL_LOOP_PROGRESS_OUTPUT,err,error,*999)

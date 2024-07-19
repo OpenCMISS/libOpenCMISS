@@ -1,9 +1,9 @@
-!> \file
+!> \file opencmiss.F90
 !> \brief The top level OpenCMISS module.
 !>
 !> \mainpage OpenCMISS Documentation
 !>
-!> http://www.opencmiss.org/
+!> https://www.opencmiss.org/
 !>
 !> An open source interactive computer program for Continuum Mechanics, Image analysis, Signal processing and System
 !> Identification. Target usage: Bioengineering application of finite element analysis, boundary element and collocation
@@ -11,17 +11,19 @@
 !>
 !> The Original Code is OpenCMISS
 !>
-!> Please see LICENSE for license information
+!> LICENSE
+!>
+!> \rtfinclude ../LICENSE
 !>
 !> Contributor(s): Chris Bradley
 !>
-!> \defgroup OpenCMISS
-!> The top level OpenCMISS module. This module is the buffer Fortran module between the OpenCMISS library and user code.
 
 ! Eclipse regular expressions to add the DLLEXPORT macro:
 ! Find: ^( *)(SUBROUTINE *)([^\(]*)(\([^\)]*\))
 ! Replace: $1$2$3$4\R$1  !DLLEXPORT($3)
 
+!> \defgroup OpenCMISS OpenCMISS
+!> \brief The top level OpenCMISS module. This module is the buffer Fortran module between the OpenCMISS library and user code
 MODULE OpenCMISS
 
   USE AnalyticAnalysisRoutines
@@ -114,20 +116,13 @@ MODULE OpenCMISS
 
   !> \addtogroup OpenCMISS_Constants OpenCMISS::Constants
   !> \brief OpenCMISS constants.
-  !> \addtogroup OpenCMISS_VersionConstants OpenCMISS::Constants::Version
-  !> \brief Version constants.
-  !> \see OpenCMISS::Constants::Kinds,OpenCMISS
   !>@{
-  INTEGER(INTG), PARAMETER :: OC_MAJOR_VERSION = OpenCMISS_MAJOR_VERSION !<OpenCMISS major version number. \see OpenCMISS_VersionContants
-  INTEGER(INTG), PARAMETER :: OC_MINOR_VERSION = OpenCMISS_MINOR_VERSION !<OpenCMISS minor version number. \see OpenCMISS_VersionContants
-  INTEGER(INTG), PARAMETER :: OC_PATCH_VERSION = OpenCMISS_PATCH_VERSION !<OpenCMISS patch version number. \see OpenCMISS_VersionContants
-  !>@}
   !> \addtogroup OpenCMISS_KindConstants OpenCMISS::Constants::Kinds
-  !> \brief Kind constants.
+  !> \brief OpenCMISS Fortran kind constants.
   !>@{
   !> \addtogroup OpenCMISS_IntegerKinds OpenCMISS::Constants::Kinds::Integers
   !> \brief Kind parameters for integer data types.
-  !> \see OpenCMISS::Constants::Kinds,OpenCMISS
+  !> \see OpenCMISS::Constants::Kinds,OpenCMISS::Constants
   !>@{
   INTEGER, PARAMETER :: OC_Intg = INTG !<Standard integer kind. \see OpenCMISS_IntegerKinds,OpenCMISS
   INTEGER, PARAMETER :: OC_SIntg = SINTG !<Short integer kind. \see OpenCMISS_IntegerKinds,OpenCMISS
@@ -138,7 +133,7 @@ MODULE OpenCMISS
   !>@}
   !> \addtogroup OpenCMISS_RealKinds OpenCMISS::Constants::Kinds::Reals
   !> \brief Kind parameters for real data types.
-  !> \see OpenCMISS::Constants::Kinds,OpenCMISS
+  !> \see OpenCMISS::Constants::Kinds,OpenCMISS::Constants
   !>@{
   INTEGER, PARAMETER :: OC_SP = SP !<Single precision real kind. \see OpenCMISS_RealKinds,OpenCMISS
   INTEGER, PARAMETER :: OC_DP = DP !<Double precision real kind. \see OpenCMISS_RealKinds,OpenCMISS
@@ -147,27 +142,44 @@ MODULE OpenCMISS
   !>@}
   !> \addtogroup OpenCMISS_ComplexKinds OpenCMISS::Constants::Kinds::Complex
   !> \brief Kind parameters for complex data types
-  !> \see OpenCMISS::Constants::Kinds,OpenCMISS
+  !> \see OpenCMISS::Constants::Kinds,OpenCMISS::Constants
   !>@{
   INTEGER, PARAMETER :: OC_SPC = SPC !<Single precision complex kind. \see OpenCMISS_ComplexKinds,OpenCMISS
   INTEGER, PARAMETER :: OC_DPC = DPC !<Double precision complex kind. \see OpenCMISS_ComplexKinds,OpenCMISS
   INTEGER, PARAMETER :: OC_RPC = RPC !<Working precision complex kind. \see OpenCMISS_ComplexKinds,OpenCMISS
   !>@}
   !>@}
+  !> \defgroup OpenCMISS_VersionConstants OpenCMISS::Constants::Version
+  !> \brief OpenCMISS version constants.
+  !> \see OpenCMISS::Constants
+  !>@{
+  INTEGER(INTG), PARAMETER :: OC_MAJOR_VERSION = OpenCMISS_MAJOR_VERSION !<OpenCMISS major version number. \see OpenCMISS_VersionContants
+  INTEGER(INTG), PARAMETER :: OC_MINOR_VERSION = OpenCMISS_MINOR_VERSION !<OpenCMISS minor version number. \see OpenCMISS_VersionContants
+  INTEGER(INTG), PARAMETER :: OC_PATCH_VERSION = OpenCMISS_PATCH_VERSION !<OpenCMISS patch version number. \see OpenCMISS_VersionContants
+  !>@}
+  !>@}
   
   !Module types
 
+  !> \addtogroup OpenCMISS_Basis OpenCMISS::Basis
+  !>@{
+  
   !>Contains information about a basis function.
   TYPE OC_BasisType
     PRIVATE
     TYPE(BasisType), POINTER :: basis
   END TYPE OC_BasisType
+  
+  !>@}
 
+  !> \addtogroup OpenCMISS_BoundaryConditions OpenCMISS::BoundaryConditions
+  !>@{
   !>Contains information on the boundary conditions for the equations set.
   TYPE OC_BoundaryConditionsType
     PRIVATE
     TYPE(BoundaryConditionsType), POINTER :: boundaryConditions
   END TYPE OC_BoundaryConditionsType
+  !>@}
 
   !>Contains information on a CellML environment.
   TYPE OC_CellMLType
@@ -482,7 +494,7 @@ MODULE OpenCMISS
   !> \brief Analytic analysis error type parameters.
   !> \see OpenCMISS::AnalyticAnalysis,OpenCMISS
   !>@{ 
-  INTEGER(INTG), PARAMETER :: OC_ANALYTIC_ABSOLUTE_ERROR_TYPE = ANALYTIC_ABSOLUTE_ERROR_TYPE !<Analytic analysis absolute error type \see OpenCMISS_AnalyticErrorTypes,OpenCMISS
+  INTEGER(OC_INTG), PARAMETER :: OC_ANALYTIC_ABSOLUTE_ERROR_TYPE = ANALYTIC_ABSOLUTE_ERROR_TYPE !<Analytic analysis absolute error type \see OpenCMISS_AnalyticErrorTypes,OpenCMISS
   INTEGER(INTG), PARAMETER :: OC_ANALYTIC_PERCENTAGE_ERROR_TYPE = ANALYTIC_PERCENTAGE_ERROR_TYPE !<Analytic analysis percentage error type \see OpenCMISS_AnalyticErrorTypes,OpenCMISS
   INTEGER(INTG), PARAMETER :: OC_ANALYTIC_RELATIVE_ERROR_TYPE = ANALYTIC_RELATIVE_ERROR_TYPE !<Analytic analysis relative error type \see OpenCMISS_AnalyticErrorTypes,OpenCMISS
   !>@}
@@ -686,9 +698,9 @@ MODULE OpenCMISS
   !> \addtogroup OpenCMISS_BasisConstants OpenCMISS::Basis::Constants
   !> \brief Basis function constants.
   !>@{
-  !> \addtogroup OpenCMISS_BasisTypes OpenCMISS::Basis::BasisTypes
+  !> \addtogroup OpenCMISS_BasisTypes OpenCMISS::Basis::Constants::BasisTypes
   !> \brief Basis definition type parameters.
-  !> \see OpenCMISS::BasisConstants,OpenCMISS
+  !> \see OpenCMISS::Basis::Constants,OpenCMISS::Basis
   !>@{ 
   INTEGER(INTG), PARAMETER :: OC_BASIS_LAGRANGE_HERMITE_TP_TYPE = BASIS_LAGRANGE_HERMITE_TP_TYPE !<Lagrange-Hermite tensor product basis type \see OpenCMISS_BasisTypes,OpenCMISS
   INTEGER(INTG), PARAMETER :: OC_BASIS_SIMPLEX_TYPE = BASIS_SIMPLEX_TYPE !<Simplex basis type \see OpenCMISS_BasisTypes,OpenCMISS
@@ -698,9 +710,9 @@ MODULE OpenCMISS
   INTEGER(INTG), PARAMETER :: OC_BASIS_FOURIER_LAGRANGE_HERMITE_TP_TYPE = BASIS_FOURIER_LAGRANGE_HERMITE_TP_TYPE !<Fourier-Lagrange tensor product basis type \see OpenCMISS_BasisTypes,OpenCMISS
   INTEGER(INTG), PARAMETER :: OC_BASIS_EXTENDED_LAGRANGE_TP_TYPE = BASIS_EXTENDED_LAGRANGE_TP_TYPE !< Extendend Lagrange tensor product basis type \see OpenCMISS_BasisTypes,OpenCMISS
   !>@}
-  !> \addtogroup OpenCMISS_BasisInterpolationSpecifications OpenCMISS::Basis::InterpolationSpecifications
+  !> \addtogroup OpenCMISS_BasisInterpolationSpecifications OpenCMISS::Basis::Constants::InterpolationSpecifications
   !> \brief Interpolation specification parameters
-  !> \see OpenCMISS::BasisConstants,OpenCMISS
+  !> \see OpenCMISS::Basis::Constants,OpenCMISS::Basis
   !>@{
   INTEGER(INTG), PARAMETER :: OC_BASIS_LINEAR_LAGRANGE_INTERPOLATION = BASIS_LINEAR_LAGRANGE_INTERPOLATION !<Linear Lagrange interpolation specification \see OpenCMISS_BasisInterpolationSpecifications,OpenCMISS
   INTEGER(INTG), PARAMETER :: OC_BASIS_QUADRATIC_LAGRANGE_INTERPOLATION = BASIS_QUADRATIC_LAGRANGE_INTERPOLATION !<Quadratic Lagrange interpolation specification \see OpenCMISS_BasisInterpolationSpecifications,OpenCMISS
@@ -712,18 +724,18 @@ MODULE OpenCMISS
   INTEGER(INTG), PARAMETER :: OC_BASIS_QUADRATIC_SIMPLEX_INTERPOLATION = BASIS_QUADRATIC_SIMPLEX_INTERPOLATION !<Quadratic Simplex interpolation specification \see OpenCMISS_BasisInterpolationSpecifications,OpenCMISS
   INTEGER(INTG), PARAMETER :: OC_BASIS_CUBIC_SIMPLEX_INTERPOLATION = BASIS_CUBIC_SIMPLEX_INTERPOLATION !<Cubic Simplex interpolation specification \see OpenCMISS_BasisInterpolationSpecifications,OpenCMISS
   !>@}
-  !> \addtogroup OpenCMISS_BasisQuadratureSchemes OpenCMISS::Basis::QuadratureSchemes
+  !> \addtogroup OpenCMISS_BasisQuadratureSchemes OpenCMISS::Basis::Constants::QuadratureSchemes
   !> \brief Quadrature scheme parameters
-  !> \see OpenCMISS::BasisConstants,OpenCMISS
+  !> \see OpenCMISS::Basis::Constants,OpenCMISS::Basis
   !>@{
   INTEGER(INTG), PARAMETER :: OC_BASIS_DEFAULT_QUADRATURE_SCHEME = BASIS_DEFAULT_QUADRATURE_SCHEME !<Identifier for the default quadrature scheme \see OpenCMISS_BasisQuadratureSchemes,OpenCMISS
   INTEGER(INTG), PARAMETER :: OC_BASIS_LOW_QUADRATURE_SCHEME = BASIS_LOW_QUADRATURE_SCHEME !<Identifier for a low order quadrature scheme \see OpenCMISS_BasisQuadratureSchemes,OpenCMISS
   INTEGER(INTG), PARAMETER :: OC_BASIS_MID_QUADRATURE_SCHEME = BASIS_MID_QUADRATURE_SCHEME !<Identifier for a mid order quadrature scheme \see OpenCMISS_BasisQuadratureSchemes,OpenCMISS
   INTEGER(INTG), PARAMETER :: OC_BASIS_HIGH_QUADRATURE_SCHEME = BASIS_HIGH_QUADRATURE_SCHEME !<Identifier for a high order quadrature scheme \see OpenCMISS_BasisQuadratureSchemes,OpenCMISS
   !>@}
-  !> \addtogroup OpenCMISS_BasisQuadratureTypes OpenCMISS::Basis::QuadratureTypes
+  !> \addtogroup OpenCMISS_BasisQuadratureTypes OpenCMISS::Basis::Constants::QuadratureTypes
   !> \brief Basis quadrature type parameters.
-  !> \see OpenCMISS::BasisConstants,OpenCMISS
+  !> \see OpenCMISS::Basis::Constants,OpenCMISS::Basis
   !>@{
   INTEGER(INTG), PARAMETER :: OC_BASIS_GAUSS_LEGENDRE_QUADRATURE = BASIS_GAUSS_LEGENDRE_QUADRATURE !<Gauss-Legendre quadrature \see OpenCMISS_BasisQuadratureTypes,OpenCMISS
   INTEGER(INTG), PARAMETER :: OC_BASIS_GAUSS_LAGUERRE_QUADRATURE = BASIS_GAUSS_LAGUERRE_QUADRATURE !<Gauss-Laguerre quadrature \see OpenCMISS_BasisQuadratureTypes,OpenCMISS
@@ -731,9 +743,9 @@ MODULE OpenCMISS
   INTEGER(INTG), PARAMETER :: OC_BASIS_ADAPTIVE_GAUSS_LEGENDRE_QUADRATURE = BASIS_ADAPTIVE_GAUSS_LEGENDRE_QUADRATURE !<Adaptive Gauss-Legendre quadrature \see OpenCMISS_BasisQuadratureTypes,OpenCMISS
   INTEGER(INTG), PARAMETER :: OC_BASIS_GAUSS_SIMPLEX_QUADRATURE = BASIS_GAUSS_SIMPLEX_QUADRATURE !<Gauss-Legendre for Simplex elements quadrature \see OpenCMISS_BasisQuadratureTypes,OpenCMISS
   !>@}
-  !> \addtogroup OpenCMISS_BasisXiCollapse OpenCMISS::Basis::XiCollapse
+  !> \addtogroup OpenCMISS_BasisXiCollapse OpenCMISS::Basis::Constants::XiCollapse
   !> \brief Basis Xi collapse parameters.
-  !> \see OpenCMISS::Basis,OpenCMISS
+  !> \see OpenCMISS::Basis::Constants,OpenCMISS::Basis
   !>@{
   INTEGER(INTG), PARAMETER :: OC_BASIS_XI_COLLAPSED = BASIS_XI_COLLAPSED !<The Xi direction is collapsed \see OpenCMISS_BasisXiCollapse,OpenCMISS
   INTEGER(INTG), PARAMETER :: OC_BASIS_COLLAPSED_AT_XI0 = BASIS_COLLAPSED_AT_XI0 !<The Xi direction at the xi=0 end of this Xi direction is collapsed \see OpenCMISS_BasisXiCollapse,OpenCMISS
@@ -748,6 +760,8 @@ MODULE OpenCMISS
 
   !Interfaces
 
+  !> \addtogroup OpenCMISS_Basis OpenCMISS::Basis
+  !>@{
   !>Returns the collapsed Xi flags for a basis.
   INTERFACE OC_Basis_CollapsedXiGet
     MODULE PROCEDURE OC_Basis_CollapsedXiGetNumber
@@ -869,7 +883,9 @@ MODULE OpenCMISS
     MODULE PROCEDURE OC_Basis_TypeSetNumber
     MODULE PROCEDURE OC_Basis_TypeSetObj
   END INTERFACE OC_Basis_TypeSet
-
+  
+  !>@}
+  
   PUBLIC OC_BASIS_LAGRANGE_HERMITE_TP_TYPE,OC_BASIS_SIMPLEX_TYPE,OC_BASIS_SERENDIPITY_TYPE,OC_BASIS_AUXILLIARY_TYPE, &
     & OC_BASIS_B_SPLINE_TP_TYPE,OC_BASIS_FOURIER_LAGRANGE_HERMITE_TP_TYPE,OC_BASIS_EXTENDED_LAGRANGE_TP_TYPE
 
@@ -1056,16 +1072,16 @@ MODULE OpenCMISS
   !==================================================================================================================================
 
   !Module parameters
-  !> \addtogroup OpenCMISS_CMISSConstants OpenCMISS::OC_::Constants
+  !> \addtogroup OpenCMISS_Constants OpenCMISS::Constants
   !> \brief CMISS constants.
   !>@{
-  !> \addtogroup OpenCMISS_CMISSErrorHandlingModes OpenCMISS::OC_::ErrorHandlingModes
+  !> \addtogroup OpenCMISS_ErrorHandlingModes OpenCMISS::Constants::ErrorHandlingModes
   !> \brief CMISS error handling mode parameters
-  !> \see OpenCMISS::OC_,OpenCMISS
+  !> \see OpenCMISS::Constants,OpenCMISS
   !>@{
-  INTEGER(INTG), PARAMETER :: OC_ERRORS_RETURN_ERROR_CODE = OC_RETURN_ERROR_CODE !<Just return the error code \see OpenCMISS_CMISSErrorHandlingModes,OpenCMISS
-  INTEGER(INTG), PARAMETER :: OC_ERRORS_OUTPUT_ERROR = OC_OUTPUT_ERROR !<Output the error traceback and return the error code \see OpenCMISS_CMISSErrorHandlingModes,OpenCMISS
-  INTEGER(INTG), PARAMETER :: OC_ERRORS_TRAP_ERROR = OC_TRAP_ERROR!<Trap the error by outputing the error traceback and stopping the program \see OpenCMISS_CMISSErrorHandlingModes,OpenCMISS
+  INTEGER(INTG), PARAMETER :: OC_ERRORS_RETURN_ERROR_CODE = OC_RETURN_ERROR_CODE !<Just return the error code \see OpenCMISS_ErrorHandlingModes,OpenCMISS
+  INTEGER(INTG), PARAMETER :: OC_ERRORS_OUTPUT_ERROR = OC_OUTPUT_ERROR !<Output the error traceback and return the error code \see OpenCMISS_ErrorHandlingModes,OpenCMISS
+  INTEGER(INTG), PARAMETER :: OC_ERRORS_TRAP_ERROR = OC_TRAP_ERROR!<Trap the error by outputing the error traceback and stopping the program \see OpenCMISS_ErrorHandlingModes,OpenCMISS
   !>@}
   !>@}
 
@@ -2925,9 +2941,9 @@ MODULE OpenCMISS
   !> \addtogroup OpenCMISS_EquationsSetRoutines OpenCMISS::EquationsSet::Constants
   !> \brief Equations set constants.
   !>@{
-  !> \addtogroup OpenCMISS_EquationsSetClasses OpenCMISS::EquationsSet::Classes
+  !> \addtogroup OpenCMISS_EquationsSetClasses OpenCMISS::EquationsSet::Constants::Classes
   !> \brief Equations set classes.
-  !> \see OpenCMISS::EquationsSet,OpenCMISS
+  !> \see OpenCMISS::EquationsSet::Constants,OpenCMISS::EquationsSet
   !>@{
   INTEGER(INTG), PARAMETER :: OC_EQUATIONS_SET_NO_CLASS = EQUATIONS_SET_NO_CLASS !<No equations set class \see OpenCMISS_EquationsSetClasses,OpenCMISS
   INTEGER(INTG), PARAMETER :: OC_EQUATIONS_SET_ELASTICITY_CLASS = EQUATIONS_SET_ELASTICITY_CLASS !<Elasticity equations set class \see OpenCMISS_EquationsSetClasses,OpenCMISS
@@ -2940,9 +2956,9 @@ MODULE OpenCMISS
   INTEGER(INTG), PARAMETER :: OC_EQUATIONS_SET_OPTIMISATION_CLASS = EQUATIONS_SET_OPTIMISATION_CLASS !<Optimisation equations set class \see OpenCMISS_EquationsSetClasses,OpenCMISS
   INTEGER(INTG), PARAMETER :: OC_EQUATIONS_SET_MULTI_PHYSICS_CLASS = EQUATIONS_SET_MULTI_PHYSICS_CLASS !<Multi Physics equations set class \see OpenCMISS_EquationsSetClasses,OpenCMISS
   !>@}
-  !> \addtogroup OpenCMISS_EquationsSetTypes OpenCMISS::EquationsSet::Types
+  !> \addtogroup OpenCMISS_EquationsSetTypes OpenCMISS::EquationsSet::Constants::Types
   !> \brief Equations set Types.
-  !> \see OpenCMISS::EquationsSet,OpenCMISS
+  !> \see OpenCMISS::EquationsSet::Constants,OpenCMISS::EquationsSet
   !>@{
   INTEGER(INTG), PARAMETER :: OC_EQUATIONS_SET_NO_TYPE = EQUATIONS_SET_NO_TYPE !<No equations set type \see OpenCMISS_EquationsSetTypes,OpenCMISS
   INTEGER(INTG), PARAMETER :: OC_EQUATIONS_SET_LINEAR_ELASTICITY_TYPE = EQUATIONS_SET_LINEAR_ELASTICITY_TYPE !<Linear elasticity equations set type \see OpenCMISS_EquationsSetTypes,OpenCMISS
@@ -2982,9 +2998,9 @@ MODULE OpenCMISS
     & EQUATIONS_SET_DIFFUSION_ADVECTION_DIFFUSION_TYPE !<Diffusion Advection Diffusion equations set type \see OpenCMISS_EquationsSetTypes,OpenCMISS
 
   !>@}
-  !> \addtogroup OpenCMISS_EquationsSetSubtypes OpenCMISS::EquationsSet::Subtypes
+  !> \addtogroup OpenCMISS_EquationsSetSubtypes OpenCMISS::EquationsSet::Constants::Subtypes
   !> \brief Equations set subtypes.
-  !> \see OpenCMISS::EquationsSet,OpenCMISS
+  !> \see OpenCMISS::EquationsSet::Constants,OpenCMISS::EquationsSet
   !>@{
   INTEGER(INTG), PARAMETER :: OC_EQUATIONS_SET_NO_SUBTYPE = EQUATIONS_SET_NO_SUBTYPE !<No equations set subtype \see OpenCMISS_EquationsSetSubtypes,OpenCMISS
   INTEGER(INTG), PARAMETER :: OC_EQUATIONS_SET_THREE_DIMENSIONAL_ISOTROPIC_SUBTYPE = &
@@ -3283,9 +3299,9 @@ MODULE OpenCMISS
     & EQUATIONS_SET_FINITE_ELASTICITY_NAVIER_STOKES_ALE_SUBTYPE !<Finite Elasticity Navier Stokes ALE equations set subtype \see OpenCMISS_EquationsSetSubtype,OpenCMISS
 
   !>@}
-  !> \addtogroup OpenCMISS_EquationsSetFittingSmoothingTypes OpenCMISS::EquationsSet::Fitting::SmoothingTypes
+  !> \addtogroup OpenCMISS_EquationsSetFittingSmoothingTypes OpenCMISS::EquationsSet::Fitting::Constants::SmoothingTypes
   !> \brief The smoothing types for fitting equations sets.
-  !> \see OpenCMISS::EquationsSet,OpenCMISS
+  !> \see OpenCMISS::EquationsSet::Fitting::Constants,OpenCMISS::EquationsSet::Fitting
   !>@{
   INTEGER(INTG), PARAMETER :: OC_EQUATIONS_SET_FITTING_NO_SMOOTHING = &
     & EQUATIONS_SET_FITTING_NO_SMOOTHING !<No smoothing \see OpenCMISS_EquationsSetFittingSmoothingTypes,OpenCMISS
@@ -3298,9 +3314,9 @@ MODULE OpenCMISS
   !>@}
 
   !>@}
-  !> \addtogroup OpenCMISS_EquationsSetSolutionMethods OpenCMISS::EquationsSet::SolutionMethods
+  !> \addtogroup OpenCMISS_EquationsSetSolutionMethods OpenCMISS::EquationsSet::Constants::SolutionMethods
   !> \brief The solution method parameters
-  !> \see OpenCMISS::EquationsSet,OpenCMISS
+  !> \see OpenCMISS::EquationsSet::Constants,OpenCMISS::EquationsSet
   !>@{
   INTEGER(INTG), PARAMETER :: OC_EQUATIONS_SET_FEM_SOLUTION_METHOD = EQUATIONS_SET_FEM_SOLUTION_METHOD !<Finite Element Method solution method. \see OpenCMISS_EquationsSetSolutionMethods,OpenCMISS
   INTEGER(INTG), PARAMETER :: OC_EQUATIONS_SET_BEM_SOLUTION_METHOD = EQUATIONS_SET_BEM_SOLUTION_METHOD !<Boundary Element Method solution method. \see OpenCMISS_EquationsSetSolutionMethods,OpenCMISS
@@ -3311,9 +3327,9 @@ MODULE OpenCMISS
   INTEGER(INTG), PARAMETER :: OC_EQUATIONS_SET_GFV_SOLUTION_METHOD = EQUATIONS_SET_GFV_SOLUTION_METHOD !<Grid-based Finite Volume solution method. \see OpenCMISS_EquationsSetSolutionMethods,OpenCMISS
   !>@}
 
-  !> \addtogroup OpenCMISS_EquationsSetDerivedTensorTypes OpenCMISS::EquationsSet::DerivedTensorTypes
+  !> \addtogroup OpenCMISS_EquationsSetDerivedTensorTypes OpenCMISS::EquationsSet::Constants::DerivedTensorTypes
   !> \brief EquationsSet derived tensor type parameters
-  !> \see OpenCMISS::EquationsSet,OpenCMISS
+  !> \see OpenCMISS::EquationsSet::Constants,OpenCMISS::EquationsSet
   !>@{
   INTEGER(INTG), PARAMETER :: OC_EQUATIONS_SET_DERIVED_DEFORMATION_GRADIENT = EQUATIONS_SET_DEFORMATION_GRADIENT_TENSOR !<Green strain tensor field output. \see OpenCMISS_EquationsSetDerivedTensorTypes,OpenCMISS
   INTEGER(INTG), PARAMETER :: OC_EQUATIONS_SET_DERIVED_DEFORMATION_GRADIENT_SPATIAL = &
@@ -3334,21 +3350,21 @@ MODULE OpenCMISS
   INTEGER(INTG), PARAMETER :: OC_EQUATIONS_SET_DERIVED_ELASTIC_WORK = EQUATIONS_SET_ELASTIC_WORK !<Elastic work field output. \see OpenCMISS_EquationsSetDerivedTensorTypes,OpenCMISS
   !>@}
 
-  !> \addtogroup OpenCMISS_EquationsSetOutputTypes OpenCMISS::EquationsSet::OutputTypes
+  !> \addtogroup OpenCMISS_EquationsSetOutputTypes OpenCMISS::EquationsSet::Constants::OutputTypes
   !> \brief Equations set output types
-  !> \see OpenCMISS::EquationsSet,OpenCMISS
+  !> \see OpenCMISS::EquationsSet::Constants,OpenCMISS::EquationsSet
   !>@{
   INTEGER(INTG), PARAMETER :: OC_EQUATIONS_SET_NO_OUTPUT = EQUATIONS_SET_NO_OUTPUT!<No output from the equations set \see OpenCMISS_EquationsSetOutputTypes,OpenCMISS
   INTEGER(INTG), PARAMETER :: OC_EQUATIONS_SET_PROGRESS_OUTPUT = EQUATIONS_SET_PROGRESS_OUTPUT !<Progress information output for the equations set. \see OpenCMISS_EquationsSetOutputTypes,OpenCMISS
   !>@}
 
-  !> \addtogroup OpenCMISS_EquationsSetAnalyticFunctionTypes OpenCMISS::EquationsSet::AnalyticFunctionTypes
+  !> \addtogroup OpenCMISS_EquationsSetAnalyticFunctionTypes OpenCMISS::EquationsSet::Constants::AnalyticFunctionTypes
   !> \brief The analytic function types.
-  !> \see OpenCMISS::EquationsSet,OpenCMISS
+  !> \see OpenCMISS::EquationsSet::Constants,OpenCMISS::EquationsSet
   !>@{
-  !> \addtogroup OpenCMISS_EquationsSetLaplaceAnalyticFunctionTypes OpenCMISS::EquationsSet::AnalyticFunctionTypes::Laplace
+  !> \addtogroup OpenCMISS_EquationsSetLaplaceAnalyticFunctionTypes OpenCMISS::EquationsSet::Constants::AnalyticFunctionTypes::Laplace
   !> \brief The analytic function types for a Laplace equation
-  !> \see OpenCMISS::EquationsSet::AnalyticFunctionTypes,OpenCMISS
+  !> \see OpenCMISS::EquationsSet::Constants::AnalyticFunctionTypes,OpenCMISS::EquationsSet::Constants
   !>@{
   INTEGER(INTG), PARAMETER :: OC_EQUATIONS_SET_STANDARD_LAPLACE_EQUATION_TWO_DIM_1 = &
     & EQUATIONS_SET_STANDARD_LAPLACE_EQUATION_TWO_DIM_1 !<u=x**2+2*x*y-y**2 \see OpenCMISS_EquationsSetLaplaceAnalyticFunctionTypes,OpenCMISS
@@ -3361,19 +3377,19 @@ MODULE OpenCMISS
   INTEGER(INTG), PARAMETER :: OC_EQUATIONS_SET_GENERALISED_LAPLACE_EQUATION_TWO_DIM_1 = &
     & EQUATIONS_SET_GENERALISED_LAPLACE_EQUATION_TWO_DIM_1 !<u=2.e^x.e^{-\lambda_{1}.y}cos(\lambda_{2}y) \see OpenCMISS_EquationsSetLaplaceAnalyticFunctionTypes,OpenCMISS
   !>@}
-  !> \addtogroup OpenCMISS_EquationsSetHelmholtzAnalyticFunctionTypes OpenCMISS::EquationsSet::AnalyticFunctionTypes::Helmholtz
+  !> \addtogroup OpenCMISS_EquationsSetHelmholtzAnalyticFunctionTypes OpenCMISS::EquationsSet::Constants::AnalyticFunctionTypes::Helmholtz
   !> \brief The analytic function types for a Helmholtz equation
   !> \see OpenCMISS::EquationsSet::AnalyticFunctionTypes,OpenCMISS
   !>@{
   INTEGER(INTG), PARAMETER :: OC_EQUATIONS_SET_HELMHOLTZ_EQUATION_TWO_DIM_1 = EQUATIONS_SET_HELMHOLTZ_EQUATION_TWO_DIM_1 !<u=cos(sqrt(2)*k*x)*sin(sqrt(2)*k*y) \see OpenCMISS_EquationsSetHelmholtzAnalyticFunctionTypes,OpenCMISS
   !>@}
-  !> \addtogroup OpenCMISS_PoiseuilleAnalyticFunctionTypes OpenCMISS::EquationsSet::AnalyticFunctionTypes::Poiseuille
+  !> \addtogroup OpenCMISS_PoiseuilleAnalyticFunctionTypes OpenCMISS::EquationsSet::Constants::AnalyticFunctionTypes::Poiseuille
   !> \brief The analytic function types for a Poiseuille equation.
   !> \see OpenCMISS::EquationsSet::AnalyticFunctionTypes,OpenCMISS
   !>@{
   INTEGER(INTG), PARAMETER :: OC_EQUATIONS_SET_POISEUILLE_EQUATION_TWO_DIM_1 = EQUATIONS_SET_POISEUILLE_EQUATION_TWO_DIM_1 !<u=ln(4/(x+y+1^2)) \see OpenCMISS_EquationsSetPoiseuilleAnalyticFunctionTypes,OpenCMISS
   !>@}
-  !> \addtogroup OpenCMISS_PoissonAnalyticFunctionTypes OpenCMISS::EquationsSet::AnalyticFunctionTypes::Poisson
+  !> \addtogroup OpenCMISS_PoissonAnalyticFunctionTypes OpenCMISS::EquationsSet::Constants::AnalyticFunctionTypes::Poisson
   !> \brief The analytic function types for a Poisson equation.
   !> \see OpenCMISS::EquationsSet::AnalyticFunctionTypes,OpenCMISS
   !>@{
@@ -3387,7 +3403,7 @@ MODULE OpenCMISS
   INTEGER(INTG), PARAMETER :: OC_EQUATIONS_SET_PRESSURE_POISSON_THREE_DIM_1 = EQUATIONS_SET_PRESSURE_POISSON_THREE_DIM_1 !<u=tbd \see OpenCMISS_EquationsSetPoissonAnalyticFunctionTypes,OpenCMISS
   INTEGER(INTG), PARAMETER :: OC_EQUATIONS_SET_PRESSURE_POISSON_THREE_DIM_2 = EQUATIONS_SET_PRESSURE_POISSON_THREE_DIM_2 !<u=tbd \see OpenCMISS_EquationsSetPoissonAnalyticFunctionTypes,OpenCMISS
   !>@}
-  !> \addtogroup OpenCMISS_DiffusionAnalyticFunctionTypes OpenCMISS::EquationsSet::AnalyticFunctionTypes::Diffusion
+  !> \addtogroup OpenCMISS_DiffusionAnalyticFunctionTypes OpenCMISS::EquationsSet::Constants::AnalyticFunctionTypes::Diffusion
   !> \brief The analytic function types for a diffusion equation.
   !> \see OpenCMISS::EquationsSet::AnalyticFunctionTypes,OpenCMISS
   !>@{
@@ -3410,21 +3426,21 @@ MODULE OpenCMISS
   INTEGER(INTG), PARAMETER :: OC_EQUATIONS_SET_MULTI_COMP_DIFFUSION_FOUR_COMP_THREE_DIM = &
     & EQUATIONS_SET_MULTI_COMP_DIFFUSION_FOUR_COMP_THREE_DIM !<Prescribed solution, using a source term to correct for error - 3D with 3 compartments
   !>@}
-  !> \addtogroup OpenCMISS_AdvectionDiffusionAnalyticFunctionTypes OpenCMISS::EquationsSet::AnalyticFunctionTypes::AdvectionDiffusion
+  !> \addtogroup OpenCMISS_AdvectionDiffusionAnalyticFunctionTypes OpenCMISS::EquationsSet::Constants::AnalyticFunctionTypes::AdvectionDiffusion
   !> \brief The analytic function types for an advection-diffusion equation.
   !> \see OpenCMISS::EquationsSet::AnalyticFunctionTypes,OpenCMISS
   !>@{
   INTEGER(INTG), PARAMETER :: OC_EQUATIONS_SET_ADVECTION_DIFFUSION_EQUATION_TWO_DIM_1 = &
     & EQUATIONS_SET_ADVECTION_DIFFUSION_EQUATION_TWO_DIM_1 !<u=exp(-kt)*sin(sqrt(k)*(x*cos(phi)+y*sin(phi))) \see OpenCMISS_EquationsSetDiffusionAnalyticFunctionTypes,OpenCMISS
   !>@}
-  !> \addtogroup OpenCMISS_ReactionDiffusionAnalyticFunctionTypes OpenCMISS::EquationsSet::AnalyticFunctionTypes::ReactionDiffusion
+  !> \addtogroup OpenCMISS_ReactionDiffusionAnalyticFunctionTypes OpenCMISS::EquationsSet::Constants::AnalyticFunctionTypes::ReactionDiffusion
   !> \brief The analytic function types for a reaction-diffusion equation.
   !> \see OpenCMISS::EquationsSet::AnalyticFunctionTypes,OpenCMISS
   !>@{
   INTEGER(INTG), PARAMETER :: OC_EQUATIONS_SET_REACTION_DIFFUSION_EQUATION_ONE_DIM_1 = &
     & EQUATIONS_SET_REACTION_DIFFUSION_EQUATION_ONE_DIM_1 !<Fisher's equation, u(x,t)=1/[1 + A.exp(-5.c.t/6 +/- \sqrt(6.c)x/6)]^2 \see OpenCMISS_EquationsSetDiffusionAnalyticFunctionTypes,OpenCMISS
   !>@}
-  !> \addtogroup OpenCMISS_StokesAnalyticFunctionTypes OpenCMISS::EquationsSet::AnalyticFunctionTypes::Stokes
+  !> \addtogroup OpenCMISS_StokesAnalyticFunctionTypes OpenCMISS::EquationsSet::Constants::AnalyticFunctionTypes::Stokes
   !> \brief The analytic function types for a Stokes equation.
   !> \see OpenCMISS::EquationsSet::AnalyticFunctionTypes,OpenCMISS
   !>@{
@@ -3439,7 +3455,7 @@ MODULE OpenCMISS
   INTEGER(INTG), PARAMETER :: OC_EQUATIONS_SET_STOKES_EQUATION_THREE_DIM_4 = EQUATIONS_SET_STOKES_EQUATION_THREE_DIM_4 !<u=tbd \see OpenCMISS_EquationsSetStokesAnalyticFunctionTypes,OpenCMISS
   INTEGER(INTG), PARAMETER :: OC_EQUATIONS_SET_STOKES_EQUATION_THREE_DIM_5 = EQUATIONS_SET_STOKES_EQUATION_THREE_DIM_5 !<u=tbd \see OpenCMISS_EquationsSetStokesAnalyticFunctionTypes,OpenCMISS
   !>@}
-  !> \addtogroup OpenCMISS_NavierStokesAnalyticFunctionTypes OpenCMISS::EquationsSet::AnalyticFunctionTypes::NavierStokes
+  !> \addtogroup OpenCMISS_NavierStokesAnalyticFunctionTypes OpenCMISS::EquationsSet::Constants::AnalyticFunctionTypes::NavierStokes
   !> \brief The analytic function types for a Navier-Stokes equation.
   !> \see OpenCMISS::EquationsSet::AnalyticFunctionTypes,OpenCMISS
   !>@{
@@ -3469,7 +3485,7 @@ MODULE OpenCMISS
   INTEGER(INTG), PARAMETER :: OC_EQUATIONS_SET_NAVIER_STOKES_EQUATION_THREE_DIM_5 = &
     & EQUATIONS_SET_NAVIER_STOKES_EQUATION_THREE_DIM_5 !<u=tbd \see OpenCMISS_EquationsSetNavierStokesAnalyticFunctionTypes,OpenCMISS
   !>@}
-  !> \addtogroup OpenCMISS_DarcyAnalyticFunctionTypes OpenCMISS::EquationsSet::AnalyticFunctionTypes::Darcy
+  !> \addtogroup OpenCMISS_DarcyAnalyticFunctionTypes OpenCMISS::EquationsSet::Constants::AnalyticFunctionTypes::Darcy
   !> \brief The analytic function types for a Darcy equation.
   !> \see OpenCMISS::EquationsSet::AnalyticFunctionTypes,OpenCMISS
   !>@{
@@ -3482,7 +3498,7 @@ MODULE OpenCMISS
   INTEGER(INTG), PARAMETER :: OC_EQUATIONS_SET_INCOMP_ELAST_DARCY_ANALYTIC_DARCY = &
     & EQUATIONS_SET_INCOMP_ELAST_DARCY_ANALYTIC_DARCY !<this is a solution where the finite elasticity solve is skipped to allow easy analytic testing of the mass increase & velocity solve step of incompressible poromechanical model
   !>@}
-  !> \addtogroup OpenCMISS_BurgersAnalyticFunctionTypes OpenCMISS::EquationsSet::AnalyticFunctionTypes::Burgers
+  !> \addtogroup OpenCMISS_BurgersAnalyticFunctionTypes OpenCMISS::EquationsSet::Constants::AnalyticFunctionTypes::Burgers
   !> \brief The analytic function types for a Burgers equation.
   !> \see OpenCMISS::EquationsSet::AnalyticFunctionTypes,OpenCMISS
   !>@{
@@ -3495,7 +3511,7 @@ MODULE OpenCMISS
     & EQUATIONS_SET_STATIC_BURGERS_EQUATION_ONE_DIM_1
   !>@}
 
-  !> \addtogroup OpenCMISS_EquationsSetLinearElasticityAnalyticFunctionTypes OpenCMISS::EquationsSet::AnalyticFunctionTypes::LinearElasticity
+  !> \addtogroup OpenCMISS_EquationsSetLinearElasticityAnalyticFunctionTypes OpenCMISS::EquationsSet::Constants::AnalyticFunctionTypes::LinearElasticity
   !> \brief The analytic function types for a LinearElasticity equation
   !> \see OpenCMISS::EquationsSet::AnalyticFunctionTypes,OpenCMISS
   !>@{
@@ -3506,7 +3522,7 @@ MODULE OpenCMISS
   INTEGER(INTG), PARAMETER :: OC_EQUATIONS_SET_LINEAR_ELASTICITY_THREE_DIM_2 = EQUATIONS_SET_LINEAR_ELASTICITY_THREE_DIM_2 !<u=tbd \see OpenCMISS_EquationsSetLinearElasticityAnalyticFunctionTypes,OpenCMISS
   INTEGER(INTG), PARAMETER :: OC_EQUATIONS_SET_LINEAR_ELASTICITY_CANTILEVER_END_LOAD = EQUATIONS_SET_LINEAR_ELASTICITY_CANTILEVER_END_LOAD !<Cantilever with a point load at the free end \see OpenCMISS_EquationsSetLinearElasticityAnalyticFunctionTypes,OpenCMISS
   !>@}
-  !> \addtogroup OpenCMISS_EquationsSetFiniteElasticityAnalyticFunctionTypes OpenCMISS::EquationsSet::AnalyticFunctionTypes::FiniteElasticity
+  !> \addtogroup OpenCMISS_EquationsSetFiniteElasticityAnalyticFunctionTypes OpenCMISS::EquationsSet::Constants::AnalyticFunctionTypes::FiniteElasticity
   !> \brief The analytic function types for a FiniteElasticity equation
   !> \see OpenCMISS::EquationsSet::AnalyticFunctionTypes,OpenCMISS
   !>@{
@@ -5783,9 +5799,9 @@ MODULE OpenCMISS
 
   !Module parameters
 
-  !> \addtogroup OpenCMISS_InterfaceMatricesTimeDependenceTypes OpenCMISS::InterfaceMatrices::TimeDependenceTypes
+  !> \addtogroup OpenCMISS_InterfaceMatricesTimeDependenceTypes OpenCMISS::InterfaceMatrices::Constants::TimeDependenceTypes
   !> \brief Interface matrices time dependency types
-  !> \see OpenCMISS::InterfaceEquations,OpenCMISS
+  !> \see OpenCMISS::InterfaceMatrices::Constants,OpenCMISS::InterfaceMatrices
   !>@{
   INTEGER(INTG), PARAMETER :: OC_INTERFACE_MATRIX_STATIC=INTERFACE_MATRIX_STATIC !<Interface matrix is of static type \see OpenCMISS_InterfaceMatricesTimeDependenceTypes,OpenCMISS
   INTEGER(INTG), PARAMETER :: OC_INTERFACE_MATRIX_QUASI_STATIC=INTERFACE_MATRIX_QUASI_STATIC !<Interface matrix is of quasi-static type \see OpenCMISS_InterfaceMatricesTimeDependenceTypes,OpenCMISS
@@ -8512,6 +8528,8 @@ CONTAINS
   !================================================================================================================================
   !
 
+  !> \addtogroup OpenCMISS_Basis OpenCMISS::Basis
+  !>@{
   !>Copy an array of OC_BasisTypes from C to an allocated Fortran array, for use by the C bindings
   SUBROUTINE OC_BasisTypesCopy(bases,basesSize,basesPtr,err)
     !DLLEXPORT(OC_BasisTypesCopy)
@@ -8519,32 +8537,32 @@ CONTAINS
     !Argument variables
     TYPE(OC_BasisType), INTENT(INOUT) :: bases(:) !<On return, the array of OC_BasisTypes
     INTEGER(C_INT), INTENT(IN) :: basesSize !<The length of the C array of pointers to OC_BasisTypes
-    TYPE(C_PTR), INTENT(IN) :: basesPtr !<The pointer to the first OC_BasisType pointer
+    TYPE(C_PTR), INTENT(IN) :: basesPtr !<Th pointer to the first OC_BasisType pointer
     INTEGER(INTG), INTENT(OUT) :: err !<The error code.
     !Local variables
-    INTEGER(INTG) :: basis_idx
-    TYPE(C_PTR), POINTER :: BasesCPtrs(:)
-    TYPE(OC_BasisType), POINTER :: Basis
+    INTEGER(INTG) :: basisIdx
+    TYPE(C_PTR), POINTER :: basesCPtrs(:)
+    TYPE(OC_BasisType), POINTER :: basis
 
     ENTERS("OC_BasisTypesCopy",err,error,*999)
 
     IF(C_ASSOCIATED(basesPtr)) THEN
-      CALL C_F_POINTER(basesPtr,BasesCPtrs,[basesSize])
-      IF(ASSOCIATED(BasesCPtrs)) THEN
-        DO basis_idx=1,basesSize
-          CALL C_F_POINTER(BasesCPtrs(basis_idx),Basis)
-          IF(ASSOCIATED(BasesCPtrs)) THEN
-            bases(basis_idx)%basis => Basis%basis
+      CALL C_F_POINTER(basesPtr,basesCPtrs,[basesSize])
+      IF(ASSOCIATED(basesCPtrs)) THEN
+        DO basisIdx=1,basesSize
+          CALL C_F_POINTER(basesCPtrs(basisIdx),Basis)
+          IF(ASSOCIATED(basesCPtrs)) THEN
+            bases(basisIdx)%basis => basis%basis
           ELSE
-            CALL FlagError("error converting C pointer.",ERR,error,*999)
-          END IF
-        END DO
+            CALL FlagError("Error converting C pointer.",err,error,*999)
+          ENDIF
+        ENDDO !basisIdx
       ELSE
-        CALL FlagError("error converting C pointer.",ERR,error,*999)
-      END IF
+        CALL FlagError("Error converting C pointer.",err,error,*999)
+      ENDIF
     ELSE
-      CALL FlagError("bases C pointer is not associated.",ERR,error,*999)
-    END IF
+      CALL FlagError("Bases C pointer is not associated.",err,error,*999)
+    ENDIF
 
     EXITS("OC_BasisTypesCopy")
     RETURN
@@ -8604,6 +8622,8 @@ CONTAINS
 
   END SUBROUTINE OC_Basis_Initialise
 
+  !>@}
+  
   !
   !================================================================================================================================
   !
@@ -12116,6 +12136,9 @@ CONTAINS
 !!
 !!==================================================================================================================================
 
+  !> \addtogroup OpenCMISS_Basis OpenCMISS::Basis
+  !>@{
+  
   !>Returns the collapsed Xi flags of a basis identified by user number.
   SUBROUTINE OC_Basis_CollapsedXiGetNumber(contextUserNumber,basisUserNumber,collapsedXi,err)
     !DLLEXPORT(OC_Basis_CollapsedXiGetNumber)
@@ -13441,6 +13464,7 @@ CONTAINS
 
   END SUBROUTINE OC_Basis_TypeSetObj
 
+  !>@}
 
 !!==================================================================================================================================
 !!

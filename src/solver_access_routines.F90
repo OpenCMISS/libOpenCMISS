@@ -443,7 +443,7 @@ MODULE SolverAccessRoutines
   !>@}
 
   
-  !> \addtogroup SolverRoutines_CellMLEquationsLinearityTypes OpenCMISS::Iron::CellMLEquationsLinearityTypes
+  !> \addtogroup SolverRoutines_CellMLEquationsLinearityTypes OpenCMISS::CellMLEquationsLinearityTypes
   !> \brief The CellML equations linearity types 
   !> \see SolverRoutines
   !>@{
@@ -451,7 +451,7 @@ MODULE SolverAccessRoutines
   INTEGER(INTG), PARAMETER :: CELLML_EQUATIONS_NONLINEAR=2 !<CellML equations are nonlinear \see SolverRoutines_CellMLEquationLinearityTypes,SolverRoutines
   !>@}
 
-  !> \addtogroup SolverRoutines_CellMLEquationsTimeDependenceTypes OpenCMISS:Iron::CellMLEquationsTimeDependenceTypes
+  !> \addtogroup SolverRoutines_CellMLEquationsTimeDependenceTypes OpenCMISS:CellMLEquationsTimeDependenceTypes
   !> \brief The CellML equations time dependence types 
   !> \see SolverRoutines
   !>@{
@@ -1000,7 +1000,7 @@ CONTAINS
   !================================================================================================================================
   !
 
-  !>Returns the linearity type for CellML equations \see OpenCMISS::Iron::cmfe_CellMLEquations_LinearityTypeGet
+  !>Returns the linearity type for CellML equations \see OpenCMISS::OC_CellMLEquations_LinearityTypeGet
   SUBROUTINE CellMLEquations_LinearityTypeGet(cellMLEquations,linearityType,err,error,*)
 
     !Argument variables
@@ -1089,7 +1089,7 @@ CONTAINS
   !================================================================================================================================
   !
 
-  !>Returns the time dependence type for CellML equations \see OpenCMISS::Iron::cmfe_CellMLEquations_TimeDependenceTypeGet
+  !>Returns the time dependence type for CellML equations \see OpenCMISS::OC_CellMLEquations_TimeDependenceTypeGet
   SUBROUTINE CellMLEquations_TimeDependenceTypeGet(cellMLEquations,timeDependenceType,err,error,*)
 
     !Argument variables
@@ -1430,7 +1430,7 @@ CONTAINS
   !================================================================================================================================
   !
 
-  !>Returns a pointer to the CellML equations for a solver. \see OpenCMISS::Iron::cmfe_Solver_CellMLEquationsGet
+  !>Returns a pointer to the CellML equations for a solver. \see OpenCMISS::OC_Solver_CellMLEquationsGet
   SUBROUTINE Solver_CellMLEquationsGet(solver,cellMLEquations,err,error,*)
 
     !Argument variables
@@ -2644,7 +2644,7 @@ CONTAINS
   !================================================================================================================================
   !
 
-  !>Returns the linearity type for the dynamic solver. \see OpenCMISS::Iron::cmfe_Solver_DynamicLinearityTypeGet
+  !>Returns the linearity type for the dynamic solver. \see OpenCMISS::OC_Solver_DynamicLinearityTypeGet
   SUBROUTINE Solver_DynamicLinearityTypeGet(solver,linearityType,err,error,*)
 
     !Argument variables
@@ -2803,7 +2803,7 @@ CONTAINS
   !================================================================================================================================
   !
 
-  !>Returns a pointer to the linked linear solver for a solvers dynamic solver. \see OpenCMISS::Iron::cmfe_Solver_DynamicLinearSolverGet
+  !>Returns a pointer to the linked linear solver for a solvers dynamic solver. \see OpenCMISS::OC_Solver_DynamicLinearSolverGet
   SUBROUTINE Solver_DynamicLinkedLinearSolverGet(solver,linearSolver,err,error,*)
 
     !Argument variables
@@ -2842,7 +2842,7 @@ CONTAINS
   !================================================================================================================================
   !
 
-  !>Returns a pointer to the linked nonlinear solver for a solvers dynamic solver. \see OpenCMISS::Iron::cmfe_Solver_DynamicNonlinearSolverGet
+  !>Returns a pointer to the linked nonlinear solver for a solvers dynamic solver. \see OpenCMISS::OC_Solver_DynamicNonlinearSolverGet
   SUBROUTINE Solver_DynamicLinkedNonlinearSolverGet(solver,nonlinearSolver,err,error,*)
 
     !Argument variables
@@ -2947,7 +2947,7 @@ CONTAINS
   !================================================================================================================================
   !
 
-  !>Returns the label of a solver. \see OpenCMISS::Iron::cmfe_Solver_LabelGet
+  !>Returns the label of a solver. \see OpenCMISS::OC_Solver_LabelGet
   SUBROUTINE Solver_LabelGetC(solver,label,err,error,*)
 
     !Argument variables
@@ -2983,7 +2983,7 @@ CONTAINS
   !================================================================================================================================
   !
 
-  !>Returns the label of a solver. \see OpenCMISS::Iron::cmfe_Solver_LabelGet
+  !>Returns the label of a solver. \see OpenCMISS::OC_Solver_LabelGet
   SUBROUTINE Solver_LabelGetVS(solver,label,err,error,*)
 
     !Argument variables
@@ -3012,7 +3012,7 @@ CONTAINS
   !================================================================================================================================
   !
 
-  !>Gets the type of library to use for the solver \see OpenCMISS::Iron::cmfe_Solver_LibraryTypeGet
+  !>Gets the type of library to use for the solver \see OpenCMISS::OC_Solver_LibraryTypeGet
   SUBROUTINE Solver_LibraryTypeGet(solver,solverLibraryType,err,error,*)
 
     !Argument variables
@@ -3126,7 +3126,7 @@ CONTAINS
   !================================================================================================================================
   !
   
-  !>Returns the CellML solver associated with a Newton solver  \see OpenCMISS::Iron::cmfe_Solver_NewtonCellMLSolverGetSet
+  !>Returns the CellML solver associated with a Newton solver  \see OpenCMISS::OC_Solver_NewtonCellMLSolverGetSet
   SUBROUTINE Solver_NewtonLinkedCellMLSolverGet(solver,cellMLSolver,err,error,*)
 
     !Argument variables
@@ -3138,7 +3138,7 @@ CONTAINS
     TYPE(DynamicSolverType), POINTER :: dynamicSolver
     TYPE(NonlinearSolverType), POINTER :: nonlinearSolver
     TYPE(NewtonSolverType), POINTER :: newtonSolver
-    TYPE(SolverType), POINTER :: linkedLinearSolver,linkedNonlinearSolver
+    TYPE(SolverType), POINTER :: linkedNonlinearSolver
 
     ENTERS("Solver_QuasiNewtonLinkedCellMLSolverGet",err,error,*998)
 
@@ -3185,7 +3185,7 @@ CONTAINS
   !================================================================================================================================
   !
 
-  !>Returns the linear solver associated with a Newton solver \see OpenCMISS::Iron::cmfe_Solver_NewtonLinearSolverGet
+  !>Returns the linear solver associated with a Newton solver \see OpenCMISS::OC_Solver_NewtonLinearSolverGet
   SUBROUTINE Solver_NewtonLinkedLinearSolverGet(solver,linearSolver,err,error,*)
 
     !Argument variables
@@ -3389,7 +3389,7 @@ CONTAINS
   !================================================================================================================================
   !
   
-  !>Returns the CellML solver associated with a Quasi-Newton solver  \see OpenCMISS::Iron::cmfe_Solver_QuasiNewtonCellMLSolverGetSet
+  !>Returns the CellML solver associated with a Quasi-Newton solver  \see OpenCMISS::OC_Solver_QuasiNewtonCellMLSolverGetSet
   SUBROUTINE Solver_QuasiNewtonLinkedCellMLSolverGet(solver,cellMLSolver,err,error,*)
 
     !Argument variables
@@ -3401,7 +3401,7 @@ CONTAINS
     TYPE(DynamicSolverType), POINTER :: dynamicSolver
     TYPE(NonlinearSolverType), POINTER :: nonlinearSolver
     TYPE(QuasiNewtonSolverType), POINTER :: quasiNewtonSolver
-    TYPE(SolverType), POINTER :: linkedLinearSolver,linkedNonlinearSolver
+    TYPE(SolverType), POINTER :: linkedNonlinearSolver
 
     ENTERS("Solver_QuasiNewtonLinkedCellMLSolverGet",err,error,*998)
 
@@ -3448,7 +3448,7 @@ CONTAINS
   !================================================================================================================================
   !
 
-  !>Returns the linear solver associated with a Quasi-Newton solver \see OpenCMISS::Iron::cmfe_Solver_QuasiNewtonLinearSolverGet
+  !>Returns the linear solver associated with a Quasi-Newton solver \see OpenCMISS::OC_Solver_QuasiNewtonLinearSolverGet
   SUBROUTINE Solver_QuasiNewtonLinkedLinearSolverGet(solver,linearSolver,err,error,*)
 
     !Argument variables
@@ -3522,7 +3522,7 @@ CONTAINS
   !================================================================================================================================
   !
 
-  !>Returns a pointer to the solver equations for a solver. \see OpenCMISS::Iron::cmfe_Solver_SolverEquationsGet
+  !>Returns a pointer to the solver equations for a solver. \see OpenCMISS::OC_Solver_SolverEquationsGet
   SUBROUTINE Solver_SolverEquationsGet(solver,solverEquations,err,error,*)
 
     !Argument variables
@@ -4684,7 +4684,7 @@ CONTAINS
   !================================================================================================================================
   !
 
-  !>Gets the boundary conditions for solver equations. \see OpenCMISS::Iron::cmfe_SolverEquations_BoundaryConditionsGet
+  !>Gets the boundary conditions for solver equations. \see OpenCMISS::OC_SolverEquations_BoundaryConditionsGet
   SUBROUTINE SolverEquations_BoundaryConditionsGet(solverEquations,boundaryConditions,err,error,*)
 
     !Argument variables

@@ -212,7 +212,7 @@ CONTAINS
 #ifdef WITH_F08_MPI
     TYPE(MPI_Comm) :: groupCommunicator
 #else
-    INTEGER(ING) :: groupCommunicator
+    INTEGER(INTG) :: groupCommunicator
 #endif
 #ifdef WITH_MPI
     INTEGER(INTG) :: mpiIError

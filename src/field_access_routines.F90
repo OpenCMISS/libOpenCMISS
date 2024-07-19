@@ -775,7 +775,6 @@ CONTAINS
     INTEGER(INTG), INTENT(OUT) :: err !<The error code
     TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
     !Local Variables
-    TYPE(DomainMappingType), POINTER :: domainMapping
     TYPE(FieldVariableType), POINTER :: fieldVariable
 
     ENTERS("Field_ComponentDOFGetConstant",err,error,*999)
@@ -934,7 +933,7 @@ CONTAINS
   !================================================================================================================================
   !
 
-  !>Gets the interpolation type for a field variable component identified by a pointer. \see OpenCMISS::Iron::cmfe_Field_ComponentInterpolationGet
+  !>Gets the interpolation type for a field variable component identified by a pointer. \see OpenCMISS::OC_Field_ComponentInterpolationGet
   SUBROUTINE Field_ComponentInterpolationGet(field,variableType,componentNumber,interpolationType,err,error,*)
 
     !Argument variables
@@ -965,7 +964,7 @@ CONTAINS
   !================================================================================================================================
   !
 
-  !>Gets the label for a field variable component for character labels. \see OpenCMISS::Iron::cmfe_Field_ComponentLabelGet
+  !>Gets the label for a field variable component for character labels. \see OpenCMISS::OC_Field_ComponentLabelGet
   SUBROUTINE Field_ComponentLabelGetC(field,variableType,componentNumber,label,err,error,*)
 
     !Argument variables
@@ -995,7 +994,7 @@ CONTAINS
   !================================================================================================================================
   !
 
-  !>Gets the label for a field variable component for varying string labels. \see OpenCMISS::Iron::cmfe_Field_ComponentLabelGet
+  !>Gets the label for a field variable component for varying string labels. \see OpenCMISS::OC_Field_ComponentLabelGet
   SUBROUTINE Field_ComponentLabelGetVS(field,variableType,componentNumber,label,err,error,*)
 
     !Argument variables
@@ -1056,7 +1055,7 @@ CONTAINS
   !================================================================================================================================
   !
 
-  !>Gets the mesh component number for a field variable component identified by a pointer. \see OpenCMISS::Iron::cmfe_Field_ComponentMeshComponentnGet
+  !>Gets the mesh component number for a field variable component identified by a pointer. \see OpenCMISS::OC_Field_ComponentMeshComponentnGet
   SUBROUTINE Field_ComponentMeshComponentGet(field,variableType,componentNumber,meshComponent,err,error,*)
 
     !Argument variables
@@ -1262,7 +1261,7 @@ CONTAINS
   !================================================================================================================================
   !
 
-  !>Gets the data type for a field variable. \see OpenCMISS::Iron::cmfe_Field_DataTypeGet
+  !>Gets the data type for a field variable. \see OpenCMISS::OC_Field_DataTypeGet
   SUBROUTINE Field_DataTypeGet(field,variableType,dataType,err,error,*)
 
     !Argument variables
@@ -1297,7 +1296,7 @@ CONTAINS
   !================================================================================================================================
   !
 
-  !>Gets a decomposition from a field. \see OpenCMISS::Iron::cmfe_Field_DecompositionGet
+  !>Gets a decomposition from a field. \see OpenCMISS::OC_Field_DecompositionGet
   SUBROUTINE Field_DecompositionGet(field,decomposition,err,error,*)
 
     !Argument variables
@@ -1389,7 +1388,7 @@ CONTAINS
   !================================================================================================================================
   !
 
-  !>Gets the dependent type for a field. \see OpenCMISS::Iron::cmfe_Field_DependentTypeGet
+  !>Gets the dependent type for a field. \see OpenCMISS::OC_Field_DependentTypeGet
   SUBROUTINE Field_DependentTypeGet(field,dependentType,err,error,*)
 
     !Argument variables
@@ -1446,7 +1445,7 @@ CONTAINS
   !================================================================================================================================
   !
 
-  !>Gets the field dimension for a field variable. \see OpenCMISS::Iron::cmfe_Field_DimensionGet
+  !>Gets the field dimension for a field variable. \see OpenCMISS::OC_Field_DimensionGet
   SUBROUTINE Field_DimensionGet(field,variableType,dimension,err,error,*)
 
     !Argument variables
@@ -1511,7 +1510,7 @@ CONTAINS
   !================================================================================================================================
   !
 
-  !>Gets the DOF order type for a field variable. \see OpenCMISS::Iron::cmfe_Field_DOFOrderTypeGet
+  !>Gets the DOF order type for a field variable. \see OpenCMISS::OC_Field_DOFOrderTypeGet
   SUBROUTINE Field_DOFOrderTypeGet(field,variableType,dofOrderType,err,error,*)
 
     !Argument variables
@@ -1597,9 +1596,6 @@ CONTAINS
     INTEGER(INTG), INTENT(OUT) :: err !<The error code
     TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
     !Local Variables
-#ifdef WITH_POSTCHECKS    
-    TYPE(VARYING_STRING) :: localError
-#endif    
 
     ENTERS("Field_GeometricFieldExists",err,error,*998)
 
@@ -1622,7 +1618,7 @@ CONTAINS
   !================================================================================================================================
   !
 
-  !>Gets the geometric field for a field identified by a pointer. \see OpenCMISS::Iron::cmfe_Field_GeometricFieldGet
+  !>Gets the geometric field for a field identified by a pointer. \see OpenCMISS::OC_Field_GeometricFieldGet
   SUBROUTINE Field_GeometricFieldGet(field,geometricField,err,error,*)
 
     !Argument variables
@@ -1945,7 +1941,7 @@ CONTAINS
   !================================================================================================================================
   !
 
-  !>Gets the field label for a field for character labels. \see OpenCMISS::Iron::cmfe_Field_LabelGet
+  !>Gets the field label for a field for character labels. \see OpenCMISS::OC_Field_LabelGet
   SUBROUTINE Field_LabelGetC(field,label,err,error,*)
 
     !Argument variables
@@ -1978,7 +1974,7 @@ CONTAINS
   !================================================================================================================================
   !
 
-  !>Gets the field label for a field for varying string labels. \see OpenCMISS::Iron::cmfe_Field_LabelGet
+  !>Gets the field label for a field for varying string labels. \see OpenCMISS::OC_Field_LabelGet
   SUBROUTINE Field_LabelGetVS(field,label,err,error,*)
 
     !Argument variables
@@ -2080,7 +2076,7 @@ CONTAINS
   !================================================================================================================================
   !
 
-  !>Gets the number of field components for a field variable. \see OpenCMISS::Iron::cmfe_Field_NumberOfComponentsGet
+  !>Gets the number of field components for a field variable. \see OpenCMISS::OC_Field_NumberOfComponentsGet
   SUBROUTINE Field_NumberOfComponentsGet(field,variableType,numberOfComponents,err,error,*)
 
     !Argument variables
@@ -2231,7 +2227,7 @@ CONTAINS
   !================================================================================================================================
   !
 
-  !>Gets the number of variables for a field. \see OpenCMISS::Iron::cmfe_Field_NumberOfVariablesGet
+  !>Gets the number of variables for a field. \see OpenCMISS::OC_Field_NumberOfVariablesGet
   SUBROUTINE Field_NumberOfVariablesGet(field,numberOfVariables,err,error,*)
 
     !Argument variables
@@ -2520,7 +2516,7 @@ CONTAINS
   !================================================================================================================================
   !
 
-  !>Gets the scaling type for a field. \see OpenCMISS::Iron::cmfe_Field_ScalingTypeGet
+  !>Gets the scaling type for a field. \see OpenCMISS::OC_Field_ScalingTypeGet
   SUBROUTINE Field_ScalingTypeGet(field,scalingType,err,error,*)
 
     !Argument variables
@@ -2649,7 +2645,7 @@ CONTAINS
   !================================================================================================================================
   !
 
-  !>Gets the field type for a field. \see OpenCMISS::Iron::cmfe_FieldTypeGet
+  !>Gets the field type for a field. \see OpenCMISS::OC_FieldTypeGet
   SUBROUTINE Field_TypeGet(field,type,err,error,*)
 
     !Argument variables
@@ -2820,7 +2816,7 @@ CONTAINS
   !================================================================================================================================
   !
 
-  !>Gets the label for a field variable for character labels. \see OpenCMISS::Iron::cmfe_Field_VariableLabelGet
+  !>Gets the label for a field variable for character labels. \see OpenCMISS::OC_Field_VariableLabelGet
   SUBROUTINE Field_VariableLabelGetC(field,variableType,label,err,error,*)
 
     !Argument variables
@@ -2849,7 +2845,7 @@ CONTAINS
   !================================================================================================================================
   !
 
-  !>Gets the label for a field variable for varying string labels. \see OpenCMISS::Iron::cmfe_Field_VariableLabelGet
+  !>Gets the label for a field variable for varying string labels. \see OpenCMISS::OC_Field_VariableLabelGet
   SUBROUTINE Field_VariableLabelGetVS(field,variableType,label,err,error,*)
 
     !Argument variables
@@ -3804,7 +3800,7 @@ CONTAINS
   !================================================================================================================================
   !
 
-  !>Gets the field variable type for a field. \see OpenCMISS::Iron::cmfe_Field_VariableTypesGet
+  !>Gets the field variable type for a field. \see OpenCMISS::OC_Field_VariableTypesGet
   SUBROUTINE Field_VariableTypesGet0(field,variableType,err,error,*)
 
     !Argument variables
@@ -3830,7 +3826,7 @@ CONTAINS
   !================================================================================================================================
   !
 
-  !>Gets the field variable types for a field. \see OpenCMISS::Iron::cmfe_Field_VariableTypesGet
+  !>Gets the field variable types for a field. \see OpenCMISS::OC_Field_VariableTypesGet
   SUBROUTINE Field_VariableTypesGet1(field,variableTypes,err,error,*)
 
     !Argument variables
@@ -4248,7 +4244,7 @@ CONTAINS
   !================================================================================================================================
   !
 
-  !>Gets the label for a field variable component for character labels. \see OpenCMISS::Iron::cmfe_Field_ComponentLabelGet
+  !>Gets the label for a field variable component for character labels. \see OpenCMISS::OC_Field_ComponentLabelGet
   SUBROUTINE FieldVariable_ComponentLabelGetC(fieldVariable,componentNumber,label,err,error,*)
 
     !Argument variables

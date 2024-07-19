@@ -234,7 +234,7 @@ CONTAINS
   !================================================================================================================================
   !
   
-  !>Returns the coordinate system of an interface. \see OpenCMISS::Iron::cmfe_Interface_CoordinateSystemGet
+  !>Returns the coordinate system of an interface. \see OpenCMISS::OC_Interface_CoordinateSystemGet
   SUBROUTINE Interface_CoordinateSystemGet(interface,coordinateSystem,err,error,*)
 
     !Argument variables
@@ -343,7 +343,7 @@ CONTAINS
   !================================================================================================================================
   !
   
-  !>Returns a pointer to the data points for a given user number in an interface. \see OpenCMISS::Iron::cmfe_Interface_DataPointsGet
+  !>Returns a pointer to the data points for a given user number in an interface. \see OpenCMISS::OC_Interface_DataPointsGet
   SUBROUTINE Interface_DataPointsGet(interface,userNumber,dataPoints,err,error,*)
 
     !Argument variables
@@ -435,7 +435,7 @@ CONTAINS
   !================================================================================================================================
   !
 
-  !>Returns a pointer to a field for a given user number in an interface. \see OpenCMISS::Iron::cmfe_Interface_FieldGet
+  !>Returns a pointer to a field for a given user number in an interface. \see OpenCMISS::OC_Interface_FieldGet
   SUBROUTINE Interface_FieldGet(interface,userNumber,field,err,error,*)
 
     !Argument variables
@@ -482,7 +482,7 @@ CONTAINS
   !================================================================================================================================
   !
 
-  !>Returns a pointer to a interface condition for a given user number in an interface. \see OpenCMISS::Iron::cmfe_Interface_InterfaceConditionGet
+  !>Returns a pointer to a interface condition for a given user number in an interface. \see OpenCMISS::OC_Interface_InterfaceConditionGet
   SUBROUTINE Interface_InterfaceConditionGet(interface,userNumber,interfaceCondition,err,error,*)
 
     !Argument variables
@@ -575,7 +575,7 @@ CONTAINS
   !================================================================================================================================
   !
 
-  !>Returns a pointer to the mesh for a given user number in a interface. \see OpenCMISS::Iron::cmfe_Interface_MeshGet
+  !>Returns a pointer to the mesh for a given user number in a interface. \see OpenCMISS::OC_Interface_MeshGet
   SUBROUTINE Interface_MeshGet(interface,userNumber,mesh,err,error,*)
 
     !Argument variables
@@ -741,7 +741,7 @@ CONTAINS
   !================================================================================================================================
   !
 
-  !>Returns a pointer to the nodes for a interface. \see OpenCMISS::Iron::cmfe_Interface_NodesGet
+  !>Returns a pointer to the nodes for a interface. \see OpenCMISS::OC_Interface_NodesGet
   SUBROUTINE Interface_NodesGet(interface,nodes,err,error,*)
 
     !Argument variables

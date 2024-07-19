@@ -57,11 +57,6 @@ PROGRAM CantileverExample
 
   IMPLICIT NONE
 
-#ifdef NOMPIMOD
-#include "mpif.h"
-#endif
-
-
   !Test program parameters
   REAL(OC_RP), PARAMETER :: Width=60.0_OC_RP
   REAL(OC_RP), PARAMETER :: Length=40.0_OC_RP

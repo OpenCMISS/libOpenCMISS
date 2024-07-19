@@ -155,7 +155,7 @@ MODULE Types
   ! Quadrature types
   !
 
-  !>Contains information for a particular quadrature scheme. \see OpenCMISS::Iron::cmfe_QuadratureSchemeType \todo Also evaluate the product of the basis functions at gauss points for speed???
+  !>Contains information for a particular quadrature scheme. \see OpenCMISS::OC_QuadratureSchemeType \todo Also evaluate the product of the basis functions at gauss points for speed???
   TYPE QuadratureSchemeType
     INTEGER(INTG) :: globalNumber !<The global number of the quadrature scheme in the list of quadrature schemes for a particular quadrature.
     TYPE(QuadratureType), POINTER :: quadrature !<The pointer back to the quadrature for a particular quadrature scheme
@@ -175,7 +175,7 @@ MODULE Types
     TYPE(QuadratureSchemeType), POINTER :: ptr !<A pointer to the quadrature scheme
   END TYPE QuadratureSchemePtrType
 
-  !>Contains information on the quadrature to be used for integrating a basis. \see OpenCMISS::Iron::cmfe_QuadratureType
+  !>Contains information on the quadrature to be used for integrating a basis. \see OpenCMISS::OC_QuadratureType
   TYPE QuadratureType
     INTEGER(INTG) :: type !<The type of the quadrature \see BasisRoutines_QuadratureTypes
     TYPE(BasisType), POINTER :: basis !<The pointer back to the basis
@@ -395,7 +395,7 @@ MODULE Types
     REAL(DP), ALLOCATABLE :: weights(:) !<weights(coordinateIdx). Weights of the data point, has the size of region dimension the data point belongs to.
   END TYPE DataPointType
 
-  !>Contains information on the data points defined on a region. \see OpenCMISS::Iron::cmfe_DataPointsType
+  !>Contains information on the data points defined on a region. \see OpenCMISS::OC_DataPointsType
   TYPE DataPointsType
     INTEGER(INTG) :: globalNumber !<The global number of data points
     INTEGER(INTG) :: userNumber !<The user number of the data points
@@ -440,7 +440,7 @@ MODULE Types
     TYPE(VARYING_STRING) :: label !<A string label for the node
   END TYPE NodeType
 
-  !>Contains information on the nodes defined on a region. \see OpenCMISS::Iron::cmfe_NodesType
+  !>Contains information on the nodes defined on a region. \see OpenCMISS::OC_NodesType
   TYPE NodesType
     TYPE(RegionType), POINTER :: region !<A pointer to the region containing the nodes. If the nodes are in an interface rather than a region then this pointer will be NULL and the interface pointer should be used.
     TYPE(InterfaceType), POINTER :: interface !<A pointer to the interface containing the nodes. If the nodes are in a region rather than an interface then this pointer will be NULL and the region pointer should be used.
@@ -584,7 +584,7 @@ MODULE Types
     TYPE(EMBEDDING_GAUSSPOINT_TYPE), ALLOCATABLE :: GAUSS_POINT_XI_POSITION(:,:) !<GAUSS_POINT_XI_POSITION(gauss_idx,element_idx) Location of the gauss_idx'th Gauss point of the element_idx'th parent mesh in the child mesh
   END TYPE MESH_EMBEDDING_TYPE
 
-  !>Contains information on a mesh defined on a region. \see OpenCMISS::Iron::cmfe_MeshType
+  !>Contains information on a mesh defined on a region. \see OpenCMISS::OC_MeshType
   TYPE MeshType
     INTEGER(INTG) :: userNumber !<The user number of the mesh. The user number must be unique.
     INTEGER(INTG) :: globalNumber !<The corresponding global number for the mesh.
@@ -674,7 +674,7 @@ MODULE Types
     LOGICAL :: appendLinearComponent=.FALSE. !<True when two mesh components are needed 
 END TYPE GeneratedMeshEllipsoidType
 
-  !>Contains information on a generated mesh. \see OpenCMISS::Iron::cmfe_GeneratedMeshType
+  !>Contains information on a generated mesh. \see OpenCMISS::OC_GeneratedMeshType
   TYPE GeneratedMeshType
     INTEGER(INTG) :: userNumber !<The user number of the generated mesh. The user number must be unique.
     INTEGER(INTG) :: globalNumber !<The corresponding global number for the generated mesh.
@@ -1246,7 +1246,7 @@ END TYPE GeneratedMeshEllipsoidType
     INTEGER(INTG), ALLOCATABLE :: coupledNodes(:,:) !<coupledNodes(coupledMeshIdx,interfaceNodeIdx). Coupled nodes numbers
   END TYPE DecompositionConnectivityType
   
-  !>Contains information on the mesh decomposition. \see OpenCMISS::Iron::cmfe_DecompositionType
+  !>Contains information on the mesh decomposition. \see OpenCMISS::OC_DecompositionType
   TYPE DecompositionType
     INTEGER(INTG) :: userNumber!<The user defined identifier for the domain decomposition. The user number must be unique.
     INTEGER(INTG) :: globalNumber !<The global number of the domain decomposition in the list of domain decompositions for a particular mesh.
@@ -1639,7 +1639,7 @@ END TYPE GeneratedMeshEllipsoidType
     LOGICAL, ALLOCATABLE :: meshComponentNumberLocked(:,:) !<meshComponentNumberLocked(componentIdx,variableTypeIdx). Is .TRUE. if the mesh component number of the componentIdx'th component of the variableTypeIdx'th varible type has been locked, .FALSE. if not.
   END TYPE FieldCreateValuesCacheType
 
-  !>Contains information for a field defined on a region. \see OpenCMISS::Iron::cmfe_FieldType
+  !>Contains information for a field defined on a region. \see OpenCMISS::OC_FieldType
   TYPE FieldType
     INTEGER(INTG) :: globalNumber !<The global number of the field in the list of fields for a region.
     INTEGER(INTG) :: userNumber !<The user defined identifier for the field. The user number must be unique.
@@ -2417,7 +2417,7 @@ END TYPE GeneratedMeshEllipsoidType
     TYPE(EquationsMatricesVectorType), POINTER :: vectorMatrices !<A pointer to the matrices, vectors for the vector equations
   END TYPE EquationsVectorType
   
-  !>Contains information about the equations in an equations set. \see OpenCMISS::Iron::cmfe_EquationsType
+  !>Contains information about the equations in an equations set. \see OpenCMISS::OC_EquationsType
   TYPE EquationsType
     TYPE(EquationsSetType), POINTER :: equationsSet !<A pointer to the equations_set
     LOGICAL :: equationsFinished !<Is .TRUE. if the equations have been finished, .FALSE. if not.
@@ -2488,7 +2488,7 @@ END TYPE GeneratedMeshEllipsoidType
     TYPE(BoundaryConditionsVariableType), POINTER :: ptr !<A pointer to the boundary conditions variable
   END TYPE BoundaryConditionsVariablePtrType
 
-  !>Contains information on the boundary conditions for the solver equations. \see OpenCMISS::Iron::cmfe_BoundaryConditionsType
+  !>Contains information on the boundary conditions for the solver equations. \see OpenCMISS::OC_BoundaryConditionsType
   TYPE BoundaryConditionsType
     TYPE(SolverEquationsType), POINTER :: solverEquations !<A pointer to the solver equations.
     LOGICAL :: boundaryConditionsFinished !<Is .TRUE. if the boundary conditions for the equations set has finished being created, .FALSE. if not.
@@ -2671,7 +2671,7 @@ END TYPE GeneratedMeshEllipsoidType
     TYPE(FieldType), POINTER :: equationsSetField !<A pointer to the equations set field for the equations set.
   END TYPE EquationsSetEquationsFieldType
 
-  !>Contains information on an equations set. \see OpenCMISS::Iron::cmfe_EquationsSetType
+  !>Contains information on an equations set. \see OpenCMISS::OC_EquationsSetType
   TYPE EquationsSetType
     INTEGER(INTG) :: userNumber !<The user identifying number of the equations set
     INTEGER(INTG) :: globalNumber !<The global index of the equations set in the region.
@@ -3316,7 +3316,7 @@ END TYPE GeneratedMeshEllipsoidType
   ! Solver equations types
   !
 
-  !>Contains information about the solver equations for a solver. \see OpenCMISS::Iron::cmfe_SolverEquationsType
+  !>Contains information about the solver equations for a solver. \see OpenCMISS::OC_SolverEquationsType
   TYPE SolverEquationsType
     TYPE(SolverType), POINTER :: solver !<A pointer to the solver
     LOGICAL :: solverEquationsFinished !<Is .TRUE. if the solver equations have finished being created, .FALSE. if not.
@@ -3658,7 +3658,7 @@ END TYPE GeneratedMeshEllipsoidType
     TYPE(SolverType), POINTER :: ptr
   END TYPE SolverPtrType
 
- !>Contains information on the type of solver to be used. \see OpenCMISS::Iron::cmfe_SolverType
+ !>Contains information on the type of solver to be used. \see OpenCMISS::OC_SolverType
   TYPE SolverType
     TYPE(SolversType), POINTER :: solvers !<A pointer to the control loop solvers. Note that if this is a linked solver this will be NULL and solvers should be accessed through the linking solver.
     INTEGER(INTG) :: globalNumber !<The global number of the solver in the list of solvers
@@ -4173,7 +4173,7 @@ END TYPE GeneratedMeshEllipsoidType
   ! History types
   !
 
-  !>Contains information about a history file for a control loop. \see OpenCMISS::Iron::cmfe_HistoryType
+  !>Contains information about a history file for a control loop. \see OpenCMISS::OC_HistoryType
   TYPE HISTORY_TYPE
     TYPE(ControlLoopType), POINTER :: controlLoop !<A pointer to the control loop for the history file
     LOGICAL :: HISTORY_FINISHED !<Is .TRUE. if the history file has finished being created, .FALSE. if not.
@@ -4258,7 +4258,7 @@ END TYPE GeneratedMeshEllipsoidType
     TYPE(ControlLoopType), POINTER :: ptr !<The pointer to the control loop
   END TYPE ControlLoopPtrType
 
-  !>Contains information on a control loop. \see OpenCMISS::Iron::cmfe_ControlLoopType
+  !>Contains information on a control loop. \see OpenCMISS::OC_ControlLoopType
   TYPE ControlLoopType
     TYPE(ProblemType), POINTER :: problem !<A pointer back to the problem for the control loop
     TYPE(ControlLoopType), POINTER :: parentLoop !<A pointer back to the parent control loop if this is a sub loop
@@ -4301,7 +4301,7 @@ END TYPE GeneratedMeshEllipsoidType
     INTEGER(INTG) :: actionType !<The action type \see ProblemRoutines_SetupActionTypes,ProblemRoutines
   END TYPE ProblemSetupType
   
-  !>Contains information for a problem. \see OpenCMISS::Iron::cmfe_ProblemType
+  !>Contains information for a problem. \see OpenCMISS::OC_ProblemType
   TYPE ProblemType
     INTEGER(INTG) :: userNumber !<The user defined identifier for the problem. The user number must be unique.
     INTEGER(INTG) :: globalNumber !<The global number of the problem in the list of problems.
@@ -4339,7 +4339,7 @@ END TYPE GeneratedMeshEllipsoidType
     TYPE(RegionType), POINTER :: ptr !<The pointer to the region.
   END TYPE RegionPtrType
      
-  !>Contains information for a region. \see OpenCMISS::Iron::cmfe_RegionType
+  !>Contains information for a region. \see OpenCMISS::OC_RegionType
   TYPE RegionType 
     INTEGER(INTG) :: userNumber !<The user defined identifier for the region. The user number must be unique.
     TYPE(RegionsType), POINTER :: regions !<A pointer back to the regions for this region.

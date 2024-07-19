@@ -539,7 +539,7 @@ CONTAINS
   !================================================================================================================================
   !
 
-  !>Returns a pointer to the CellML equations defined with a solver. \see OpenCMISS::Iron::cmfe_Problem_CellMLEquationsGet
+  !>Returns a pointer to the CellML equations defined with a solver. \see OpenCMISS::OC_Problem_CellMLEquationsGet
   SUBROUTINE Problem_CellMLEquationsGet0(problem,controlLoopIdentifier,solverIndex,cellMLEquations,err,error,*)
 
     !Argument variables
@@ -566,7 +566,7 @@ CONTAINS
   !================================================================================================================================
   !
 
-  !>Returns a pointer to the solver CellML equations defined with a solver. \see OPENCMISS::CMISSProblemSolverCellMLEquationsGet
+  !>Returns a pointer to the solver CellML equations defined with a solver. \see OpenCMISS::OC_Problem_CellMLEquationsGet
   SUBROUTINE Problem_CellMLEquationsGet1(problem,controlLoopIdentifiers,solverIndex,cellMLEquations,err,error,*)
 
     !Argument variables
@@ -657,7 +657,7 @@ CONTAINS
   !================================================================================================================================
   !
 
-  !>Returns a pointer to the control loop for a problem. \see OpenCMISS::Iron::cmfe_Problem_ControlLoopGet
+  !>Returns a pointer to the control loop for a problem. \see OpenCMISS::OC_Problem_ControlLoopGet
   SUBROUTINE Problem_ControlLoopGet0(problem,controlLoopIdentifier,controlLoop,err,error,*)
 
     !Argument variables
@@ -683,7 +683,7 @@ CONTAINS
   !================================================================================================================================
   !
 
-  !>Returns a pointer to the control_loop for a problem. \see OpenCMISS::Iron::cmfe_Problem_ControlLoopGet
+  !>Returns a pointer to the control_loop for a problem. \see OpenCMISS::OC_Problem_ControlLoopGet
   SUBROUTINE Problem_ControlLoopGet1(problem,controlLoopIdentifiers,controlLoop,err,error,*)
 
     !Argument variables
@@ -835,7 +835,7 @@ CONTAINS
   !================================================================================================================================
   !
 
-  !>Returns a pointer to the solver for a problem control loop. \see OpenCMISS::Iron::cmfe_Problem_SolverGet
+  !>Returns a pointer to the solver for a problem control loop. \see OpenCMISS::OC_Problem_SolverGet
   SUBROUTINE Problem_SolverGet0(problem,controlLoopIdentifier,solverIndex,solver,err,error,*)
 
     !Argument variables
@@ -862,7 +862,7 @@ CONTAINS
   !================================================================================================================================
   !
 
-  !>Returns a pointer to the solver for a problem control loop. \see OpenCMISS::Iron::cmfe_Problem_SolverGet
+  !>Returns a pointer to the solver for a problem control loop. \see OpenCMISS::OC_Problem_SolverGet
   SUBROUTINE Problem_SolverGet1(problem,controlLoopIdentifiers,solverIndex,solver,err,error,*)
 
     !Argument variables
@@ -904,7 +904,7 @@ CONTAINS
   !================================================================================================================================
   !
 
-  !>Returns a pointer to a solver equations defined with a solver. \see OpenCMISS::Iron::cmfe_Problem_SolverEquationsGet
+  !>Returns a pointer to a solver equations defined with a solver. \see OpenCMISS::OC_Problem_SolverEquationsGet
   SUBROUTINE Problem_SolverEquationsGet0(problem,controlLoopIdentifier,solverIndex,solverEquations,err,error,*)
 
     !Argument variables
@@ -931,7 +931,7 @@ CONTAINS
   !================================================================================================================================
   !
 
-  !>Returns a pointer to a solver equations defined with a solver. \see OpenCMISS::Iron::cmfe_Problem_SolverEquationsGet
+  !>Returns a pointer to a solver equations defined with a solver. \see OpenCMISS::OC_Problem_SolverEquationsGet
   SUBROUTINE Problem_SolverEquationsGet1(problem,controlLoopIdentifiers,solverIndex,solverEquations,err,error,*)
 
     !Argument variables
@@ -975,7 +975,7 @@ CONTAINS
   !================================================================================================================================
   !
 
-  !>Returns the problem specification i.e., problem class, type and subtype for an problem. \see OpenCMISS::Iron::cmfe_Problem_SpecificationGet
+  !>Returns the problem specification i.e., problem class, type and subtype for an problem. \see OpenCMISS::OC_Problem_SpecificationGet
   SUBROUTINE Problem_SpecificationGet(problem,minSpecificationLength,problemSpecification,err,error,*)
 
     !Argument variables
@@ -1107,7 +1107,7 @@ CONTAINS
   !================================================================================================================================
   !
 
-  !>Gets the size of the problem specification array for a problem identified by a pointer. \see OpenCMISS::Iron::cmfe_Problem_SpecificationSizeGet
+  !>Gets the size of the problem specification array for a problem identified by a pointer. \see OpenCMISS::OC_Problem_SpecificationSizeGet
   SUBROUTINE Problem_SpecificationSizeGet(problem,specificationSize,err,error,*)
 
     !Argument variables

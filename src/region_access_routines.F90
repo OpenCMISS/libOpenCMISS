@@ -195,7 +195,7 @@ CONTAINS
   !================================================================================================================================
   !
 
-  !>Returns a pointer to the cellml for a given user number in a region. \see OPENCMISS::Iron::cmfe_Region_CellMLGet
+  !>Returns a pointer to the cellml for a given user number in a region. \see OpenCMISS::OC_Region_CellMLGet
   SUBROUTINE Region_CellMLGet(region,userNumber,cellml,err,error,*)
 
     !Argument variables
@@ -328,7 +328,7 @@ CONTAINS
   !================================================================================================================================
   !
 
-  !>Returns the coordinate system of region. \see OPENCMISS::Iron::cmfe_Region_CoordinateSystemGet
+  !>Returns the coordinate system of region. \see OpenCMISS::OC_Region_CoordinateSystemGet
   SUBROUTINE Region_CoordinateSystemGet(region,coordinateSystem,err,error,*)
 
     !Argument variables
@@ -371,7 +371,7 @@ CONTAINS
   !================================================================================================================================
   !
   
-  !>Returns a pointer to the data points for a given user number in a region. \see OPENCMISS::Iron::cmfe_Region_DataPointsGet
+  !>Returns a pointer to the data points for a given user number in a region. \see OpenCMISS::OC_Region_DataPointsGet
   SUBROUTINE Region_DataPointsGet(region,userNumber,dataPoints,err,error,*)
 
     !Argument variables
@@ -422,7 +422,7 @@ CONTAINS
   !================================================================================================================================
   !
 
-  !>Returns a pointer to the decomposer for a given user number in a region. \see OPENCMISS::Iron::cmfe_Region_DecomposerGet
+  !>Returns a pointer to the decomposer for a given user number in a region. \see OpenCMISS::OC_Region_DecomposerGet
   SUBROUTINE Region_DecomposerGet(region,userNumber,decomposer,err,error,*)
 
     !Argument variables
@@ -508,7 +508,7 @@ CONTAINS
   !================================================================================================================================
   !
 
-  !>Returns a pointer to the equations set for a given user number in a region. \see OPENCMISS::Iron::cmfe_Region_EquationsSetGet
+  !>Returns a pointer to the equations set for a given user number in a region. \see OpenCMISS::OC_Region_EquationsSetGet
   SUBROUTINE Region_EquationsSetGet(region,userNumber,equationsSet,err,error,*)
 
     !Argument variables
@@ -552,7 +552,7 @@ CONTAINS
   !================================================================================================================================
   !
 
-  !>Returns a pointer to the field for a given user number in a region. \see OPENCMISS::Iron::cmfe_Region_FieldGet
+  !>Returns a pointer to the field for a given user number in a region. \see OpenCMISS::OC_Region_FieldGet
   SUBROUTINE Region_FieldGet(region,userNumber,field,err,error,*)
 
     !Argument variables
@@ -638,7 +638,7 @@ CONTAINS
   !================================================================================================================================
   !
 
-  !>Returns a pointer to the generated mesh for a given user number in a region. \see OPENCMISS::Iron::cmfe_Region_GeneratedMeshGet
+  !>Returns a pointer to the generated mesh for a given user number in a region. \see OpenCMISS::OC_Region_GeneratedMeshGet
   SUBROUTINE Region_GeneratedMeshGet(region,userNumber,generatedMesh,err,error,*)
 
     !Argument variables
@@ -718,7 +718,7 @@ CONTAINS
   !================================================================================================================================
   !
 
-  !>Returns a pointer to the interface for a given user number in a (parent) region. \see OPENCMISS::Iron::cmfe_Region_InterfaceGet
+  !>Returns a pointer to the interface for a given user number in a (parent) region. \see OpenCMISS::OC_Region_InterfaceGet
   SUBROUTINE Region_InterfaceGet(region,userNumber,interface,err,error,*)
 
     !Argument variables
@@ -801,7 +801,7 @@ CONTAINS
   !================================================================================================================================
   !
 
-  !>Returns the label of a region. \see OPENCMISS::Iron::cmfe_Region_LabelGet
+  !>Returns the label of a region. \see OpenCMISS::OC_Region_LabelGet
   SUBROUTINE Region_LabelGetC(region,label,err,error,*)
 
     !Argument variables
@@ -837,7 +837,7 @@ CONTAINS
   !================================================================================================================================
   !
 
-  !>Returns the label of a region. \see OPENCMISS::Iron::cmfe_Region_LabelGet
+  !>Returns the label of a region. \see OpenCMISS::OC_Region_LabelGet
   SUBROUTINE Region_LabelGetVS(region,label,err,error,*)
 
     !Argument variables
@@ -867,7 +867,7 @@ CONTAINS
   !================================================================================================================================
   !
 
-  !>Returns a pointer to the mesh for a given user number in a region. \see OPENCMISS::Iron::cmfe_Region_MeshGet
+  !>Returns a pointer to the mesh for a given user number in a region. \see OpenCMISS::OC_Region_MeshGet
   SUBROUTINE Region_MeshGet(region,userNumber,mesh,err,error,*)
 
     !Argument variables
@@ -953,7 +953,7 @@ CONTAINS
   !================================================================================================================================
   !
 
-  !>Returns a pointer to the nodes for a region. \see OPENCMISS::Iron::cmfe_Region_NodesGet
+  !>Returns a pointer to the nodes for a region. \see OpenCMISS::OC_Region_NodesGet
   SUBROUTINE Region_NodesGet(region,nodes,err,error,*)
 
     !Argument variables

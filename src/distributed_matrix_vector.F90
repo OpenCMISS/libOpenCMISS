@@ -7584,7 +7584,7 @@ CONTAINS
         CALL MPI_Test(cmissVector%transfers(domainIdx)%mpiReceiveRequest,isFinished,status,mpiIError)
         CALL MPI_ErrorCheck("MPI_Test",mpiIError,err,error,*999)
 #else
-        CALL MPI_TEST(cmissVector%transfers(domainIdx)%mpiReceiveRequest,isFinished,stgatus,mpiIError)
+        CALL MPI_TEST(cmissVector%transfers(domainIdx)%mpiReceiveRequest,isFinished,status,mpiIError)
         CALL MPI_ErrorCheck("MPI_TEST",mpiIError,err,error,*999)
 #endif        
         IF(.NOT.isFinished) EXIT

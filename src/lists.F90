@@ -60,7 +60,7 @@ MODULE Lists
 
   !Module parameters
 
-  !> \addtogroup OpenCMISS_ListsConstants OpenCMISS::Iron::Lists::Constants
+  !> \addtogroup OpenCMISS_ListsConstants OpenCMISS::Lists::Constants
   !> \brief Lists constants.
   !>@{
   !> \addtogroup Lists_DataType Lists::DataTypes

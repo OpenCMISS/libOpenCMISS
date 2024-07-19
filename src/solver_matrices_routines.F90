@@ -527,9 +527,6 @@ CONTAINS
     INTEGER(INTG), INTENT(OUT) :: err !<The error code
     TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
     !Local Variables
-    INTEGER(INTG) :: matrixIdx
-    TYPE(SolverMatrixType), POINTER :: solverMatrix
-    TYPE(VARYING_STRING) :: localError
     
     ENTERS("SolverMatrices_StorageTypesSet0",err,error,*999)
 
@@ -691,7 +688,6 @@ CONTAINS
     TYPE(MatrixRowColCouplingType), POINTER :: equationsColToSolverColsMap(:),equationsRowToSolverRowsMap(:)
     TYPE(SolverMappingType), POINTER :: solverMapping
     TYPE(SolverMatricesType), POINTER :: solverMatrices
-    TYPE(VARYING_STRING) :: localError
     
     ENTERS("SolverMatrix_EquationsMatrixAdd",err,error,*999)
 
@@ -762,8 +758,6 @@ CONTAINS
     TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
     !Local Variables
     INTEGER(INTG) :: interfaceMatrixNumber,solverMatrixNumber
-    INTEGER(INTG), POINTER :: columnIndices(:),rowIndices(:)
-    REAL(DP), POINTER :: interfaceMatrixData(:)
     LOGICAL :: hasTranspose
     TYPE(DistributedMatrixType), POINTER :: interfaceDistributedMatrix,solverDistributedMatrix,transposeDistributedMatrix
     TYPE(InterfaceConditionToSolverMatricesMapType), POINTER :: interfaceConditionToSolverMatricesMap
@@ -775,7 +769,6 @@ CONTAINS
       & interfaceRowToSolverColsMap(:),interfaceRowToSolverRowsMap(:)
     TYPE(SolverMappingType), POINTER :: solverMapping
     TYPE(SolverMatricesType), POINTER :: solverMatrices
-    TYPE(VARYING_STRING) :: localError
     
     ENTERS("SolverMatrix_InterfaceMatrixAdd",err,error,*999)
 
@@ -855,7 +848,6 @@ CONTAINS
     TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
     !Local Variables
     INTEGER(INTG) :: jacobianMatrixNumber
-    REAL(DP), POINTER :: jacobianMatrixData(:)
     TYPE(DistributedMatrixType), POINTER :: jacobianDistributedMatrix,solverDistributedMatrix
     TYPE(EquationsMatricesVectorType), POINTER :: vectorMatrices
     TYPE(EquationsMatricesNonlinearType), POINTER :: nonlinearMatrices
@@ -865,7 +857,6 @@ CONTAINS
     TYPE(MatrixRowColCouplingType), POINTER :: equationsRowToSolverRowsMap(:),jacobianColToSolverColsMap(:)
     TYPE(SolverMappingType), POINTER :: solverMapping
     TYPE(SolverMatricesType), POINTER :: solverMatrices
-    TYPE(VARYING_STRING) :: localError
     
     ENTERS("SolverMatrix_JacobianMatrixAdd",err,error,*999)
 
@@ -931,18 +922,14 @@ CONTAINS
     INTEGER(INTG)  :: dummyErr,equationsMatrixIdx,equationsSetIdx,equationsSolverMatrixNumber,interfaceConditionIdx, &
       & interfaceConditionMethod,interfaceMatrixIdx,maximumColumnIndices,maximumColumnsPerRow,maximumTransposeColumnsPerRow, &
       & numberOfColumns,numberOfDynamicMatrices,numberOfEquationsSets,numberOfInterfaceConditions,numberOfInterfaceMatrices, &
-      & numberOfJacobianMatrices,numberOfLinearMatrices,numberOfMatrices,numberOfRows,numberOfSolverMatrices,solverColumnIdx, &
+      & numberOfJacobianMatrices,numberOfLinearMatrices,numberOfRows,numberOfSolverMatrices,solverColumnIdx, &
       & solverMatrixIdx,solverMatrixNumber,solverRowNumber,storageType
     INTEGER(INTG), ALLOCATABLE :: columns(:)
     REAL(DP) :: sparsity
     LOGICAL :: hasTranspose
     TYPE(DistributedMatrixType), POINTER :: distributedMatrix,solverDistributedMatrix,transposeDistributedMatrix
     TYPE(EquationsMatrixType), POINTER :: equationsMatrix
-    TYPE(EquationsMatricesDynamicType), POINTER :: dynamicMatrices
-    TYPE(EquationsMatricesLinearType), POINTER :: linearMatrices
-    TYPE(EquationsMatricesNonlinearType), POINTER :: nonlinearMatrices
     TYPE(EquationsMatricesToSolverMatrixMapType), POINTER :: equationsMatricesToSolverMatrixMap
-    TYPE(EquationsMatricesVectorType), POINTER :: vectorMatrices
     TYPE(EquationsMatrixToSolverMatrixMapType), POINTER :: equationsMatrixToSolverMatrixMap
     TYPE(EquationsSetToSolverMatricesMapType), POINTER :: equationsSetToSolverMatricesMap
     TYPE(JacobianMatrixType), POINTER :: jacobianMatrix
@@ -950,7 +937,6 @@ CONTAINS
     TYPE(InterfaceConditionType), POINTER :: interfaceCondition
     TYPE(InterfaceConditionToSolverMatricesMapType), POINTER :: interfaceConditionToSolverMatricesMap
     TYPE(InterfaceMatrixType), POINTER :: interfaceMatrix
-    TYPE(InterfaceMatricesType), POINTER :: interfaceMatrices
     TYPE(InterfaceMatricesToSolverMatrixMapType), POINTER :: interfaceMatricesToSolverMatrixMap
     TYPE(InterfaceMatrixToSolverMatricesMapType), POINTER :: interfaceMatrixToSolverMatricesMap
     TYPE(InterfaceMatrixToSolverMatrixMapType), POINTER :: interfaceMatrixToSolverMatrixMap

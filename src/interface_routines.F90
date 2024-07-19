@@ -197,7 +197,7 @@ CONTAINS
   !================================================================================================================================
   !
 
-  !>Finishes the creation of an interface. \see OPENCMISS::Iron::cmfe_InterfaceCreateFinish
+  !>Finishes the creation of an interface. \see OpenCMISS::OC_InterfaceCreateFinish
   SUBROUTINE Interface_CreateFinish(INTERFACE,err,error,*) 
 
     !Argument variables
@@ -247,7 +247,7 @@ CONTAINS
   !================================================================================================================================
   !
 
-  !>Starts the creation of an interface on a parent region. \see OPENCMISS::Iron::cmfe_InterfaceCreateStart
+  !>Starts the creation of an interface on a parent region. \see OpenCMISS::OC_InterfaceCreateStart
   SUBROUTINE Interface_CreateStart(userNumber,parentRegion,INTERFACE,err,error,*)
 
     !Argument variables
@@ -310,7 +310,7 @@ CONTAINS
   !================================================================================================================================
   !
 
-  !>Sets the coordinate system of an interface.  \see OPENCMISS::Iron::cmfe_Interface_CoordinateSystemSet
+  !>Sets the coordinate system of an interface.  \see OpenCMISS::OC_Interface_CoordinateSystemSet
   SUBROUTINE Interface_CoordinateSystemSet(INTERFACE,coordinateSystem,err,error,*)
 
     !Argument variables
@@ -338,7 +338,7 @@ CONTAINS
   !================================================================================================================================
   !
 
-  !>Destroys an interface. \see OPENCMISS::Iron::cmfe_InterfaceDestroy
+  !>Destroys an interface. \see OpenCMISS::OC_InterfaceDestroy
   SUBROUTINE Interface_Destroy(INTERFACE,err,error,*) 
 
     !Argument variables
@@ -557,7 +557,7 @@ CONTAINS
   !================================================================================================================================
   !
 
-  !>Returns the label of an interface for a character label. \see OPENCMISS::Iron::cmfe_InterfaceLabelGet
+  !>Returns the label of an interface for a character label. \see OpenCMISS::OC_InterfaceLabelGet
   SUBROUTINE Interface_LabelGetC(interface,label,err,error,*)
 
     !Argument variables
@@ -591,7 +591,7 @@ CONTAINS
   !================================================================================================================================
   !
 
-  !>Returns the label of an interface for a varying string label. \see OPENCMISS::Iron::cmfe_InterfaceLabelGet
+  !>Returns the label of an interface for a varying string label. \see OpenCMISS::OC_InterfaceLabelGet
   SUBROUTINE Interface_LabelGetVS(INTERFACE,label,err,error,*)
 
     !Argument variables
@@ -619,7 +619,7 @@ CONTAINS
   !================================================================================================================================
   !
 
-  !>Sets the label of an interface for a character label. \see OPENCMISS::Iron::cmfe_InterfaceLabelSet
+  !>Sets the label of an interface for a character label. \see OpenCMISS::OC_InterfaceLabelSet
   SUBROUTINE Interface_LabelSetC(INTERFACE,label,err,error,*)
 
     !Argument variables
@@ -646,7 +646,7 @@ CONTAINS
   !================================================================================================================================
   !
 
-  !>Sets the label of an interface for a varying string label. \see OPENCMISS::Iron::cmfe_InterfaceLabelSet
+  !>Sets the label of an interface for a varying string label. \see OpenCMISS::OC_InterfaceLabelSet
   SUBROUTINE Interface_LabelSetVS(INTERFACE,label,err,error,*)
 
     !Argument variables

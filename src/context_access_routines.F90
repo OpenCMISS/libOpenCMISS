@@ -41,7 +41,7 @@
 !> the terms of any one of the MPL, the GPL or the LGPL.
 !>
 
-!> \addtogroup OpenCMISS_Context OpenCMISS::Iron::Context
+!> \addtogroup OpenCMISS_Context OpenCMISS::Context
 !> This module handles all contex access routines.
 MODULE ContextAccessRoutines
 
@@ -312,7 +312,7 @@ CONTAINS
   !================================================================================================================================
   !
   
-  !>Gets the random seeds for a context. \see OpenCMISS::Iron::cmfe_Context_RandomSeedsGet
+  !>Gets the random seeds for a context. \see OpenCMISS::OC_Context_RandomSeedsGet
   SUBROUTINE Context_RandomSeedsGet(context,randomSeeds,err,error,*)
 
     !Argument Variables
@@ -351,7 +351,7 @@ CONTAINS
   !================================================================================================================================
   !
 
-  !>Returns the size of the random seeds array for a context \see OpenCMISS::Iron::cmfe_Context_RandomSeedsSizeGet
+  !>Returns the size of the random seeds array for a context \see OpenCMISS::OC_Context_RandomSeedsSizeGet
   SUBROUTINE Context_RandomSeedsSizeGet(context,randomSeedsSize,err,error,*)
   
     !Argument variables

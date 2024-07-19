@@ -41,7 +41,7 @@
 !> the terms of any one of the MPL, the GPL or the LGPL.
 !>
 
-!> \addtogroup OpenCMISS_CellML OpenCMISS::Iron::CellML
+!> \addtogroup OpenCMISS_CellML OpenCMISS::CellML
 !> This module contains all CellML access method routines.
 MODULE CellMLAccessRoutines
   
@@ -59,10 +59,10 @@ MODULE CellMLAccessRoutines
 
   !Module parameters
 
-  !> \addtogroup CellML_Types OpenCMISS::Iron::CellML::Constants
+  !> \addtogroup CellML_Types OpenCMISS::CellML::Constants
   !> \brief CellML constants
   !>@{
-  !> \addtogroup CellML_FieldTypes OpenCMISS::Iron::CellML::Constants::FieldTypes
+  !> \addtogroup CellML_FieldTypes OpenCMISS::CellML::Constants::FieldTypes
   !> \brief CellML field parameter types
   !> \see CmissCellML,OpenCMISS_CellMLFieldTypes
   !> CellML model variables being mapped to or from fields will have an initial type of CellML_UNKNOWN_FIELD. This will be set to
@@ -75,7 +75,7 @@ MODULE CellMLAccessRoutines
   INTEGER(INTG), PARAMETER :: CELLML_PARAMETERS_FIELD = 4 !<CellML parameters field \see CellML_FieldTypes,CmissCellML
   !>@}
 
-  !> \addtogroup CellML_FieldMappingTypes OpenCMISS::Iron::CellML::Constants::FieldMappingTypes
+  !> \addtogroup CellML_FieldMappingTypes OpenCMISS::CellML::Constants::FieldMappingTypes
   !> \brief CellML field parameter types
   !> \see CmissCellML,OpenCMISS_CellMLFieldTypes
   !>@{
@@ -83,7 +83,7 @@ MODULE CellMLAccessRoutines
   INTEGER(INTG), PARAMETER :: CELLML_MAP_FROM_FIELD_TYPE = 2 !<A field to CellML mapping type \see CellML_FieldMappingTypes,CmissCellML
   !>@}
 
-  !> \addtogroup CellML_ModelsFieldTypes OpenCMISS::Iron::CellML::Constants::ModelsFieldTypes
+  !> \addtogroup CellML_ModelsFieldTypes OpenCMISS::CellML::Constants::ModelsFieldTypes
   !> \brief CellML field parameter types
   !> \see CmissCellML,OpenCMISS_CellMLFieldTypes
   !>@{
@@ -2176,9 +2176,6 @@ CONTAINS
     INTEGER(INTG), INTENT(OUT) :: err !<The error code
     TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
     !Local Variables
-#ifdef WITH_POSTCHECKS    
-    TYPE(VARYING_STRING) :: localError
-#endif    
 
     ENTERS("CellMLModelsField_OnlyOneModelIndexGet",err,error,*999)
 

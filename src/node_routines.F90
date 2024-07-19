@@ -201,7 +201,7 @@ CONTAINS
   !================================================================================================================================
   !
 
-  !>Finishes the process of creating nodes in the region. \see OpenCMISS::Iron::cmfe_Nodes_CreateFinish
+  !>Finishes the process of creating nodes in the region. \see OpenCMISS::OC_Nodes_CreateFinish
   SUBROUTINE Nodes_CreateFinish(nodes,err,error,*)
 
     !Argument variables
@@ -288,7 +288,7 @@ CONTAINS
   !================================================================================================================================
   !
 
-  !>Starts the process of creating nodes in an interface. \see OpenCMISS::Iron::cmfe_Nodes_CreateStart
+  !>Starts the process of creating nodes in an interface. \see OpenCMISS::OC_Nodes_CreateStart
   SUBROUTINE Nodes_CreateStartInterface(interface,numberOfNodes,nodes,err,error,*)
 
     !Argument variables
@@ -326,7 +326,7 @@ CONTAINS
   !================================================================================================================================
   !
 
-  !>Starts the process of creating nodes in the region.  \see OpenCMISS::Iron::cmfe_Nodes_CreateStart
+  !>Starts the process of creating nodes in the region.  \see OpenCMISS::OC_Nodes_CreateStart
   SUBROUTINE Nodes_CreateStartRegion(region,numberOfNodes,nodes,err,error,*)
 
     !Argument variables
@@ -364,7 +364,7 @@ CONTAINS
   !================================================================================================================================
   !
 
-  !>Destroys nodes. \see OpenCMISS::Iron::cmfe_Nodes_Destroy
+  !>Destroys nodes. \see OpenCMISS::OC_Nodes_Destroy
   SUBROUTINE Nodes_Destroy(nodes,err,error,*)
 
     !Argument variables
@@ -530,7 +530,7 @@ CONTAINS
   !================================================================================================================================
   !
 
-  !>Gets the character label for a node identified by a given global number. \see OpenCMISS::Iron::cmfe_Nodes_LabelGet
+  !>Gets the character label for a node identified by a given global number. \see OpenCMISS::OC_Nodes_LabelGet
   SUBROUTINE Nodes_LabelGetC(nodes,globalNumber,label,err,error,*)
 
     !Argument variables
@@ -573,7 +573,7 @@ CONTAINS
   !================================================================================================================================
   !
 
-  !>Gets the varying string label for a node identified by a given global number. \see OpenCMISS::Iron::cmfe_Nodes_LabelGet
+  !>Gets the varying string label for a node identified by a given global number. \see OpenCMISS::OC_Nodes_LabelGet
   SUBROUTINE Nodes_LabelGetVS(nodes,globalNumber,label,err,error,*)
 
     !Argument variables
@@ -609,7 +609,7 @@ CONTAINS
   !================================================================================================================================
   !
 
-  !>Changes/sets the character label for a node identified by a given global number. \see OpenCMISS::Iron::cmfe_Nodes_LabelSet
+  !>Changes/sets the character label for a node identified by a given global number. \see OpenCMISS::OC_Nodes_LabelSet
   SUBROUTINE Nodes_LabelSetC(nodes,globalNumber,label,err,error,*)
 
     !Argument variables
@@ -644,7 +644,7 @@ CONTAINS
   !================================================================================================================================
   !
 
-  !>Changes/sets the varying string label for a node identified by a given global number. \see OpenCMISS::Iron::cmfe_Nodes_LabelSet
+  !>Changes/sets the varying string label for a node identified by a given global number. \see OpenCMISS::OC_Nodes_LabelSet
   SUBROUTINE Nodes_LabelSetVS(nodes,globalNumber,label,err,error,*)
 
     !Argument variables
@@ -679,7 +679,7 @@ CONTAINS
   !================================================================================================================================
   !
 
-  !>Returns the number of nodes. \see OpenCMISS::Iron::cmfe_Nodes_NumberOfNodesGet
+  !>Returns the number of nodes. \see OpenCMISS::OC_Nodes_NumberOfNodesGet
   SUBROUTINE Nodes_NumberOfNodesGet(nodes,numberOfNodes,err,error,*)
 
     !Argument variables
@@ -707,7 +707,7 @@ CONTAINS
   !================================================================================================================================
   !
 
-  !>Gets the user number for a node identified by a given global number. \see OpenCMISS::Iron::cmfe_Nodes_UserNumberGet
+  !>Gets the user number for a node identified by a given global number. \see OpenCMISS::OC_Nodes_UserNumberGet
   SUBROUTINE Nodes_UserNumberGet(nodes,globalNumber,userNumber,err,error,*)
 
     !Argument variables
@@ -743,7 +743,7 @@ CONTAINS
   !================================================================================================================================
   !
 
-  !>Changes/sets the user number for a node identified by a given global number. \see OpenCMISS::Iron::cmfe_Nodes_UserNumberSet
+  !>Changes/sets the user number for a node identified by a given global number. \see OpenCMISS::OC_Nodes_UserNumberSet
   SUBROUTINE Nodes_UserNumberSet(nodes,globalNumber,userNumber,err,error,*)
 
     !Argument variables
@@ -795,7 +795,7 @@ CONTAINS
   !================================================================================================================================
   !
 
-  !>Changes/sets the user numbers for all nodes. \see OpenCMISS::Iron::cmfe_Nodes_UserNumbersAllSet
+  !>Changes/sets the user numbers for all nodes. \see OpenCMISS::OC_Nodes_UserNumbersAllSet
   SUBROUTINE Nodes_UserNumbersAllSet(nodes,userNumbers,err,error,*)
 
     !Argument variables

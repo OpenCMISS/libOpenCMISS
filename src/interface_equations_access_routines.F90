@@ -59,7 +59,7 @@ MODULE InterfaceEquationsAccessRoutines
 
   !Module parameters
 
-  !> \addtogroup OpenCMISS_InterfaceEquationsConstants OpenCMISS::Iron::InterfaceEquations::Constants
+  !> \addtogroup OpenCMISS_InterfaceEquationsConstants OpenCMISS::InterfaceEquations::Constants
   !> \brief Matrix vector constants.
   !>@{
   !> \addtogroup InterfaceEquations_LinearityTypes InterfaceEquations::Constants::LinearityTypes

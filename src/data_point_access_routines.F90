@@ -253,7 +253,7 @@ CONTAINS
   !================================================================================================================================
   !
 
-  !>Gets the character label for a data point identified by a given global number. \see OpenCMISS::Iron::cmfe_DataPoints_LabelGet
+  !>Gets the character label for a data point identified by a given global number. \see OpenCMISS::OC_DataPoints_LabelGet
   SUBROUTINE DataPoints_DataLabelGetC(dataPoints,globalNumber,label,err,error,*)
 
     !Argument variables
@@ -320,7 +320,7 @@ CONTAINS
   !================================================================================================================================
   !
 
-  !>Gets the varying string label for a data point identified by a given global number. \see OpenCMISS::Iron::cmfe_DataPoints_LabelGet
+  !>Gets the varying string label for a data point identified by a given global number. \see OpenCMISS::OC_DataPoints_LabelGet
   SUBROUTINE DataPoints_DataLabelGetVS(dataPoints,globalNumber,label,err,error,*)
 
     !Argument variables
@@ -980,7 +980,7 @@ CONTAINS
   !================================================================================================================================
   !
 
-  !>Returns the number of data points. \see OpenCMISS::Iron::cmfe_DataPoints_NumberOfDataPointsGet
+  !>Returns the number of data points. \see OpenCMISS::OC_DataPoints_NumberOfDataPointsGet
   SUBROUTINE DataPoints_NumberOfDataPointsGet(dataPoints,numberOfDataPoints,err,error,*)
 
     !Argument variables
@@ -1102,7 +1102,6 @@ CONTAINS
     TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
     !Local Variables
     INTEGER(INTG) :: setIdx
-    TYPE(DataPointsType), POINTER :: setDataPoints
 #ifdef WITH_PRECHECKS    
     TYPE(VARYING_STRING) :: localError
 #endif    

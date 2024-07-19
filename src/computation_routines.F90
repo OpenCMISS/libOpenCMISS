@@ -41,7 +41,7 @@
 !> the terms of any one of the MPL, the GPL or the LGPL.
 !>
 
-!> \defgroup OpenCMISS_Computation OpenCMISS::Iron::Computation
+!> \defgroup OpenCMISS_Computation OpenCMISS::Computation
 !> This module contains all computation routines.
 MODULE ComputationRoutines
 
@@ -712,7 +712,7 @@ CONTAINS
   !=================================================================================================================================
   !
 
-  !>Start the creation of a work group \see OpenCMISS::Iron::cmfe_WorkGroup_CreateStart
+  !>Start the creation of a work group \see OpenCMISS::OC_WorkGroup_CreateStart
   SUBROUTINE WorkGroup_CreateStart(userNumber,parentWorkGroup,workGroup,err,error,*)
 
     !Argument Variables
@@ -767,7 +767,7 @@ CONTAINS
   !================================================================================================================================
   !
 
-  !>Finish the creation of a work group \see OpenCMISS::Iron::cmfe_WorkGroup_CreateFinish
+  !>Finish the creation of a work group \see OpenCMISS::OC_WorkGroup_CreateFinish
   SUBROUTINE WorkGroup_CreateFinish(workGroup,err,error,*)
 
     !Argument Variables
@@ -879,7 +879,7 @@ CONTAINS
   !=================================================================================================================================
   !
 
-  !>Destroy a work group \see OpenCMISS::Iron::cmfe_WorkGroup_Destroy
+  !>Destroy a work group \see OpenCMISS::OC_WorkGroup_Destroy
   SUBROUTINE WorkGroup_Destroy(workGroup,err,error,*)
 
     !Argument Variables
@@ -1104,7 +1104,7 @@ CONTAINS
   !=================================================================================================================================
   !
 
-  !>Set the character label of a work group \see OpenCMISS::Iron::cmfe_WorkGroup_LabelSet
+  !>Set the character label of a work group \see OpenCMISS::OC_WorkGroup_LabelSet
   SUBROUTINE WorkGroup_LabelSetC(workGroup,label,err,error,*)
 
     !Argument Variables
@@ -1131,7 +1131,7 @@ CONTAINS
   !=================================================================================================================================
   !
 
-  !>Set the varying string label of a work group \see OpenCMISS::Iron::cmfe_WorkGroup_LabelSet
+  !>Set the varying string label of a work group \see OpenCMISS::OC_WorkGroup_LabelSet
   SUBROUTINE WorkGroup_LabelSetVS(workGroup,label,err,error,*)
 
     !Argument Variables
@@ -1158,7 +1158,7 @@ CONTAINS
   !=================================================================================================================================
   !
 
-  !>Set the number of group nodes in a work group \see OpenCMISS::Iron::cmfe_WorkGroup_NumberOfGroupNodesSet
+  !>Set the number of group nodes in a work group \see OpenCMISS::OC_WorkGroup_NumberOfGroupNodesSet
   SUBROUTINE WorkGroup_NumberOfGroupNodesSet(workGroup,numberOfGroupComputationNodes,err,error,*)
 
     !Argument Variables

@@ -41,7 +41,7 @@
 !> the terms of any one of the MPL, the GPL or the LGPL.
 !>
 
-!> \defgroup OpenCMISS_BoundaryConditions OpenCMISS::Iron::BoundaryConditions
+!> \defgroup OpenCMISS_BoundaryConditions OpenCMISS::BoundaryConditions
 !> This module handles all boundary conditions routines.
 MODULE BoundaryConditionsRoutines
 
@@ -209,7 +209,7 @@ MODULE BoundaryConditionsRoutines
   !================================================================================================================================
   !
 
-  !>Adds to the value of the specified constant and sets this as a boundary condition on the specified constant. \see OpenCMISS::Iron::cmfe_BoundaryConditions_AddConstant
+  !>Adds to the value of the specified constant and sets this as a boundary condition on the specified constant. \see OpenCMISS::OC_BoundaryConditions_AddConstant
   SUBROUTINE BoundaryConditions_AddConstantField(boundaryConditions,field,variableType,componentNumber,condition,bcValue, &
     & err,error,*)
 
@@ -254,8 +254,7 @@ MODULE BoundaryConditionsRoutines
     INTEGER(INTG), INTENT(OUT) :: err !<The error code
     TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
     !Local Variables
-    INTEGER(INTG) :: localDOF,globalDOF
-    TYPE(VARYING_STRING) :: localError
+    INTEGER(INTG) :: localDOF
 
     ENTERS("BoundaryConditions_AddConstantVariable",err,error,*999)
 
@@ -276,7 +275,7 @@ MODULE BoundaryConditionsRoutines
   !================================================================================================================================
   !
 
-  !>Adds to the value of the specified constant and sets this as a boundary condition on the specified user element. \see OpenCMISS:Iron::BoundaryConditions::cmfe_BoundaryConditions_AddElement
+  !>Adds to the value of the specified constant and sets this as a boundary condition on the specified user element. \see OpenCMISS:BoundaryConditions::OC_BoundaryConditions_AddElement
   SUBROUTINE BoundaryConditions_AddElementField(boundaryConditions,field,variableType,userElementNumber,componentNumber, &
     & condition,bcValue,err,error,*)
 
@@ -328,7 +327,6 @@ MODULE BoundaryConditionsRoutines
     !Local Variables
     INTEGER(INTG) :: localDOF
     LOGICAL :: ghostDOF
-    TYPE(VARYING_STRING) :: localError
 
     ENTERS("BoundaryConditions_AddElementVariable",err,error,*999)
 
@@ -517,7 +515,7 @@ MODULE BoundaryConditionsRoutines
   !================================================================================================================================
   !
 
-  !>Adds to the value of the specified constant and sets this as a boundary condition on the specified user node. \see OpenCMISS::Iron::cmfe_BoundaryConditions_AddNode
+  !>Adds to the value of the specified constant and sets this as a boundary condition on the specified user node. \see OpenCMISS::OC_BoundaryConditions_AddNode
   SUBROUTINE BoundaryConditions_AddNodeField(boundaryConditions,field,variableType,versionNumber,derivativeNumber, &
     & userNodeNumber,componentNumber,condition,bcValue,err,error,*)
 
@@ -716,7 +714,7 @@ MODULE BoundaryConditionsRoutines
     !Argument variables
     TYPE(BoundaryConditionsType), POINTER, INTENT(IN) :: boundaryConditions !<The solver equations boundary conditions to constrain the DOFs for.
     TYPE(FieldType), POINTER, INTENT(IN) :: field !<The equations dependent field containing the field DOFs to be constrained.
-    INTEGER(INTG), INTENT(IN) :: variableType !<The field variable type of the DOFs to be constrained. \see OPENCMISS_FieldVariableTypes
+    INTEGER(INTG), INTENT(IN) :: variableType !<The field variable type of the DOFs to be constrained. \see OpenCMISS_FieldVariableTypes
     INTEGER(INTG), INTENT(IN) :: versionNumber !<The derivative version number.
     INTEGER(INTG), INTENT(IN) :: derivativeNumber !<The derivative number.
     INTEGER(INTG), INTENT(IN) :: component !<The field component number of the DOFs to be constrained.
@@ -1564,7 +1562,7 @@ MODULE BoundaryConditionsRoutines
     !Local Variables
     INTEGER(INTG) :: dummyErr,equationsSetIdx,interfaceConditionIdx,linearityType,numberOfEquationsMatrices, &
       & numberOfEquationsSets,numberOfInterfaceConditions,numberOfInterfaceMatrices,numberOfLinearVariables, &
-      & numberOfResiduals,numberOfResidualVariables,numberOfVariables,residualIdx,timeDependenceType,variableIdx,variableType
+      & numberOfResiduals,numberOfResidualVariables,residualIdx,timeDependenceType,variableIdx
     TYPE(EquationsType), POINTER :: equations
     TYPE(EquationsVectorType), POINTER :: vectorEquations
     TYPE(EquationsSetType), POINTER :: equationsSet
@@ -1838,7 +1836,6 @@ MODULE BoundaryConditionsRoutines
     TYPE(FieldVariableType), POINTER :: matchVariable
     TYPE(InterfaceType), POINTER :: lhsVariableInterface,matchVariableInterface
     TYPE(RegionType), POINTER :: lhsInterfaceParentRegion,lhsVariableRegion,matchInterfaceParentRegion,matchVariableRegion
-    TYPE(VARYING_STRING) :: localError
 
     ENTERS("BoundaryConditions_LHSVariableExists",err,error,*998)
 
@@ -2023,7 +2020,6 @@ MODULE BoundaryConditionsRoutines
     TYPE(FieldVariableType), POINTER :: matchVariable
     TYPE(InterfaceType), POINTER :: rhsVariableInterface,matchVariableInterface
     TYPE(RegionType), POINTER :: rhsInterfaceParentRegion,rhsVariableRegion,matchInterfaceParentRegion,matchVariableRegion
-    TYPE(VARYING_STRING) :: localError
 
     ENTERS("BoundaryConditions_RHSVariableExists",err,error,*998)
 
@@ -2173,7 +2169,6 @@ MODULE BoundaryConditionsRoutines
     TYPE(FieldVariableType), POINTER :: matchVariable
     TYPE(InterfaceType), POINTER :: fieldVariableInterface,matchVariableInterface
     TYPE(RegionType), POINTER :: fieldInterfaceParentRegion,fieldVariableRegion,matchInterfaceParentRegion,matchVariableRegion
-    TYPE(VARYING_STRING) :: localError
 
     ENTERS("BoundaryConditions_RowVariableExists",err,error,*998)
 
@@ -2313,7 +2308,7 @@ MODULE BoundaryConditionsRoutines
     INTEGER(INTG), INTENT(OUT) :: err !<The error code
     TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
     !Local Variables
-    INTEGER(INTG) :: dummyErr,numberOfDOFs,rowVariableIdx,totalNumberOfDOFs
+    INTEGER(INTG) :: dummyErr,rowVariableIdx
     TYPE(BoundaryConditionsRowVariablePtrType), ALLOCATABLE :: newBoundaryConditionsRowVariables(:)
     TYPE(BoundaryConditionsRowVariableType), POINTER :: boundaryConditionsRowVariable
     TYPE(VARYING_STRING) :: dummyError
@@ -2586,7 +2581,7 @@ MODULE BoundaryConditionsRoutines
   !================================================================================================================================
   !
 
-  !>Sets a boundary condition on the specified constant. \see OpenCMISS::Iron::cmfe_BoundaryConditions_SetConstant
+  !>Sets a boundary condition on the specified constant. \see OpenCMISS::OC_BoundaryConditions_SetConstant
   SUBROUTINE BoundaryConditions_SetConstantField(boundaryConditions,field,variableType,componentNumber,condition,bcValue, &
     & err,error,*)
 
@@ -2631,7 +2626,7 @@ MODULE BoundaryConditionsRoutines
     INTEGER(INTG), INTENT(OUT) :: err !<The error code
     TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
     !Local Variables
-    INTEGER(INTG) :: localDOF,globalDOF
+    INTEGER(INTG) :: localDOF
 
     ENTERS("BoundaryConditions_SetConstantVariable",err,error,*999)
 
@@ -2652,7 +2647,7 @@ MODULE BoundaryConditionsRoutines
   !================================================================================================================================
   !
 
-  !>Sets a boundary condition on the specified user element. \see OpenCMISS::Iron::cmfe_BoundaryConditions_SetElement
+  !>Sets a boundary condition on the specified user element. \see OpenCMISS::OC_BoundaryConditions_SetElement
   SUBROUTINE BoundaryConditions_SetElementField(boundaryConditions,field,variableType,userElementNumber,componentNumber, &
     & condition,bcValue,err,error,*)
     
@@ -2872,7 +2867,7 @@ MODULE BoundaryConditionsRoutines
   !================================================================================================================================
   !
 
-  !>Sets a boundary condition on the specified user node. \see OpenCMISS::Iron:cmfe_BoundaryConditions_SetNode
+  !>Sets a boundary condition on the specified user node. \see OpenCMISS::Iron:OC_BoundaryConditions_SetNode
   SUBROUTINE BoundaryConditions_SetNodeField(boundaryConditions,field,variableType,versionNumber,derivativeNumber, &
     & userNodeNumber,componentNumber,condition,bcValue,err,error,*)
 
@@ -2889,11 +2884,8 @@ MODULE BoundaryConditionsRoutines
     INTEGER(INTG), INTENT(OUT) :: err !<The error code
     TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
     !Local Variables
-    INTEGER(INTG) :: localDOF,globalDOF
-    TYPE(BoundaryConditionsVariableType), POINTER :: boundaryConditionsVariable
     TYPE(FieldVariableType), POINTER :: fieldVariable
-    TYPE(VARYING_STRING) :: localError
-
+    
     ENTERS("BoundaryConditions_SetNodeField",err,error,*999)
 
     NULLIFY(fieldVariable)
@@ -2928,9 +2920,8 @@ MODULE BoundaryConditionsRoutines
     INTEGER(INTG), INTENT(OUT) :: err !<The error code
     TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
     !Local Variables
-    INTEGER(INTG) :: localDOF,globalDOF
-    TYPE(VARYING_STRING) :: localError
-
+    INTEGER(INTG) :: globalDOF,localDOF
+ 
     ENTERS("BoundaryConditions_SetNodeVariable",err,error,*999)
 
     CALL BoundaryConditions_AssertNotFinished(boundaryConditions,err,error,*999)
@@ -3287,7 +3278,6 @@ MODULE BoundaryConditionsRoutines
     TYPE(FieldVariableType), POINTER :: matchVariable
     TYPE(InterfaceType), POINTER :: fieldVariableInterface,matchVariableInterface
     TYPE(RegionType), POINTER :: fieldInterfaceParentRegion,fieldVariableRegion,matchInterfaceParentRegion,matchVariableRegion
-    TYPE(VARYING_STRING) :: localError
 
     ENTERS("BoundaryConditions_VariableExists",err,error,*998)
 
@@ -3858,7 +3848,7 @@ MODULE BoundaryConditionsRoutines
     INTEGER(INTG), INTENT(OUT) :: err !<The error code
     type(varying_string), intent(out) :: error !<The error string
     ! Local variables
-    INTEGER(INTG) :: boundaryConditionType,equationsSetIdx,esSpecification(3),numberOfEquationsSets,specificationSize
+    INTEGER(INTG) :: boundaryConditionType,equationsSetIdx,esSpecification(3),numberOfEquationsSets
     LOGICAL :: validEquationsSetFound
     TYPE(BoundaryConditionsType), POINTER :: boundaryConditions
     TYPE(EquationsSetType), POINTER :: equationsSet
@@ -4408,7 +4398,7 @@ MODULE BoundaryConditionsRoutines
     INTEGER(INTG), INTENT(OUT) :: err !<The error code
     TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
     !Local variables
-    INTEGER(INTG) :: bcDOFType,currentDOFType,numberOfGlobalDOFs,previousCondition,previousDOF,variableType
+    INTEGER(INTG) :: bcDOFType,currentDOFType,numberOfGlobalDOFs,variableType
     TYPE(FieldVariableType), POINTER :: fieldVariable
     TYPE(VARYING_STRING) :: localError
 
@@ -5054,7 +5044,7 @@ MODULE BoundaryConditionsRoutines
       & domainNumber,dummyErr,faceIdx,faceNumber,globalDOF,interpolationType,lineIdx,lineNumber,localDOF, &
       & localNeumannConditionIdx,localNodeIdx,localType,myGroupNodeNumber,neumannConditionNumber,neumannIdx,nodeIdx,nodeNumber, &
       & numberOfDimensions,numberOfDomains,numberOfGroupNodes,numberOfNodeDerivatives,numberOfNodeFaces,numberOfNodeLines, &
-      & numberOfNodes,numberNonZeros,numberOfPointDOFs,numberRowEntries,numberOfVariables,totalNumberOfLocal,versionNumber
+      & numberOfNodes,numberNonZeros,numberOfPointDOFs,numberRowEntries,totalNumberOfLocal,versionNumber
     INTEGER(INTG), ALLOCATABLE :: rowIndices(:), columnIndices(:), localDOFNumbers(:)
     REAL(DP) :: pointValue
     LOGICAL :: boundaryFace,boundaryLine,boundaryNode,calculateFaces,calculateLines
@@ -5068,8 +5058,6 @@ MODULE BoundaryConditionsRoutines
     TYPE(DomainLinesType), POINTER :: domainLines
     TYPE(DomainNodesType), POINTER :: domainNodes
     TYPE(DomainTopologyType), POINTER :: domainTopology
-    TYPE(EquationsMappingNonlinearType), POINTER :: nonlinearMapping
-    TYPE(EquationsMappingResidualType), POINTER :: residualMapping
     TYPE(FieldType), POINTER :: field
     TYPE(FieldVariableType), POINTER :: fieldVariable
     TYPE(ListType), POINTER :: columnIndicesList, rowColumnIndicesList
