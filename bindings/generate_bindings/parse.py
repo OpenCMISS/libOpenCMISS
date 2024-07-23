@@ -710,6 +710,10 @@ class DoxygenGrouping(object):
             self.type = 'group'
             self.group = line[
                     line.find('OpenCMISS_') + len('OpenCMISS_'):].split()[0]
+        elif line.find(r'\defgroup') > -1:
+            self.type = 'group'
+            self.group = line[
+                    line.find('OpenCMISS_') + len('OpenCMISS_'):].split()[0]
         elif line.find(r'\brief') > -1:
             self.type = 'brief'
             self.brief = line[line.find(r'\brief') + len(r'\brief'):].strip()

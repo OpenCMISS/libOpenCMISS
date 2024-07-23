@@ -337,6 +337,8 @@ if(CMAKE_C_COMPILER_ID STREQUAL "IntelLLVM")
   add_compile_options( "$<$<AND:$<COMPILE_LANGUAGE:C>,$<CONFIG:Release>>:-fast>" )
   add_compile_options( "$<$<AND:$<COMPILE_LANGUAGE:C>,$<CONFIG:Debug>>:-O0>" )
 elseif(CMAKE_C_COMPILER_ID STREQUAL "GNU")
+  add_compile_options( "$<$<AND:$<COMPILE_LANGUAGE:C>,$<OR:$<CONFIG:Debug>,$<CONFIG:RelWithDebInfo>>>:-g>" )
+  add_compile_options( "$<$<AND:$<COMPILE_LANGUAGE:C>,$<BOOL:${OpenCMISS_WITH_OpenMP}>>:-fopenmp>" )
   add_compile_options( "$<$<AND:$<COMPILE_LANGUAGE:C>,$<BOOL:${OpenCMISS_WITH_WARN_ALL}>>:-Wall>" )
   add_compile_options( "$<$<AND:$<COMPILE_LANGUAGE:C>,$<CONFIG:Release>>:-Ofast>" )
   add_compile_options( "$<$<AND:$<COMPILE_LANGUAGE:C>,$<CONFIG:Debug>>:-O0>" )
@@ -347,12 +349,14 @@ endif()
 if(CMAKE_Fortran_COMPILER_ID STREQUAL "IntelLLVM")
   add_compile_options( "$<$<COMPILE_LANGUAGE:Fortran>:-traceback>" )
   add_compile_options( "$<$<AND:$<COMPILE_LANGUAGE:Fortran>,$<OR:$<CONFIG:Debug>,$<CONFIG:RelWitDebInfo>>>:-debug>" )
+  add_compile_options( "$<$<AND:$<COMPILE_LANGUAGE:Fortran>,$<BOOL:${OpenCMISS_WITH_OpenMP}>>:-fopenmp>" )
   add_compile_options( "$<$<AND:$<COMPILE_LANGUAGE:Fortran>,$<BOOL:${OpenCMISS_WITH_WARN_ALL}>>:-warn;all>" )
   add_compile_options( "$<$<AND:$<COMPILE_LANGUAGE:Fortran>,$<BOOL:${OpenCMISS_WITH_CHECK_ALL}>>:-check;all,nouninit>" )
   add_compile_options( "$<$<AND:$<COMPILE_LANGUAGE:Fortran>,$<CONFIG:Release>>:-fast>" )
   add_compile_options( "$<$<AND:$<COMPILE_LANGUAGE:Fortran>,$<CONFIG:Debug>>:-O0>" )
 elseif(CMAKE_Fortran_COMPILER_ID STREQUAL "GNU")
   add_compile_options( "$<$<COMPILE_LANGUAGE:Fortran>:-fbacktrace>" )
+  add_compile_options( "$<$<AND:$<COMPILE_LANGUAGE:Fortran>,$<BOOL:${OpenCMISS_WITH_OpenMP}>>:-fopenmp>" )
   add_compile_options( "$<$<AND:$<COMPILE_LANGUAGE:Fortran>,$<BOOL:${OpenCMISS_WITH_WARN_ALL}>>:-Wall>" )
   add_compile_options( "$<$<AND:$<COMPILE_LANGUAGE:Fortran>,$<BOOL:${OpenCMISS_WITH_CHECK_ALL}>>:-fcheck=all;-ffpe-trap=invalid,zero,overflow>" )
   add_compile_options( "$<$<AND:$<COMPILE_LANGUAGE:Fortran>,$<CONFIG:Release>>:-Ofast>" )
@@ -634,7 +638,7 @@ add_custom_command(
   -DOpenCMISS_Python_MODULE_NAME=${OpenCMISS_Python_MODULE_NAME}
   -DOpenCMISS_OPENCMISS_PYTHON_PY=${OpenCMISS_OPENCMISS_PYTHON_PY}
   -P ${OpenCMISS_CMAKE_DIR}/OCGeneratePythonModuleFile.cmake
-  DEPENDS ${OpenCMISS_SRC_DIR}/opencmiss.F90
+  DEPENDS ${OpenCMISS_SRC_DIR}/opencmiss.F90 ${OpenCMISS_BINDINGS_Python_DIR}/extra_content.py
   WORKING_DIRECTORY ${OpenCMISS_BINDINGS_DIR}
 )
 

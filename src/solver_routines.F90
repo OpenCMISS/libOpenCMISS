@@ -937,7 +937,6 @@ CONTAINS
     TYPE(CellMLModelType), POINTER :: cellMLModel
     TYPE(CellMLModelsFieldType), POINTER :: cellMLModelsField
     TYPE(FieldType), POINTER :: modelsField
-    TYPE(VARYING_STRING) :: localError
     
     ENTERS("SolverCellMLEvaluator_Evaluate",err,error,*999)
 
@@ -1730,7 +1729,6 @@ CONTAINS
     TYPE(CellMLModelType), POINTER :: cellMLModel
     TYPE(CellMLModelsFieldType), POINTER :: cellMLModelsField
     TYPE(FieldType), POINTER :: modelsField
-    TYPE(VARYING_STRING) :: localError
     
     ENTERS("SolverDAEEulerForward_Integrate",err,error,*999)
 
@@ -2089,7 +2087,6 @@ CONTAINS
     TYPE(FieldVariableType), POINTER :: modelsVariable
     TYPE(FieldType), POINTER :: modelsField,stateField,parametersField,intermediateField
     TYPE(SolverType), POINTER :: solver
-    TYPE(VARYING_STRING) :: localError
     
     ENTERS("SolverDAEEulerForward_Solve",err,error,*999)
 
@@ -3043,7 +3040,6 @@ CONTAINS
     TYPE(FieldVariableType), POINTER :: modelsVariable
     TYPE(FieldType), POINTER :: modelsField,stateField,parametersField,intermediateField
     TYPE(SolverType), POINTER :: solver
-    TYPE(VARYING_STRING) :: localError
 
     ENTERS("SolverDAEBDF_Solve",err,error,*999)
 
@@ -3315,7 +3311,6 @@ CONTAINS
     TYPE(FieldVariableType), POINTER :: modelsVariable
     TYPE(FieldType), POINTER :: modelsField,stateField,parametersField,intermediateField
     TYPE(SolverType), POINTER :: solver
-    TYPE(VARYING_STRING) :: localError
 
     ENTERS("SolverDAEExternal_Solve",err,error,*999)
 
@@ -4305,10 +4300,10 @@ CONTAINS
     INTEGER(INTG) :: dampingMatrixNumber,dependentVariableType,dynamicVariableType,equationsSetIdx,interfaceConditionIdx, &
       & lagrangeVariableType,linearLibraryType,linearMatrixIdx,massMatrixNumber,nonlinearLibraryType,numberOfEquationsSets, &
       & numberOfInterfaceConditions,numberOfLinearMatrices,numberOfResiduals,numberOfResidualVariables,numberOfSources, &
-      & residualIdx,residualVariableIdx,rhsVariableType,solverVariableIdx,sourceIdx,sparsityType,symmetryType,variablePositionIdx
+      & residualIdx,residualVariableIdx,rhsVariableType,sourceIdx,sparsityType,symmetryType
     LOGICAL :: lumped
     TYPE(DistributedVectorType), POINTER :: tempDistributedVector
-    TYPE(DomainMappingType), POINTER :: colsDomainMapping,rowsDomainMapping
+    TYPE(DomainMappingType), POINTER :: rowsDomainMapping
     TYPE(EquationsType), POINTER :: equations
     TYPE(EquationsVectorType), POINTER :: vectorEquations
     TYPE(EquationsMappingVectorType), POINTER :: vectorMapping
@@ -4318,7 +4313,6 @@ CONTAINS
     TYPE(EquationsMappingNonlinearType), POINTER :: nonlinearMapping
     TYPE(EquationsMappingResidualType), POINTER :: residualMapping
     TYPE(EquationsMappingRHSType), POINTER :: rhsMapping
-    TYPE(EquationsMappingSourceType), POINTER :: sourceMapping
     TYPE(EquationsMappingSourcesType), POINTER :: sourcesMapping
     TYPE(EquationsMatricesVectorType), POINTER :: vectorMatrices
     TYPE(EquationsMatricesDynamicType), POINTER :: dynamicMatrices
@@ -4328,7 +4322,7 @@ CONTAINS
     TYPE(EquationsMatricesRHSType), POINTER :: rhsVector
     TYPE(EquationsMatricesSourceType), POINTER :: sourceVector
     TYPE(EquationsMatricesSourcesType), POINTER :: sourceVectors
-    TYPE(EquationsMatrixType), POINTER :: dampingMatrix,linearMatrix,massMatrix,stiffnessMatrix
+    TYPE(EquationsMatrixType), POINTER :: dampingMatrix,linearMatrix,massMatrix
     TYPE(EquationsSetType), POINTER :: equationsSet
     TYPE(FieldType), POINTER :: dependentField,lagrangeField
     TYPE(FieldVariableType), POINTER :: dependentVariable,dynamicVariable,lagrangeVariable,lhsVariable,linearVariable, &
@@ -6921,7 +6915,6 @@ CONTAINS
     !Local Variables
     INTEGER(INTG) :: numberOfGeometricComponents,variableType
     REAL(DP) :: u,v,w,vectorLength,rotationMatrix(4,4),transformationMatrix(4,4)
-    INTEGER(INTG) :: size1,size2
     TYPE(FieldType), POINTER :: field
     TYPE(GeometricTransformationSolverType), POINTER :: geometricTransformationSolver
     TYPE(VARYING_STRING) :: localError
@@ -7166,8 +7159,6 @@ CONTAINS
     INTEGER(INTG) :: dummyErr,loopType,maximumNumberOfIterations
     TYPE(SolversType), POINTER :: solvers
     TYPE(ControlLoopType), POINTER :: controlLoop
-    TYPE(ControlLoopWhileType), POINTER :: whileLoop
-    TYPE(ControlLoopLoadIncrementType), POINTER :: loadIncrementLoop
     TYPE(VARYING_STRING) :: dummyError
 
     ENTERS("Solver_GeometricTransformationInitialise",err,error,*998)
@@ -9213,7 +9204,7 @@ CONTAINS
     INTEGER(INTG), INTENT(OUT) :: err !<The error code
     TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
     !Local Variables
-    INTEGER(INTG) :: convergedReason,globalRow,localRow,localRowIdx,numberOfIterations,numberOfMatrices,numberOfRows,storageType
+    INTEGER(INTG) :: convergedReason,globalRow,localRowIdx,numberOfIterations,numberOfMatrices,numberOfRows,storageType
     REAL(DP) :: residualNorm,solverValue,matrixValue
     REAL(DP), POINTER :: rhsData(:)
     TYPE(DistributedMatrixType), POINTER :: distributedMatrix
@@ -9621,48 +9612,44 @@ CONTAINS
     INTEGER(INTG), INTENT(OUT) :: err !<The error code
     TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
     !Local Variables
-    INTEGER(INTG) :: columnNumber,currentIteration,dampingMatrixNumber,dependentVariableType,dirichletIdx,dynamicVariableType, &
-      & equationsColumnNumber,equationsMatrixIdx,equationsMatrixIdx2,equationsMatrixNumber,equationsRowNumber, &
+    INTEGER(INTG) :: currentIteration,dampingMatrixNumber,dirichletIdx,dynamicVariableType, &
+      & equationsColumnNumber,equationsMatrixIdx,equationsMatrixNumber,equationsRowNumber, &
       & equationsSetIdx,inputIteration,interfaceColumnNumber,interfaceConditionIdx,interfaceConditionMethod,interfaceMatrixIdx, &
-      & interfaceVariableType,jacobianMatrixIdx,lhsBoundaryCondition,lhsBoundaryFinish,lhsGlobalDOF,lhsVariableDOF, &
-      & linearMatrixIdx,linearVariableIdx, &
-      & linearVariableType,massMatrixNumber,numberOfDirichletConditions,numberOfDynamicMatrices,numberOfEquationsMatrices, &
-      & numberOfEquationsSets, &
-      & numberOfInterfaceConditions,numberOfInterfaceMatrices,numberOfJacobianMatrices,numberOfLinearMatrices, &
-      & numberOfLinearVariables,numberOfResiduals,numberOfResidualVariables,numberOfRows, &
-      & numberOfSolverMatrices,numberOfSources,outputIteration,residualIdx,residualVariableDOF,residualVariableIdx, &
-      & rhsBoundaryCondition,rhsGlobalDOF, &
-      & rhsVariableDOF,rhsVariableType,rowCondition,solverRowIdx,solverRowNumber,solverMatrixIdx,sourceIdx,stiffnessMatrixNumber, &
-      & timeDependenceType,totalNumberOfRows,transposeTimeDependenceType,variableBoundaryCondition,variableDOF, &
-      & variableGlobalDOF,variableIdx,variablePositionIdx,variableType
-    INTEGER(INTG), POINTER :: equationsRowToLHSDOFMap(:),equationsRowToResidualDOFMap(:),equationsRowToRHSDOFMap(:), &
+      & jacobianMatrixIdx,lhsBoundaryCondition,lhsBoundaryFinish,lhsGlobalDOF,lhsVariableDOF, &
+      & linearMatrixIdx,linearVariableIdx,massMatrixNumber,numberOfDirichletConditions, &
+      & numberOfDynamicMatrices,numberOfEquationsMatrices,numberOfEquationsSets,numberOfInterfaceConditions, &
+      & numberOfInterfaceMatrices,numberOfJacobianMatrices,numberOfLinearMatrices,numberOfLinearVariables, &
+      & numberOfResiduals,numberOfResidualVariables,numberOfRows,numberOfSolverMatrices,numberOfSources,outputIteration, &
+      & residualIdx,residualVariableIdx,rhsVariableDOF, &
+      & rowCondition,solverMatrixIdx,sourceIdx,stiffnessMatrixNumber, &
+      & timeDependenceType,totalNumberOfRows,transposeTimeDependenceType,variableDOF, &
+      & variableIdx
+    INTEGER(INTG), POINTER :: equationsRowToLHSDOFMap(:),equationsRowToRHSDOFMap(:), &
       & variableDOFToRowMap(:)
     REAL(SP) :: systemElapsed,systemTime1(1),systemTime2(1),userElapsed,userTime1(1),userTime2(1)
     REAL(DP) :: alphaValue,currentFunctionFactor,currentRHSValue,currentTime,dampingMatrixCoefficient,deltaT,dofValue, &
       & dynamicAccelerationFactor,dynamicDisplacementFactor,dynamicValue,dynamicVelocityFactor,equationsDampingCoefficient, &
       & equationsMassCoefficient,equationsStiffnessCoefficient,firstUpdateFactor,jacobianMatrixCoefficient,linearCoefficient, &
-      & linearValue,linearValueSum,massMatrixCoefficient,matrixCoefficient,matrixCoefficients(2)=[0.0_DP,0.0_DP],nonlinearValue, &
+      & linearValue,massMatrixCoefficient,matrixCoefficient,matrixCoefficients(2)=[0.0_DP,0.0_DP],nonlinearValue, &
       & previousFunctionFactor,previous2FunctionFactor,previous3FunctionFactor,previousRHSValue,previous2RHSValue, &
-      & previous3RHSValue,residualCoefficient,residualValue,rhsValue,rowCouplingCoefficient,secondUpdateFactor, &
+      & previous3RHSValue,residualCoefficient,rhsCoefficient,rhsValue,secondUpdateFactor, &
       & solverRHSValue,sourceValue,stiffnessMatrixCoefficient,sourceCoefficient,startTime,stopTime,timeIncrement, &
       & transposeMatrixCoefficient,vectorCoefficient
     REAL(DP), POINTER :: matrixCheckData(:),currentValuesVector(:),previousValuesVector(:),previousVelocityVector(:), &
-      & previousAccelerationVector(:),previousResidualParameters(:),previous2ResidualParameters(:), &
-      & previous3ResidualParameters(:),rhsCoefficient,rhsIntegratedParameters(:),rhsParameters(:),solverRHSCheckData(:),solverResidualCheckData(:)
+      & previousAccelerationVector(:),rhsIntegratedParameters(:),rhsParameters(:),solverRHSCheckData(:),solverResidualCheckData(:)
     LOGICAL :: hasIntegratedValues,hasTranspose,includeResidual,interfaceMatrixDynamic,rhsLinearMatrix,rhsResidual, &
       & updateResidual,updateRHS,updateSolverMatrix
     TYPE(BoundaryConditionsType), POINTER :: boundaryConditions
     TYPE(BoundaryConditionsDirichletType), POINTER :: dirichletBoundaryConditions
     TYPE(BoundaryConditionsNeumannType), POINTER :: neumannBoundaryConditions
-    TYPE(BoundaryConditionsVariableType), POINTER :: dependentBoundaryConditions,lhsBoundaryConditionsVariable, &
-      & rhsBoundaryConditionsVariable
+    TYPE(BoundaryConditionsVariableType), POINTER :: lhsBoundaryConditionsVariable,rhsBoundaryConditionsVariable
     TYPE(BoundaryConditionsRowVariableType), POINTER :: lhsBoundaryConditionsRowVariable
     TYPE(ControlLoopType), POINTER :: controlLoop
     TYPE(DistributedMatrixType), POINTER :: dampingDistributedMatrix,equationsDistributedMatrix,interfaceDistributedMatrix, &
       & jacobianDistributedMatrix,linearDistributedMatrix,massDistributedMatrix,previousSolverDistributedMatrix, &
       & solverDistributedMatrix,stiffnessDistributedMatrix,transposeDistributedMatrix,transposeInterfaceDistributedMatrix
     TYPE(DistributedVectorType), POINTER :: currentDistributedVector,currentResidualVector,currentRHSVector,currentSourceVector, &
-      & dependentDistributedVector,distributedResidualVector,distributedSourceVector,dynamicTempVector,equationsRHSVector, &
+      & dependentDistributedVector,dynamicTempVector, &
       & incrementalVector,interfaceRHSDistributedVector,interfaceTempVector,lagrangeDistributedVector,linearTempVector, &
       & nonlinearTempVector,previousDistributedVector,previous2DistributedVector,previous3DistributedVector, &
       & predictedMeanAccelerationVector, &
@@ -9670,7 +9657,7 @@ CONTAINS
       & previous3ResidualVector,previousRHSVector,previous2RHSVector,previous3RHSVector, &
       & previousSourceVector,previous2SourceVector,previous3SourceVector,residualDistributedVector,solverRHSVector, &
       & solverResidualVector,sourcesTempVector,transposeInterfaceTempVector
-    TYPE(DomainMappingType), POINTER :: lhsDomainMapping,residualDomainMapping,rhsDomainMapping,variableDomainMapping
+    TYPE(DomainMappingType), POINTER :: lhsDomainMapping
     TYPE(DynamicSolverType), POINTER :: dynamicSolver
     TYPE(EquationsType), POINTER :: equations
     TYPE(EquationsMappingVectorType), POINTER :: vectorMapping
@@ -9697,13 +9684,12 @@ CONTAINS
     TYPE(EquationsSetType), POINTER :: equationsSet
     TYPE(EquationsSetToSolverMatricesMapType), POINTER :: equationsSetToSolverMatricesMap
     TYPE(EquationsVectorType), POINTER :: vectorEquations
-    TYPE(FieldType), POINTER :: dependentField,lagrangeField
-    TYPE(FieldVariableType), POINTER :: dependentVariable,dynamicVariable,interfaceVariable,lagrangeVariable,lhsVariable, &
+    TYPE(FieldType), POINTER :: dependentField
+    TYPE(FieldVariableType), POINTER :: dependentVariable,dynamicVariable,lagrangeVariable,lhsVariable, &
       & linearVariable,residualVariable,rhsVariable
     TYPE(InterfaceConditionType), POINTER :: interfaceCondition
     TYPE(InterfaceConditionToSolverMatricesMapType), POINTER :: interfaceConditionToSolverMatricesMap
     TYPE(InterfaceEquationsType), POINTER :: interfaceEquations
-    TYPE(InterfaceLagrangeType), POINTER :: interfaceLagrange
     TYPE(InterfaceMappingType), POINTER :: interfaceMapping
     TYPE(InterfaceMappingRHSType), POINTER :: interfaceRHSMapping
     TYPE(InterfaceMatricesType), POINTER :: interfaceMatrices
@@ -11374,38 +11360,36 @@ CONTAINS
     INTEGER(INTG), INTENT(OUT) :: err !<The error code
     TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
     !Local Variables
-    INTEGER(INTG) :: dependentVariableType,dirichletIdx,equationsColumnNumber,equationsMatrixIdx,equationsMatrixIdx2, &
-      & equationsMatrixNumber,equationsRowNumber,equationsSetIdx,interfaceConditionIdx,interfaceConditionMethod, &
-      & interfaceMatrixIdx,interfaceVariableType,jacobianMatrixIdx,lhsBoundaryCondition,lhsBoundaryFinish,lhsGlobalDOF, &
-      & lhsVariableDOF,linearMatrixIdx,linearMatrixNumber,linearVariableIdx,linearVariableType,numberOfDirichletConditions, &
-      & numberOfEquationsMatrices,numberOfEquationsSets,numberOfInterfaceConditions,numberOfInterfaceMatrices, &
-      & numberOfJacobianMatrices,numberOfLinearMatrices,numberOfLinearVariables,numberOfResiduals,numberOfResidualVariables, &
+    INTEGER(INTG) :: dirichletIdx,equationsMatrixIdx, &
+      & equationsRowNumber,equationsSetIdx,interfaceConditionIdx,interfaceConditionMethod, &
+      & interfaceMatrixIdx,jacobianMatrixIdx,lhsBoundaryCondition,lhsBoundaryFinish,lhsGlobalDOF, &
+      & lhsVariableDOF,linearMatrixIdx,linearMatrixNumber,numberOfDirichletConditions, &
+      & numberOfEquationsSets,numberOfInterfaceConditions,numberOfInterfaceMatrices, &
+      & numberOfJacobianMatrices,numberOfLinearMatrices,numberOfResiduals,numberOfResidualVariables, &
       & numberOfRows,numberOfSolverMatrices,numberOfSources,penaltyMatrixIdx,residualIdx,residualVariableIdx, &
-      & rhsBoundaryCondition,rhsGlobalDOF,rhsVariableDOF,rhsVariableType,rowCondition,solverMatrixIdx,solverOutputType, &
-      & solverRowNumber,sourceIdx,totalNumberOfRows,variableDOF,variableGlobalDOF,variableBoundaryCondition,variableIdx, &
-      & variableType
+      & rhsBoundaryCondition,rhsVariableDOF,rowCondition,solverMatrixIdx,solverOutputType, &
+      & sourceIdx,totalNumberOfRows
     INTEGER(INTG), POINTER :: equationsRowToLHSDOFMap(:),equationsRowToRHSDOFMap(:)
     REAL(SP) :: systemElapsed,systemTime1(1),systemTime2(1),userElapsed,userTime1(1),userTime2(1)
-    REAL(DP) :: alphaValue,currentRHSValue,dependentValue,dofValue,linearValue,linearValueSum,matrixCoefficient, &
-      & matrixCoefficients(2),nonlinearValue,residualCoefficient,residualValue,rhsCoefficient,rhsIntegratedValue,rhsValue, &
+    REAL(DP) :: dofValue,linearValue,matrixCoefficient, &
+      & matrixCoefficients(2),nonlinearValue,residualCoefficient,rhsCoefficient,rhsValue, &
       & solverRHSValue,sourceCoefficient,sourceValue
-    REAL(DP), POINTER :: checkData(:),checkData2(:),checkData3(:),checkData4(:),matrixCheckData(:),rhsIntegratedParameters(:), &
-      & rhsParameters(:),solverResidualCheckData(:),solverRHSCheckData(:)
+    REAL(DP), POINTER :: matrixCheckData(:),rhsIntegratedParameters(:),rhsParameters(:),solverResidualCheckData(:), &
+      & solverRHSCheckData(:)
     TYPE(RealDPPtrType), ALLOCATABLE :: dependentParameters(:)
     LOGICAL :: hasIntegratedValues,hasTranspose,rhsLinearMatrix,rhsResidual,solverResidual,subtractFixedBCsFromResidual, &
       & updateMatrix,updateResidual,updateRHS
     TYPE(BoundaryConditionsType), POINTER :: boundaryConditions
     TYPE(BoundaryConditionsDirichletType), POINTER :: dirichletBoundaryConditions
     TYPE(BoundaryConditionsNeumannType), POINTER :: neumannBoundaryConditions
-    TYPE(BoundaryConditionsVariableType), POINTER :: dependentBoundaryConditions,lhsBoundaryConditionsVariable, &
-      & rhsBoundaryConditionsVariable
+    TYPE(BoundaryConditionsVariableType), POINTER :: lhsBoundaryConditionsVariable,rhsBoundaryConditionsVariable
     TYPE(BoundaryConditionsRowVariableType), POINTER :: lhsBoundaryConditionsRowVariable
     TYPE(DistributedMatrixType), POINTER :: interfaceDistributedMatrix,jacobianDistributedMatrix,linearDistributedMatrix, &
       & previousSolverDistributedMatrix,transposeDistributedMatrix,solverDistributedMatrix
     TYPE(DistributedVectorType), POINTER :: currentRHSVector,currentSourceVector,dependentDistributedVector,dependentVector, &
-      & distributedSourceVector,equationsRHSVector,interfaceRHSDistributedVector,interfaceTempVector,lagrangeVector, &
+      & distributedSourceVector,interfaceRHSDistributedVector,interfaceTempVector,lagrangeVector, &
       & linearTempVector,nonlinearTempVector,residualDistributedVector,solverResidualVector,solverRHSVector,sourcesTempVector
-    TYPE(DomainMappingType), POINTER :: lhsDomainMapping,rhsDomainMapping,variableDomainMapping
+    TYPE(DomainMappingType), POINTER :: lhsDomainMapping
     TYPE(EquationsType), POINTER :: equations
     TYPE(EquationsVectorType), POINTER :: vectorEquations
     TYPE(EquationsMappingVectorType), POINTER :: vectorMapping
@@ -11424,17 +11408,16 @@ CONTAINS
     TYPE(EquationsMatricesSourceType), POINTER :: sourceVector
     TYPE(EquationsMatricesSourcesType), POINTER :: sourceVectors
     TYPE(EquationsMatricesToSolverMatrixMapType), POINTER :: equationsMatricesToSolverMatrixMap
-    TYPE(EquationsMatrixType), POINTER :: equationsMatrix,linearMatrix
-    TYPE(EquationsMatrixToSolverMatrixMapType), POINTER :: equationsMatrixToSolverMatrixMap,linearMatrixToSolverMatrixMap
+    TYPE(EquationsMatrixType), POINTER :: linearMatrix
+    TYPE(EquationsMatrixToSolverMatrixMapType), POINTER :: linearMatrixToSolverMatrixMap
     TYPE(EquationsSetType), POINTER :: equationsSet
     TYPE(EquationsSetToSolverMatricesMapType), POINTER :: equationsSetToSolverMatricesMap
-    TYPE(FieldType), POINTER :: dependentField,lagrangeField
-    TYPE(FieldVariableType), POINTER :: dependentVariable,interfaceVariable,lagrangeVariable,lhsVariable,linearVariable, &
+    TYPE(FieldType), POINTER :: lagrangeField
+    TYPE(FieldVariableType), POINTER :: dependentVariable,lagrangeVariable,lhsVariable,linearVariable, &
       & residualVariable,rhsVariable
     TYPE(InterfaceConditionType), POINTER :: interfaceCondition
     TYPE(InterfaceConditionToSolverMatricesMapType), POINTER :: interfaceConditionToSolverMatricesMap
     TYPE(InterfaceEquationsType), POINTER :: interfaceEquations
-    TYPE(InterfaceLagrangeType), POINTER :: interfaceLagrange
     TYPE(InterfaceMappingType), POINTER :: interfaceMapping
     TYPE(InterfaceMappingRHSType), POINTER :: interfaceRHSMapping
     TYPE(InterfaceMatricesType), POINTER :: interfaceMatrices
@@ -11455,7 +11438,6 @@ CONTAINS
     TYPE(SolverMatricesType), POINTER :: solverMatrices
     TYPE(SolverMatrixType), POINTER :: solverMatrix
     TYPE(SolverMatrixToEquationsMapType), POINTER :: solverMatrixToEquationsMap
-    TYPE(VarToEquationsMatricesMapType), POINTER :: linearVarToEquationsMatricesMap
     TYPE(VARYING_STRING) :: localError
   
     ENTERS("Solver_StaticAssemble",err,error,*999)
@@ -12721,7 +12703,7 @@ CONTAINS
     TYPE(EquationsMatrixType), POINTER :: equationsMatrix
     TYPE(EquationsSetType), POINTER :: equationsSet
     TYPE(FieldType), POINTER :: dependentField,lagrangeField
-    TYPE(FieldVariableType), POINTER :: linearVariable,interfaceVariable,lagrangeVariable,lhsVariable
+    TYPE(FieldVariableType), POINTER :: interfaceVariable,lagrangeVariable,lhsVariable
     TYPE(LinearDirectSolverType), POINTER :: directSolver
     TYPE(LinearIterativeSolverType), POINTER :: iterativeSolver
     TYPE(LinearSolverType), POINTER :: linearSolver
@@ -13694,7 +13676,7 @@ CONTAINS
     TYPE(EquationsMatrixType), POINTER :: equationsMatrix
     TYPE(EquationsSetType), POINTER :: equationsSet
     TYPE(FieldType), POINTER :: dependentField
-    TYPE(FieldVariableType), POINTER :: lhsVariable,linearVariable
+    TYPE(FieldVariableType), POINTER :: lhsVariable
     TYPE(NonlinearSolverType), POINTER :: nonlinearSolver
     TYPE(QuasiNewtonSolverType), POINTER :: quasiNewtonSolver
     TYPE(SolverType), POINTER :: solver
@@ -14725,7 +14707,7 @@ CONTAINS
     TYPE(EquationsMatrixType), POINTER :: equationsMatrix
     TYPE(EquationsSetType), POINTER :: equationsSet
     TYPE(FieldType), POINTER :: dependentField,lagrangeField
-    TYPE(FieldVariableType), POINTER :: linearVariable,interfaceVariable,lagrangeVariable,lhsVariable
+    TYPE(FieldVariableType), POINTER :: interfaceVariable,lagrangeVariable,lhsVariable
     TYPE(LinearDirectSolverType), POINTER :: directSolver
     TYPE(LinearIterativeSolverType), POINTER :: iterativeSolver
     TYPE(LinearSolverType), POINTER :: linearSolver
@@ -17085,16 +17067,15 @@ CONTAINS
     INTEGER(INTG), INTENT(OUT) :: err !<The error code
     TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
     !Local Variables
-    INTEGER(INTG) :: columnNumber,equationsSetIdx,interfaceConditionIdx,localDOFIdx,localNumber,numberOfDOFs, &
-      & numberOfEquationsSets,numberOfInterfaceConditions,numberOfSolverMatrices,numberOfVariables,solverDOFIdx, &
-      & solverMatrixIdx,variableDOFIdx,variableIdx,variableType
+    INTEGER(INTG) :: equationsSetIdx,interfaceConditionIdx,localDOFIdx,numberOfDOFs,numberOfEquationsSets, &
+      & numberOfInterfaceConditions,numberOfSolverMatrices,numberOfVariables,solverDOFIdx,solverMatrixIdx, &
+      & variableDOFIdx,variableIdx
     REAL(DP) :: additiveConstant,dofValue,couplingCoefficient
     REAL(DP), POINTER :: variableData(:)
     TYPE(DistributedVectorType), POINTER :: solverVector
     TYPE(DomainMappingType), POINTER :: columnDOFsMapping,domainMapping
     TYPE(EquationsMatricesToSolverMatrixMapType), POINTER :: equationsMatricesToSolverMatrixMap
     TYPE(EquationsSetToSolverMatricesMapType), POINTER :: equationsSetToSolverMatricesMap
-    TYPE(FieldType), POINTER :: dependentField,lagrangeField
     TYPE(FieldVariableType), POINTER :: dependentVariable,lagrangeVariable
     TYPE(InterfaceConditionToSolverMatricesMapType), POINTER :: interfaceConditionToSolverMatricesMap
     TYPE(InterfaceMatricesToSolverMatrixMapType), POINTER :: interfaceMatricesToSolverMatrixMap
@@ -17375,20 +17356,13 @@ CONTAINS
     INTEGER(INTG), INTENT(OUT) :: err !<The error code
     TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
     !Local Variables
-    INTEGER(INTG) :: dummyErr,dynamicVariableType,equationsDOFIdx,equationIdx,equationsSetIdx,equationType,numberOfEquationDOFs, &
-      & numberOfSolverDOFs,numberOfSolverMatrices,numberOfVariables,solverDOFIdx,solverIdx,solverMatrixIdx,variableDOF,variableIdx
+    INTEGER(INTG) :: dummyErr,equationsDOFIdx,equationIdx,equationType,numberOfEquationDOFs, &
+      & numberOfSolverDOFs,numberOfSolverMatrices,numberOfVariables,solverDOFIdx,solverMatrixIdx,variableDOF,variableIdx
     REAL(DP) :: currentAcceleration,additiveConstant,deltaT,currentDisplacement,previousAcceleration, &
       & previousDisplacement,previousVelocity,alphaValue,variableCoefficient,currentVelocity
     REAL(DP), POINTER :: solverData(:)
     TYPE(DistributedVectorType), POINTER :: solverVector
     TYPE(DynamicSolverType), POINTER :: dynamicSolver
-    TYPE(EquationsType), POINTER :: equations
-    TYPE(EquationsVectorType), POINTER :: vectorEquations
-    TYPE(EquationsMappingVectorType), POINTER :: vectorMapping
-    TYPE(EquationsMappingDynamicType), POINTER :: dynamicMapping
-    TYPE(EquationsMappingNonlinearType), POINTER :: nonlinearMapping
-    TYPE(EquationsSetType), POINTER :: equationsSet
-    TYPE(FieldType), POINTER :: dependentField
     TYPE(FieldVariableType), POINTER :: dependentVariable
     TYPE(SolverDOFToVariableDOFsMapType), POINTER :: solverDOFToVariableDOFsMap
     TYPE(SolverEquationsType), POINTER :: solverEquations
@@ -17642,7 +17616,7 @@ CONTAINS
     TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
     !Local Variables
     INTEGER(INTG) :: equationsSetIdx,linearityType,numberOfEquationsSets,numberOfResiduals,numberOfSolverMatrices, &
-      & numberOfVariables,residualIdx,residualVariableIdx,solverMatrixIdx,variableIdx
+      & numberOfVariables,residualIdx,solverMatrixIdx,variableIdx
     TYPE(DistributedVectorType), POINTER :: currentVector,previousVector,previous2Vector,previous3Vector
     TYPE(DynamicSolverType), POINTER :: dynamicSolver
     TYPE(EquationsType), POINTER :: equations
@@ -17653,15 +17627,13 @@ CONTAINS
     TYPE(EquationsMatricesResidualType), POINTER :: residualVector
     TYPE(EquationsMatricesVectorType), POINTER :: vectorMatrices
     TYPE(EquationsSetType), POINTER :: equationsSet
-    TYPE(FieldType), POINTER :: field
-    TYPE(FieldVariableType), POINTER :: fieldVariable,residualVariable
+    TYPE(FieldVariableType), POINTER :: fieldVariable
     TYPE(SolverEquationsType), POINTER :: solverEquations
     TYPE(SolverMappingType), POINTER :: solverMapping
     TYPE(SolverMappingVariableType), POINTER :: solverMappingVariable
     TYPE(SolverMappingVariablesType), POINTER :: solverMappingVariables
     TYPE(SolverMatricesType), POINTER :: solverMatrices
     TYPE(SolverMatrixToEquationsMapType), POINTER :: solverMatrixToEquationsMap
-    TYPE(VARYING_STRING) :: localError
 
     ENTERS("Solver_VariablesDynamicFieldPreviousValuesUpdate",err,error,*999)
 
@@ -17776,25 +17748,19 @@ CONTAINS
     TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
 
     !Local Variables
-    INTEGER(INTG) :: dummyErr,equationsDOFIdx,equationIdx,equationType,numberOfDOFs, &
-      & numberOfEquationDOFs,numberOfSolverMatrices,numberOfVariables,solverDOFIdx,solverMatrixIdx,variableDOF
+    INTEGER(INTG) :: dummyErr,equationsDOFIdx,equationIdx,equationType,numberOfDOFs,numberOfEquationDOFs, &
+      & numberOfSolverMatrices,numberOfVariables,solverDOFIdx,solverMatrixIdx,variableDOF,variableIdx
     REAL(DP) :: additiveConstant,alphaValue,alphaDOFValue,currentDisplacement,deltaT,previousDisplacement, &
       & previousVelocity,previousAcceleration,variableCoefficient
-    INTEGER(INTG) :: variableIdx,variableType
     REAL(DP), POINTER :: solverData(:)
     TYPE(DistributedVectorType), POINTER :: solverVector
     TYPE(DynamicSolverType), POINTER :: dynamicSolver
-    TYPE(EquationsVectorType), POINTER :: vectorEquations
-    TYPE(EquationsMappingNonlinearType), POINTER :: nonlinearMapping
-    TYPE(EquationsMappingVectorType), POINTER :: vectorMapping
-    TYPE(InterfaceEquationsType), POINTER :: interfaceEquations
     TYPE(FieldVariableType), POINTER :: dependentVariable
     TYPE(SolverType), POINTER :: linkingSolver
     TYPE(SolverEquationsType), POINTER :: solverEquations
     TYPE(SolverMappingType), POINTER :: solverMapping
     TYPE(SolverMappingVariableType), POINTER :: solverMappingVariable
     TYPE(SolverMappingVariablesType), POINTER :: solverMappingVariables
-    TYPE(InterfaceMappingType), POINTER :: interfaceMapping
     TYPE(SolverDOFToVariableDOFsMapType), POINTER :: solverDOFToVariableDOFsMap
     TYPE(SolverMatricesType), POINTER :: solverMatrices
     TYPE(SolverMatrixType), POINTER :: solverMatrix

@@ -231,9 +231,8 @@ CONTAINS
     INTEGER(INTG), INTENT(OUT) :: err !<The error code
     TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
     !Local Variables
-    INTEGER(INTG) :: analyticFunctionType,componentIdx,derivativeIdx,dimensionIdx,esSpecification(3),localDOFIdx,nodeIdx, &
-      & numberOfComponents,numberOfDimensions,numberOfNodeDerivatives,numberOfNodes,numberOfVariables,numberOfVersions, &
-      & variableIdx,variableType,versionIdx
+    INTEGER(INTG) :: analyticFunctionType,componentIdx,esSpecification(3),nodeIdx,numberOfComponents, &
+      & numberOfDimensions,numberOfNodes,numberOfVariables,numberOfVersions,variableIdx,variableType
     REAL(DP) :: analyticAccelerationValue,analyticValue,analyticVelocityValue,gradientAnalyticValue(3),hessianAnalyticValue(3,3), &
       & normal(3),position(3),tangents(3,3),time
     REAL(DP), POINTER :: analyticParameters(:)
@@ -459,7 +458,7 @@ CONTAINS
     INTEGER(INTG), INTENT(OUT) :: err !<The error code
     TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
     !Local Variables
-    INTEGER(INTG) :: analyticFunctionType,componentIdx,esSpecification(3),geometricMeshComponent,geometricScalingType, &
+    INTEGER(INTG) :: componentIdx,esSpecification(3),geometricMeshComponent,geometricScalingType, &
       & lumpingType,numberOfAnalyticComponents,numberOfDependentComponents,numberOfDimensions,numberOfMaterialsComponents, &
       & solutionMethod,sparsityType
     REAL(DP) :: aParam,bParam,cParam,nuParam
@@ -470,7 +469,7 @@ CONTAINS
     TYPE(EquationsVectorType), POINTER :: vectorEquations
     TYPE(EquationsSetAnalyticType), POINTER :: equationsAnalytic
     TYPE(EquationsSetMaterialsType), POINTER :: equationsMaterials
-    TYPE(FieldType), POINTER :: analyticField,dependentField,geometricField,materialsField
+    TYPE(FieldType), POINTER :: analyticField,geometricField,materialsField
     TYPE(RegionType), POINTER :: region
     TYPE(VARYING_STRING) :: localError
 
@@ -1288,20 +1287,17 @@ CONTAINS
     INTEGER(INTG), INTENT(OUT) :: err !<The error code
     TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
     !Local Variables
-    INTEGER(INTG) :: analyticFunctionType,boundaryConditionCheckVariable,componentIdx,derivativeIdx,dimensionIdx, &
-      & equationsSetIdx,globalDerivativeIndex,localDOFIdx,nodeIdx,numberOfComponents,numberOfDimensions,numberOfEquationsSets, &
-      & numberOfNodes,numberOfNodeDerivatives,numberOfVariables,pSpecification(3),variableIdx,variableType
+    INTEGER(INTG) :: analyticFunctionType,componentIdx,equationsSetIdx,nodeIdx,numberOfComponents,numberOfDimensions, &
+      & numberOfEquationsSets,numberOfNodes,numberOfVariables,pSpecification(3),variableIdx,variableType
     REAL(DP) :: analyticAccelerationValue,analyticValue,analyticVelocityValue,currentTime,gradientAnalyticValue(3), &
       & hessianAnalyticValue(3,3),normal(3),position(3),tangents(3,3),timeIncrement
-    REAL(DP), POINTER :: analyticParameters(:),geometricParameters(:)
+    REAL(DP), POINTER :: analyticParameters(:)
     LOGICAL :: boundaryNode,setAcceleration,setVelocity
     TYPE(BoundaryConditionsType), POINTER :: boundaryConditions
-    TYPE(BoundaryConditionsVariableType), POINTER :: boundaryConditionsVariable
     TYPE(ControlLoopType), POINTER :: controlLoop
     TYPE(DomainType), POINTER :: domain
     TYPE(DomainNodesType), POINTER :: domainNodes
     TYPE(DomainTopologyType), POINTER :: domainTopology
-    TYPE(EquationsType), POINTER :: equations
     TYPE(EquationsSetType), POINTER :: equationsSet
     TYPE(EquationsSetAnalyticType), POINTER :: equationsAnalytic
     TYPE(FieldType), POINTER :: analyticField,dependentField,geometricField
@@ -1545,7 +1541,6 @@ CONTAINS
     TYPE(RegionType), POINTER :: region
     TYPE(SolverEquationsType), POINTER :: solverEquations
     TYPE(SolverMappingType), POINTER :: solverMapping
-    TYPE(SolversType), POINTER :: solvers
     TYPE(VARYING_STRING) :: localError,method,filename
 
     ENTERS("Burgers_PostSolveOutputData",err,error,*999)
@@ -1851,13 +1846,13 @@ CONTAINS
     TYPE(VARYING_STRING), INTENT(OUT) :: error   !<The error string
     !Local Variables 
     INTEGER(INTG) columnComponentIdx,columnElementDOFIdx,columnElementParameterIdx,colsVariableType,componentIdx, &
-      & esSpecification(3),gaussPointIdx,meshComponent1,meshComponent2,numberOfColsComponents,numberOfColsElementParameters, &
+      & esSpecification(3),gaussPointIdx,numberOfColsComponents,numberOfColsElementParameters, &
       & numberOfDimensions,numberOfGauss,numberOfRowsComponents,numberOfRowsElementParameters,numberOfXi,rowComponentIdx, &
       & rowElementDOFIdx,rowElementParameterIdx,rowsVariableType,scalingType,xiIdx,variableType    
-    REAL(DP) :: cParam,colsdPhidX,colsdPhidXi,colsPhi,dependentValue,dudX(3),dXidX(3,3),jacobian,jacobianGaussWeight,gaussWeight, &
-      & matrixValue,sum1,sum2,sum3,rowsPhi,uValue(3),uDeriv(3,3)
-    LOGICAL :: evaluateJacobian,updateJacobian
-    TYPE(BasisType), POINTER :: colsBasis,dependentBasis1,dependentBasis2,geometricBasis,rowsBasis
+    REAL(DP) :: cParam,colsdPhidX,colsdPhidXi,colsPhi,dudX(3),dXidX(3,3),jacobian,jacobianGaussWeight,gaussWeight, &
+      & matrixValue,sum1,sum2,rowsPhi,uValue(3),uDeriv(3,3)
+    LOGICAL :: updateJacobian
+    TYPE(BasisType), POINTER :: colsBasis,geometricBasis,rowsBasis
     TYPE(DecompositionType), POINTER :: dependentDecomposition,geometricDecomposition
     TYPE(DomainType), POINTER :: colsDomain,geometricDomain,rowsDomain
     TYPE(DomainElementsType), POINTER :: colsDomainElements,geometricDomainElements,rowsDomainElements
@@ -1877,10 +1872,9 @@ CONTAINS
     TYPE(FieldInterpolatedPointMetricsType), POINTER :: geometricInterpPointMetrics
     TYPE(FieldInterpolationParametersType), POINTER :: colsInterpParameters,dependentInterpParameters,geometricInterpParameters, &
       & materialsInterpParameters,rowsInterpParameters
-    TYPE(FieldVariableType), POINTER :: colsVariable,dependentVariable,geometricVariable,rowsVariable
+    TYPE(FieldVariableType), POINTER :: colsVariable,geometricVariable,rowsVariable
     TYPE(JacobianMatrixType), POINTER :: jacobianMatrix
-    TYPE(QuadratureSchemeType), POINTER :: geometricQuadratureScheme,colsQuadratureScheme,quadratureScheme1,quadratureScheme2, &
-      & rowsQuadratureScheme
+    TYPE(QuadratureSchemeType), POINTER :: geometricQuadratureScheme,colsQuadratureScheme,rowsQuadratureScheme
     TYPE(VARYING_STRING) :: localError
 
     ENTERS("Burgers_FiniteElementJacobianEvaluate",err,error,*999)
@@ -2166,15 +2160,14 @@ CONTAINS
     INTEGER(INTG), INTENT(OUT) :: err !<The error code
     TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
     !Local Variables
-    INTEGER(INTG) colsXiIdx,columnComponentIdx,columnElementDOFIdx,columnElementParameterIdx,colsVariableType,componentIdx, &
-      & esSpecification(3),gaussPointIdx,meshComponent1,meshComponent2,numberOfColsComponents,numberOfDimensions, &
+    INTEGER(INTG) colsXiIdx,columnComponentIdx,columnElementDOFIdx,columnElementParameterIdx,colsVariableType, &
+      & esSpecification(3),gaussPointIdx,numberOfColsComponents,numberOfDimensions, &
       & numberOfColsElementParameters,numberOfGauss,numberOfRowsComponents,numberOfRowsElementParameters,numberOfXi, &
       & rowComponentIdx,rowElementDOFIdx,rowElementParameterIdx,rowsVariableType,rowsXiIdx,scalingType,variableType
     REAL(DP) :: aParam,bParam,cParam,colsPhi,colsdPhidXi(3),dudX(3),dudXi(3,3),gaussWeight,jacobian,jacobianGaussWeight, &
-      & sum,sum1,rowsdPhidXi(3),rowsPhi,ududX,uValue(3)
-    LOGICAL :: evaluateAny,evaluateDamping,evaluateLinearDynamic,evaluateResidual,evaluateRHS,evaluateStiffness,firstDamping, &
-      & firstRHS,firstStiffness,update,updateDamping,updateMatrices,updateStiffness,updateRHS,updateResidual
-    TYPE(BasisType), POINTER :: colsBasis,dependentBasis,geometricBasis,dependentBasis1,dependentBasis2,rowsBasis
+      & sum,rowsdPhidXi(3),rowsPhi,ududX,uValue(3)
+    LOGICAL :: update,updateDamping,updateMatrices,updateStiffness,updateRHS,updateResidual
+    TYPE(BasisType), POINTER :: colsBasis,geometricBasis,rowsBasis
     TYPE(DecompositionType), POINTER :: dependentDecomposition,geometricDecomposition
     TYPE(DomainType), POINTER :: colsDomain,geometricDomain,rowsDomain
     TYPE(DomainElementsType), POINTER :: colsDomainElements,geometricDomainElements,rowsDomainElements
@@ -2201,9 +2194,8 @@ CONTAINS
     TYPE(FieldInterpolatedPointMetricsType), POINTER :: geometricInterpPointMetrics
     TYPE(FieldInterpolationParametersType), POINTER :: colsInterpParameters,dependentInterpParameters,geometricInterpParameters, &
       & materialsInterpParameters,rowsInterpParameters
-    TYPE(FieldVariableType), POINTER :: colsVariable,geometricVariable,dependentVariable,rowsVariable
-    TYPE(QuadratureSchemeType), POINTER :: colsQuadratureScheme,geometricQuadratureScheme,quadratureScheme1,quadratureScheme2, &
-      & rowsQuadratureScheme
+    TYPE(FieldVariableType), POINTER :: colsVariable,geometricVariable,rowsVariable
+    TYPE(QuadratureSchemeType), POINTER :: colsQuadratureScheme,geometricQuadratureScheme,rowsQuadratureScheme
     TYPE(VARYING_STRING) :: localError
 
     ENTERS("Burgers_FiniteElementResidualEvaluate",err,error,*999)

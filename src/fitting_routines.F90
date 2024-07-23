@@ -127,7 +127,7 @@ CONTAINS
     TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
     !Local Variables
     INTEGER(INTG) :: componentIdx,esSpecification(4),geometricMeshComponent,geometricScalingType,numberOfComponents, &
-      & numberOfComponents2,numberOfDecompositionDimensions,numberOfDependentComponents,numberOfDimensions, &
+      & numberOfDecompositionDimensions,numberOfDependentComponents,numberOfDimensions, &
       & numberOfIndependentComponents,numberOfMaterialsComponents,solutionMethod,sparsityType
     TYPE(DecompositionType), POINTER :: geometricDecomposition
     TYPE(EquationsType), POINTER :: equations
@@ -1134,7 +1134,7 @@ CONTAINS
     INTEGER(INTG) :: colsVariableType,columnComponentIdx,columnElementDOFIdx,columnElementParameterIdx,columnXiIdx,componentIdx, &
       & dataPointGlobalNumber,dataPointIdx,dataPointLocalNumber,dataPointUserNumber,derivativeIdx,esSpecification(4), &
       & gaussPointIdx,geometricDerivative,localDOFIdx,numberOfColsComponents, &
-      & numberOfColumnElementParameters(MAXIMUM_DATA_COMPONENTS),numberOfDataComponents,numberOfDimensions,numberOfDOFs, &
+      & numberOfColumnElementParameters(MAXIMUM_DATA_COMPONENTS),numberOfDataComponents,numberOfDimensions, &
       & numberOfElementDataPoints,numberOfElementXi,numberOfGauss,numberOfRowsComponents, &
       & numberOfRowElementParameters(MAXIMUM_DATA_COMPONENTS),numberOfXi,rowComponentIdx,rowElementDOFIdx,rowElementParameterIdx, &
       & rowXiIdx,rowsVariableType,scalingType,smoothingType,xiIdx
@@ -1142,10 +1142,10 @@ CONTAINS
       & columnd2PhidXi3dXi3,columnd2PhidXi1dXi2,columnd2PhidXi1dXi3,columnd2PhidXi2dXi3,curvature, &
       & dataPointVector(MAXIMUM_DATA_COMPONENTS),dataPointWeight(MAXIMUM_DATA_COMPONENTS),dXdY(3,3),dXdXi(3,3),dYdXi(3,3), &
       & dXidY(3,3),dXidX(3,3),elementXi(3),gaussWeight,jacobian,jacobianGaussWeight,Jxy,Jyxi,kappa11,kappa22,kappa33,kappa12, &
-      & kappa13,kappa23,kappaParam,materialFact,permOverVisParam0,permOverVisParam,porosity0,porosity,projectionXi(3), &
+      & kappa13,kappa23,materialFact,permOverVisParam0,permOverVisParam,porosity0,porosity, &
       & rhsCurvature,rhsTension,rowPhi, &
       & rowdPhidXi(3),rowdPhidXi1,rowdPhidXi2,rowdPhidXi3,rowd2PhidXi1dXi1,rowd2PhidXi2dXi2,rowd2PhidXi3dXi3,rowd2PhidXi1dXi2, &
-      & rowd2PhidXi1dXi3,rowd2PhidXi2dXi3,sum,tau1,tau2,tau3,tauParam,tension,uValue(3)
+      & rowd2PhidXi1dXi3,rowd2PhidXi2dXi3,sum,tau1,tau2,tau3,tension,uValue(3)
     REAL(DP), POINTER :: independentVectorParameters(:),independentWeightParameters(:)
     LOGICAL :: update,updateMatrix,updateRHS,updateSource
     TYPE(BasisType), POINTER :: dependentBasis,geometricBasis
@@ -1162,7 +1162,6 @@ CONTAINS
     TYPE(EquationsMappingLHSType), POINTER :: lhsMapping
     TYPE(EquationsMappingLinearType), POINTER :: linearMapping
     TYPE(EquationsMappingRHSType), POINTER :: rhsMapping
-    TYPE(EquationsMappingSourceType), POINTER :: sourceMapping
     TYPE(EquationsMappingSourcesType), POINTER :: sourcesMapping
     TYPE(EquationsMappingVectorType), POINTER :: vectorMapping
     TYPE(EquationsMatricesLinearType), POINTER :: linearMatrices
@@ -1174,14 +1173,14 @@ CONTAINS
     TYPE(EquationsVectorType), POINTER :: vectorEquations
     TYPE(FieldType), POINTER :: dependentField,geometricField,independentField,materialsField,sourceField
     TYPE(FieldInterpolationParametersType), POINTER :: colsInterpParameters,dataInterpParameters,dataWeightInterpParameters, &
-      & dependentInterpParameters,independentInterpParameters,initialGeometricInterpParameters,geometricInterpParameters, &
+      & dependentInterpParameters,initialGeometricInterpParameters,geometricInterpParameters, &
       & materialsInterpParameters,rowsInterpParameters,sourceInterpParameters
     TYPE(FieldInterpolatedPointType), POINTER :: dataInterpPoint,dataWeightInterpPoint,dependentInterpPoint, &
-      & independentInterpPoint,initialGeometricInterpPoint,geometricInterpPoint,materialsInterpPoint,sourceInterpPoint
+      & initialGeometricInterpPoint,geometricInterpPoint,materialsInterpPoint,sourceInterpPoint
     TYPE(FieldInterpolatedPointMetricsType), POINTER :: initialGeometricInterpPointMetrics,geometricInterpPointMetrics
-    TYPE(FieldVariableType), POINTER :: colsVariable,dataVariable,dataWeightVariable,dependentVariable,independentVariable, &
+    TYPE(FieldVariableType), POINTER :: colsVariable,dataVariable,dataWeightVariable,independentVariable, &
       & geometricVariable,materialsVariable,rowsVariable,sourceVariable
-    TYPE(QuadratureSchemeType), POINTER :: dependentQuadratureScheme,geometricQuadratureScheme
+    TYPE(QuadratureSchemeType), POINTER :: dependentQuadratureScheme
     TYPE(QuadratureSchemePtrType) :: columnQuadratureScheme(MAXIMUM_DATA_COMPONENTS),rowQuadratureScheme(MAXIMUM_DATA_COMPONENTS)
     TYPE(VARYING_STRING) :: localError
 
@@ -1269,7 +1268,17 @@ CONTAINS
       
       NULLIFY(equationsInterpolation)
       CALL Equations_InterpolationGet(equations,equationsInterpolation,err,error,*999)
-
+       
+      NULLIFY(rowsVariable)
+      CALL EquationsMappingLHS_LHSVariableGet(lhsMapping,rowsVariable,err,error,*999)
+      CALL FieldVariable_VariableTypeGet(rowsVariable,rowsVariableType,err,error,*999)
+      CALL FieldVariable_NumberOfComponentsGet(rowsVariable,numberOfRowsComponents,err,error,*999)
+      
+      NULLIFY(colsVariable)
+      CALL EquationsMappingLinear_LinearMatrixVariableGet(linearMapping,1,colsVariable,err,error,*999)
+      CALL FieldVariable_VariableTypeGet(colsVariable,colsVariableType,err,error,*999)
+      CALL FieldVariable_NumberOfComponentsGet(colsVariable,numberOfColsComponents,err,error,*999)
+      
       NULLIFY(geometricField)
       CALL EquationsSet_GeometricFieldGet(equationsSet,geometricField,err,error,*999)
       NULLIFY(geometricVariable)
@@ -1321,16 +1330,6 @@ CONTAINS
       NULLIFY(dependentInterpPoint)
       CALL EquationsInterpolation_DependentPointGet(equationsInterpolation,colsVariableType,dependentInterpPoint,err,error,*999)
       CALL Field_InterpolationParametersElementGet(FIELD_VALUES_SET_TYPE,elementNumber,dependentInterpParameters,err,error,*999)
-       
-      NULLIFY(rowsVariable)
-      CALL EquationsMappingLHS_LHSVariableGet(lhsMapping,rowsVariable,err,error,*999)
-      CALL FieldVariable_VariableTypeGet(rowsVariable,rowsVariableType,err,error,*999)
-      CALL FieldVariable_NumberOfComponentsGet(rowsVariable,numberOfRowsComponents,err,error,*999)
-      
-      NULLIFY(colsVariable)
-      CALL EquationsMappingLinear_LinearMatrixVariableGet(linearMapping,1,colsVariable,err,error,*999)
-      CALL FieldVariable_VariableTypeGet(colsVariable,colsVariableType,err,error,*999)
-      CALL FieldVariable_NumberOfComponentsGet(colsVariable,numberOfColsComponents,err,error,*999)
       
       !Cache row and column bases and quadrature schemes to avoid repeated calculations
       IF(numberOfRowsComponents>MAXIMUM_DATA_COMPONENTS) THEN
@@ -2267,22 +2266,20 @@ CONTAINS
     !Local Variables
     INTEGER(INTG), PARAMETER :: MAXIMUM_DATA_COMPONENTS=99
     INTEGER(INTG) ::  colsVariableType,columnComponentIdx,columnElementDOFIdx,columnElementParameterIdx,componentIdx, &
-      & dataPointGlobalNumber,dataPointIdx,dataPointLocalNumber,dataPointUserNumber,dependentComponentColumnIdx, &
-      & dependentComponentRowIdx,dependentElementParameterColumnIdx,dependentElementParameterRowIdx,dependentParameterColumnIdx, &
-      & dependentParameterRowIdx,dependentVariableType,esSpecification(4),gaussPointIdx,geometricDerivative,localDofIdx, &
-      & meshComponentRow,meshComponentColumn,numberOfColsComponents,numberOfColumnElementParameters(MAXIMUM_DATA_COMPONENTS), &
+      & dataPointGlobalNumber,dataPointIdx,dataPointLocalNumber,dataPointUserNumber, &
+      & esSpecification(4),localDofIdx,numberOfColsComponents,numberOfColumnElementParameters(MAXIMUM_DATA_COMPONENTS), &
       & numberOfDataComponents,numberOfDimensions,numberOfElementDataPoints,numberOfElementXi,numberOfGauss, &
       & numberOfRowsComponents,numberOfRowElementParameters(MAXIMUM_DATA_COMPONENTS),numberOfXi,rowComponentIdx, &
       & rowElementDOFIdx,rowElementParameterIdx,rowsVariableType,scalingType,smoothingType
-    REAL(DP) :: columnPhi,curvature,dataPointWeight(MAXIMUM_DATA_COMPONENTS),dataPointVector(MAXIMUM_DATA_COMPONENTS), &
-      & elementXi(3),jacobianGaussWeight,kappaParam,rowPhi,sum,tauParam,tension
+    REAL(DP) :: columnPhi,dataPointWeight(MAXIMUM_DATA_COMPONENTS),dataPointVector(MAXIMUM_DATA_COMPONENTS), &
+      & elementXi(3),rowPhi,sum
     REAL(DP), POINTER :: independentVectorParameters(:),independentWeightParameters(:)
     LOGICAL :: update,updateMatrix,updateResidual,updateRHS
-    TYPE(BasisType), POINTER :: dependentBasis,geometricBasis,dependentBasisRow,dependentBasisColumn
+    TYPE(BasisType), POINTER :: dependentBasis,geometricBasis
     TYPE(BasisPtrType) :: columnBasis(MAXIMUM_DATA_COMPONENTS),rowBasis(MAXIMUM_DATA_COMPONENTS)
     TYPE(DataProjectionType), POINTER :: dataProjection
     TYPE(DecompositionType), POINTER :: dependentDecomposition,geometricDecomposition,independentDecomposition
-    TYPE(DecompositionTopologyType), POINTER :: decompositionTopology,independentDecompositionTopology
+    TYPE(DecompositionTopologyType), POINTER :: independentDecompositionTopology
     TYPE(DecompositionDataPointsType), POINTER :: decompositionDataPoints
     TYPE(DomainType), POINTER :: columnDomain,dependentDomain,geometricDomain,rowDomain
     TYPE(DomainElementsType), POINTER :: columnDomainElements,dependentDomainElements,geometricDomainElements,rowDomainElements
@@ -2291,24 +2288,21 @@ CONTAINS
     TYPE(EquationsInterpolationType), POINTER :: equationsInterpolation
     TYPE(EquationsMappingVectorType), POINTER :: vectorMapping
     TYPE(EquationsMappingLHSType), POINTER :: lhsMapping
-    TYPE(EquationsMappingLinearType), POINTER :: linearMapping
     TYPE(EquationsMappingNonlinearType), POINTER :: nonlinearMapping
     TYPE(EquationsMappingResidualType), POINTER :: residualMapping
     TYPE(EquationsMappingRHSType), POINTER :: rhsMapping
     TYPE(EquationsMatricesVectorType), POINTER :: vectorMatrices
-    TYPE(EquationsMatricesLinearType), POINTER :: linearMatrices
     TYPE(EquationsMatricesNonlinearType), POINTER :: nonlinearMatrices
     TYPE(EquationsMatricesResidualType), POINTER :: residualVector
     TYPE(EquationsMatricesRHSType), POINTER :: rhsVector
-    TYPE(EquationsMatrixType), POINTER :: equationsMatrix
-    TYPE(EquationsVectorType), POINTER :: vectorEquations
+     TYPE(EquationsVectorType), POINTER :: vectorEquations
     TYPE(FieldType), POINTER :: dependentField,geometricField,independentField,materialsField
     TYPE(FieldInterpolationParametersType), POINTER :: dataInterpParameters,dataWeightInterpParameters,dependentInterpParameters, &
       & geometricInterpParameters,materialsInterpParameters,rowsInterpParameters
     TYPE(FieldInterpolatedPointType), POINTER :: dataInterpPoint,dataWeightInterpPoint,dependentInterpPoint,geometricInterpPoint, &
       & materialsInterpPoint
     TYPE(FieldInterpolatedPointMetricsType), POINTER :: geometricInterpPointMetrics
-    TYPE(FieldVariableType), POINTER :: colsVariable,dataVariable,dataWeightVariable,dependentVariable,geometricVariable, &
+    TYPE(FieldVariableType), POINTER :: colsVariable,dataVariable,dataWeightVariable,geometricVariable, &
       & materialsVariable,rowsVariable
     TYPE(QuadratureSchemeType), POINTER :: dependentQuadratureScheme
     TYPE(QuadratureSchemePtrType) :: columnQuadratureScheme(MAXIMUM_DATA_COMPONENTS), &
@@ -2927,7 +2921,6 @@ CONTAINS
     INTEGER(INTG) :: pSpecification(3)
     TYPE(ControlLoopType), POINTER :: controlLoop
     TYPE(ProblemType), POINTER :: problem
-    TYPE(SolversType), POINTER :: solvers
     TYPE(VARYING_STRING) :: localError
 
     ENTERS("Fitting_PreSolve",err,error,*999)
@@ -3122,14 +3115,13 @@ CONTAINS
       & pSpecification(3)
     REAL(DP) :: currentTime,startTime,stopTime,timeIncrement
     REAL(DP), POINTER :: inputVelNewData(:)
-    TYPE(ControlLoopType), POINTER :: controlLoop,controlTimeLoop
+    TYPE(ControlLoopType), POINTER :: controlLoop
     TYPE(EquationsSetType), POINTER :: equationsSet
     TYPE(FieldType), POINTER :: geometricField,sourceField
     TYPE(FieldVariableType), POINTER :: sourceVariable
     TYPE(ProblemType), POINTER :: problem
     TYPE(SolverEquationsType), POINTER :: solverEquations
     TYPE(SolverMappingType), POINTER :: solverMapping
-    TYPE(SolversType), POINTER :: solvers
     TYPE(VARYING_STRING) :: localError
 
     ENTERS("Fitting_PreSolveUpdateInputData",err,error,*999)
