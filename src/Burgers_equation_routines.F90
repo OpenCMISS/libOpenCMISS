@@ -130,7 +130,7 @@ CONTAINS
     !Argument variables
     TYPE(EquationsSetType), POINTER, INTENT(IN) :: equationsSet !<The equations set to evaluate
     INTEGER(INTG), INTENT(IN) :: analyticFunctionType !<The type of analytic function to evaluate
-    REAL(DP), INTENT(IN) :: x(:) !<x(dimention_idx). The geometric position to evaluate at
+    REAL(DP), INTENT(IN) :: x(:) !<x(dimensionIdx). The geometric position to evaluate at
     REAL(DP), INTENT(IN) :: time !<The time to evaluate at
     INTEGER(INTG), INTENT(IN) :: componentNumber !<The dependent field component number to evaluate
     REAL(DP), INTENT(IN) :: analyticParameters(:) !<A pointer to any analytic field parameters
@@ -235,7 +235,7 @@ CONTAINS
       & numberOfComponents,numberOfDimensions,numberOfNodeDerivatives,numberOfNodes,numberOfVariables,numberOfVersions, &
       & variableIdx,variableType,versionIdx
     REAL(DP) :: analyticAccelerationValue,analyticValue,analyticVelocityValue,gradientAnalyticValue(3),hessianAnalyticValue(3,3), &
-      & normal(3),position(3),tangents(3,3),time
+      & normal(3),position(3,MAXIMUM_GLOBAL_DERIV_NUMBER),tangents(3,2),time
     REAL(DP), POINTER :: analyticParameters(:)
     LOGICAL :: boundaryNode,setAcceleration,setVelocity
     TYPE(DomainType), POINTER :: domain
@@ -304,8 +304,8 @@ CONTAINS
           IF((.NOT.boundaryOnly).OR.(boundaryOnly.AND.boundaryNode)) THEN
             CALL Field_PositionNormalTangentsCalculateNode(dependentField,FIELD_U_VARIABLE_TYPE,componentIdx,nodeIdx, &
               & position,normal,tangents,err,error,*999)
-            CALL Burgers_AnalyticFunctionsEvaluate(equationsSet,analyticFunctionType,position,time,componentIdx, &
-              & analyticParameters,analyticValue,gradientAnalyticValue,hessianAnalyticValue,analyticVelocityValue, &
+            CALL Burgers_AnalyticFunctionsEvaluate(equationsSet,analyticFunctionType,position(:,NO_PART_DERIV),time, &
+              & componentIdx,analyticParameters,analyticValue,gradientAnalyticValue,hessianAnalyticValue,analyticVelocityValue, &
               & analyticAccelerationValue,err,error,*999)
             CALL BoundaryConditions_SetAnalyticBoundaryNode(boundaryConditions,numberOfDimensions,dependentVariable,componentIdx, &
               & domainNodes,nodeIdx,boundaryNode,tangents,normal,analyticValue,gradientAnalyticValue,hessianAnalyticValue, &
@@ -1292,7 +1292,7 @@ CONTAINS
       & equationsSetIdx,globalDerivativeIndex,localDOFIdx,nodeIdx,numberOfComponents,numberOfDimensions,numberOfEquationsSets, &
       & numberOfNodes,numberOfNodeDerivatives,numberOfVariables,pSpecification(3),variableIdx,variableType
     REAL(DP) :: analyticAccelerationValue,analyticValue,analyticVelocityValue,currentTime,gradientAnalyticValue(3), &
-      & hessianAnalyticValue(3,3),normal(3),position(3),tangents(3,3),timeIncrement
+      & hessianAnalyticValue(3,3),normal(3),position(3,MAXIMUM_GLOBAL_DERIV_NUMBER),tangents(3,3),timeIncrement
     REAL(DP), POINTER :: analyticParameters(:),geometricParameters(:)
     LOGICAL :: boundaryNode,setAcceleration,setVelocity
     TYPE(BoundaryConditionsType), POINTER :: boundaryConditions
@@ -1390,9 +1390,9 @@ CONTAINS
                 IF((.NOT.boundaryOnly).OR.(boundaryOnly.AND.boundaryNode)) THEN
                   CALL Field_PositionNormalTangentsCalculateNode(dependentField,FIELD_U_VARIABLE_TYPE,componentIdx,nodeIdx, &
                     & position,normal,tangents,err,error,*999)
-                  CALL Burgers_AnalyticFunctionsEvaluate(equationsSet,analyticFunctionType,position,currentTime,componentIdx, &
-                    & analyticParameters,analyticValue,gradientAnalyticValue,hessianAnalyticValue,analyticVelocityValue, &
-                    & analyticAccelerationValue,err,error,*999)
+                  CALL Burgers_AnalyticFunctionsEvaluate(equationsSet,analyticFunctionType,position(:,NO_PART_DERIV), &
+                    & currentTime,componentIdx,analyticParameters,analyticValue,gradientAnalyticValue,hessianAnalyticValue, &
+                    & analyticVelocityValue,analyticAccelerationValue,err,error,*999)
                   CALL BoundaryConditions_UpdateAnalyticNode(boundaryConditions,numberOfDimensions,dependentVariable, &
                     & componentIdx,domainNodes,nodeIdx,tangents,normal,analyticValue,gradientAnalyticValue,hessianAnalyticValue, &
                     & setVelocity,analyticVelocityValue,setAcceleration,analyticAccelerationValue,err,error,*999)

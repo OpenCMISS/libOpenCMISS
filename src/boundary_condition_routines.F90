@@ -564,14 +564,14 @@ MODULE BoundaryConditionsRoutines
     INTEGER(INTG) :: localDOF
     LOGICAL :: ghostDOF
 
-    ENTERS("BoundaryConditions_AddNode",err,error,*999)
+    ENTERS("BoundaryConditions_AddNodeVariable",err,error,*999)
 
     CALL BoundaryConditions_AssertNotFinished(boundaryConditions,err,error,*999)
     CALL FieldVariable_UserNodeDOFGet(fieldVariable,versionNumber,derivativeNumber,userNodeNumber,componentNumber, &
       & localDOF,ghostDOF,err,error,*999)
     CALL BoundaryConditions_CheckInterpolationType(condition,fieldVariable,componentNumber,err,error,*999)
     CALL BoundaryConditions_AddLocalDOF(boundaryConditions,fieldVariable,localDOF,condition,bcValue,err,error,*999)
-    
+     
     EXITS("BoundaryConditions_AddNodeVariable")
     RETURN
 999 ERRORSEXITS("BoundaryConditions_AddNodeVariable",err,error)
@@ -579,6 +579,202 @@ MODULE BoundaryConditionsRoutines
     
   END SUBROUTINE BoundaryConditions_AddNodeVariable
 
+  !
+  !================================================================================================================================
+  !
+
+  !>Adds to the value of the specified constant and sets this as a boundary condition on the specified user node.
+  SUBROUTINE BoundaryConditions_CalculateAnalyticDOFValue(boundaryConditions,fieldVariable,versionNumber,derivativeNumber, &
+    & nodeNumber,componentNumber,analyticValue,gradientAnalyticValue,hessianAnalyticValue,position,normal,tangents, &
+    & analyticDOFValue,err,error,*)
+
+    !Argument variables
+    TYPE(BoundaryConditionsType), POINTER :: boundaryConditions !<A pointer to the boundary conditions to calculate the boundary condition for
+    TYPE(FieldVariableType), POINTER :: fieldVariable !<A pointer to the field to calculate the boundary condition on.
+    INTEGER(INTG), INTENT(IN) :: versionNumber !<The derivative version to calculate the analytic DOF value at
+    INTEGER(INTG), INTENT(IN) :: derivativeNumber !<The derivative to calculate the analytic DOF value at
+    INTEGER(INTG), INTENT(IN) :: nodeNumber !<The user node number to calculate the analytic DOF value at
+    INTEGER(INTG), INTENT(IN) :: componentNumber !<The component number to calculate the analytic DOF value at
+    REAL(DP), INTENT(IN) :: analyticValue !<The analytic value at the node
+    REAL(DP), INTENT(IN) :: gradientAnalyticValue(:) !<The gradient of the analytic value at the node.
+    REAL(DP), INTENT(IN) :: hessianAnalyticValue(:,:) !<The Hessian of the analytic value at the node.
+    REAL(DP), INTENT(IN) :: position(:,:) !<The position of the node and any derivatives
+    REAL(DP), INTENT(IN) :: normal(:) !<The normal to the domain at the node
+    REAL(DP), INTENT(IN) :: tangents(:,:) !<The tangents to the domain at the node
+    REAL(DP), INTENT(OUT) :: analyticDOFValue !<On exit, the calculated analytic DOF value
+    INTEGER(INTG), INTENT(OUT) :: err !<The error code
+    TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
+    !Local Variables
+    INTEGER(INTG) :: variableType
+    TYPE(VARYING_STRING) :: localError
+
+    ENTERS("BoundaryConditions_CalculateAnalyticDOFValue",err,error,*999)
+
+    CALL FieldVariable_VariableTypeGet(fieldVariable,variableType,err,error,*999)
+    
+    dofValue=0.0_DP
+    SELECT CASE(variableType)
+    CASE(FIELD_U_VARIABLE_TYPE) 
+      SELECT CASE(derivativeGlobalIndex)
+      CASE(NO_GLOBAL_DERIV)
+        dofValue=analyticValue
+      CASE(GLOBAL_DERIV_S1)
+        !Compute grad(u).s1
+        DO componentIdx1=1,numberOfDimensions
+          dofValue=dofValue+gradientAnalyticValue(componentIdx1)*tangents(componentIdx1,1)
+        ENDDO !componentIdx1
+      CASE(GLOBAL_DERIV_S2)
+        !Compute grad(u).s2
+        DO componentIdx1=1,numberOfDimensions
+          dofValue=dofValue+gradientAnalyticValue(componentIdx1)*tangents(componentIdx1,2)
+        ENDDO !componentIdx1
+      CASE(GLOBAL_DERIV_S3)
+        !Compute grad(u).s3
+        DO componentIdx1=1,numberOfDimensions
+          dofValue=dofValue+gradientAnalyticValue(componentIdx1)*tangents(componentIdx1,3)
+        ENDDO !componentIdx1
+      CASE(GLOBAL_DERIV_S1_S2)
+        !Compute grad s1^t.H(u).s2
+        DO componentIdx2=1,numberOfDimensions
+          DO componentIdx1=1,numberOfDimensions
+            dofValue=dofValue+ &
+              & tangents(componentIdx1,1)*hessianAnalyticValue(componentIdx1,componentIdx2)*tangents(componentIdx2,2)
+          ENDDO !componentIdx1
+        ENDDO !componentIdx2
+      CASE(GLOBAL_DERIV_S1_S3)
+        !Compute grad s1^t.H(u).s3
+        DO componentIdx2=1,numberOfDimensions
+          DO componentIdx1=1,numberOfDimensions
+            dofValue=dofValue+ &
+              & tangents(componentIdx1,1)*hessianAnalyticValue(componentIdx1,componentIdx2)*tangents(componentIdx2,3)
+          ENDDO !componentIdx1
+        ENDDO !componentIdx2
+      CASE(GLOBAL_DERIV_S2_S3)
+        !Compute grad s2^t.H(u).s3
+        DO componentIdx2=1,numberOfDimensions
+          DO componentIdx1=1,numberOfDimensions
+            dofValue=dofValue+ &
+              & tangents(componentIdx1,2)*hessianAnalyticValue(componentIdx1,componentIdx2)*tangents(componentIdx2,3)
+          ENDDO !componentIdx1
+        ENDDO !componentIdx2
+      CASE(GLOBAL_DERIV_S1_S2_S3)
+!!TODO: not implemented
+        dofValue=0.0_DP
+      CASE DEFAULT
+        localError="The global derivative index of "//TRIM(NumberToVString(derivativeGlobalIndex,"*",err,error))// &
+          & " for derivative index "//TRIM(NumberToVString(derivativeIdx,"*",err,error))//" of local node number "// &
+          & TRIM(NumberToVString(localNodeNumber,"*",err,error))//" of component number "// &
+          & TRIM(NumberToVString(componentNumber,"*",err,error))//" of variable type "// &
+          & TRIM(NumberToVString(variableType,"*",err,error))//" is invalid."
+        CALL FlagError(localError,err,error,*999)
+      END SELECT
+    CASE(FIELD_DELUDELN_VARIABLE_TYPE)
+      SELECT CASE(derivativeGlobalIndex)
+      CASE(NO_GLOBAL_DERIV)
+        !Compute grad(u).n
+        DO componentIdx1=1,numberOfDimensions
+          dofValue=dofValue+gradientAnalyticValue(componentIdx1)*normal(componentIdx1)
+        ENDDO !componentIdx1
+        dofValue=analyticValue
+      CASE(GLOBAL_DERIV_S1)
+        !Compute grad s1^t.H(u).n
+        DO componentIdx2=1,numberOfDimensions
+          DO componentIdx1=1,numberOfDimensions
+            dofValue=dofValue+ &
+              & tangents(componentIdx1,1)*hessianAnalyticValue(componentIdx1,componentIdx2)*normal(componentIdx2)
+          ENDDO !componentIdx1
+        ENDDO !componentIdx2
+      CASE(GLOBAL_DERIV_S2)
+        !Compute grad s2^t.H(u).n
+        DO componentIdx2=1,numberOfDimensions
+          DO componentIdx1=1,numberOfDimensions
+            dofValue=dofValue+ &
+              & tangents(componentIdx1,2)*hessianAnalyticValue(componentIdx1,componentIdx2)*normal(componentIdx2)
+          ENDDO !componentIdx1
+        ENDDO !componentIdx2
+      CASE(GLOBAL_DERIV_S3)
+        !Compute grad s3^t.H(u).n
+        DO componentIdx2=1,numberOfDimensions
+          DO componentIdx1=1,numberOfDimensions
+            dofValue=dofValue+ &
+              & tangents(componentIdx1,3)*hessianAnalyticValue(componentIdx1,componentIdx2)*normal(componentIdx2)
+          ENDDO !componentIdx1
+        ENDDO !componentIdx2
+      CASE(GLOBAL_DERIV_S1_S2)
+!!TODO: not implemented
+        dofValue=0.0_DP
+      CASE(GLOBAL_DERIV_S1_S3)
+!!TODO: not implemented
+        dofValue=0.0_DP
+      CASE(GLOBAL_DERIV_S2_S3)
+!!TODO: not implemented
+        dofValue=0.0_DP
+      CASE(GLOBAL_DERIV_S1_S2_S3)
+!!TODO: not implemented
+        dofValue=0.0_DP
+      CASE DEFAULT
+        localError="The global derivative index of "//TRIM(NumberToVString(derivativeGlobalIndex,"*",err,error))// &
+          & " for derivative index "//TRIM(NumberToVString(derivativeIdx,"*",err,error))//" of local node number "// &
+          & TRIM(NumberToVString(localNodeNumber,"*",err,error))//" of component number "// &
+          & TRIM(NumberToVString(componentNumber,"*",err,error))//" of variable type "// &
+          & TRIM(NumberToVString(variableType,"*",err,error))//" is invalid."
+        CALL FlagError(localError,err,error,*999)
+      END SELECT
+    CASE(FIELD_T_VARIABLE_TYPE)
+      SELECT CASE(derivativeGlobalIndex)
+      CASE(NO_GLOBAL_DERIV)
+        !Compute grad(u).n
+        DO componentIdx1=1,numberOfDimensions
+          dofValue=dofValue+gradientAnalyticValue(componentIdx1)*normal(componentIdx1)
+        ENDDO !componentIdx1
+        dofValue=analyticValue
+      CASE(GLOBAL_DERIV_S1)
+        !Compute grad s1^t.H(u).n
+        DO componentIdx2=1,numberOfDimensions
+          DO componentIdx1=1,numberOfDimensions
+            dofValue=dofValue+ &
+              & tangents(componentIdx1,1)*hessianAnalyticValue(componentIdx1,componentIdx2)*normal(componentIdx2)
+          ENDDO !componentIdx1
+        ENDDO !componentIdx2
+      CASE(GLOBAL_DERIV_S2)
+        !Compute grad s2^t.H(u).n
+        DO componentIdx2=1,numberOfDimensions
+          DO componentIdx1=1,numberOfDimensions
+            dofValue=dofValue+ &
+              & tangents(componentIdx1,2)*hessianAnalyticValue(componentIdx1,componentIdx2)*normal(componentIdx2)
+          ENDDO !componentIdx1
+        ENDDO !componentIdx2
+      CASE(GLOBAL_DERIV_S3)
+        !Compute grad s3^t.H(u).n
+        DO componentIdx2=1,numberOfDimensions
+          DO componentIdx1=1,numberOfDimensions
+            dofValue=dofValue+ &
+              & tangents(componentIdx1,3)*hessianAnalyticValue(componentIdx1,componentIdx2)*normal(componentIdx2)
+          ENDDO !componentIdx1
+        ENDDO !componentIdx2
+      CASE(GLOBAL_DERIV_S1_S2)
+!!TODO: not implemented
+        dofValue=0.0_DP
+      CASE(GLOBAL_DERIV_S1_S3)
+!!TODO: not implemented
+        dofValue=0.0_DP
+      CASE(GLOBAL_DERIV_S2_S3)
+!!TODO: not implemented
+        dofValue=0.0_DP
+      CASE(GLOBAL_DERIV_S1_S2_S3)
+!!TODO: not implemented
+        dofValue=0.0_DP
+      CASE DEFAULT
+        localError="The global derivative index of "//TRIM(NumberToVString(derivativeGlobalIndex,"*",err,error))// &
+          & " for derivative index "//TRIM(NumberToVString(derivativeIdx,"*",err,error))//" of local node number "// &
+          & TRIM(NumberToVString(localNodeNumber,"*",err,error))//" of component number "// &
+          & TRIM(NumberToVString(componentNumber,"*",err,error))//" of variable type "// &
+          & TRIM(NumberToVString(variableType,"*",err,error))//" is invalid."
+        CALL FlagError(localError,err,error,*999)
+      END SELECT
+    CASE DEFAULT
+      !Do nothing or error???
+    END SELECT
   !
   !================================================================================================================================
   !
@@ -3006,6 +3202,58 @@ MODULE BoundaryConditionsRoutines
           CALL FlagError(localError,err,error,*999)
         END SELECT
       CASE(FIELD_DELUDELN_VARIABLE_TYPE)
+        SELECT CASE(derivativeGlobalIndex)
+        CASE(NO_GLOBAL_DERIV)
+          !Compute grad(u).n
+          DO componentIdx1=1,numberOfDimensions
+            dofValue=dofValue+gradientAnalyticValue(componentIdx1)*normal(componentIdx1)
+          ENDDO !componentIdx1
+          dofValue=analyticValue
+        CASE(GLOBAL_DERIV_S1)
+            !Compute grad s1^t.H(u).n
+          DO componentIdx2=1,numberOfDimensions
+            DO componentIdx1=1,numberOfDimensions
+              dofValue=dofValue+ &
+                & tangents(componentIdx1,1)*hessianAnalyticValue(componentIdx1,componentIdx2)*normal(componentIdx2)
+            ENDDO !componentIdx1
+          ENDDO !componentIdx2
+        CASE(GLOBAL_DERIV_S2)
+          !Compute grad s2^t.H(u).n
+          DO componentIdx2=1,numberOfDimensions
+            DO componentIdx1=1,numberOfDimensions
+              dofValue=dofValue+ &
+                & tangents(componentIdx1,2)*hessianAnalyticValue(componentIdx1,componentIdx2)*normal(componentIdx2)
+            ENDDO !componentIdx1
+          ENDDO !componentIdx2
+        CASE(GLOBAL_DERIV_S3)
+          !Compute grad s3^t.H(u).n
+          DO componentIdx2=1,numberOfDimensions
+            DO componentIdx1=1,numberOfDimensions
+              dofValue=dofValue+ &
+                  & tangents(componentIdx1,3)*hessianAnalyticValue(componentIdx1,componentIdx2)*normal(componentIdx2)
+            ENDDO !componentIdx1
+          ENDDO !componentIdx2
+        CASE(GLOBAL_DERIV_S1_S2)
+!!TODO: not implemented
+          dofValue=0.0_DP
+        CASE(GLOBAL_DERIV_S1_S3)
+!!TODO: not implemented
+          dofValue=0.0_DP
+        CASE(GLOBAL_DERIV_S2_S3)
+!!TODO: not implemented
+          dofValue=0.0_DP
+        CASE(GLOBAL_DERIV_S1_S2_S3)
+!!TODO: not implemented
+          dofValue=0.0_DP
+        CASE DEFAULT
+          localError="The global derivative index of "//TRIM(NumberToVString(derivativeGlobalIndex,"*",err,error))// &
+            & " for derivative index "//TRIM(NumberToVString(derivativeIdx,"*",err,error))//" of local node number "// &
+            & TRIM(NumberToVString(localNodeNumber,"*",err,error))//" of component number "// &
+            & TRIM(NumberToVString(componentNumber,"*",err,error))//" of variable type "// &
+            & TRIM(NumberToVString(variableType,"*",err,error))//" is invalid."
+          CALL FlagError(localError,err,error,*999)
+        END SELECT
+      CASE(FIELD_T_VARIABLE_TYPE)
         SELECT CASE(derivativeGlobalIndex)
         CASE(NO_GLOBAL_DERIV)
           !Compute grad(u).n

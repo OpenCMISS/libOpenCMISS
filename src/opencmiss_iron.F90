@@ -37777,7 +37777,7 @@ CONTAINS
     INTEGER(INTG), INTENT(IN) :: variableType !<The variable type of the field to get the interpolation type for. \see OpenCMISS_FieldVariableTypes
     INTEGER(INTG), INTENT(IN) :: componentNumber !<The component number of the field variable to get the interpolation type for.
     INTEGER(INTG), INTENT(IN) :: localNodeNumber !<The local node number of the field variable to get the data type for.
-    REAL(DP), INTENT(OUT) :: position(:),normal(:),tangents(:,:) !<Actual useful outputs
+    REAL(DP), INTENT(OUT) :: position(:,:),normal(:),tangents(:,:) !<Actual useful outputs
     INTEGER(INTG), INTENT(OUT) :: err !<The error code.
     !Local variables
     TYPE(ContextType), POINTER :: context
@@ -37821,7 +37821,7 @@ CONTAINS
     INTEGER(INTG), INTENT(IN) :: variableType !<The variable type of the field to get the interpolation type for. \see OpenCMISS_FieldVariableTypes
     INTEGER(INTG), INTENT(IN) :: componentNumber !<The component number of the field variable to get the data type for.
     INTEGER(INTG), INTENT(IN) :: localNodeNumber !<The local node number of the field variable to get the data type for.
-    REAL(DP), INTENT(OUT) :: position(:),normal(:),tangents(:,:) !<Actual useful outputs
+    REAL(DP), INTENT(OUT) :: position(:,:),normal(:),tangents(:,:) !<Actual useful outputs
     INTEGER(INTG), INTENT(OUT) :: err !<The error code.
     !Local variables
 

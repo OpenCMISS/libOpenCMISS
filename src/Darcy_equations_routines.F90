@@ -1452,7 +1452,7 @@ CONTAINS
               CALL EquationsMappingVector_RHSVariableTypeSet(vectorMapping,FIELD_DELVDELN_VARIABLE_TYPE,err,error,*999)
               IF(esSpecification(3)==EQUATIONS_SET_INCOMPRESSIBLE_ELASTICITY_DRIVEN_DARCY_SUBTYPE) THEN
                 CALL EquationsMappingVector_NumberOfSourcesSet(vectorMapping,1,err,error,*999)
-                CALL EquationsMappingVector_SourcesVariableTypesSet(vectorMapping,FIELD_U_VARIABLE_TYPE,err,error,*999)
+                CALL EquationsMappingVector_SourceVariableTypesSet(vectorMapping,FIELD_U_VARIABLE_TYPE,err,error,*999)
               ENDIF
             CASE(EQUATIONS_SET_INCOMPRESSIBLE_ELAST_MULTI_COMP_DARCY_SUBTYPE)
               NULLIFY(equationsSetField)
@@ -1480,7 +1480,7 @@ CONTAINS
               CALL EquationsMappingVector_LinearMatricesVariableTypesSet(vectorMapping,variableUTypes,err,error,*999)
               CALL EquationsMappingVector_RHSVariableTypeSet(vectorMapping,variableTypes(2*myMatrixIdx+2),err,error,*999)
               CALL EquationsMappingVector_NumberOfSourcesSet(vectorMapping,1,err,error,*999)
-              CALL EquationsMappingVector_SourcesVariableTypesSet(vectorMapping,FIELD_U_VARIABLE_TYPE,err,error,*999)
+              CALL EquationsMappingVector_SourceVariableTypesSet(vectorMapping,FIELD_U_VARIABLE_TYPE,err,error,*999)
             CASE DEFAULT
               CALL EquationsMappingVector_DynamicVariableTypeSet(vectorMapping,FIELD_U_VARIABLE_TYPE,err,error,*999)
               CALL EquationsMappingVector_RHSVariableTypeSet(vectorMapping,FIELD_DELUDELN_VARIABLE_TYPE, &

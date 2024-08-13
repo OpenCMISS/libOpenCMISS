@@ -5142,10 +5142,11 @@ MODULE SolverMappingRoutines
 
     IF(ASSOCIATED(equationsMatrixToSolverMatricesMap)) THEN
       IF(ALLOCATED(equationsMatrixToSolverMatricesMap%equationsMatrixToSolverMatrixMaps)) THEN
-        DO equationsMatrixIdx=1,SIZE(equationsMatrixToSolverMatricesMap%equationsMatrixToSolverMatrixMaps,1)
-          CALL SolverMappingEMToSMMap_Finalise(equationsMatrixToSolverMatricesMap% &
-            & equationsMatrixToSolverMatrixMaps(equationsMatrixIdx)%ptr,err,error,*999)        
-        ENDDO !equationsMatrixIdx
+        !Don't finalise these maps as it will be done elsewhere
+        !DO equationsMatrixIdx=1,SIZE(equationsMatrixToSolverMatricesMap%equationsMatrixToSolverMatrixMaps,1)
+        !  CALL SolverMappingEMToSMMap_Finalise(equationsMatrixToSolverMatricesMap% &
+        !    & equationsMatrixToSolverMatrixMaps(equationsMatrixIdx)%ptr,err,error,*999)        
+        !ENDDO !equationsMatrixIdx
         DEALLOCATE(equationsMatrixToSolverMatricesMap%equationsMatrixToSolverMatrixMaps)
       ENDIF
       DEALLOCATE(equationsMatrixToSolverMatricesMap)
@@ -5375,8 +5376,8 @@ MODULE SolverMappingRoutines
     solverEquations%solverMapping%numberOfGlobalRows=0
     solverEquations%solverMapping%numberOfEquationsSets=0
     solverEquations%solverMapping%numberOfInterfaceConditions=0
-    NULLIFY(solverEquations%solverMapping%rhsVariablesList)
     NULLIFY(solverEquations%solverMapping%rowDOFsMapping)
+    NULLIFY(solverEquations%solverMapping%rhsVariablesList)
     NULLIFY(solverEquations%solverMapping%createValuesCache)
     CALL SolverMapping_CreateValuesCacheInitialise(solverEquations%solverMapping,err,error,*999)
     

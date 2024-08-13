@@ -116,15 +116,14 @@ CONTAINS
   !
   
   !>Evaluate the analytic solutions for a Laplace equation
-  SUBROUTINE Laplace_AnalyticFunctionsEvaluate(equationsSet,analyticFunctionType,x,time,componentNumber,analyticParameters, &
+  SUBROUTINE Laplace_AnalyticFunctionsEvaluate(equationsSet,analyticFunctionType,componentNumber,x,analyticParameters, &
     & analyticValue,gradientAnalyticValue,hessianAnalyticValue,err,error,*)
 
     !Argument variables
     TYPE(EquationsSetType), POINTER, INTENT(IN) :: equationsSet !<The equations set to evaluate
     INTEGER(INTG), INTENT(IN) :: analyticFunctionType !<The type of analytic function to evaluate
-    REAL(DP), INTENT(IN) :: x(:) !<x(dimensionIdx). The geometric position to evaluate at
-    REAL(DP), INTENT(IN) :: time !<The time to evaluate at
     INTEGER(INTG), INTENT(IN) :: componentNumber !<The component number of the dependent field to evaluate
+    REAL(DP), INTENT(IN) :: x(:) !<x(dimensionIdx). The geometric position to evaluate at
     REAL(DP), POINTER, INTENT(IN) :: analyticParameters(:) !<A pointer to any analytic field parameters
     REAL(DP), INTENT(OUT) :: analyticValue !<On return, the analytic function value.
     REAL(DP), INTENT(OUT) :: gradientAnalyticValue(:) !<On return, the gradient of the analytic function value.
@@ -263,7 +262,8 @@ CONTAINS
     !Local Variables
     INTEGER(INTG) :: analyticFunctionType,componentIdx,dimensionIdx,esSpecification(3),nodeIdx,numberOfComponents, &
       & numberOfDimensions,numberOfNodes,numberOfVariables,variableIdx,variableType
-    REAL(DP) :: analyticValue,gradientAnalyticValue(3),hessianAnalyticValue(3,3),normal(3),position(3),tangents(3,3),time
+    REAL(DP) :: analyticValue,gradientAnalyticValue(3),hessianAnalyticValue(3,3),normal(3), &
+      & position(3,MAXIMUM_GLOBAL_DERIV_NUMBER),tangents(3,2),time
     REAL(DP), POINTER :: analyticParameters(:),geometricParameters(:)
     LOGICAL :: boundaryNode
     TYPE(DomainType), POINTER :: domain
@@ -320,7 +320,7 @@ CONTAINS
           !IF((.NOT.boundaryOnly).OR.(boundaryOnly.AND.boundaryNode)) THEN
           CALL Field_PositionNormalTangentsCalculateNode(dependentField,FIELD_U_VARIABLE_TYPE,componentIdx,nodeIdx, &
             & position,normal,tangents,err,error,*999)
-          CALL Laplace_AnalyticFunctionsEvaluate(equationsSet,analyticFunctionType,position,time,componentIdx, &
+          CALL Laplace_AnalyticFunctionsEvaluate(equationsSet,analyticFunctionType,componentIdx,position(:,NO_PART_DERIV), &
             & analyticParameters,analyticValue,gradientAnalyticValue,hessianAnalyticValue,err,error,*999)
           CALL BoundaryConditions_SetAnalyticBoundaryNode(boundaryConditions,numberOfDimensions,dependentVariable,componentIdx, &
             & domainNodes,nodeIdx,boundaryNode,tangents,normal,analyticValue,gradientAnalyticValue,hessianAnalyticValue, &

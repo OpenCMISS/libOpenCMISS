@@ -122,18 +122,15 @@ CONTAINS
   !
   
   !>Evaluate the analytic solutions for a Poisson equation
-  SUBROUTINE Poisson_AnalyticFunctionsEvaluate(equationsSet,analyticFunctionType,x,time,componentNumber,analyticParameters, &
-    & materialsParameters,sourceParameters,analyticValue,gradientAnalyticValue,hessianAnalyticValue,err,error,*)
+  SUBROUTINE Poisson_AnalyticFunctionsEvaluate(equationsSet,analyticFunctionType,componentNumber,x,analyticParameters, &
+    & analyticValue,gradientAnalyticValue,hessianAnalyticValue,err,error,*)
 
     !Argument variables
     TYPE(EquationsSetType), POINTER, INTENT(IN) :: equationsSet !<The equations set to evaluate
     INTEGER(INTG), INTENT(IN) :: analyticFunctionType !<The type of analytic function to evaluate
-    REAL(DP), INTENT(IN) :: x(:) !<x(dimensionIdx). The geometric position to evaluate at
-    REAL(DP), INTENT(IN) :: time !<The time to evaluate at
     INTEGER(INTG), INTENT(IN) :: componentNumber !<The component number of the dependent field to evaluate
+    REAL(DP), INTENT(IN) :: x(:) !<x(dimensionIdx). The geometric position to evaluate at
     REAL(DP), POINTER, INTENT(IN) :: analyticParameters(:) !<A pointer to any analytic field parameters
-    REAL(DP), POINTER, INTENT(IN) :: materialsParameters(:) !<A pointer to any materials field parameters
-    REAL(DP), POINTER, INTENT(IN) :: sourceParameters(:) !<A pointer to any source field parameters
     REAL(DP), INTENT(OUT) :: analyticValue !<On return, the analytic function value.
     REAL(DP), INTENT(OUT) :: gradientAnalyticValue(:) !<On return, the gradient of the analytic function value.
     REAL(DP), INTENT(OUT) :: hessianAnalyticValue(:,:) !<On return, the Hessian of the analytic function value.
@@ -295,7 +292,8 @@ CONTAINS
     !Local Variables
     INTEGER(INTG) :: analyticFunctionType,componentIdx,dimensionIdx,esSpecification(3),nodeIdx,numberOfComponents, &
       & numberOfDimensions,numberOfNodeDerivatives,numberOfNodes,numberOfVariables,variableIdx,variableType
-    REAL(DP) :: analyticValue,gradientAnalyticValue(3),hessianAnalyticValue(3,3),normal(3),position(3),tangents(3,3),time
+    REAL(DP) :: analyticValue,gradientAnalyticValue(3),hessianAnalyticValue(3,3),normal(3), &
+      & position(3,MAXIMUM_GLOBAL_DERIV_NUMBER),tangents(3,2),time
     REAL(DP), POINTER :: analyticParameters(:),materialsParameters(:),sourceParameters(:),geometricParameters(:)
     LOGICAL :: boundaryNode
     TYPE(DomainType), POINTER :: domain
@@ -365,16 +363,15 @@ CONTAINS
         !Loop over the local nodes excluding the ghosts.
         DO nodeIdx=1,numberOfNodes
           CALL DomainNodes_NodeBoundaryNodeGet(domainNodes,nodeIdx,boundaryNode,err,error,*999)
-          IF((.NOT.boundaryOnly).OR.(boundaryOnly.AND.boundaryNode)) THEN
-            CALL Field_PositionNormalTangentsCalculateNode(dependentField,FIELD_U_VARIABLE_TYPE,1,nodeIdx, &
-              & position,normal,tangents,err,error,*999)
-            CALL Poisson_AnalyticFunctionsEvaluate(equationsSet,analyticFunctionType,position,time,componentIdx, &
-              & analyticParameters,materialsParameters,sourceParameters,analyticValue,gradientAnalyticValue, &
-              & hessianAnalyticValue,err,error,*999)
-            CALL BoundaryConditions_SetAnalyticBoundaryNode(boundaryConditions,numberOfDimensions,dependentVariable,componentIdx, &
-              & domainNodes,nodeIdx,boundaryNode,tangents,normal,analyticValue,gradientAnalyticValue,hessianAnalyticValue, &
-              & .FALSE.,0.0_DP,.FALSE.,0.0_DP,err,error,*999)
-          ENDIF !boundary only test
+          !IF((.NOT.boundaryOnly).OR.(boundaryOnly.AND.boundaryNode)) THEN
+          CALL Field_PositionNormalTangentsCalculateNode(dependentField,FIELD_U_VARIABLE_TYPE,1,nodeIdx, &
+            & position,normal,tangents,err,error,*999)
+          CALL Poisson_AnalyticFunctionsEvaluate(equationsSet,analyticFunctionType,componentIdx,position(:,NO_PART_DERIV), &
+            & analyticParameters,analyticValue,gradientAnalyticValue,hessianAnalyticValue,err,error,*999)
+          CALL BoundaryConditions_SetAnalyticBoundaryNode(boundaryConditions,numberOfDimensions,dependentVariable,componentIdx, &
+            & domainNodes,nodeIdx,boundaryNode,tangents,normal,analyticValue,gradientAnalyticValue,hessianAnalyticValue, &
+            & .FALSE.,0.0_DP,.FALSE.,0.0_DP,err,error,*999)
+          !ENDIF !boundary only test
         ENDDO !nodeIdx
       ENDDO !componentIdx
       CALL FieldVariable_ParameterSetUpdateStart(dependentVariable,FIELD_ANALYTIC_VALUES_SET_TYPE,err,error,*999)
@@ -1431,12 +1428,14 @@ CONTAINS
             CALL EquationsMappingVector_NumberOfResidualsSet(vectorMapping,1,err,error,*999)
             CALL EquationsMappingVector_ResidualNumberOfVariablesSet(vectorMapping,1,1,err,error,*999)
             CALL EquationsMappingVector_ResidualVariableTypesSet(vectorMapping,1,FIELD_U_VARIABLE_TYPE,err,error,*999)            
+            CALL EquationsMappingVector_ResidualCoefficientsSet(vectorMapping,-1.0_DP,err,error,*999)
           ENDIF
           CALL EquationsMappingVector_RHSVariableTypeSet(vectorMapping,FIELD_DELUDELN_VARIABLE_TYPE,err,error,*999)
           CALL EquationsMappingVector_RHSCoefficientSet(vectorMapping,-1.0_DP,err,error,*999)
           IF(ASSOCIATED(equationsSource)) THEN
             CALL EquationsMappingVector_NumberOfSourcesSet(vectorMapping,1,err,error,*999)
-            CALL EquationsMappingVector_SourcesVariableTypesSet(vectorMapping,FIELD_U_VARIABLE_TYPE,err,error,*999)
+            CALL EquationsMappingVector_SourceVariableTypesSet(vectorMapping,FIELD_U_VARIABLE_TYPE,err,error,*999)
+            CALL EquationsMappingVector_SourceCoefficientsSet(vectorMapping,-1.0_DP,err,error,*999)
           ENDIF
           CALL EquationsMapping_VectorCreateFinish(vectorMapping,err,error,*999)
           !Create the equations matrices
@@ -2131,7 +2130,7 @@ CONTAINS
                         ENDDO !xiIdx
                       ENDDO !columnXiIdx
                     ENDDO !rowXiIdx
-                    sum=sum+aParam*rowPhi*columnPhi
+                    sum=sum-aParam*rowPhi*columnPhi
                   CASE(EQUATIONS_SET_NONLINEAR_PRESSURE_POISSON_SUBTYPE,EQUATIONS_SET_LINEAR_PRESSURE_POISSON_SUBTYPE, &
                     & EQUATIONS_SET_ALE_PRESSURE_POISSON_SUBTYPE,EQUATIONS_SET_FITTED_PRESSURE_POISSON_SUBTYPE)
                     DO rowXiIdx=1,numberOfXi
@@ -2597,9 +2596,9 @@ CONTAINS
                   & columnElementParameterIdx,NO_PART_DERIV,gaussPointIdx,columnPhi,err,error,*999)
                 SELECT CASE(esSpecification(3))
                 CASE(EQUATIONS_SET_QUADRATIC_SOURCE_POISSON_SUBTYPE)
-                  jacobianValue=-2.0_DP*bParam*rowPhi*columnPhi*uValue
+                  jacobianValue=2.0_DP*bParam*rowPhi*columnPhi*uValue
                 CASE(EQUATIONS_SET_EXPONENTIAL_SOURCE_POISSON_SUBTYPE)
-                  jacobianValue=-aParam*bParam*rowPhi*columnPhi*EXP(bParam*uValue)
+                  jacobianValue=aParam*bParam*rowPhi*columnPhi*EXP(bParam*uValue)
                 END SELECT
                 jacobianMatrix%elementJacobian%matrix(rowElementDOFIdx,columnElementDOFIdx)= &
                   & jacobianMatrix%elementJacobian%matrix(rowElementDOFIdx,columnElementDOFIdx)+ &
@@ -3002,7 +3001,7 @@ CONTAINS
                         ENDDO !xiIdx
                       ENDDO !columnXiIdx
                     ENDDO !rowXiIdx
-                    sum=sum+aParam*rowPhi*columnPhi
+                    sum=sum-aParam*rowPhi*columnPhi
                   CASE(EQUATIONS_SET_EXPONENTIAL_SOURCE_POISSON_SUBTYPE)
                     DO rowXiIdx=1,numberOfXi
                       DO columnXiIdx=1,numberOfXi

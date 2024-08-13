@@ -9625,12 +9625,12 @@ CONTAINS
       & equationsMassCoefficient,equationsStiffnessCoefficient,firstUpdateFactor,jacobianMatrixCoefficient,linearCoefficient, &
       & linearValue,linearValueSum,massMatrixCoefficient,matrixCoefficient,matrixCoefficients(2)=[0.0_DP,0.0_DP],nonlinearValue, &
       & previousFunctionFactor,previous2FunctionFactor,previous3FunctionFactor,previousRHSValue,previous2RHSValue, &
-      & previous3RHSValue,residualCoefficient,residualValue,rhsValue,rowCouplingCoefficient,secondUpdateFactor, &
+      & previous3RHSValue,residualCoefficient,residualValue,rhsCoefficient,rhsValue,rowCouplingCoefficient,secondUpdateFactor, &
       & solverRHSValue,sourceValue,stiffnessMatrixCoefficient,sourceCoefficient,startTime,stopTime,timeIncrement, &
       & transposeMatrixCoefficient,vectorCoefficient
     REAL(DP), POINTER :: matrixCheckData(:),currentValuesVector(:),previousValuesVector(:),previousVelocityVector(:), &
       & previousAccelerationVector(:),previousResidualParameters(:),previous2ResidualParameters(:), &
-      & previous3ResidualParameters(:),rhsCoefficient,rhsIntegratedParameters(:),rhsParameters(:),solverRHSCheckData(:),solverResidualCheckData(:)
+      & previous3ResidualParameters(:),rhsIntegratedParameters(:),rhsParameters(:),solverRHSCheckData(:),solverResidualCheckData(:)
     LOGICAL :: hasIntegratedValues,hasTranspose,includeResidual,interfaceMatrixDynamic,rhsLinearMatrix,rhsResidual, &
       & updateResidual,updateRHS,updateSolverMatrix
     TYPE(BoundaryConditionsType), POINTER :: boundaryConditions
@@ -10319,7 +10319,8 @@ CONTAINS
                   IF(ASSOCIATED(solverMappingVariable)) rhsResidual=.FALSE.
                 ENDDO !residualVariableIdx
               ENDDO !solverMatrixIdx
-              IF(rhsResidual.OR.solver%solveType==SOLVER_NONLINEAR_TYPE) THEN
+              IF(rhsResidual.OR.(solver%solveType==SOLVER_DYNAMIC_TYPE.AND.dynamicSolver%linearity==SOLVER_DYNAMIC_NONLINEAR).OR. &
+                & solver%solveType==SOLVER_NONLINEAR_TYPE) THEN
                 CALL EquationsMappingResidual_VectorCoefficientGet(residualMapping,residualCoefficient,err,error,*999)
                 NULLIFY(residualVector)
                 CALL EquationsMatricesNonlinear_ResidualVectorGet(nonlinearMatrices,residualIdx,residualVector,err,error,*999)

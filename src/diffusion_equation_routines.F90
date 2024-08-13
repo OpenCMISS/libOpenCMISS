@@ -140,43 +140,45 @@ CONTAINS
   !
   
   !>Evaluate the analytic solutions for a diffusion equation
-  SUBROUTINE Diffusion_AnalyticFunctionsEvaluate(equationsSet,analyticFunctionType,x,tangents,normal,time,variableType, &
-    & globalDerivativeIndex,componentNumber,analyticParameters,materialsParameters,analyticValue,err,error,*)
-
+  SUBROUTINE Diffusion_AnalyticFunctionsEvaluate(equationsSet,analyticFunctionType,componentNumber,time,x, &
+    & analyticParameters,analyticValue,gradientAnalyticValue,hessianAnalyticValue,velocityAnalyticValue, &
+    & accelerationAnalyticValue,err,error,*)
+    
+    
     !Argument variables
     TYPE(EquationsSetType), POINTER, INTENT(IN) :: equationsSet !<The equations set to evaluate
     INTEGER(INTG), INTENT(IN) :: analyticFunctionType !<The type of analytic function to evaluate
-    REAL(DP), INTENT(IN) :: x(:) !<x(dimensionIdx). The geometric position to evaluate at
-    REAL(DP), INTENT(IN) :: tangents(:,:) !<tangents(dimensionIdx,xiIdx). The geometric tangents at the point to evaluate at.
-    REAL(DP), INTENT(IN) :: normal(:) !<normal(dimensionIdx). The normal vector at the point to evaluate at.
-    REAL(DP), INTENT(IN) :: time !<The time to evaluate at
-    INTEGER(INTG), INTENT(IN) :: variableType !<The field variable type to evaluate at
-    INTEGER(INTG), INTENT(IN) :: globalDerivativeIndex !<The global derivative direction to evaluate at
     INTEGER(INTG), INTENT(IN) :: componentNumber !<The dependent field component number to evaluate
+    REAL(DP), INTENT(IN) :: time !<The time to evaluate at
+    REAL(DP), INTENT(IN) :: x(:) !<x(dimensionIdx). The geometric position to evaluate at
     REAL(DP), INTENT(IN) :: analyticParameters(:) !<A pointer to any analytic field parameters
-    REAL(DP), INTENT(IN) :: materialsParameters(:) !<A pointer to any materials field parameters
     REAL(DP), INTENT(OUT) :: analyticValue !<On return, the analytic function value.
+    REAL(DP), INTENT(OUT) :: gradientAnalyticValue(:) !<On return, the gradient of the analytic function value.
+    REAL(DP), INTENT(OUT) :: hessianAnalyticValue(:,:) !<On return, the Hessian of the analytic function value.
+    REAL(DP), INTENT(OUT) :: velocityAnalyticValue !<On return, the analytic velocity value.
+    REAL(DP), INTENT(OUT) :: accelerationAnalyticValue !<On return, the analytic acceleration value.
     INTEGER(INTG), INTENT(OUT) :: err !<The error code
     TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
     !Local variables
     INTEGER(INTG) :: equationsSubType,esSpecification(3)
-    REAL(DP) :: k,phi,A,B,C,D,A1,A2,A3,A4,aParam,bParam,cParam,kParam,lParam,constParam,betaParam,lambdaParam,muParam
+    REAL(DP) :: k,phi,A,B,C,D,A1,A2,A3,A4,aParam,bParam,cParam,hParam,lParam,constParam,betaParam,lambdaParam,muParam, &
+      & phiParam,sigmaParam
     TYPE(VARYING_STRING) :: localError
-
-    !These are parameters for the analytical solution
-    !k = 1.0_DP !this is a time decay constant for the exponential term
-    !phi = 0.785398163397_DP !pi/4 - this sets the orientation of the solution relative to the axes
-    k = 10.0_DP !this is a time decay constant for the exponential term
-    phi = 1.0_DP !pi/4 - this sets the orientation of the solution relative to the axes
- 
-    !Solution parameters for 
-    A1 = 0.4_DP
-    A2 = 0.3_DP
-    A3 = 0.2_DP
-    A4 = 0.1_DP
 
     ENTERS("Diffusion_AnalyticFunctionsEvaluate",err,error,*999)
 
+    IF(componentNumber/=1) THEN
+      localError="The specified component number of "//TRIM(NumberToVString(componentNumber,"*",err,error))// &
+        & " is invalid. The component number should be 1 for a Laplace equation."
+      CALL FlagError(localError,err,error,*999)
+    ENDIF
+    
+    analyticValue=0.0_DP
+    gradientAnalyticValue=0.0_DP
+    hessianAnalyticValue=0.0_DP
+    velocityAnalyticValue=0.0_DP
+    accelerationAnalyticValue=0.0_DP
+    
     CALL EquationsSet_SpecificationGet(equationsSet,3,esSpecification,err,error,*999)
      
     equationsSubType=esSpecification(3)
@@ -189,114 +191,60 @@ CONTAINS
         !see http://eqworld.ipmnet.ru/en/solutions/lpde/lpde101.pdf
         !OpenCMISS has \del u/\del t + k \del^2 u/\del x^2 = 0, thereform with \mu=2.\pi/L we have
         !u(x,t)=A.exp(4.\pi^2.k.t/L^2)cos(2.\pi.x/L+B)+C
-        kParam=materialsParameters(1)
         aParam=analyticParameters(1)
         bParam=analyticParameters(2)
         cParam=analyticParameters(3)
         lParam=analyticParameters(4)
-        SELECT CASE(variableType)
-        CASE(FIELD_U_VARIABLE_TYPE)
-          SELECT CASE(globalDerivativeIndex)
-          CASE(NO_GLOBAL_DERIV)
-            analyticValue=aParam*EXP(4.0_DP*PI**2*kParam*time/lParam**2)*COS(2.0_DP*PI*x(1)/lParam+bParam)+cParam
-          CASE(GLOBAL_DERIV_S1)
-            CALL FlagError("Not implemented.",err,error,*999)
-          CASE DEFAULT
-            localError="The global derivative index of "//TRIM(NumberToVString(globalDerivativeIndex,"*",err,error))// &
-              & " is invalid."
-            CALL FlagError(localError,err,error,*999)
-          END SELECT
-        CASE(FIELD_DELUDELN_VARIABLE_TYPE)
-          SELECT CASE(globalDerivativeIndex)
-          CASE(NO_GLOBAL_DERIV)
-            ANALYTICVALUE=0.0_DP
-          CASE(GLOBAL_DERIV_S1)
-            CALL FlagError("Not implemented.",err,error,*999)
-          CASE DEFAULT
-            localError="The global derivative index of "//TRIM(NumberToVString(globalDerivativeIndex,"*",err,error))// &
-              & " is invalid."
-            CALL FlagError(localError,err,error,*999)
-          END SELECT
-        CASE DEFAULT
-          localError="The variable type of "//TRIM(NumberToVString(variableType,"*",err,error))//" is invalid."
-          CALL FlagError(localError,err,error,*999)
-        END SELECT
+        sigmaParam=analyticParameters(5)
+        analyticValue=aParam*EXP(4.0_DP*PI**2*sigmaParam*time/(lParam**2))*COS(2.0_DP*PI*x(1)/lParam+bParam)+cParam
+        gradientAnalyticValue(1)=(-2.0_DP*PI/lParam)* &
+          & aParam*EXP(4.0_DP*PI**2*sigmaParam*time/(lParam**2))*SIN(2.0_DP*PI*x(1)/lParam+bParam)
+        hessianAnalyticValue(1,1)=(-4.0_DP*PI*PI/lParam)* &
+          & aParam*EXP(4.0_DP*PI**2*sigmaParam*time/(lParam**2))*COS(2.0_DP*PI*x(1)/lParam+bParam)
+        velocityAnalyticValue=(4.0_DP*PI*PI*sigmaParam/(lParam**2))* &
+          & aParam*EXP(4.0_DP*PI**2*sigmaParam*time/(lParam**2))*COS(2.0_DP*PI*x(1)/lParam+bParam)
+        accelerationAnalyticValue=(16.0_DP*PI**4*sigmaParam**2/(lParam**4))* &
+          & aParam*EXP(4.0_DP*PI**2*sigmaParam*time/(lParam**2))*COS(2.0_DP*PI*x(1)/lParam+bParam)
       CASE(EQUATIONS_SET_DIFFUSION_EQUATION_TWO_DIM_1)
-        !u=exp(-kt)*sin(sqrt(k)*(x*cos(phi)+y*sin(phi)))
-        SELECT CASE(variableType)
-        CASE(FIELD_U_VARIABLE_TYPE)
-          SELECT CASE(globalDerivativeIndex)
-          CASE(NO_GLOBAL_DERIV)
-            analyticValue=EXP(-k*time)*SIN((SQRT(k))*(x(1)*COS(phi)+x(2)*SIN(phi)))!Need to specify time, k and phi!
-          CASE(GLOBAL_DERIV_S1)
-            CALL FlagError("Not implemented.",err,error,*999)
-          CASE(GLOBAL_DERIV_S2)
-            CALL FlagError("Not implemented.",err,error,*999)
-          CASE(GLOBAL_DERIV_S1_S2)
-            CALL FlagError("Not implmented.",err,error,*999)
-          CASE DEFAULT
-            localError="The global derivative index of "//TRIM(NumberToVString(globalDerivativeIndex,"*",err,error))// &
-              & " is invalid."
-            CALL FlagError(localError,err,error,*999)
-          END SELECT
-        CASE(FIELD_DELUDELN_VARIABLE_TYPE)
-          SELECT CASE(globalDerivativeIndex)
-          CASE(NO_GLOBAL_DERIV)
-            analyticValue=0.0_DP !set to zero currently- actual value for diffusion solution needs adding 
-          CASE(GLOBAL_DERIV_S1)
-            CALL FlagError("Not implemented.",err,error,*999)
-          CASE(GLOBAL_DERIV_S2)
-            CALL FlagError("Not implemented.",err,error,*999)                                    
-          CASE(GLOBAL_DERIV_S1_S2)
-            CALL FlagError("Not implemented.",err,error,*999)
-          CASE DEFAULT
-            localError="The global derivative index of "//TRIM(NumberToVString(globalDerivativeIndex,"*",err,error))// &
-              & " is invalid."
-            CALL FlagError(localError,err,error,*999)
-          END SELECT
-        CASE DEFAULT
-          localError="The variable type of "//TRIM(NumberToVString(variableType,"*",err,error))// &
-            & " is invalid."
-          CALL FlagError(localError,err,error,*999)
-        END SELECT
+        !For du/dt = k*\grad^2.u a solutions is
+        !u=A.exp(-kt)*sin(x*cos(phi)+y*sin(phi))
+        !k is the decay constant
+        !phi sets the orientation of the solution relative to the axes
+        aParam=analyticParameters(1)
+        phiParam=analyticParameters(2)
+        lParam=analyticParameters(3)
+        hParam=analyticParameters(4)
+        sigmaParam=analyticParameters(5)
+        analyticValue=aParam* &
+          & EXP((4.0_DP*PI**2*sigmaParam*(lParam**2*SIN(phiParam)**2+hParam**2*COS(phiParam)**2)*time)/ &
+          & (lParam**2*hParam**2))*SIN(2.0_DP*PI*COS(phiParam)*x(1)/lParam+2.0_DP*PI*SIN(phiParam)*x(2)/hParam)
+        gradientAnalyticValue(1)=(2.0_DP*PI*COS(phiParam))/(lParam)*aParam* &
+          & EXP((4.0_DP*PI**2*sigmaParam*(lParam**2*SIN(phiParam)**2+hParam**2*COS(phiParam)**2)*time)/ &
+          & (lParam**2*hParam**2))*COS(2.0_DP*PI*COS(phiParam)*x(1)/lParam+2.0_DP*PI*SIN(phiParam)*x(2)/hParam)
+        gradientAnalyticValue(2)=(2.0_DP*PI*SIN(phiParam))/(hParam)*aParam* &
+          & EXP((4.0_DP*PI**2*sigmaParam*(lParam**2*SIN(phiParam)**2+hParam**2*COS(phiParam)**2)*time)/ &
+          & (lParam**2*hParam**2))*COS(2.0_DP*PI*COS(phiParam)*x(1)/lParam+2.0_DP*PI*SIN(phiParam)*x(2)/hParam)
+        hessianAnalyticValue(1,1)=(-4.0_DP*PI**2*COS(phiParam)**2)/(lParam**2)*aParam* &
+          & EXP((4.0_DP*PI**2*sigmaParam*(lParam**2*SIN(phiParam)**2+hParam**2*COS(phiParam)**2)*time)/ &
+          & (lParam**2*hParam**2))*SIN(2.0_DP*PI*COS(phiParam)*x(1)/lParam+2.0_DP*PI*SIN(phiParam)*x(2)/hParam)
+        hessianAnalyticValue(2,2)=(-4.0_DP*PI**2*SIN(phiParam)**2)/(hParam**2)*aParam* &
+          & EXP((4.0_DP*PI**2*sigmaParam*(lParam**2*SIN(phiParam)**2+hParam**2*COS(phiParam)**2)*time)/ &
+          & (lParam**2*hParam**2))*SIN(2.0_DP*PI*COS(phiParam)*x(1)/lParam+2.0_DP*PI*SIN(phiParam)*x(2)/hParam)
+        hessianAnalyticValue(1,2)=(-4.0_DP*PI**2*SIN(phiParam)*COS(phiParam))/(lParam*hParam)*aParam* &
+          & EXP((4.0_DP*PI**2*sigmaParam*(lParam**2*SIN(phiParam)**2+hParam**2*COS(phiParam)**2)*time)/ &
+          & (lParam**2*hParam**2))*SIN(2.0_DP*PI*COS(phiParam)*x(1)/lParam+2.0_DP*PI*SIN(phiParam)*x(2)/hParam)
+        hessianAnalyticValue(2,1)=hessianAnalyticValue(1,2)
+        velocityAnalyticValue=(4.0_DP*PI**2*sigmaParam*(lParam**2*SIN(phiParam)**2+hParam**2*COS(phiParam)**2))/ &
+          & (lParam**2*hParam**2)*aParam* &
+          & EXP((4.0_DP*PI**2*sigmaParam*(lParam**2*SIN(phiParam)**2+hParam**2*COS(phiParam)**2)*time)/ &
+          & (lParam**2*hParam**2))*SIN(2.0_DP*PI*COS(phiParam)*x(1)/lParam+2.0_DP*PI*SIN(phiParam)*x(2)/hParam)
+        accelerationAnalyticValue=(16.0_DP*PI**4*sigmaParam**2*&
+          & (lParam**2*SIN(phiParam)**2+hParam**2*COS(phiParam)**2)**2)/(lParam**2*hParam**2)*aParam* &
+          & EXP((4.0_DP*PI**2*sigmaParam*(lParam**2*SIN(phiParam)**2+hParam**2*COS(phiParam)**2)*time)/ &
+          & (lParam**2*hParam**2))*SIN(2.0_DP*PI*COS(phiParam)*x(1)/lParam+2.0_DP*PI*SIN(phiParam)*x(2)/hParam)      
       CASE(EQUATIONS_SET_DIFFUSION_EQUATION_THREE_DIM_1)
-        !u=A1*exp(-t)*(x^2+y^2+z^2)
-        SELECT CASE(variableType)
-        CASE(FIELD_U_VARIABLE_TYPE)
-          SELECT CASE(globalDerivativeIndex)
-          CASE(NO_GLOBAL_DERIV)
-            analyticValue=A1*EXP(-1.0_DP*time)*(x(1)*x(1)+x(2)*x(2)+x(3)*x(3))
-          CASE(GLOBAL_DERIV_S1)
-            CALL FlagError("Not implemented.",err,error,*999)
-          CASE(GLOBAL_DERIV_S2)
-            CALL FlagError("Not implemented.",err,error,*999)
-          CASE(GLOBAL_DERIV_S1_S2)
-            CALL FlagError("Not implmented.",err,error,*999)
-          CASE DEFAULT
-            localError="The global derivative index of "//TRIM(NumberToVString(globalDerivativeIndex,"*",err,error))// &
-              & " is invalid."
-            CALL FlagError(localError,err,error,*999)
-          END SELECT
-        CASE(FIELD_DELUDELN_VARIABLE_TYPE)
-          SELECT CASE(globalDerivativeIndex)
-          CASE(NO_GLOBAL_DERIV)
-            ANALYTICVALUE=0.0_DP !set to zero currently- actual value for diffusion solution needs adding
-          CASE(GLOBAL_DERIV_S1)
-            CALL FlagError("Not implemented.",err,error,*999)
-          CASE(GLOBAL_DERIV_S2)
-            CALL FlagError("Not implemented.",err,error,*999)                                    
-          CASE(GLOBAL_DERIV_S1_S2)
-            CALL FlagError("Not implemented.",err,error,*999)
-          CASE DEFAULT
-            localError="The global derivative index of "//TRIM(NumberToVString(globalDerivativeIndex,"*",err,error))// &
-              & " is invalid."
-            CALL FlagError(localError,err,error,*999)
-          END SELECT
-        CASE DEFAULT
-          localError="The variable type of "//TRIM(NumberToVString(variableType,"*",err,error))// &
-            & " is invalid."
-          CALL FlagError(localError,err,error,*999)
-        END SELECT
+        !u=A*exp(-t)*(x^2+y^2+z^2)
+        CALL FlagError("Not implemented.",err,error,*999)
       CASE DEFAULT
         localError="The specified analytic function type of "//TRIM(NumberToVString(analyticFunctionType,"*",err,error))// &
           & " is invalid."
@@ -306,47 +254,7 @@ CONTAINS
       SELECT CASE(analyticFunctionType)
       CASE(EQUATIONS_SET_LINEAR_SOURCE_DIFFUSION_EQUATION_THREE_DIM_1)
         !u=exp(-kt)*sin(sqrt(k)*(x*cos(phi)+y*sin(phi)))
-        !These are parameters for the 3D analytical solution with a linear source
-        A = -0.25_DP
-        B = 0.5_DP   
-        C = 0.5_DP
-        D = 0.5_DP
-        SELECT CASE(variableType)
-        CASE(FIELD_U_VARIABLE_TYPE)
-          SELECT CASE(globalDerivativeIndex)
-          CASE(NO_GLOBAL_DERIV)
-            analyticValue=EXP(A*time)*EXP(B*x(1))*EXP(C*x(2))*EXP(D*x(3))
-          CASE(GLOBAL_DERIV_S1)
-            CALL FlagError("Not implemented.",err,error,*999)
-          CASE(GLOBAL_DERIV_S2)
-            CALL FlagError("Not implemented.",err,error,*999)
-          CASE(GLOBAL_DERIV_S1_S2)
-            CALL FlagError("Not implmented.",err,error,*999)
-          CASE DEFAULT
-            localError="The global derivative index of "//TRIM(NumberToVString(globalDerivativeIndex,"*",err,error))// &
-              & " is invalid."
-            CALL FlagError(localError,err,error,*999)
-          END SELECT
-        CASE(FIELD_DELUDELN_VARIABLE_TYPE)
-          SELECT CASE(globalDerivativeIndex)
-          CASE(NO_GLOBAL_DERIV)
-            analyticValue=0.0_DP !set to zero currently- actual value for diffusion solution needs adding 
-          CASE(GLOBAL_DERIV_S1)
-            CALL FlagError("Not implemented.",err,error,*999)
-          CASE(GLOBAL_DERIV_S2)
-            CALL FlagError("Not implemented.",err,error,*999)                                    
-          CASE(GLOBAL_DERIV_S1_S2)
-            CALL FlagError("Not implemented.",err,error,*999)
-          CASE DEFAULT
-            localError="The global derivative index of "//TRIM(NumberToVString(globalDerivativeIndex,"*",err,error))// &
-              & " is invalid."
-            CALL FlagError(localError,err,error,*999)
-          END SELECT
-        CASE DEFAULT
-          localError="The variable type of "//TRIM(NumberToVString(variableType,"*",err,error))// &
-            & " is invalid."
-          CALL FlagError(localError,err,error,*999)
-        END SELECT
+        CALL FlagError("Not implemented.",err,error,*999)
       CASE DEFAULT
         localError="The analytic function type of "// &
           & TRIM(NumberToVString(analyticFunctionType,"*",err,error))// &
@@ -354,47 +262,21 @@ CONTAINS
         CALL FlagError(localError,err,error,*999)
       END SELECT
     CASE(EQUATIONS_SET_QUADRATIC_SOURCE_DIFFUSION_SUBTYPE)
-     SELECT CASE(analyticFunctionType)
+      SELECT CASE(analyticFunctionType)
       CASE(EQUATIONS_SET_QUADRATIC_SOURCE_DIFFUSION_EQUATION_ONE_DIM_1)
         !For del u/del t = del^2 u/del x^2 + a + bu + cu^m with a = 0 then
         !u(x,t) = [+/-\beta + C.exp(\lamba.t+/\mu.x)]^(2/1-m) where
         !\beta=\sqrt(-c/b); \lamba=b(1-m)(m+3)/(2(m+1)); \mu = \sqrt((b(1-m)^2)/(2.(m+1))
         !see http://eqworld.ipmnet.ru/en/solutions/npde/npde1104.pdf
-        aParam=materialsParameters(1)
-        bParam=materialsParameters(2)
-        cParam=materialsParameters(3)
+        aParam=analyticParameters(1)
+        bParam=analyticParameters(2)
+        cParam=analyticParameters(3)
         betaParam=SQRT(-cParam/bParam)
         lambdaParam=-5.0_DP*bParam/6.0_DP
         muParam=SQRT(bParam/6.0_DP)
         constParam=1.0_DP
-        SELECT CASE(variableType)
-        CASE(FIELD_U_VARIABLE_TYPE)
-          SELECT CASE(globalDerivativeIndex)
-          CASE(NO_GLOBAL_DERIV)
-            analyticValue=1.0_DP/(betaParam+constParam*EXP(lambdaParam*time+muParam*x(1)))**2
-          CASE(GLOBAL_DERIV_S1)
-            CALL FlagError("Not implemented.",err,error,*999)
-          CASE DEFAULT
-            localError="The global derivative index of "//TRIM(NumberToVString(globalDerivativeIndex,"*",err,error))// &
-              & " is invalid."
-            CALL FlagError(localError,err,error,*999)
-          END SELECT
-        CASE(FIELD_DELUDELN_VARIABLE_TYPE)
-          SELECT CASE(globalDerivativeIndex)
-          CASE(NO_GLOBAL_DERIV)
-            analyticValue=0.0_DP                                 
-          CASE(GLOBAL_DERIV_S1)
-            CALL FlagError("Not implemented.",err,error,*999)
-          CASE DEFAULT
-            localError="The global derivative index of "//TRIM(NumberToVString(globalDerivativeIndex,"*",err,error))// &
-              & " is invalid."
-            CALL FlagError(localError,err,error,*999)
-          END SELECT
-        CASE DEFAULT
-          localError="The variable type of "//TRIM(NumberToVString(variableType,"*",err,error))// &
-            & " is invalid."
-          CALL FlagError(localError,err,error,*999)
-        END SELECT
+        analyticValue=1.0_DP/(betaParam+constParam*EXP(lambdaParam*time+muParam*x(1)))**2
+        CALL FlagError("Not implmented.",err,error,*999)
       CASE DEFAULT
         localError="The analytic function type of "// &
           & TRIM(NumberToVString(analyticFunctionType,"*",err,error))// &
@@ -408,40 +290,14 @@ CONTAINS
         !u(x,t) = -2/c.ln[+/-\beta + C.exp(+/-\mu.x-a.c.t/2)] where
         !\beta=\sqrt(-b/a); \mu = \sqrt(a.c/2)
         !see http://eqworld.ipmnet.ru/en/solutions/npde/npde1105.pdf
-        aParam=materialsParameters(1)
-        bParam=materialsParameters(2)
-        cParam=materialsParameters(3)
+        aParam=analyticParameters(1)
+        bParam=analyticParameters(2)
+        cParam=analyticParameters(3)
         constParam=1.0_DP
         betaParam=SQRT(-bParam/aParam)
         muParam=SQRT(aParam*cParam/2.0_DP)
-        SELECT CASE(variableType)
-        CASE(FIELD_U_VARIABLE_TYPE)
-          SELECT CASE(globalDerivativeIndex)
-          CASE(NO_GLOBAL_DERIV)
-            analyticValue=-2.0_DP/cParam*LOG(betaParam+constParam*EXP(muParam*X(1)-aParam*cParam*time/2.0_DP))
-          CASE(GLOBAL_DERIV_S1)
-            CALL FlagError("Not implemented.",err,error,*999)
-          CASE DEFAULT
-            localError="The global derivative index of "//TRIM(NumberToVString(globalDerivativeIndex,"*",err,error))// &
-              & " is invalid."
-            CALL FlagError(localError,err,error,*999)
-          END SELECT
-        CASE(FIELD_DELUDELN_VARIABLE_TYPE)
-          SELECT CASE(globalDerivativeIndex)
-          CASE(NO_GLOBAL_DERIV)
-            analyticValue=0.0_DP 
-          CASE(GLOBAL_DERIV_S1)
-            CALL FlagError("Not implemented.",err,error,*999)
-          CASE DEFAULT
-            localError="The global derivative index of "//TRIM(NumberToVString(globalDerivativeIndex,"*",err,error))// &
-              & " is invalid."
-            CALL FlagError(localError,err,error,*999)
-          END SELECT
-        CASE DEFAULT
-          localError="The variable type of "//TRIM(NumberToVString(variableType,"*",err,error))// &
-            & " is invalid."
-          CALL FlagError(localError,err,error,*999)
-        END SELECT
+        analyticValue=-2.0_DP/cParam*LOG(betaParam+constParam*EXP(muParam*X(1)-aParam*cParam*time/2.0_DP))
+        CALL FlagError("Not implemented.",err,error,*999)
       CASE DEFAULT
         localError="The analytic function type of "// &
           & TRIM(NumberToVString(analyticFunctionType,"*",err,error))// &
@@ -459,265 +315,11 @@ CONTAINS
     CASE(EQUATIONS_SET_MULTI_COMP_TRANSPORT_DIFFUSION_SUBTYPE)
       SELECT CASE(analyticFunctionType)
       CASE(EQUATIONS_SET_MULTI_COMP_DIFFUSION_TWO_COMP_TWO_DIM)
-        SELECT CASE(variableType)
-        CASE(FIELD_U_VARIABLE_TYPE)
-          SELECT CASE(globalDerivativeIndex)
-          CASE(NO_GLOBAL_DERIV)
-            analyticValue=A1*EXP(-1.0_DP*time)*(x(1)*x(1)+x(2)*x(2))
-          CASE(GLOBAL_DERIV_S1)
-            CALL FlagError("Not implemented.",err,error,*999)
-          CASE(GLOBAL_DERIV_S2)
-            CALL FlagError("Not implemented.",err,error,*999)
-          CASE(GLOBAL_DERIV_S1_S2)
-            CALL FlagError("Not implmented.",err,error,*999)
-          CASE DEFAULT
-            localError="The global derivative index of "//TRIM(NumberToVString(globalDerivativeIndex,"*",err,error))// &
-              & " is invalid."
-            CALL FlagError(localError,err,error,*999)
-          END SELECT
-        CASE(FIELD_DELUDELN_VARIABLE_TYPE)
-          SELECT CASE(globalDerivativeIndex)
-          CASE(NO_GLOBAL_DERIV)
-            analyticValue=0.0_DP!set to zero currently- actual value for diffusion solution needs adding                                    
-          CASE(GLOBAL_DERIV_S1)
-            CALL FlagError("Not implemented.",err,error,*999)
-          CASE(GLOBAL_DERIV_S2)
-            CALL FlagError("Not implemented.",err,error,*999)                                    
-          CASE(GLOBAL_DERIV_S1_S2)
-            CALL FlagError("Not implemented.",err,error,*999)
-          CASE DEFAULT
-            localError="The global derivative index of "//TRIM(NumberToVString(globalDerivativeIndex,"*",err,error))// &
-              & " is invalid."
-            CALL FlagError(localError,err,error,*999)
-          END SELECT
-        CASE(FIELD_V_VARIABLE_TYPE)
-          SELECT CASE(globalDerivativeIndex)
-          CASE(NO_GLOBAL_DERIV)
-            analyticValue=A2*EXP(-1.0_DP*time)*(x(1)*x(1)+x(2)*x(2))
-          CASE(GLOBAL_DERIV_S1)
-            CALL FlagError("Not implemented.",err,error,*999)
-          CASE(GLOBAL_DERIV_S2)
-            CALL FlagError("Not implemented.",err,error,*999)
-          CASE(GLOBAL_DERIV_S1_S2)
-            CALL FlagError("Not implmented.",err,error,*999)
-          CASE DEFAULT
-            localError="The global derivative index of "//TRIM(NumberToVString(globalDerivativeIndex,"*",err,error))// &
-              & " is invalid."
-            CALL FlagError(localError,err,error,*999)
-          END SELECT
-        CASE(FIELD_DELVDELN_VARIABLE_TYPE)
-          SELECT CASE(globalDerivativeIndex)
-          CASE(NO_GLOBAL_DERIV)
-            analyticValue=0.0_DP!set to zero currently- actual value for diffusion solution needs adding
-          CASE(GLOBAL_DERIV_S1)
-            CALL FlagError("Not implemented.",err,error,*999)
-          CASE(GLOBAL_DERIV_S2)
-            CALL FlagError("Not implemented.",err,error,*999)                                    
-          CASE(GLOBAL_DERIV_S1_S2)
-            CALL FlagError("Not implemented.",err,error,*999)
-          CASE DEFAULT
-            localError="The global derivative index of "//TRIM(NumberToVString(globalDerivativeIndex,"*",err,error))// &
-              & " is invalid."
-            CALL FlagError(localError,err,error,*999)
-          END SELECT
-        CASE DEFAULT
-          localError="The variable type of "//TRIM(NumberToVString(variableType,"*",err,error))// &
-            & " is invalid."
-          CALL FlagError(localError,err,error,*999)
-        END SELECT
+        analyticValue=A1*EXP(-1.0_DP*time)*(x(1)*x(1)+x(2)*x(2))
+        CALL FlagError("Not implemented.",err,error,*999)
       CASE(EQUATIONS_SET_MULTI_COMP_DIFFUSION_TWO_COMP_THREE_DIM)
-        SELECT CASE(variableType)
-        CASE(FIELD_U_VARIABLE_TYPE)
-          SELECT CASE(globalDerivativeIndex)
-          CASE(NO_GLOBAL_DERIV)
-            analyticValue=A1*EXP(-1.0_DP*time)*(x(1)*x(1)+x(2)*x(2)+x(3)*x(3))
-          CASE(GLOBAL_DERIV_S1)
-            CALL FlagError("Not implemented.",err,error,*999)
-          CASE(GLOBAL_DERIV_S2)
-            CALL FlagError("Not implemented.",err,error,*999)
-          CASE(GLOBAL_DERIV_S1_S2)
-            CALL FlagError("Not implmented.",err,error,*999)
-          CASE DEFAULT
-            localError="The global derivative index of "//TRIM(NumberToVString(globalDerivativeIndex,"*",err,error))// &
-              & " is invalid."
-            CALL FlagError(localError,err,error,*999)
-          END SELECT
-        CASE(FIELD_DELUDELN_VARIABLE_TYPE)
-          SELECT CASE(globalDerivativeIndex)
-          CASE(NO_GLOBAL_DERIV)
-            analyticValue=0.0_DP !set to zero currently- actual value for diffusion solution needs adding 
-          CASE(GLOBAL_DERIV_S1)
-            CALL FlagError("Not implemented.",err,error,*999)
-          CASE(GLOBAL_DERIV_S2)
-            CALL FlagError("Not implemented.",err,error,*999)                                    
-          CASE(GLOBAL_DERIV_S1_S2)
-            CALL FlagError("Not implemented.",err,error,*999)
-          CASE DEFAULT
-            localError="The global derivative index of "//TRIM(NumberToVString(globalDerivativeIndex,"*",err,error))// &
-              & " is invalid."
-            CALL FlagError(localError,err,error,*999)
-          END SELECT
-        CASE(FIELD_V_VARIABLE_TYPE)
-          SELECT CASE(globalDerivativeIndex)
-          CASE(NO_GLOBAL_DERIV)
-            analyticValue=A2*EXP(-1.0_DP*time)*(x(1)*x(1)+x(2)*x(2)+x(3)*x(3))
-          CASE(GLOBAL_DERIV_S1)
-            CALL FlagError("Not implemented.",err,error,*999)
-          CASE(GLOBAL_DERIV_S2)
-            CALL FlagError("Not implemented.",err,error,*999)
-          CASE(GLOBAL_DERIV_S1_S2)
-            CALL FlagError("Not implmented.",err,error,*999)
-          CASE DEFAULT
-            localError="The global derivative index of "//TRIM(NumberToVString(globalDerivativeIndex,"*",err,error))// &
-              & " is invalid."
-            CALL FlagError(localError,err,error,*999)
-          END SELECT
-        CASE(FIELD_DELVDELN_VARIABLE_TYPE)
-          SELECT CASE(globalDerivativeIndex)
-          CASE(NO_GLOBAL_DERIV)
-            analyticValue=0.0_DP !set to zero currently- actual value for diffusion solution needs adding
-          CASE(GLOBAL_DERIV_S1)
-            CALL FlagError("Not implemented.",err,error,*999)
-          CASE(GLOBAL_DERIV_S2)
-            CALL FlagError("Not implemented.",err,error,*999)                                    
-          CASE(GLOBAL_DERIV_S1_S2)
-            CALL FlagError("Not implemented.",err,error,*999)
-          CASE DEFAULT
-            localError="The global derivative index of "//TRIM(NumberToVString(globalDerivativeIndex,"*",err,error))// &
-              & " is invalid."
-            CALL FlagError(localError,err,error,*999)
-          END SELECT
-        CASE DEFAULT
-          localError="The variable type of "//TRIM(NumberToVString(variableType,"*",err,error))// &
-            & " is invalid."
-          CALL FlagError(localError,err,error,*999)
-        END SELECT
-      CASE(EQUATIONS_SET_MULTI_COMP_DIFFUSION_THREE_COMP_THREE_DIM)
-        SELECT CASE(variableType)
-        CASE(FIELD_U_VARIABLE_TYPE)
-          SELECT CASE(globalDerivativeIndex)
-          CASE(NO_GLOBAL_DERIV)
-            analyticValue=A1*EXP(-1.0_DP*time)*(x(1)*x(1)+x(2)*x(2)+x(3)*x(3))
-          CASE(GLOBAL_DERIV_S1)
-            CALL FlagError("Not implemented.",err,error,*999)
-          CASE(GLOBAL_DERIV_S2)
-            CALL FlagError("Not implemented.",err,error,*999)
-          CASE(GLOBAL_DERIV_S1_S2)
-            CALL FlagError("Not implmented.",err,error,*999)
-          CASE DEFAULT
-            localError="The global derivative index of "//TRIM(NumberToVString(globalDerivativeIndex,"*",err,error))// &
-              & " is invalid."
-            CALL FlagError(localError,err,error,*999)
-          END SELECT
-        CASE(FIELD_DELUDELN_VARIABLE_TYPE)
-          SELECT CASE(globalDerivativeIndex)
-          CASE(NO_GLOBAL_DERIV)
-            analyticValue=0.0_DP !set to zero currently- actual value for diffusion solution needs adding 
-          CASE(GLOBAL_DERIV_S1)
-            CALL FlagError("Not implemented.",err,error,*999)
-          CASE(GLOBAL_DERIV_S2)
-            CALL FlagError("Not implemented.",err,error,*999)                                    
-          CASE(GLOBAL_DERIV_S1_S2)
-            CALL FlagError("Not implemented.",err,error,*999)
-          CASE DEFAULT
-            localError="The global derivative index of "//TRIM(NumberToVString(globalDerivativeIndex,"*",err,error))// &
-              & " is invalid."
-            CALL FlagError(localError,err,error,*999)
-          END SELECT
-        CASE(FIELD_V_VARIABLE_TYPE)
-          SELECT CASE(globalDerivativeIndex)
-          CASE(NO_GLOBAL_DERIV)
-            analyticValue=A2*EXP(-1.0_DP*time)*(x(1)*x(1)+x(2)*x(2)+x(3)*x(3))
-          CASE(GLOBAL_DERIV_S1)
-            CALL FlagError("Not implemented.",err,error,*999)
-          CASE(GLOBAL_DERIV_S2)
-            CALL FlagError("Not implemented.",err,error,*999)
-          CASE(GLOBAL_DERIV_S1_S2)
-            CALL FlagError("Not implmented.",err,error,*999)
-          CASE DEFAULT
-            localError="The global derivative index of "//TRIM(NumberToVString(globalDerivativeIndex,"*",err,error))// &
-              & " is invalid."
-            CALL FlagError(localError,err,error,*999)
-          END SELECT
-        CASE(FIELD_DELVDELN_VARIABLE_TYPE)
-          SELECT CASE(globalDerivativeIndex)
-          CASE(NO_GLOBAL_DERIV)
-            analyticValue=0.0_DP !set to zero currently- actual value for diffusion solution needs adding
-          CASE(GLOBAL_DERIV_S1)
-            CALL FlagError("Not implemented.",err,error,*999)
-          CASE(GLOBAL_DERIV_S2)
-            CALL FlagError("Not implemented.",err,error,*999)                                    
-          CASE(GLOBAL_DERIV_S1_S2)
-            CALL FlagError("Not implemented.",err,error,*999)
-          CASE DEFAULT
-            localError="The global derivative index of "//TRIM(NumberToVString(globalDerivativeIndex,"*",err,error))// &
-              & " is invalid."
-            CALL FlagError(localError,err,error,*999)
-          END SELECT
-        CASE(FIELD_U1_VARIABLE_TYPE)
-          SELECT CASE(globalDerivativeIndex)
-          CASE(NO_GLOBAL_DERIV)
-            analyticValue=A3*EXP(-1.0_DP*time)*(x(1)*x(1)+x(2)*x(2)+x(3)*x(3))
-          CASE(GLOBAL_DERIV_S1)
-            CALL FlagError("Not implemented.",err,error,*999)
-          CASE(GLOBAL_DERIV_S2)
-            CALL FlagError("Not implemented.",err,error,*999)
-          CASE(GLOBAL_DERIV_S1_S2)
-            CALL FlagError("Not implmented.",err,error,*999)
-          CASE DEFAULT
-            localError="The global derivative index of "//TRIM(NumberToVString(globalDerivativeIndex,"*",err,error))// &
-              & " is invalid."
-            CALL FlagError(localError,err,error,*999)
-          END SELECT
-        CASE(FIELD_DELU1DELN_VARIABLE_TYPE)
-          SELECT CASE(globalDerivativeIndex)
-          CASE(NO_GLOBAL_DERIV)
-            analyticValue=0.0_DP!set to zero currently- actual value for diffusion solution needs adding 
-          CASE(GLOBAL_DERIV_S1)
-            CALL FlagError("Not implemented.",err,error,*999)
-          CASE(GLOBAL_DERIV_S2)
-            CALL FlagError("Not implemented.",err,error,*999)                                    
-          CASE(GLOBAL_DERIV_S1_S2)
-            CALL FlagError("Not implemented.",err,error,*999)
-          CASE DEFAULT
-            localError="The global derivative index of "//TRIM(NumberToVString(globalDerivativeIndex,"*",err,error))// &
-              & " is invalid."
-            CALL FlagError(localError,err,error,*999)
-          END SELECT
-        CASE(FIELD_U2_VARIABLE_TYPE)
-          SELECT CASE(globalDerivativeIndex)
-          CASE(NO_GLOBAL_DERIV)
-            analyticValue=A4*EXP(-1.0_DP*time)*(x(1)*x(1)+x(2)*x(2)+x(3)*x(3))
-          CASE(GLOBAL_DERIV_S1)
-            CALL FlagError("Not implemented.",err,error,*999)
-          CASE(GLOBAL_DERIV_S2)
-            CALL FlagError("Not implemented.",err,error,*999)
-          CASE(GLOBAL_DERIV_S1_S2)
-            CALL FlagError("Not implmented.",err,error,*999)
-          CASE DEFAULT
-            localError="The global derivative index of "//TRIM(NumberToVString(globalDerivativeIndex,"*",err,error))// &
-              & " is invalid."
-            CALL FlagError(localError,err,error,*999)
-          END SELECT
-        CASE(FIELD_DELU2DELN_VARIABLE_TYPE)
-          SELECT CASE(globalDerivativeIndex)
-          CASE(NO_GLOBAL_DERIV)
-            analyticValue=0.0_DP !set to zero currently- actual value for diffusion solution needs adding
-          CASE(GLOBAL_DERIV_S1)
-            CALL FlagError("Not implemented.",err,error,*999)
-          CASE(GLOBAL_DERIV_S2)
-            CALL FlagError("Not implemented.",err,error,*999)                                    
-          CASE(GLOBAL_DERIV_S1_S2)
-            CALL FlagError("Not implemented.",err,error,*999)
-          CASE DEFAULT
-            localError="The global derivative index of "//TRIM(NumberToVString(globalDerivativeIndex,"*",err,error))// &
-              & " is invalid."
-            CALL FlagError(localError,err,error,*999)
-          END SELECT
-        CASE DEFAULT
-          localError="The variable type of "//TRIM(NumberToVString(variableType,"*",err,error))//" is invalid."
-          CALL FlagError(localError,err,error,*999)
-        END SELECT
+        analyticValue=A1*EXP(-1.0_DP*time)*(x(1)*x(1)+x(2)*x(2)+x(3)*x(3))
+        CALL FlagError("Not implemented.",err,error,*999)
       CASE DEFAULT
         localError="The analytic function type of "//TRIM(NumberToVString(analyticFunctionType,"*",err,error))//" is invalid."
         CALL FlagError(localError,err,error,*999)
@@ -751,13 +353,14 @@ CONTAINS
       & imyMatrixIdx,localDofIdx,nodeIdx,numberOfComponents,numberOfDimensions,numberOfNodes,numberOfNodeDerivatives, &
       & numberOfVariables,numberOfVersions,variableIdx,variableType,versionIdx
     INTEGER(INTG), POINTER :: equationsSetParameters(:)
-    REAL(DP) :: initialValue,normal(3),tangents(3,3),time,analyticValue,x(3)
+    REAL(DP) :: initialValue,position(3,MAXIMUM_GLOBAL_DERIV_NUMBER),normal(3),tangents(3,3),time,analyticValue, &
+      & gradientAnalyticValue(3),hessianAnalyticValue(3,3),velocityAnalyticValue,accelerationAnalyticValue
     REAL(DP), POINTER :: analyticParameters(:),geometricParameters(:),materialsParameters(:)
     LOGICAL :: boundaryNode
     TYPE(DomainType), POINTER :: domain
     TYPE(DomainNodesType), POINTER :: domainNodes
     TYPE(DomainTopologyType), POINTER :: domainTopology
-    TYPE(FieldType), POINTER :: analyticField,dependentField,equationsSetField,geometricField,materialsField
+    TYPE(FieldType), POINTER :: analyticField,dependentField,equationsSetField,geometricField
     TYPE(FieldVariableType), POINTER :: dependentVariable,geometricVariable
  
     ENTERS("Diffusion_BoundaryConditionAnalyticCalculate",err,error,*999)
@@ -781,143 +384,41 @@ CONTAINS
     CALL EquationsSet_AnalyticFieldExists(equationsSet,analyticField,err,error,*999)
     IF(ASSOCIATED(analyticField)) &
       & CALL Field_ParameterSetDataGet(analyticField,FIELD_U_VARIABLE_TYPE,FIELD_VALUES_SET_TYPE,analyticParameters,err,error,*999)
-    NULLIFY(materialsField)
-    NULLIFY(materialsParameters)
-    CALL EquationsSet_MaterialsFieldExists(equationsSet,materialsField,err,error,*999)
-    IF(ASSOCIATED(materialsField)) &
-      CALL Field_ParameterSetDataGet(materialsField,FIELD_U_VARIABLE_TYPE,FIELD_VALUES_SET_TYPE,materialsParameters, &
-      & err,error,*999)           
     CALL EquationsSet_AnalyticTimeGet(equationsSet,time,err,error,*999)
-    IF(equationsSet%specification(3)==EQUATIONS_SET_MULTI_COMP_TRANSPORT_DIFFUSION_SUBTYPE)THEN
-      !If a multi-comp model, we will use the equations set field information to assign only the appropriate
-      !field variable boundary conditions. Use predetermined mapping from equations set field compartment number
-      !to field variable type
-      NULLIFY(equationsSetField)
-      CALL EquationsSet_EquationsSetFieldGet(equationsSet,equationsSetField,err,error,*999)
-      NULLIFY(equationsSetParameters)
-      CALL Field_ParameterSetDataGet(equationsSetField,FIELD_U_VARIABLE_TYPE,FIELD_VALUES_SET_TYPE,equationsSetParameters, &
-        & err,error,*999)
-      imyMatrixIdx = equationsSetParameters(1)
-      DO variableIdx=0,1
-        variableType=FIELD_U_VARIABLE_TYPE+(FIELD_NUMBER_OF_VARIABLE_SUBTYPES*(imyMatrixIdx-1))+variableIdx
-        NULLIFY(dependentVariable)
-        CALL Field_VariableGet(dependentField,variableType,dependentVariable,err,error,*999)
-        CALL FieldVariable_ParameterSetEnsureCreated(dependentVariable,FIELD_ANALYTIC_VALUES_SET_TYPE,err,error,*999)
-        CALL FieldVariable_NumberOfComponentsGet(dependentVariable,numberOfComponents,err,error,*999)
-        DO componentIdx=1,numberOfComponents
-          CALL FieldVariable_ComponentInterpolationCheck(dependentVariable,componentIdx,FIELD_NODE_BASED_INTERPOLATION, &
-            & err,error,*999)
-          NULLIFY(domain)
-          CALL FieldVariable_DomainGet(dependentVariable,componentIdx,domain,err,error,*999)
-          NULLIFY(domainTopology)
-          CALL Domain_DomainTopologyGet(domain,domainTopology,err,error,*999)
-          NULLIFY(domainNodes)
-          CALL DomainTopology_DomainNodesGet(domainTopology,domainNodes,err,error,*999)
-          !Loop over the local nodes excluding the ghosts.
-          CALL DomainNodes_NumberOfNodesGet(domainNodes,numberOfNodes,err,error,*999)
-          DO nodeIdx=1,numberOfNodes
-!!TODO \todo We should interpolate the geometric field here and the node position.
-            DO dimensionIdx=1,numberOfDimensions
-              !Default to version 1 of each node derivative
-              CALL FieldVariable_LocalNodeDOFGet(geometricVariable,1,1,nodeIdx,dimensionIdx,localDofIdx,err,error,*999)
-              x(dimensionIdx)=geometricParameters(localDofIdx)
-            ENDDO !dimensionIdx
-            CALL DomainNodes_NodeBoundaryNodeGet(domainNodes,nodeIdx,boundaryNode,err,error,*999)
-            !Loop over the derivatives
-            CALL DomainNodes_NodeNumberOfDerivativesGet(domainNodes,nodeIdx,numberOfNodeDerivatives,err,error,*999)
-            DO derivativeIdx=1,numberOfNodeDerivatives
-              CALL DomainNodes_DerivativeGlobalIndexGet(domainNodes,derivativeIdx,nodeIdx,globalDerivativeIndex,err,error,*999)
-              CALL Diffusion_AnalyticFunctionsEvaluate(equationsSet,analyticFunctionType,x,tangents,normal,time,variableType, &
-                & globalDerivativeIndex,componentIdx,analyticParameters,materialsParameters,analyticValue,err,error,*999)
-              !Default to version 1 of each node derivative
-              CALL FieldVariable_LocalNodeDOFGet(dependentVariable,1,derivativeIdx,nodeIdx,dimensionIdx,localDofIdx,err,error,*999)
-              CALL FieldVariable_ParameterSetUpdateLocalDOF(dependentVariable,FIELD_ANALYTIC_VALUES_SET_TYPE,localDofIdx, &
-                & analyticValue,err,error,*999)
-              IF(MOD(variableType,FIELD_NUMBER_OF_VARIABLE_SUBTYPES)==FIELD_U_VARIABLE_TYPE) THEN
-                IF(boundaryNode) THEN
-                  !If we are a boundary node then set the analytic value on the boundary
-                  CALL BoundaryConditions_SetLocalDOF(boundaryConditions,dependentVariable,localDofIdx,BOUNDARY_CONDITION_FIXED, &
-                    & analyticValue,err,error,*999)
-                ELSE
-                  CALL FieldVariable_ParameterSetUpdateLocalDof(dependentVariable,FIELD_VALUES_SET_TYPE,localDofIdx, &
-                    & analyticValue,err,error,*999)
-                ENDIF
-              ENDIF
-            ENDDO !derivativeIdx
-          ENDDO !nodeIdx
-        ENDDO !component_idx
-        CALL FieldVariable_ParameterSetUpdateStart(dependentVariable,FIELD_ANALYTIC_VALUES_SET_TYPE,err,error,*999)
-        CALL FieldVariable_ParameterSetUpdateStart(dependentVariable,FIELD_VALUES_SET_TYPE,err,error,*999)
-        CALL FieldVariable_ParameterSetUpdateFinish(dependentVariable,FIELD_ANALYTIC_VALUES_SET_TYPE,err,error,*999)
-        CALL FieldVariable_ParameterSetUpdateFinish(dependentVariable,FIELD_VALUES_SET_TYPE,err,error,*999)
-      ENDDO !variableIdx
-    ELSE
-      !for single physics diffusion problems use standard analytic calculate
-      CALL Field_NumberOfVariablesGet(dependentField,numberOfVariables,err,error,*999)
-      DO variableIdx=1,numberOfVariables
-        NULLIFY(dependentVariable)
-        CALL Field_VariableIndexGet(dependentField,variableIdx,dependentVariable,variableType,err,error,*999)
-        CALL FieldVariable_ParameterSetEnsureCreated(dependentVariable,FIELD_ANALYTIC_VALUES_SET_TYPE,err,error,*999)
-        CALL FieldVariable_NumberOfComponentsGet(dependentVariable,numberOfComponents,err,error,*999)
-        DO componentIdx=1,numberOfComponents
-          CALL FieldVariable_ComponentInterpolationCheck(dependentVariable,componentIdx,FIELD_NODE_BASED_INTERPOLATION, &
-            & err,error,*999)
-          NULLIFY(domain)
-          CALL FieldVariable_DomainGet(dependentVariable,componentIdx,domain,err,error,*999)
-          NULLIFY(domainTopology)
-          CALL Domain_DomainTopologyGet(domain,domainTopology,err,error,*999)
-          NULLIFY(domainNodes)
-          CALL DomainTopology_DomainNodesGet(domainTopology,domainNodes,err,error,*999)
-          !Loop over the local nodes excluding the ghosts.
-          CALL DomainNodes_NumberOfNodesGet(domainNodes,numberOfNodes,err,error,*999)
-          DO nodeIdx=1,numberOfNodes
-!!TODO \todo We should interpolate the geometric field here and the node position.
-            DO dimensionIdx=1,numberOfDimensions
-              !Default to version 1 of each node derivative
-              CALL FieldVariable_LocalNodeDOFGet(geometricVariable,1,1,nodeIdx,componentIdx,localDofIdx,err,error,*999)
-              x(dimensionIdx)=geometricParameters(localDofIdx)
-            ENDDO !dimensionIdx
-            CALL DomainNodes_NodeBoundaryNodeGet(domainNodes,nodeIdx,boundaryNode,err,error,*999)
-            !Loop over the derivatives
-            CALL DomainNodes_NodeNumberOfDerivativesGet(domainNodes,nodeIdx,numberOfNodeDerivatives,err,error,*999)
-            DO derivativeIdx=1,numberOfNodeDerivatives
-              CALL DomainNodes_DerivativeGlobalIndexGet(domainNodes,derivativeIdx,nodeIdx,globalDerivativeIndex,err,error,*999)
-              CALL Diffusion_AnalyticFunctionsEvaluate(equationsSet,analyticFunctionType,x,tangents,normal,0.0_DP, &
-                & variableType,globalDerivativeIndex,componentIdx,analyticParameters,materialsParameters,initialValue, &
-                & err,error,*999)
-              CALL Diffusion_AnalyticFunctionsEvaluate(equationsSet,analyticFunctionType,x,tangents,normal,time, &
-                & variableType,globalDerivativeIndex,componentIdx,analyticParameters,materialsParameters,analyticValue, &
-                & err,error,*999)
-              CALL DomainNodes_DerivativeNumberOfVersionsGet(domainNodes,derivativeIdx,nodeIdx,numberOfVersions,err,error,*999)
-              DO versionIdx=1,numberOfVersions
-                CALL FieldVariable_LocalNodeDOFGet(dependentVariable,versionIdx,derivativeIdx,nodeIdx,componentIdx,localDofIdx, &
-                  & err,error,*999)
-                CALL Field_ParameterSetUpdateLocalDof(dependentField,variableType,FIELD_ANALYTIC_VALUES_SET_TYPE, &
-                  & localDofIdx,analyticValue,err,error,*999)
-                IF(variableType==FIELD_U_VARIABLE_TYPE) THEN
-                  IF(boundaryNode) THEN
-                    !If we are a boundary node then set the analytic value on the boundary
-                    CALL BoundaryConditions_SetLocalDOF(boundaryConditions,dependentVariable,localDofIdx, &
-                      & BOUNDARY_CONDITION_FIXED,analyticValue,err,error,*999)
-                  ELSE
-                    !Set the initial condition.
-                    CALL FieldVariable_ParameterSetUpdateLocalDof(dependentVariable,FIELD_VALUES_SET_TYPE,localDofIdx, &
-                      & initialValue,err,error,*999)
-                  ENDIF
-                ENDIF
-              ENDDO !versionIdx
-            ENDDO !derivativeIdx
-          ENDDO !nodeIdx
-        ENDDO !component_idx
-        CALL FieldVariable_ParameterSetUpdateStart(dependentVariable,FIELD_ANALYTIC_VALUES_SET_TYPE,err,error,*999)
-        CALL FieldVariable_ParameterSetUpdateStart(dependentVariable,FIELD_VALUES_SET_TYPE,err,error,*999)
-        CALL FieldVariable_ParameterSetUpdateFinish(dependentVariable,FIELD_ANALYTIC_VALUES_SET_TYPE,err,error,*999)
-        CALL FieldVariable_ParameterSetUpdateFinish(dependentVariable,FIELD_VALUES_SET_TYPE,err,error,*999)
-      ENDDO !variableIdx
-    ENDIF
-    IF(ASSOCIATED(materialsField)) &
-      & CALL Field_ParameterSetDataRestore(materialsField,FIELD_U_VARIABLE_TYPE,FIELD_VALUES_SET_TYPE,materialsParameters, &
-      & err,error,*999)
+    CALL Field_NumberOfVariablesGet(dependentField,numberOfVariables,err,error,*999)
+    DO variableIdx=1,numberOfVariables
+      NULLIFY(dependentVariable)
+      CALL Field_VariableIndexGet(dependentField,variableIdx,dependentVariable,variableType,err,error,*999)
+      CALL FieldVariable_ParameterSetEnsureCreated(dependentVariable,FIELD_ANALYTIC_VALUES_SET_TYPE,err,error,*999)
+      CALL FieldVariable_NumberOfComponentsGet(dependentVariable,numberOfComponents,err,error,*999)
+      DO componentIdx=1,numberOfComponents
+        CALL FieldVariable_ComponentInterpolationCheck(dependentVariable,componentIdx,FIELD_NODE_BASED_INTERPOLATION, &
+          & err,error,*999)
+        NULLIFY(domain)
+        CALL FieldVariable_DomainGet(dependentVariable,componentIdx,domain,err,error,*999)
+        NULLIFY(domainTopology)
+        CALL Domain_DomainTopologyGet(domain,domainTopology,err,error,*999)
+        NULLIFY(domainNodes)
+        CALL DomainTopology_DomainNodesGet(domainTopology,domainNodes,err,error,*999)
+        !Loop over the local nodes excluding the ghosts.
+        CALL DomainNodes_NumberOfNodesGet(domainNodes,numberOfNodes,err,error,*999)
+        DO nodeIdx=1,numberOfNodes
+          CALL DomainNodes_NodeBoundaryNodeGet(domainNodes,nodeIdx,boundaryNode,err,error,*999)
+          CALL Field_PositionNormalTangentsCalculateNode(dependentField,FIELD_U_VARIABLE_TYPE,componentIdx,nodeIdx, &
+            & position,normal,tangents,err,error,*999)
+          CALL Diffusion_AnalyticFunctionsEvaluate(equationsSet,analyticFunctionType,componentIdx,time, &
+            & position(:,NO_PART_DERIV),analyticParameters,analyticValue,gradientAnalyticValue,hessianAnalyticValue, &
+            & velocityAnalyticValue,accelerationAnalyticValue,err,error,*999)
+          CALL BoundaryConditions_SetAnalyticBoundaryNode(boundaryConditions,numberOfDimensions,dependentVariable,componentIdx, &
+            & domainNodes,nodeIdx,boundaryNode,tangents,normal,analyticValue,gradientAnalyticValue,hessianAnalyticValue, &
+            & .TRUE.,velocityAnalyticValue,.TRUE.,accelerationAnalyticValue,err,error,*999)
+        ENDDO !nodeIdx
+      ENDDO !component_idx
+      CALL FieldVariable_ParameterSetUpdateStart(dependentVariable,FIELD_ANALYTIC_VALUES_SET_TYPE,err,error,*999)
+      CALL FieldVariable_ParameterSetUpdateStart(dependentVariable,FIELD_VALUES_SET_TYPE,err,error,*999)
+      CALL FieldVariable_ParameterSetUpdateFinish(dependentVariable,FIELD_ANALYTIC_VALUES_SET_TYPE,err,error,*999)
+      CALL FieldVariable_ParameterSetUpdateFinish(dependentVariable,FIELD_VALUES_SET_TYPE,err,error,*999)
+    ENDDO !variableIdx
     IF(ASSOCIATED(analyticField)) &
       & CALL Field_ParameterSetDataRestore(analyticField,FIELD_U_VARIABLE_TYPE,FIELD_VALUES_SET_TYPE,analyticParameters, &
       & err,error,*999)            
@@ -1075,7 +576,7 @@ CONTAINS
       & solutionMethod,sparsityType,variableIdx
     INTEGER(INTG), POINTER :: equationsSetFieldData(:)
     INTEGER(INTG), ALLOCATABLE :: variableTypes(:),variableUTypes(:),couplingMatrixStorageType(:),couplingMatrixStructureType(:)
-    REAL(DP) :: aParam,bParam,cParam
+    REAL(DP) :: aParam,bParam,cParam,kParam,sigmaParam,sigma11,sigma22,sigma12
     TYPE(DecompositionType), POINTER :: geometricDecomposition
     TYPE(EquationsType), POINTER :: equations
     TYPE(EquationsMappingVectorType), POINTER :: vectorMapping
@@ -1738,8 +1239,17 @@ CONTAINS
             !Check the materials values are constant
             CALL Field_ComponentInterpolationCheck(materialsField,FIELD_U_VARIABLE_TYPE,1,FIELD_CONSTANT_INTERPOLATION, &
               & err,error,*999)
-            !Set number of analytic field components
-            numberOfAnalyticComponents=4
+            CALL Field_ComponentInterpolationCheck(materialsField,FIELD_U_VARIABLE_TYPE,2,FIELD_CONSTANT_INTERPOLATION, &
+              & err,error,*999)
+            !Check to ensure that the temporal materials term is one.
+            CALL Field_ParameterSetGetConstant(materialsField,FIELD_U_VARIABLE_TYPE,FIELD_VALUES_SET_TYPE,1,aParam,err,error,*999)
+            IF(ABS(aParam-1.0_DP)>ZERO_TOLERANCE) THEN
+              localError="The material a parameter of "//TRIM(NumberToVString(aParam,"*",err,error))// &
+                & " is invalid. The a parameter should be 1.0 for this analytic solution."
+              CALL FlagError(localError,err,error,*999)
+            ENDIF
+           !Set number of analytic field components
+            numberOfAnalyticComponents=5
             !Set analytic function type
             equationsAnalytic%analyticFunctionType=EQUATIONS_SET_DIFFUSION_EQUATION_ONE_DIM_1
           CASE(EQUATIONS_SET_DIFFUSION_EQUATION_TWO_DIM_1)
@@ -1757,8 +1267,42 @@ CONTAINS
                 & TRIM(NumberToVString(equationsSetSetup%analyticFunctionType,"*",err,error))//"."
               CALL FlagError(localError,err,error,*999)
             ENDIF
+            !Check the materials values are constant
+            CALL Field_ComponentInterpolationCheck(materialsField,FIELD_U_VARIABLE_TYPE,1,FIELD_CONSTANT_INTERPOLATION, &
+              & err,error,*999)
+            CALL Field_ComponentInterpolationCheck(materialsField,FIELD_U_VARIABLE_TYPE,2,FIELD_CONSTANT_INTERPOLATION, &
+              & err,error,*999)
+            CALL Field_ComponentInterpolationCheck(materialsField,FIELD_U_VARIABLE_TYPE,3,FIELD_CONSTANT_INTERPOLATION, &
+              & err,error,*999)
+            CALL Field_ComponentInterpolationCheck(materialsField,FIELD_U_VARIABLE_TYPE,4,FIELD_CONSTANT_INTERPOLATION, &
+              & err,error,*999)
+            !Check to ensure that the temporal materials term is one.
+            CALL Field_ParameterSetGetConstant(materialsField,FIELD_U_VARIABLE_TYPE,FIELD_VALUES_SET_TYPE,1,aParam,err,error,*999)
+            IF(ABS(aParam-1.0_DP)>ZERO_TOLERANCE) THEN
+              localError="The material a parameter of "//TRIM(NumberToVString(aParam,"*",err,error))// &
+                & " is invalid. The a parameter should be 1.0 for this analytic solution."
+              CALL FlagError(localError,err,error,*999)
+            ENDIF
+            !Check the diffusivity is the diagonal and the same.
+            CALL Field_ParameterSetGetConstant(materialsField,FIELD_U_VARIABLE_TYPE,FIELD_VALUES_SET_TYPE, &
+              & 1+TENSOR_TO_VOIGT2(1,1),sigma11,err,error,*999)
+            CALL Field_ParameterSetGetConstant(materialsField,FIELD_U_VARIABLE_TYPE,FIELD_VALUES_SET_TYPE, &
+              & 1+TENSOR_TO_VOIGT2(2,2),sigma22,err,error,*999)
+            CALL Field_ParameterSetGetConstant(materialsField,FIELD_U_VARIABLE_TYPE,FIELD_VALUES_SET_TYPE, &
+              & 1+TENSOR_TO_VOIGT2(1,2),sigma12,err,error,*999)
+            IF(ABS(sigma12)>ZERO_TOLERANCE) THEN
+              localError="The diffusivity 1,2 component of "//TRIM(NumberToVString(sigma12,"*",err,error))// &
+                & " is invalid. The a parameter should be 0.0 for this analytic solution."
+              CALL FlagError(localError,err,error,*999)
+            ENDIF
+            IF(ABS(sigma11-sigma22)>ZERO_TOLERANCE) THEN
+              localError="The diffusivity 1,1 component of "//TRIM(NumberToVString(sigma11,"*",err,error))// &
+                & " is different to the diffusivity 2,2 component of "//TRIM(NumberToVString(sigma22,"*",err,error))// &
+                & ". The 1,1 component should be the same as the 2,2 component for this analytic solution."
+              CALL FlagError(localError,err,error,*999)
+            ENDIF
             !Set number of analytic field components
-            numberOfAnalyticComponents=0
+            numberOfAnalyticComponents=5
             !Set analytic function type
             equationsAnalytic%analyticFunctionType=EQUATIONS_SET_DIFFUSION_EQUATION_TWO_DIM_1
           CASE(EQUATIONS_SET_DIFFUSION_EQUATION_THREE_DIM_1)
@@ -2025,7 +1569,29 @@ CONTAINS
                 !Set L
                 CALL Field_ComponentValuesInitialise(equationsAnalytic%analyticField,FIELD_U_VARIABLE_TYPE, &
                   & FIELD_VALUES_SET_TYPE,4,1.0_DP,err,error,*999)                      
+                !Set sigma
+                CALL Field_ParameterSetGetConstant(materialsField,FIELD_U_VARIABLE_TYPE,FIELD_VALUES_SET_TYPE,2, &
+                  & sigmaParam,err,error,*999)               
+                CALL Field_ComponentValuesInitialise(equationsAnalytic%analyticField,FIELD_U_VARIABLE_TYPE, &
+                  & FIELD_VALUES_SET_TYPE,5,-sigmaParam,err,error,*999)                      
               CASE(EQUATIONS_SET_DIFFUSION_EQUATION_TWO_DIM_1)
+                !Set A
+                CALL Field_ComponentValuesInitialise(equationsAnalytic%analyticField,FIELD_U_VARIABLE_TYPE, &
+                  & FIELD_VALUES_SET_TYPE,1,1.0_DP,err,error,*999)
+                !Set phi
+                CALL Field_ComponentValuesInitialise(equationsAnalytic%analyticField,FIELD_U_VARIABLE_TYPE, &
+                  & FIELD_VALUES_SET_TYPE,2,PI/4.0_DP,err,error,*999)
+                !Set L
+                CALL Field_ComponentValuesInitialise(equationsAnalytic%analyticField,FIELD_U_VARIABLE_TYPE, &
+                  & FIELD_VALUES_SET_TYPE,3,1.0_DP,err,error,*999)
+                !Set H
+                CALL Field_ComponentValuesInitialise(equationsAnalytic%analyticField,FIELD_U_VARIABLE_TYPE, &
+                  & FIELD_VALUES_SET_TYPE,4,1.0_DP,err,error,*999)                      
+                !Set sigma
+                CALL Field_ParameterSetGetConstant(materialsField,FIELD_U_VARIABLE_TYPE,FIELD_VALUES_SET_TYPE,2, &
+                  & sigmaParam,err,error,*999)               
+                CALL Field_ComponentValuesInitialise(equationsAnalytic%analyticField,FIELD_U_VARIABLE_TYPE, &
+                  & FIELD_VALUES_SET_TYPE,5,-sigmaParam,err,error,*999)                      
                 !Do nothing
               CASE DEFAULT
                 localError="The specified analytic function type of "// &
@@ -2135,7 +1701,7 @@ CONTAINS
           CALL EquationsSet_SourceFieldExists(equationsSet,sourceField,err,error,*999)
           IF(ASSOCIATED(sourceField)) THEN
             CALL EquationsMappingVector_NumberOfSourcesSet(vectorMapping,1,err,error,*999)
-            CALL EquationsMappingVector_SourcesVariableTypesSet(vectorMapping,FIELD_U_VARIABLE_TYPE,err,error,*999)
+            CALL EquationsMappingVector_SourceVariableTypesSet(vectorMapping,FIELD_U_VARIABLE_TYPE,err,error,*999)
           ENDIF
           CALL EquationsMapping_VectorCreateFinish(vectorMapping,err,error,*999)
           !Create the equations matrices
@@ -2676,7 +2242,7 @@ CONTAINS
                     DO rowXiIdx=1,numberOfXi
                       DO columnXiIdx=1,numberOfXi
                         DO xiIdx=1,numberOfXi
-                          sum=sum+conductivity(rowXiIdx,columnXiIdx)*rowdPhidXi(xiIdx)*columndPhidXi(columnXiIdx)* &
+                          sum=sum-conductivity(rowXiIdx,columnXiIdx)*rowdPhidXi(xiIdx)*columndPhidXi(columnXiIdx)* &
                             & geometricInterpPointMetrics%gu(rowXiIdx,xiIdx)
                         ENDDO !xiIdx
                       ENDDO !columnXiIdx
@@ -3528,7 +3094,7 @@ CONTAINS
                     DO rowXiIdx=1,numberOfXi
                       DO columnXiIdx=1,numberOfXi
                         DO xiIdx=1,numberOfXi
-                          sum=sum+conductivity(rowXiIdx,columnXiIdx)*rowdPhidXi(xiIdx)*columndPhidXi(columnXiIdx)* &
+                          sum=sum-conductivity(rowXiIdx,columnXiIdx)*rowdPhidXi(xiIdx)*columndPhidXi(columnXiIdx)* &
                             & geometricInterpPointMetrics%gu(rowXiIdx,xiIdx)
                         ENDDO !xiIdx
                       ENDDO !columnXiIdx
@@ -3741,7 +3307,8 @@ CONTAINS
     INTEGER(INTG) :: analyticFunctionType,boundaryConditionType,componentIdx,derivativeIdx,dimensionIdx, &
       & dynamicVariableType,equationsSetIdx,globalDerivativeIndex,globalDofIdx,localDofIdx,nodeIdx,numberOfComponents, &
       & numberOfDimensions,numberOfEquationsSets,numberOfNodes,numberOfNodeDerivatives,pSpecification(3)
-    REAL(DP) :: A1,currentTime,D1,timeIncrement,normal(3),tangents(3,3),VALUE,X(3)
+    REAL(DP) :: accerlerationValue,analyticValue,A1,currentTime,D1,gradientAnalyticValue(3),hessianAnalyticValue(3,3), &
+      & timeIncrement,normal(3),position(3,MAXIMUM_GLOBAL_DERIV_NUMBER),tangents(3,2),VALUE,velocityAnalyticValue,X(3)
     REAL(DP), POINTER :: analyticParameters(:),geometricParameters(:),materialsParameters(:)
     TYPE(BoundaryConditionsType), POINTER :: boundaryConditions
     TYPE(BoundaryConditionsVariableType), POINTER :: boundaryConditionsVariable
@@ -3809,12 +3376,6 @@ CONTAINS
           IF(ASSOCIATED(analyticField)) &
             & CALL Field_ParameterSetDataGet(analyticField,FIELD_U_VARIABLE_TYPE,FIELD_VALUES_SET_TYPE, &
             & analyticParameters,err,error,*999)
-          NULLIFY(materialsField)
-          NULLIFY(materialsParameters)
-          CALL EquationsSet_MaterialsFieldExists(equationsSet,materialsField,err,error,*999)
-          IF(ASSOCIATED(materialsField)) &
-            & CALL Field_ParameterSetDataGet(materialsField,FIELD_U_VARIABLE_TYPE,FIELD_VALUES_SET_TYPE, &
-            & materialsParameters,err,error,*999) 
           NULLIFY(equations)
           CALL EquationsSet_EquationsGet(equationsSet,equations,err,error,*999)
           NULLIFY(vectorEquations)
@@ -3845,12 +3406,11 @@ CONTAINS
             !Loop over the local nodes excluding the ghosts.
             CALL DomainNodes_NumberOfNodesGet(domainNodes,numberOfNodes,err,error,*999)
             DO nodeIdx=1,numberOfNodes
-!!TODO \todo We should interpolate the geometric field here and the node position.
-              DO dimensionIdx=1,numberOfDimensions
-                !Default to version 1 of each node derivative
-                CALL FieldVariable_LocalNodeDOFGet(geometricVariable,1,1,nodeIdx,dimensionIdx,localDOFIdx,err,error,*999)
-                x(dimensionIdx)=geometricParameters(localDofIdx)
-              ENDDO !dimensionIdx
+              CALL Field_PositionNormalTangentsCalculateNode(dependentField,FIELD_U_VARIABLE_TYPE,componentIdx,nodeIdx, &
+                & position,normal,tangents,err,error,*999)
+              CALL Diffusion_AnalyticFunctionsEvaluate(equationsSet,analyticFunctionType,componentIdx,currentTime, &
+                & position(:,NO_PART_DERIV),analyticParameters,analyticValue,gradientAnalyticValue,hessianAnalyticValue, &
+                & velocityAnalyticValue,accelerationAnalyticValue,err,error,*999)
               !Loop over the derivatives
               CALL DomainNodes_NodeNumberOfDerivativesGet(domainNodes,nodeIdx,numberOfNodeDerivatives,err,error,*999)
               DO derivativeIdx=1,numberOfNodeDerivatives
@@ -3865,7 +3425,7 @@ CONTAINS
                   & VALUE,err,error,*999)
                 boundaryConditionType=boundaryConditionsVariable%DOFTypes(globalDofIdx)
                 IF(boundaryConditionType==BOUNDARY_CONDITION_FIXED) THEN
-                  CALL FieldVariable_ParameterSetUpdateLocalDOF(dynamicVariable,FIELD_VALUES_SET_TYPE,localDOFIdx,VALUE, &
+                  CALL FieldVariable_ParameterSetUpdateLocalDOF(dynamicVariable,FIELD_VALUES_SET_TYPE,localDOFIdx,analyticValue, &
                     & err,error,*999)
                 ENDIF
               ENDDO !derivativeIdx
@@ -3924,9 +3484,6 @@ CONTAINS
               CALL FieldVariable_ParameterSetUpdateFinish(sourceVariable,FIELD_VALUES_SET_TYPE,err,error,*999)
             ENDIF
           ENDIF
-          IF(ASSOCIATED(materialsField)) & 
-            & CALL Field_ParameterSetDataRestore(materialsField,FIELD_U_VARIABLE_TYPE,FIELD_VALUES_SET_TYPE, &
-            & materialsParameters,err,error,*999)
           IF(ASSOCIATED(analyticField)) &
             & CALL Field_ParameterSetDataRestore(analyticField,FIELD_U_VARIABLE_TYPE,FIELD_VALUES_SET_TYPE, &
             & analyticParameters,err,error,*999)

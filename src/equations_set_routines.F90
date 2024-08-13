@@ -308,7 +308,7 @@ CONTAINS
     INTEGER(INTG) :: analyticFunctionType,componentInterpolationType,componentIdx,derivativeIdx,elementIdx,gaussPointIdx, &
       & globalDerivativeIndex,nodeIdx,numberOfAnalyticComponents,numberOfComponents,numberOfDimensions,numberOfElements, &
       & numberOfGauss,numberOfNodes,numberOfNodeDerivatives,numberOfVariables,numberOfVersions,variableIdx,variableType,versionIdx
-    REAL(DP) :: analyticTime,normal(3),position(3),tangents(3,3),analyticValue
+    REAL(DP) :: analyticTime,normal(3),position(3,MAXIMUM_GLOBAL_DERIV_NUMBER),tangents(3,2),analyticValue
     REAL(DP) :: analyticDummyValues(1)=0.0_DP
     REAL(DP) :: materialsDummyValues(1)=0.0_DP
     LOGICAL :: reverseNormal=.FALSE.
@@ -396,8 +396,8 @@ CONTAINS
             ENDIF
             CALL Field_InterpolateXi(FIRST_PART_DERIV,[0.5_DP,0.5_DP,0.5_DP],geometricInterpPoint,err,error,*999)
             CALL Field_InterpolatedPointMetricsCalculate(COORDINATE_JACOBIAN_NO_TYPE,geometricInterpPointMetrics,err,error,*999)
-            CALL Field_PositionNormalTangentsCalculateIntPtMetric(geometricInterpPointMetrics,reverseNormal,position,normal, &
-              & tangents,err,error,*999)
+            CALL Field_PositionNormalTangentsCalculateIntPtMetric(geometricInterpPointMetrics,reverseNormal, &
+              & position(:,NO_PART_DERIV),normal,tangents,err,error,*999)
             IF(ASSOCIATED(analyticField)) CALL Field_InterpolateXi(NO_PART_DERIV,[0.5_DP,0.5_DP,0.5_DP],analyticInterpPoint, &
               & err,error,*999)
             IF(ASSOCIATED(materialsField)) CALL Field_InterpolateXi(NO_PART_DERIV,[0.5_DP,0.5_DP,0.5_DP],materialsInterpPoint, &
@@ -405,21 +405,21 @@ CONTAINS
 !! \todo Maybe do this with optional arguments?
             IF(ASSOCIATED(analyticField)) THEN
               IF(ASSOCIATED(materialsField)) THEN
-                CALL EquationsSet_AnalyticFunctionsEvaluate(equationsSet,analyticFunctionType,position,tangents,normal, &
+                CALL EquationsSet_AnalyticFunctionsEvaluate(equationsSet,analyticFunctionType,position(:,NO_PART_DERIV),tangents,normal, &
                   & analyticTime,variableType,globalDerivativeIndex,componentIdx,analyticInterpPoint%values(:,NO_PART_DERIV), &
                   & materialsInterpPoint%values(:,NO_PART_DERIV),analyticValue,err,error,*999)
               ELSE
-                CALL EquationsSet_AnalyticFunctionsEvaluate(equationsSet,analyticFunctionType,position,tangents,normal, &
+                CALL EquationsSet_AnalyticFunctionsEvaluate(equationsSet,analyticFunctionType,position(:,NO_PART_DERIV),tangents,normal, &
                   & analyticTime,variableType,globalDerivativeIndex,componentIdx,analyticInterpPoint%values(:,NO_PART_DERIV), &
                   & materialsDummyValues,analyticValue,err,error,*999)
               ENDIF
             ELSE
               IF(ASSOCIATED(materialsField)) THEN
-                CALL EquationsSet_AnalyticFunctionsEvaluate(equationsSet,analyticFunctionType,position,tangents,normal, &
+                CALL EquationsSet_AnalyticFunctionsEvaluate(equationsSet,analyticFunctionType,position(:,NO_PART_DERIV),tangents,normal, &
                   & analyticTime,variableType,globalDerivativeIndex,componentIdx,analyticDummyValues,materialsInterpPoint% &
                   & values(:,NO_PART_DERIV),analyticValue,err,error,*999)
               ELSE
-                CALL EquationsSet_AnalyticFunctionsEvaluate(equationsSet,analyticFunctionType,position,tangents,normal, &
+                CALL EquationsSet_AnalyticFunctionsEvaluate(equationsSet,analyticFunctionType,position(:,NO_PART_DERIV),tangents,normal, &
                   & analyticTime,variableType,globalDerivativeIndex,componentIdx,analyticDummyValues,materialsDummyValues, &
                   & analyticValue,err,error,*999)
               ENDIF
@@ -446,22 +446,22 @@ CONTAINS
 !! \todo Maybe do this with optional arguments?
               IF(ASSOCIATED(analyticField)) THEN
                 IF(ASSOCIATED(materialsField)) THEN
-                  CALL EquationsSet_AnalyticFunctionsEvaluate(equationsSet,analyticFunctionType,position,tangents,normal, &
+                  CALL EquationsSet_AnalyticFunctionsEvaluate(equationsSet,analyticFunctionType,position(:,NO_PART_DERIV),tangents,normal, &
                     & analyticTime,variableType,globalDerivativeIndex,componentIdx,analyticPhysicalPoint% &
                     & values(:,NO_PHYSICAL_DERIV),materialsPhysicalPoint%values(:,NO_PHYSICAL_DERIV),analyticValue, &
                     & err,error,*999)
                 ELSE
-                  CALL EquationsSet_AnalyticFunctionsEvaluate(equationsSet,analyticFunctionType,position,tangents,normal, &
+                  CALL EquationsSet_AnalyticFunctionsEvaluate(equationsSet,analyticFunctionType,position(:,NO_PART_DERIV),tangents,normal, &
                     & analyticTime,variableType,globalDerivativeIndex,componentIdx,analyticPhysicalPoint% &
                     & values(:,NO_PHYSICAL_DERIV),materialsDummyValues,analyticValue,err,error,*999)
                 ENDIF
               ELSE
                 IF(ASSOCIATED(materialsField)) THEN
-                  CALL EquationsSet_AnalyticFunctionsEvaluate(equationsSet,analyticFunctionType,position,tangents,normal, &
+                  CALL EquationsSet_AnalyticFunctionsEvaluate(equationsSet,analyticFunctionType,position(:,NO_PART_DERIV),tangents,normal, &
                     & analyticTime,variableType,globalDerivativeIndex,componentIdx,analyticDummyValues, &
                     & materialsPhysicalPoint%values(:,NO_PHYSICAL_DERIV),analyticValue,err,error,*999)
                 ELSE
-                  CALL EquationsSet_AnalyticFunctionsEvaluate(equationsSet,analyticFunctionType,position,tangents,normal, &
+                  CALL EquationsSet_AnalyticFunctionsEvaluate(equationsSet,analyticFunctionType,position(:,NO_PART_DERIV),tangents,normal, &
                     & analyticTime,variableType,globalDerivativeIndex,componentIdx,analyticDummyValues,materialsDummyValues, &
                     & analyticValue,err,error,*999)
                 ENDIF
@@ -497,7 +497,7 @@ CONTAINS
               CALL Field_InterpolateGauss(FIRST_PART_DERIV,BASIS_DEFAULT_QUADRATURE_SCHEME,gaussPointIdx,geometricInterpPoint, &
                 & err,error,*999)
               CALL Field_InterpolatedPointMetricsCalculate(COORDINATE_JACOBIAN_NO_TYPE,geometricInterpPointMetrics,err,error,*999)
-              CALL Field_PositionNormalTangentsCalculateIntPtMetric(geometricInterpPointMetrics,reverseNormal,position,normal, &
+              CALL Field_PositionNormalTangentsCalculateIntPtMetric(geometricInterpPointMetrics,reverseNormal,position(:,NO_PART_DERIV),normal, &
                 & tangents,err,error,*999)
               IF(ASSOCIATED(analyticField)) CALL Field_InterpolateGauss(NO_PART_DERIV,BASIS_DEFAULT_QUADRATURE_SCHEME, &
                 & gaussPointIdx,analyticInterpPoint,err,error,*999)
@@ -506,21 +506,21 @@ CONTAINS
 !! \todo Maybe do this with optional arguments?
               IF(ASSOCIATED(analyticField)) THEN
                 IF(ASSOCIATED(materialsField)) THEN
-                  CALL EquationsSet_AnalyticFunctionsEvaluate(equationsSet,analyticFunctionType,position,tangents,normal, &
+                  CALL EquationsSet_AnalyticFunctionsEvaluate(equationsSet,analyticFunctionType,position(:,NO_PART_DERIV),tangents,normal, &
                     & analyticTime,variableType,globalDerivativeIndex,componentIdx,analyticInterpPoint%values(:,NO_PART_DERIV), &
                     & materialsInterpPoint%values(:,NO_PART_DERIV),analyticValue,err,error,*999)
                 ELSE
-                  CALL EquationsSet_AnalyticFunctionsEvaluate(equationsSet,analyticFunctionType,position,tangents,normal, &
+                  CALL EquationsSet_AnalyticFunctionsEvaluate(equationsSet,analyticFunctionType,position(:,NO_PART_DERIV),tangents,normal, &
                     & analyticTime,variableType,globalDerivativeIndex,componentIdx,analyticInterpPoint%values(:,NO_PART_DERIV), &
                     & materialsDummyValues,analyticValue,err,error,*999)
                 ENDIF
               ELSE
                 IF(ASSOCIATED(materialsField)) THEN
-                  CALL EquationsSet_AnalyticFunctionsEvaluate(equationsSet,analyticFunctionType,position,tangents,normal, &
+                  CALL EquationsSet_AnalyticFunctionsEvaluate(equationsSet,analyticFunctionType,position(:,NO_PART_DERIV),tangents,normal, &
                     & analyticTime,variableType,globalDerivativeIndex,componentIdx,analyticDummyValues, &
                     & materialsInterpPoint%values(:,NO_PART_DERIV),analyticValue,err,error,*999)
                 ELSE
-                  CALL EquationsSet_AnalyticFunctionsEvaluate(equationsSet,analyticFunctionType,position,tangents,normal, &
+                  CALL EquationsSet_AnalyticFunctionsEvaluate(equationsSet,analyticFunctionType,position(:,NO_PART_DERIV),tangents,normal, &
                     & analyticTime,variableType,globalDerivativeIndex,componentIdx,analyticDummyValues,materialsDummyValues, &
                     & analyticValue,err,error,*999)
                 ENDIF
@@ -595,9 +595,9 @@ CONTAINS
     !Argument variables
     TYPE(EquationsSetType), POINTER :: equationsSet !<A pointer to the equations set to evaluate the analytic for
     INTEGER(INTG), INTENT(IN) :: analyticFunctionType !<The type of analytic function to evaluate
-    REAL(DP), INTENT(IN) :: position(:) !<position(dimention_idx). The geometric position to evaluate at
-    REAL(DP), INTENT(IN) :: tangents(:,:) !<tangents(dimention_idx,xi_idx). The geometric tangents at the point to evaluate at.
-    REAL(DP), INTENT(IN) :: normal(:) !<normal(dimension_idx). The normal vector at the point to evaluate at.
+    REAL(DP), INTENT(IN) :: position(:) !<position(dimensionIdx). The geometric position to evaluate at
+    REAL(DP), INTENT(IN) :: tangents(:,:) !<tangents(dimensionIdx,tangentIdx). The geometric tangents at the point to evaluate at.
+    REAL(DP), INTENT(IN) :: normal(:) !<normal(dimensionIdx). The normal vector at the point to evaluate at.
     REAL(DP), INTENT(IN) :: time !<The time to evaluate at
     INTEGER(INTG), INTENT(IN) :: variableType !<The field variable type to evaluate at
     INTEGER(INTG), INTENT(IN) :: globalDerivative !<The global derivative direction to evaluate at
@@ -1495,8 +1495,8 @@ CONTAINS
       & sourceIdx,stiffnessMatrixNumber,variableDOF,variableType
     INTEGER(INTG), POINTER :: equationsRowToLHSDOFMap(:),equationsRowToRHSDOFMap(:)
     INTEGER(INTG), POINTER :: columnIndices(:),rowIndices(:)
-    REAL(DP) :: dampingAlpha,dependentValue,lhsSum,linearAlpha,massAlpha,matrixValue,residualAlpha,residualValue,rhsValue, &
-      & sourceAlpha,sourceValue,stiffnessAlpha
+    REAL(DP) :: dampingAlpha,dependentValue,lhsSum,linearAlpha,massAlpha,matrixValue,residualAlpha,residualValue,rhsAlpha, &
+      & rhsValue,sourceAlpha,sourceValue,stiffnessAlpha
     TYPE(BoundaryConditionsVariableType), POINTER :: lhsBoundaryConditionsVariable
     TYPE(BoundaryConditionsRowVariableType), POINTER :: lhsBoundaryConditionsRowVariable
     TYPE(DomainMappingType), POINTER :: columnDomainMapping,rhsDomainMapping
@@ -1569,6 +1569,9 @@ CONTAINS
       
         NULLIFY(vectorMatrices)
         CALL EquationsVector_VectorMatricesGet(vectorEquations,vectorMatrices,err,error,*999)
+        CALL EquationsMatricesVector_RHSVectorGet(vectorMatrices,rhsVector,err,error,*999)
+        CALL EquationsMatricesRHS_VectorCoefficientGet(rhsVector,rhsAlpha,err,error,*999)
+        IF(ABS(rhsAlpha)<=ZERO_TOLERANCE) CALL FlagError("The RHS coefficient is zero.",err,error,*999)
 
         NULLIFY(dynamicMapping)
         CALL EquationsMappingVector_DynamicMappingExists(vectorMapping,dynamicMapping,err,error,*999)
@@ -1725,8 +1728,10 @@ CONTAINS
                 lhsSum=lhsSum+sourceAlpha*SourceValue              
               ENDDO !sourceIdx
             ENDIF
-            !Set the RHS value. Note OpenCMISS defines the equation as ... + RHS = 0 and so the LHS + RHS = 0 therefore RHS = -LHS
-            CALL FieldVariable_ParameterSetUpdateLocalDOF(rhsVariable,FIELD_VALUES_SET_TYPE,rhsVariableDOF,-lhsSum,err,error,*999)
+            !Set the RHS value. Note OpenCMISS defines the equation as ... + alpha.RHS = 0 and so the LHSSum + alpha.RHS = 0
+            !therefore RHS = -LHSSum/alpha
+            rhsValue = -lhsSum/rhsAlpha
+            CALL FieldVariable_ParameterSetUpdateLocalDOF(rhsVariable,FIELD_VALUES_SET_TYPE,rhsVariableDOF,rhsValue,err,error,*999)
           CASE(BOUNDARY_CONDITION_NEUMANN_ROW)
             !OK, do nothing
           CASE(BOUNDARY_CONDITION_ROBIN_ROW)

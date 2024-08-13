@@ -105,23 +105,23 @@ CONTAINS
   !
 
   !>Evaluate the analytic solution for a classical field equations set.
-  SUBROUTINE ClassicalField_AnalyticFunctionsEvaluate(equationsSet,equationsType,analyticFunctionType,position,tangents, &
-    & normal,time,variableType,globalDerivative,computerNumber,analyticParameters,materialsParameters,value,err,error,*)
+  SUBROUTINE ClassicalField_AnalyticFunctionsEvaluate(equationsSet,equationsType,analyticFunctionType,componentNumber, &
+    & time,x,analyticParameters,analyticValue,gradientAnalyticValue,hessianAnalyticValue,velocityAnalyticValue, &
+    & accelerationAnalyticValue,error,*)
 
     !Argument variables
     TYPE(EquationsSetType), POINTER :: equationsSet !<A pointer to the equations set to evaluate the analytic for
     INTEGER(INTG), INTENT(IN) :: equationsType !<The type of equation to evaluate
     INTEGER(INTG), INTENT(IN) :: analyticFunctionType !<The type of analytic function to evaluate
-    REAL(DP), INTENT(IN) :: position(:) !<position(dimention_idx). The geometric position to evaluate at
-    REAL(DP), INTENT(IN) :: tangents(:,:) !<tangents(dimention_idx,xi_idx). The geometric tangents at the point to evaluate at.
-    REAL(DP), INTENT(IN) :: normal(:) !<normal(dimension_idx). The normal vector at the point to evaluate at.
+    INTEGER(INTG), INTENT(IN) :: componentNumber !<The dependent field component number to evaluate
     REAL(DP), INTENT(IN) :: time !<The time to evaluate at
-    INTEGER(INTG), INTENT(IN) :: variableType !<The field variable type to evaluate at
-    INTEGER(INTG), INTENT(IN) :: globalDerivative !<The global derivative direction to evaluate at
-    INTEGER(INTG), INTENT(IN) :: computerNumber !<The dependent field component number to evaluate
+    REAL(DP), INTENT(IN) :: x(:) !<x(dimensionIdx). The geometric position to evaluate at
     REAL(DP), INTENT(IN) :: analyticParameters(:) !<A pointer to any analytic field parameters
-    REAL(DP), INTENT(IN) :: materialsParameters(:) !<A pointer to any materials field parameters
-    REAL(DP), INTENT(OUT) :: value !<On return, the analtyic function value.
+   REAL(DP), INTENT(OUT) :: analyticValue !<On return, the analtyic function value.
+    REAL(DP), INTENT(OUT) :: gradientAnalyticValue(:) !<gradientAnalyticValues(dimensionIdx). On return, the gradient of the analytic function value.
+    REAL(DP), INTENT(OUT) :: hessianAnalyticValue(:,:) !<hessianAnalyticValues(dimensionIdx1,dimensionIdx2). On return, the Hessian of the analytic function value.
+    REAL(DP), INTENT(OUT) :: velocityAnalyticValue !<On return, the analytic velocity value.
+    REAL(DP), INTENT(OUT) :: accelerationAnalyticValue !<On return, the analytic acceleration value.
     INTEGER(INTG), INTENT(OUT) :: err !<The error code
     TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
     !Local Variables
@@ -133,25 +133,33 @@ CONTAINS
     
     SELECT CASE(equationsType)
     CASE(EQUATIONS_SET_LAPLACE_EQUATION_TYPE)
-      CALL FlagError("Not implemented.",err,error,*999)
+      CALL Laplace_AnalyticFunctionsEvaluate(equationsSet,analyticFunctionType,componentNumber,x, &
+        & analyticParameters,analyticValue,gradientAnalyticValue,hessianAnalyticValue,err,error,*999)
+      velocityAnalyticValue=0.0_DP
+      accelerationAnalyticValue=0.0_DP
     CASE(EQUATIONS_SET_HJ_EQUATION_TYPE)
       CALL FlagError("Not implemented.",err,error,*999)
     CASE(EQUATIONS_SET_POISSON_EQUATION_TYPE)
-      CALL FlagError("Not implemented.",err,error,*999)
+      CALL Poisson_AnalyticFunctionsEvaluate(equationsSet,analyticFunctionType,componentNumber,x, &
+        & analyticParameters,analyticValue,gradientAnalyticValue,hessianAnalyticValue,err,error,*999)
+      velocityAnalyticValue=0.0_DP
+      accelerationAnalyticValue=0.0_DP
     CASE(EQUATIONS_SET_HELMHOLTZ_EQUATION_TYPE)
       CALL FlagError("Not implemented.",err,error,*999)
     CASE(EQUATIONS_SET_WAVE_EQUATION_TYPE)
       CALL FlagError("Not implemented.",err,error,*999)
     CASE(EQUATIONS_SET_DIFFUSION_EQUATION_TYPE)
-      CALL Diffusion_AnalyticFunctionsEvaluate(equationsSet,analyticFunctionType,position, &
-        & tangents,normal,time,variableType,globalDerivative,computerNumber,analyticParameters, &
-        & materialsParameters,value,err,error,*999)
+      CALL Diffusion_AnalyticFunctionsEvaluate(equationsSet,analyticFunctionType,componentNumber,time,x, &
+        & analyticParameters,analyticValue,gradientAnalyticValue,hessianAnalyticValue, &
+        & velocityAnalyticValue,accelerationAnalyticValue,err,error,*999)
     CASE(EQUATIONS_SET_ADVECTION_DIFFUSION_EQUATION_TYPE)
       CALL FlagError("Not implemented.",err,error,*999)
     CASE(EQUATIONS_SET_ADVECTION_EQUATION_TYPE)
       CALL FlagError("Not implemented.",err,error,*999)
     CASE(EQUATIONS_SET_REACTION_DIFFUSION_EQUATION_TYPE)
-      CALL FlagError("Not implemented.",err,error,*999)
+      CALL ReactionDiffusion_AnalyticFunctionsEvaluate(equationsSet,analyticFunctionType,componentNumber,time, &
+        & x,analyticParameters,analyticValue,gradientAnalyticValue,hessianAnalyticValue, &
+        & velocityAnalyticValue,accelerationAnalyticValue,err,error,*999)
     CASE(EQUATIONS_SET_BIHARMONIC_EQUATION_TYPE)
       CALL FlagError("Not implemented.",err,error,*999)
     CASE DEFAULT

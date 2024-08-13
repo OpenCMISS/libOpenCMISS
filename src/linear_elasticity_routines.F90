@@ -131,8 +131,8 @@ CONTAINS
       & globalDerivativeIndex,localDOFIdx,nodeIdx,numberOfAxisNodes(MAX_NUMBER_OF_COMPONENTS,MAX_NUMBER_OF_VARIABLES), &
       & numberOfComponents,numberOfDimensions,numberOfNodes,numberOfNodeDerivatives,numberOfVariables,numberofVersions, &
       & variableIdx,variableType,versionIdx
-    REAL(DP) :: analyticDisplacement,analyticValue,bcValue,E,F,H,Iyy,L,maxExtent(MAX_NUMBER_OF_COMPONENTS),normal(3),position(3), &
-      & tangents(3,3),W
+    REAL(DP) :: analyticDisplacement,analyticValue,bcValue,E,F,H,Iyy,L,maxExtent(MAX_NUMBER_OF_COMPONENTS),normal(3), &
+      & position(3,MAXIMUM_GLOBAL_DERIV_NUMBER),tangents(3,2),W,x(3)
     REAL(DP), PARAMETER :: GEOMETRIC_TOLERANCE=1.0E-6_DP
     REAL(DP), POINTER :: analyticParameters(:)
     LOGICAL :: onAxis,setBC
@@ -202,15 +202,16 @@ CONTAINS
           !Find the position of the node (interpolated since the geometric field might not have these nodes)
           CALL FieldVariable_PositionNormalTangentsCalculateNode(dependentVariable,componentIdx,nodeIdx, &
             & position,normal,tangents,err,error,*999)
+          x(1:numberOfDimensions)=position(1:numberOfDimensions,NO_PART_DERIV)
           onAxis=.TRUE.
           DO dimensionIdx=1,numberOfDimensions
             IF(dimensionIdx/=componentIdx) THEN
-              onAxis=onAxis.AND.(ABS(position(dimensionIdx))<=GEOMETRIC_TOLERANCE)
+              onAxis=onAxis.AND.(ABS(x(dimensionIdx))<=GEOMETRIC_TOLERANCE)
             ENDIF
           ENDDO !dimensionIdx
           IF(onAxis) THEN
             numberOfAxisNodes(componentIdx,variableIdx)=numberOfAxisNodes(componentIdx,variableIdx)+1
-            IF(position(componentIdx)>maxExtent(componentIdx)) maxExtent(componentIdx)=position(componentIdx)
+            IF(x(componentIdx)>maxExtent(componentIdx)) maxExtent(componentIdx)=x(componentIdx)
           ENDIF
         ENDDO !nodeIdx
       ENDDO !componentIdx
@@ -284,11 +285,12 @@ CONTAINS
           !Find the position of the node
           CALL FieldVariable_PositionNormalTangentsCalculateNode(dependentVariable,componentIdx,nodeIdx, &
             & position,normal,tangents,err,error,*999)
+          x(1:numberOfDimensions)=position(1:numberOfDimensions,NO_PART_DERIV)
           !Loop over the derivatives
           CALL DomainNodes_NodeNumberOfDerivativesGet(domainNodes,nodeIdx,numberOfNodeDerivatives,err,error,*999)
           DO derivativeIdx=1,numberOfNodeDerivatives
             CALL DomainNodes_DerivativeGlobalIndexGet(domainNodes,derivativeIdx,nodeIdx,globalDerivativeIndex,err,error,*999)
-            CALL DomainNOdes_DerivativeNumberOfVersionsGet(domainNodes,derivativeIdx,nodeIdx,numberOfVersions,err,error,*999)
+            CALL DomainNodes_DerivativeNumberOfVersionsGet(domainNodes,derivativeIdx,nodeIdx,numberOfVersions,err,error,*999)
             DO versionIdx=1,numberOfVersions             
               setBC = .FALSE.            
               SELECT CASE(equationsSetSubType)
@@ -310,15 +312,15 @@ CONTAINS
                   E=analyticParameters(4)
                   F=analyticParameters(5)
                   Iyy=W*H*H*H/12.0_DP
-                  analyticDisplacement=F*position(1)*position(1)*(3.0_DP*L-position(1))/(6.0_DP*E*Iyy)                
-                  IF(ABS(position(1))<=GEOMETRIC_TOLERANCE) THEN
+                  analyticDisplacement=F*x(1)*x(1)*(3.0_DP*L-x(1))/(6.0_DP*E*Iyy)                
+                  IF(ABS(x(1))<=GEOMETRIC_TOLERANCE) THEN
                     !Build in end
                     SELECT CASE(variableType)
                     CASE(FIELD_U_VARIABLE_TYPE)
                       analyticValue=0.0_DP
                       setBC=.TRUE.
                     CASE(FIELD_T_VARIABLE_TYPE)
-                      IF(ABS(position(3))<=GEOMETRIC_TOLERANCE) THEN
+                      IF(ABS(x(3))<=GEOMETRIC_TOLERANCE) THEN
                         !Bottom built-in edge. Reaction force
                         IF(componentIdx==3) THEN
                           analyticValue=-F/REAL(numberOfAxisNodes(3,2),DP)                          
@@ -331,9 +333,9 @@ CONTAINS
                     CASE DEFAULT
                       !Do nothing
                     END SELECT
-                  ELSE IF(ABS(position(1)-L)<=GEOMETRIC_TOLERANCE) THEN
+                  ELSE IF(ABS(x(1)-L)<=GEOMETRIC_TOLERANCE) THEN
                     !Free end
-                    IF(ABS(position(3)-H)<=GEOMETRIC_TOLERANCE) THEN
+                    IF(ABS(x(3)-H)<=GEOMETRIC_TOLERANCE) THEN
                       !Upper end edge
                       SELECT CASE(variableType)
                       CASE(FIELD_U_VARIABLE_TYPE)

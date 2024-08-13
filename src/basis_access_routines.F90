@@ -234,6 +234,8 @@ MODULE BasisAccessRoutines
 
   PUBLIC Basis_InterpolationXiGet
 
+  PUBLIC Basis_IsHermiteGet
+
   PUBLIC Basis_LineBasisGet
 
   PUBLIC Basis_LineElementParameterGet
@@ -1271,6 +1273,35 @@ CONTAINS
     RETURN 1
     
   END SUBROUTINE Basis_InterpolationXiGet  
+
+  !
+  !================================================================================================================================
+  !
+  
+  !>Gets whether or not the basis is a Hermite (with derivatives) basis or not.
+  SUBROUTINE Basis_IsHermiteGet(basis,isHermite,err,error,*)
+
+    !Argument variables
+    TYPE(BasisType), POINTER :: basis !<A pointer to the basis to get the Hermite status for
+    LOGICAL, INTENT(OUT) :: isHermite !<On return, .TRUE. if the basis is a Hermite basis, .FALSE. if not.
+    INTEGER(INTG), INTENT(OUT) :: err !<The error code
+    TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
+    !Local Variables
+    
+    ENTERS("Basis_IsHermiteGet",err,error,*999)
+
+#ifdef WITH_PRECHECKS    
+    CALL Basis_AssertIsFinished(basis,err,error,*999)
+#endif    
+    
+    isHermite=basis%hermite
+    
+    EXITS("Basis_IsHermiteGet")
+    RETURN
+999 ERRORSEXITS("Basis_IsHermiteGet",err,error)
+    RETURN 1
+    
+  END SUBROUTINE Basis_IsHermiteGet
 
   !
   !================================================================================================================================

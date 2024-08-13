@@ -138,18 +138,18 @@ CONTAINS
   !
   
   !>Evaluate the analytic solutions for a reaction-diffusion equation
-  SUBROUTINE ReactionDiffusion_AnalyticFunctionsEvaluate(equationsSet,analyticFunctionType,x,time,componentNumber, &
+  SUBROUTINE ReactionDiffusion_AnalyticFunctionsEvaluate(equationsSet,analyticFunctionType,componentNumber,time,x &
     & analyticParameters,analyticValue,gradientAnalyticValue,hessianAnalyticValue,velocityAnalyticValue, &
     & accelerationAnalyticValue,err,error,*)
 
     !Argument variables
     TYPE(EquationsSetType), POINTER, INTENT(IN) :: equationsSet !<The equations set to evaluate
     INTEGER(INTG), INTENT(IN) :: analyticFunctionType !<The type of analytic function to evaluate
-    REAL(DP), INTENT(IN) :: x(:) !<x(dimensionIdx). The geometric position to evaluate at
-    REAL(DP), INTENT(IN) :: time !<The time to evaluate at
     INTEGER(INTG), INTENT(IN) :: componentNumber !<The dependent field component number to evaluate
+    REAL(DP), INTENT(IN) :: time !<The time to evaluate at
+    REAL(DP), INTENT(IN) :: x(:) !<x(dimensionIdx). The geometric position to evaluate at
     REAL(DP), INTENT(IN) :: analyticParameters(:) !<A pointer to any analytic field parameters
-   REAL(DP), INTENT(OUT) :: analyticValue !<On return, the analytic function value.
+    REAL(DP), INTENT(OUT) :: analyticValue !<On return, the analytic function value.
     REAL(DP), INTENT(OUT) :: gradientAnalyticValue(:) !<On return, the gradient of the analytic function value.
     REAL(DP), INTENT(OUT) :: hessianAnalyticValue(:,:) !<On return, the Hessian of the analytic function value.
     REAL(DP), INTENT(OUT) :: velocityAnalyticValue !<On return, the analytic velocity value.
@@ -209,7 +209,7 @@ CONTAINS
       & numberOfComponents,numberOfDimensions,numberOfNodeDerivatives,numberOfNodes,numberOfVariables,numberOfVersions, &
       & variableIdx,variableType,versionIdx
     REAL(DP) :: analyticAccelerationValue,analyticValue,analyticVelocityValue,gradientAnalyticValue(3),hessianAnalyticValue(3,3), &
-      & normal(3),position(3),tangents(3,3),time
+      & normal(3),position(3,MAXIMUM_GLOBAL_DERIV_NUMBER),tangents(3,2),time
     REAL(DP), POINTER :: analyticParameters(:)
     LOGICAL :: boundaryNode,setAcceleration,setVelocity
     TYPE(DomainType), POINTER :: domain
@@ -278,8 +278,8 @@ CONTAINS
           IF((.NOT.boundaryOnly).OR.(boundaryOnly.AND.boundaryNode)) THEN
             CALL Field_PositionNormalTangentsCalculateNode(dependentField,FIELD_U_VARIABLE_TYPE,componentIdx,nodeIdx, &
               & position,normal,tangents,err,error,*999)
-            CALL ReactionDiffusion_AnalyticFunctionsEvaluate(equationsSet,analyticFunctionType,position,time,componentIdx, &
-              & analyticParameters,analyticValue,gradientAnalyticValue,hessianAnalyticValue,analyticVelocityValue, &
+            CALL ReactionDiffusion_AnalyticFunctionsEvaluate(equationsSet,analyticFunctionType,position(:,NO_PART_DERIV), &
+              & time,componentIdx,analyticParameters,analyticValue,gradientAnalyticValue,hessianAnalyticValue,analyticVelocityValue, &
               & analyticAccelerationValue,err,error,*999)
             CALL BoundaryConditions_SetAnalyticBoundaryNode(boundaryConditions,numberOfDimensions,dependentVariable,componentIdx, &
               & domainNodes,nodeIdx,boundaryNode,tangents,normal,analyticValue,gradientAnalyticValue,hessianAnalyticValue, &
@@ -1879,7 +1879,7 @@ CONTAINS
                       ENDDO !columnXiIdx
                     ENDDO !rowXiIdx
                     stiffnessMatrix%elementMatrix%matrix(rowElementDOFIdx,columnElementDOFIdx)= &
-                      & stiffnessMatrix%elementMatrix%matrix(rowElementDOFIdx,columnElementDOFIdx)+ &
+                      & stiffnessMatrix%elementMatrix%matrix(rowElementDOFIdx,columnElementDOFIdx)- &
                       & sum*jacobianGaussWeight/correctionFactor
                   ENDIF !update stiffness
                   IF(updateDamping) THEN
@@ -2216,7 +2216,7 @@ CONTAINS
 !!In the CellML parameter set of the dependent field?
                 CASE(EQUATIONS_SET_GEN_FISHERS_NOSPLIT_REACT_DIFF_SUBTYPE)
                   !Fisher's equation. The linear b-term is in the stiffness matrix.
-                  sum=cParam*uValue*uValue*rowPhi        
+                  sum=2.0_DP*cParam*uValue*rowPhi        
                 CASE DEFAULT
                   localError="Equations set subtype "//TRIM(NumberToVString(esSpecification(3),"*",err,error))// &
                     & " is not valid for a reaction-diffusion equation type of a classical field equations set class."
@@ -2635,7 +2635,7 @@ CONTAINS
                     DO rowXiIdx=1,numberOfXi
                       DO columnXiIdx=1,numberOfXi
                         DO xiIdx=1,numberOfXi
-                          sum=sum+conductivity(rowXiIdx,columnXiIdx)*rowdPhidXi(xiIdx)*columndPhidXi(columnXiIdx)* &
+                          sum=sum-conductivity(rowXiIdx,columnXiIdx)*rowdPhidXi(xiIdx)*columndPhidXi(columnXiIdx)* &
                             & geometricInterpPointMetrics%gu(rowXiIdx,xiIdx)
                         ENDDO !xiIdx
                       ENDDO !columnXiIdx
@@ -3643,6 +3643,7 @@ CONTAINS
     TYPE(SolversType), POINTER :: solvers
     TYPE(SolverEquationsType), POINTER :: solverEquations
     TYPE(SolverMappingType), POINTER :: solverMapping
+    TYPE(VARYING_STRING) :: localError
    
     ENTERS("ReactionDiffusion_PostLoop",err,error,*999)
 
@@ -3662,7 +3663,22 @@ CONTAINS
       NULLIFY(solvers)
       CALL ControlLoop_SolversGet(controlLoop,solvers,err,error,*999)
       NULLIFY(solver)
-      CALL Solvers_SolverGet(solvers,2,solver,err,error,*999)
+      SELECT CASE(pSpecification(3))
+      CASE(PROBLEM_CELLML_GUDUNOV_SPLIT_REACT_DIFF_SUBTYPE, &       
+        & PROBLEM_CELLML_STRANG_SPLIT_REACT_DIFF_SUBTYPE, &
+        & PROBLEM_CELLML_LINEAR_NOSPLIT_REACT_DIFF_SUBTYPE, &
+        & PROBLEM_CELLML_NONLINEAR_NOSPLIT_REACT_DIFF_SUBTYPE, &
+        & PROBLEM_GUDUNOV_SPLIT_REACT_DIFF_SUBTYPE, &
+        & PROBLEM_STRANG_SPLIT_REACT_DIFF_SUBTYPE)
+        CALL Solvers_SolverGet(solvers,2,solver,err,error,*999)
+      CASE(PROBLEM_LINEAR_NOSPLIT_REACT_DIFF_SUBTYPE, &
+        & PROBLEM_NONLINEAR_NOSPLIT_REACT_DIFF_SUBTYPE)
+        CALL Solvers_SolverGet(solvers,1,solver,err,error,*999)
+      CASE DEFAULT
+        localError="The third problem specification of "//TRIM(NumberToVString(pSpecification(3),"*",err,error))// &
+          & " is invalid."
+        CALL FlagError(localError,err,error,*999)
+      END SELECT
       NULLIFY(solverEquations)
       CALL Solver_SolverEquationsGet(solver,solverEquations,err,error,*999)
       NULLIFY(solverMapping)

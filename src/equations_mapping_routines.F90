@@ -102,15 +102,15 @@ MODULE EquationsMappingRoutines
     MODULE PROCEDURE EquationsMappingVector_ResidualVariableTypesSet1
   END INTERFACE EquationsMappingVector_ResidualVariableTypesSet
   
-  INTERFACE EquationsMappingVector_SourcesCoefficientsSet
-    MODULE PROCEDURE EquationsMappingVector_SourcesCoefficientsSet0
-    MODULE PROCEDURE EquationsMappingVector_SourcesCoefficientsSet1
-  END INTERFACE EquationsMappingVector_SourcesCoefficientsSet
+  INTERFACE EquationsMappingVector_SourceCoefficientsSet
+    MODULE PROCEDURE EquationsMappingVector_SourceCoefficientsSet0
+    MODULE PROCEDURE EquationsMappingVector_SourceCoefficientsSet1
+  END INTERFACE EquationsMappingVector_SourceCoefficientsSet
   
-  INTERFACE EquationsMappingVector_SourcesVariableTypesSet
-    MODULE PROCEDURE EquationsMappingVector_SourcesVariableTypesSet0
-    MODULE PROCEDURE EquationsMappingVector_SourcesVariableTypesSet1
-  END INTERFACE EquationsMappingVector_SourcesVariableTypesSet
+  INTERFACE EquationsMappingVector_SourceVariableTypesSet
+    MODULE PROCEDURE EquationsMappingVector_SourceVariableTypesSet0
+    MODULE PROCEDURE EquationsMappingVector_SourceVariableTypesSet1
+  END INTERFACE EquationsMappingVector_SourceVariableTypesSet
   
   PUBLIC EquationsMapping_ScalarDestroy
 
@@ -144,9 +144,9 @@ MODULE EquationsMappingRoutines
 
   PUBLIC EquationsMappingVector_RHSVariableTypeSet
 
-  PUBLIC EquationsMappingVector_SourcesCoefficientsSet
+  PUBLIC EquationsMappingVector_SourceCoefficientsSet
 
-  PUBLIC EquationsMappingVector_SourcesVariableTypesSet
+  PUBLIC EquationsMappingVector_SourceVariableTypesSet
 
 CONTAINS
 
@@ -4026,7 +4026,7 @@ CONTAINS
   !
 
   !>Sets the coefficient applied to the equations set source vector.
-  SUBROUTINE EquationsMappingVector_SourcesCoefficientsSet0(vectorMapping,sourceCoefficient,err,error,*)
+  SUBROUTINE EquationsMappingVector_SourceCoefficientsSet0(vectorMapping,sourceCoefficient,err,error,*)
 
     !Argument variables
     TYPE(EquationsMappingVectorType), POINTER :: vectorMapping !<A pointer to the vector equations mapping to set the source coefficient for
@@ -4035,23 +4035,23 @@ CONTAINS
     TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
     !Local Variables
 
-    ENTERS("EquationsMappingVector_SourcesCoefficientsSet0",err,error,*999)
+    ENTERS("EquationsMappingVector_SourceCoefficientsSet0",err,error,*999)
 
-    CALL EquationsMappingVector_SourcesCoefficientsSet1(vectorMapping,[sourceCoefficient],err,error,*999)
+    CALL EquationsMappingVector_SourceCoefficientsSet1(vectorMapping,[sourceCoefficient],err,error,*999)
       
-    EXITS("EquationsMappingVector_SourcesCoefficientsSet0")
+    EXITS("EquationsMappingVector_SourceCoefficientsSet0")
     RETURN
-999 ERRORSEXITS("EquationsMappingVector_SourcesCoefficientsSet0",err,error)
+999 ERRORSEXITS("EquationsMappingVector_SourceCoefficientsSet0",err,error)
     RETURN 1
     
-  END SUBROUTINE EquationsMappingVector_SourcesCoefficientsSet0
+  END SUBROUTINE EquationsMappingVector_SourceCoefficientsSet0
   
   !
   !================================================================================================================================
   !
 
   !>Sets the coefficients applied to the equations set source vectors.
-  SUBROUTINE EquationsMappingVector_SourcesCoefficientsSet1(vectorMapping,sourceCoefficients,err,error,*)
+  SUBROUTINE EquationsMappingVector_SourceCoefficientsSet1(vectorMapping,sourceCoefficients,err,error,*)
 
     !Argument variables
     TYPE(EquationsMappingVectorType), POINTER :: vectorMapping !<A pointer to the vector equations mapping to set the source coefficients for
@@ -4062,7 +4062,7 @@ CONTAINS
     TYPE(EquationsMappingVectorCreateValuesCacheType), POINTER :: createValuesCache
     TYPE(VARYING_STRING) :: localError
 
-    ENTERS("EquationsMappingVector_SourcesCoefficientSet1",err,error,*999)
+    ENTERS("EquationsMappingVector_SourceCoefficientSet1",err,error,*999)
 
     CALL EquationsMappingVector_AssertNotFinished(vectorMapping,err,error,*999)
     NULLIFY(createValuesCache)
@@ -4078,12 +4078,12 @@ CONTAINS
     createValuesCache%sourceCoefficients(1:createValuesCache%numberOfSources)= &
       & sourceCoefficients(1:createValuesCache%numberOfSources)
       
-    EXITS("EquationsMappingVector_SourcesCoefficientsSet1")
+    EXITS("EquationsMappingVector_SourceCoefficientsSet1")
     RETURN
-999 ERRORSEXITS("EquationsMappingVector_SourcesCoefficientsSet1",err,error)
+999 ERRORSEXITS("EquationsMappingVector_SourceCoefficientsSet1",err,error)
     RETURN 1
     
-  END SUBROUTINE EquationsMappingVector_SourcesCoefficientsSet1
+  END SUBROUTINE EquationsMappingVector_SourceCoefficientsSet1
   
   !
   !================================================================================================================================
@@ -4157,7 +4157,7 @@ CONTAINS
   !
 
   !>Sets the mapping between a source field variable and the equations set source vector.
-  SUBROUTINE EquationsMappingVector_SourcesVariableTypesSet0(vectorMapping,sourceVariableType,err,error,*)
+  SUBROUTINE EquationsMappingVector_SourceVariableTypesSet0(vectorMapping,sourceVariableType,err,error,*)
 
     !Argument variables
     TYPE(EquationsMappingVectorType), POINTER :: vectorMapping !<A pointer to the vector equations mapping to set
@@ -4166,27 +4166,27 @@ CONTAINS
     TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
     !Local Variables
 
-    ENTERS("EquationsMappingVector_SourcesVariableTypesSet0",err,error,*999)
+    ENTERS("EquationsMappingVector_SourceVariableTypesSet0",err,error,*999)
 
-    CALL EquationsMappingVector_SourcesVariableTypesSet1(vectorMapping,[sourceVariableType],err,error,*999)
+    CALL EquationsMappingVector_SourceVariableTypesSet1(vectorMapping,[sourceVariableType],err,error,*999)
     
-    EXITS("EquationsMappingVector_SourcesVariableTypesSet0")
+    EXITS("EquationsMappingVector_SourceVariableTypesSet0")
     RETURN
-999 ERRORSEXITS("EquationsMappingVector_SourcesVariableTypesSet0",err,error)
+999 ERRORSEXITS("EquationsMappingVector_SourceVariableTypesSet0",err,error)
     RETURN 1
     
-  END SUBROUTINE EquationsMappingVector_SourcesVariableTypesSet0
+  END SUBROUTINE EquationsMappingVector_SourceVariableTypesSet0
   
   !
   !================================================================================================================================
   !
 
   !>Sets the mapping between a source field variables and the equations set source vectors.
-  SUBROUTINE EquationsMappingVector_SourcesVariableTypesSet1(vectorMapping,sourcesVariableTypes,err,error,*)
+  SUBROUTINE EquationsMappingVector_SourceVariableTypesSet1(vectorMapping,sourceVariableTypes,err,error,*)
 
     !Argument variables
     TYPE(EquationsMappingVectorType), POINTER :: vectorMapping !<A pointer to the vector equations mapping to set
-    INTEGER(INTG), INTENT(IN) :: sourcesVariableTypes(:) !<sourcesVariableTypes(sourceIdx). The variable type associated with the equations set sourceIdx'th source vector. If the problem does not have a source vector then the variable type on input should be zero.
+    INTEGER(INTG), INTENT(IN) :: sourceVariableTypes(:) !<sourceVariableTypes(sourceIdx). The variable type associated with the equations set sourceIdx'th source vector. If the problem does not have a source vector then the variable type on input should be zero.
     INTEGER(INTG), INTENT(OUT) :: err !<The error code
     TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
     !Local Variables
@@ -4199,15 +4199,15 @@ CONTAINS
     TYPE(FieldVariableType), POINTER :: sourceVariable
     TYPE(VARYING_STRING) :: localError
 
-    ENTERS("EquationsMappingVector_SourcesVariableTypesSet1",err,error,*999)
+    ENTERS("EquationsMappingVector_SourceVariableTypesSet1",err,error,*999)
 
     CALL EquationsMappingVector_AssertNotFinished(vectorMapping,err,error,*999)
     NULLIFY(createValuesCache)
     CALL EquationsMappingVector_CreateValuesCacheGet(vectorMapping,createValuesCache,err,error,*999)
-    IF(SIZE(sourcesVariableTypes,1)<createValuesCache%numberOfSources) THEN
-      localError="The size of the specified sources coefficients array of "// &
-        & TRIM(NumberToVString(SIZE(sourcesVariableTypes,1),"*",err,error))// &
-        & " is invalid. The size of sources coefficients array should be >= "// &
+    IF(SIZE(sourceVariableTypes,1)<createValuesCache%numberOfSources) THEN
+      localError="The size of the specified source variable types array of "// &
+        & TRIM(NumberToVString(SIZE(sourceVariableTypes,1),"*",err,error))// &
+        & " is invalid. The size of sources variable types array should be >= "// &
         & TRIM(NumberToVString(createValuesCache%numberOfSources,"*",err,error))//")."
       CALL FlagError(localError,err,error,*999)
     ENDIF
@@ -4221,7 +4221,7 @@ CONTAINS
     CALL EquationsSet_SourceFieldGet(equationsSet,sourceField,err,error,*999)
     !Check the source variables
     DO sourceIdx=1,createValuesCache%numberOfSources
-      sourceVariableType=sourcesVariableTypes(sourceIdx)
+      sourceVariableType=sourceVariableTypes(sourceIdx)
       IF(sourceVariableType<1.OR.sourceVariableType>FIELD_NUMBER_OF_VARIABLE_TYPES) THEN
         localError="The specified source variable type of "//TRIM(NumberToVString(sourceVariableType,"*",err,error))// &
           & " for source index "//TRIM(NumberToVString(sourceIdx,"*",err,error))// &
@@ -4239,14 +4239,14 @@ CONTAINS
     ENDDO !sourceIdx
 
     createValuesCache%sourceVariableTypes(1:createValuesCache%numberOfSources)= &
-      & sourcesVariableTypes(1:createValuesCache%numberOfSources)
+      & sourceVariableTypes(1:createValuesCache%numberOfSources)
     
-    EXITS("EquationsMappingVector_SourcesVariableTypesSet1")
+    EXITS("EquationsMappingVector_SourceVariableTypesSet1")
     RETURN
-999 ERRORSEXITS("EquationsMappingVector_SourcesVariableTypesSet1",err,error)
+999 ERRORSEXITS("EquationsMappingVector_SourceVariableTypesSet1",err,error)
     RETURN 1
     
-  END SUBROUTINE EquationsMappingVector_SourcesVariableTypesSet1
+  END SUBROUTINE EquationsMappingVector_SourceVariableTypesSet1
   
   !
   !================================================================================================================================
