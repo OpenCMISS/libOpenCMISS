@@ -869,8 +869,8 @@ CONTAINS
     !Local Variables
     INTEGER(INTG) :: pSpecification(3)
     TYPE(ControlLoopType), POINTER :: controlLoop,controlLoopRoot
-    TYPE(SolverType), POINTER :: solver, meshSolver
-    TYPE(SolverEquationsType), POINTER :: solverEquations,meshSolverEquations
+    TYPE(SolverType), POINTER :: solver
+    TYPE(SolverEquationsType), POINTER :: solverEquations
     TYPE(SolversType), POINTER :: solvers
     TYPE(VARYING_STRING) :: localError
 
@@ -1102,12 +1102,12 @@ CONTAINS
       & columnXiIdx,componentIdx,esSpecification(3),gaussPointIdx,maxColumnElementDOFIdx,maxRowElementDOFIdx, &
       & minColumnElementDOFIdx,minRowElementDOFIdx,numberOfColsComponents,numberOfColumnElementParameters,numberOfDimensions, &
       & numberOfGauss,numberOfRowsComponents,numberOfRowElementParameters,numberOfXi,out,rowComponentIdx,rowElementDOFIdx, &
-      & rowElementParameterIdx,rowXiIdx,rowsVariableType,scalingType,variableType,xv
+      & rowElementParameterIdx,rowXiIdx,rowsVariableType,scalingType
     REAL(DP) :: columnPhi,columndPhidXi(3),gaussWeight,jacobian,jacobianGaussWeight,dXidX(3,3),muParam,rhoParam,rowPhi, &
       & rowdPhidXi(3),sum,wValue(3),x(3)
     REAL(DP) :: aMatrix(256,256),dMatrix(256,256),aleMatrix(256,256),bTMatrix(256,256)
     LOGICAL :: update,updateDamping,updateMatrices,updateStiffness,updateRHS,updateSource
-    TYPE(BasisType), POINTER :: columnBasis,dependentBasis,geometricBasis,independentBasis,rowBasis
+    TYPE(BasisType), POINTER :: columnBasis,dependentBasis,geometricBasis,rowBasis
     TYPE(DecompositionType), POINTER :: dependentDecomposition,geometricDecomposition
     TYPE(DomainType), POINTER :: columnDomain,dependentDomain,geometricDomain,rowDomain
     TYPE(DomainElementsType), POINTER :: columnDomainElements,dependentDomainElements,geometricDomainElements,rowDomainElements
@@ -1131,11 +1131,11 @@ CONTAINS
     TYPE(EquationsSetAnalyticType), POINTER :: equationsAnalytic
     TYPE(EquationsVectorType), POINTER :: vectorEquations
     TYPE(FieldType), POINTER :: dependentField,geometricField,materialsField,independentField
-    TYPE(FieldInterpolationParametersType), POINTER :: colsInterpParameters,geometricInterpParameters,independentInterpParameters, &
-      & materialsInterpParameters,rowsInterpParameters
+    TYPE(FieldInterpolationParametersType), POINTER :: colsInterpParameters,geometricInterpParameters, &
+      & independentInterpParameters,materialsInterpParameters,rowsInterpParameters
     TYPE(FieldInterpolatedPointType), POINTER :: geometricInterpPoint,independentInterpPoint,materialsInterpPoint
     TYPE(FieldInterpolatedPointMetricsType), POINTER :: geometricInterpPointMetrics
-    TYPE(FieldVariableType), POINTER :: colsVariable,dependentVariable,geometricVariable,rowsVariable
+    TYPE(FieldVariableType), POINTER :: colsVariable,geometricVariable,rowsVariable
     TYPE(QuadratureSchemeType), POINTER :: columnQuadratureScheme,dependentQuadratureScheme,geometricQuadratureScheme, &
       & rowQuadratureScheme
     TYPE(VARYING_STRING) :: localError
@@ -1860,11 +1860,10 @@ CONTAINS
     INTEGER(INTG), INTENT(OUT) :: err !<The error code
     TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
     !Local Variables
-    INTEGER(INTG) :: analyticFunctionType,boundaryConditionCheckVariable,componentIdx,currentIteration,derivativeIdx,dimensionIdx, &
-      & elementIdx,globalDerivativeIndex,i,inputIteration,inputOption,j,k,localDOFIdx,localNodeIdx,localNodeNumber, &
+    INTEGER(INTG) :: analyticFunctionType,boundaryConditionCheckVariable,componentIdx,currentIteration,derivativeIdx, &
+      & dimensionIdx,elementIdx,globalDerivativeIndex,i,inputIteration,inputOption,j,k,localDOFIdx,localNodeIdx,localNodeNumber, &
       & maximumNumberOfElementParameters,nodeIdx,numberOfComponents,numberOfDimensions,numberOfNodes,numberOfNodeDerivatives, &
       & numberOfNodesXic(3),numberOfVariables,outputIteration,outputType,pSpecification(3),solveType,variableIdx,variableType
-    INTEGER(INTG), POINTER :: boundaryNodes(:)
     REAL(DP) :: analyticValue,currentTime,displacementValue,muParam,rhoParam,startTime,stopTime,tCoordinates(20,3), &
       & timeIncrement,x(3),xiCoordinates(4)
     REAL(DP), POINTER :: boundaryValues(:),geometricParameters(:),materialsParameters(:),meshVelocityValues(:)
@@ -1876,7 +1875,6 @@ CONTAINS
     TYPE(DomainElementsType), POINTER :: domainElements
     TYPE(DomainNodesType), POINTER :: domainNodes
     TYPE(DomainTopologyType), POINTER :: domainTopology
-    TYPE(EquationsType), POINTER :: equations
     TYPE(EquationsSetType), POINTER :: equationsSet
     TYPE(EquationsSetAnalyticType), POINTER :: equationsAnalytic
     TYPE(FieldType), POINTER :: dependentField,geometricField,independentField,materialsField
@@ -2278,9 +2276,9 @@ CONTAINS
     INTEGER(INTG), INTENT(OUT) :: err !<The error code
     TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
     !Local Variables
-    INTEGER(INTG) :: componentIdx,currentIteration,derivativeIdx,geometricMeshComponent,inputIteration,inputOption,inputType, &
-      & localDOFIdx,numberOfComponents,numberOfDimensionsLaplace,numberOfDimensionsALEStokes,numberOfNodes, &
-      & numberOfNodeDerivatives,numberOfVariables,nodeIdx,outputIteration,pSpecification(3),solveType,variableIdx,variableType
+    INTEGER(INTG) :: componentIdx,currentIteration,derivativeIdx,inputIteration,localDOFIdx,numberOfComponents, &
+      & numberOfDimensionsLaplace,numberOfDimensionsALEStokes,numberOfNodes,numberOfNodeDerivatives,numberOfVariables, &
+      & nodeIdx,outputIteration,pSpecification(3),solveType,variableIdx,variableType
     REAL(DP) :: alpha,currentTime,startTime,stopTime,timeIncrement
     REAL(DP), POINTER :: meshDisplacementValues(:)
     TYPE(ControlLoopType), POINTER :: controlLoop 
@@ -2294,8 +2292,8 @@ CONTAINS
     TYPE(EquationsVectorType), POINTER :: vectorEquations
     TYPE(FieldType), POINTER :: dependentFieldALEStokes,dependentFieldLaplace,geometricFieldALEStokes,geometricFieldLaplace, &
       & independentFieldALEStokes
-    TYPE(FieldVariableType), POINTER :: dependentVariableALEStokes,dependentVariableLaplace,geometricVariableALEStokes, &
-      & geometricVariableLaplace,independentVariableALEStokes,independentVariableLaplace
+    TYPE(FieldVariableType), POINTER :: dependentVariableALEStokes,geometricVariableALEStokes,geometricVariableLaplace, &
+      & independentVariableALEStokes
     TYPE(ProblemType), POINTER :: problem
     TYPE(SolverType), POINTER :: solverALEStokes,solverLaplace
     TYPE(SolverEquationsType), POINTER :: solverEquationsLaplace,solverEquationsALEStokes 
@@ -2454,7 +2452,6 @@ CONTAINS
     TYPE(DomainType), POINTER :: domain
     TYPE(DomainNodesType), POINTER :: domainNodes
     TYPE(DomainTopologyType), POINTER :: domainTopology
-    TYPE(EquationsType), POINTER :: equations
     TYPE(EquationsSetType), POINTER :: equationsSet
     TYPE(FieldType), POINTER :: dependentField,independentField
     TYPE(FieldVariableType), POINTER :: dependentVariable
@@ -2552,11 +2549,11 @@ CONTAINS
     INTEGER(INTG), INTENT(OUT) :: err !<The error code
     TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
     !Local Variables
-    INTEGER(INTG) :: analyticFunctionType,currentIteration,equationsSetIdx,inputIteration,numberOfDimensions, &
-      & numberOfEquationsSets,outputIteration,pSpecification(3),outputType
+    INTEGER(INTG) :: analyticFunctionType,currentIteration,equationsSetIdx,inputIteration,numberOfEquationsSets, &
+      & outputIteration,pSpecification(3),outputType
     REAL(DP) :: currentTime,startTime,stopTime,timeIncrement
-    LOGICAL :: exportField
     CHARACTER(14) :: outputFile
+    EXTERNAL :: SYSTEM
     TYPE(ControlLoopType), POINTER :: controlLoop 
     TYPE(EquationsSetType), POINTER :: equationsSet 
     TYPE(EquationsSetAnalyticType), POINTER :: equationsAnalytic
@@ -2691,7 +2688,6 @@ CONTAINS
     INTEGER(INTG) :: analyticFunctionType,boundCount,componentIdx,derivativeIdx,dimensionIdx,elementIdx,globalDerivativeIndex, &
       & i,j,k,localDOFIdx,localNodeIdx,localNodeNumber,maximumNumberOfElementParameters,nodeIdx,numberOfComponents, &
       & numberOfDimensions,numberOfNodes,numberOfNodeDerivatives,numberOfNodesXiC(4),numberOfVariables,variableIdx,variableType
-    INTEGER(INTG), POINTER :: boundaryNodes(:)
     REAL(DP) :: analyticValue,currentTime,muParam,rhoParam,tCoordinates(20,3),x(3),xiCoordinates(3)
     !REAL(DP) :: boundaryTolerance, boundaryX(3,2),muParam,L
     REAL(DP), POINTER :: geometricParameters(:),materialsParameters(:)

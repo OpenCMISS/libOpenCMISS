@@ -673,11 +673,10 @@ CONTAINS
     INTEGER(INTG), INTENT(OUT) :: err !<The error code
     TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
     !Local Variables
-    INTEGER(INTG) :: iterationIdx,loopIdx,numberOfSolvers,numberOfSubLoops,solverIdx
+    INTEGER(INTG) :: loopIdx,numberOfSolvers,numberOfSubLoops,solverIdx
     TYPE(ControlLoopType), POINTER :: controlLoop2
     TYPE(SolverType), POINTER :: solver
     TYPE(SolversType), POINTER :: solvers
-    TYPE(VARYING_STRING) :: localError
     
     ENTERS("Problem_ControlLoopSolversSetup",err,error,*999)
 
@@ -2427,12 +2426,10 @@ CONTAINS
     REAL(DP) :: currentTime,timeIncrement
     TYPE(BoundaryConditionsType), POINTER :: boundaryConditions
     TYPE(ControlLoopType), POINTER :: controlLoop
-    TYPE(EquationsType), POINTER :: equations
     TYPE(EquationsSetType), POINTER :: equationsSet
     TYPE(InterfaceConditionType), POINTER :: interfaceCondition
     TYPE(SolverType), POINTER :: solver
     TYPE(SolverMappingType), POINTER :: solverMapping
-    TYPE(VARYING_STRING) :: localError
    
     ENTERS("Problem_SolverEquationsQuasistaticNonlinearSolve",err,error,*999)
 
@@ -2499,7 +2496,6 @@ CONTAINS
     !Local Variables
     INTEGER(INTG) :: equationsSetIdx,interfaceConditionIdx,numberOfEquationsSets,numberOfInterfaceConditions
     TYPE(BoundaryConditionsType), POINTER :: boundaryConditions
-    TYPE(EquationsType), POINTER :: equations
     TYPE(EquationsSetType), POINTER :: equationsSet
     TYPE(InterfaceConditionType), POINTER :: interfaceCondition
     TYPE(SolverType), POINTER :: solver
@@ -2564,11 +2560,9 @@ CONTAINS
     INTEGER(INTG) :: equationsSetIdx,interfaceConditionIdx,numberOfEquationsSets
     TYPE(BoundaryConditionsType), POINTER :: boundaryConditions
     TYPE(EquationsSetType), POINTER :: equationsSet
-    TYPE(EquationsType), POINTER :: equations
     TYPE(InterfaceConditionType), POINTER :: interfaceCondition
     TYPE(SolverType), POINTER :: solver
     TYPE(SolverMappingType), POINTER :: solverMapping
-    TYPE(VARYING_STRING) :: localError
     
     ENTERS("Problem_SolverEquationsStaticNonlinearSolve",err,error,*999)
 
@@ -2625,19 +2619,14 @@ CONTAINS
     INTEGER(INTG), INTENT(OUT) :: err !<The error code
     TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
     !Local Variables
-    INTEGER(INTG) :: equationsLinearity,equationsSetIdx,inputIterationNumber,interfaceConditionIdx,iterationNumber, &
-      & numberOfEquationsSets,numberOfInterfaceConditions,outputIterationNumber,solverDegree,solverEquationsLinearity, &
+    INTEGER(INTG) :: inputIterationNumber,iterationNumber,outputIterationNumber,solverDegree,solverEquationsLinearity, &
       & solverEquationsTimeDependence,solverOrder,solveType
     REAL(DP) :: currentTime,startTime,stopTime,timeIncrement
     LOGICAL :: initSolver,nonlinear,setup,setupFinished,solverInitialised
     TYPE(ControlLoopType), POINTER :: controlLoop
     TYPE(DistributedVectorType), POINTER :: solverVector
     TYPE(DynamicSolverType), POINTER :: dynamicSolver
-    TYPE(EquationsType), POINTER :: equations
-    TYPE(EquationsSetType), POINTER :: equationsSet
-    TYPE(InterfaceConditionType), POINTER :: interfaceCondition
     TYPE(SolverEquationsType), POINTER :: solverEquations
-    TYPE(SolverMappingType), POINTER :: solverMapping
     TYPE(SolverMatricesType), POINTER :: solverMatrices
     TYPE(SolverMatrixType), POINTER :: solverMatrix
     TYPE(VARYING_STRING) :: localError
@@ -3740,10 +3729,12 @@ SUBROUTINE Problem_SolverJacobianEvaluatePetsc(snes,x,A,B,ctx,err)
  
   !Argument variables
   TYPE(PetscSnesType), INTENT(INOUT) :: snes !<The PETSc snes
-  TYPE(PetscVecType), INTENT(INOUT) :: X !<The PETSc x Vec
+  TYPE(PetscVecType), INTENT(INOUT) :: x !<The PETSc x Vec
   TYPE(PetscMatType), INTENT(INOUT) :: A !<The PETSc A Mat
   TYPE(PetscMatType), INTENT(INOUT) :: B !<The PETSc B Mat
-  TYPE(SolverType), POINTER :: ctx !<The passed through context
+  !Newer versions of PETSc pass in the de-referenced ctx
+  !TYPE(SolverType), POINTER :: ctx !<The passed through context
+  TYPE(SolverType), TARGET :: ctx !<The passed through context
   INTEGER(INTG), INTENT(INOUT) :: err !<The error code
   !Local Variables
   INTEGER(INTG) :: dummyErr,nonlinearSolveType,numberOfMatrices
@@ -3751,15 +3742,18 @@ SUBROUTINE Problem_SolverJacobianEvaluatePetsc(snes,x,A,B,ctx,err)
   TYPE(NewtonSolverType), POINTER :: newtonSolver
   TYPE(NonlinearSolverType), POINTER :: nonlinearSolver
   TYPE(QuasiNewtonSolverType), POINTER :: quasiNewtonSolver
+  TYPE(SolverType), POINTER :: solver
   TYPE(SolverEquationsType), POINTER :: solverEquations
   TYPE(SolverMatricesType), POINTER :: solverMatrices
   TYPE(SolverMatrixType), POINTER :: solverMatrix
   TYPE(VARYING_STRING) :: dummyError,error,localError
 
-  IF(.NOT.ASSOCIATED(ctx)) CALL FlagError("Solver context is not associated.",err,error,*998)
+  solver=>ctx
+  
+  IF(.NOT.ASSOCIATED(solver)) CALL FlagError("Solver context is not associated.",err,error,*998)
 
   NULLIFY(solverEquations)
-  CALL Solver_SolverEquationsGet(ctx,solverEquations,err,error,*999)
+  CALL Solver_SolverEquationsGet(solver,solverEquations,err,error,*999)
   NULLIFY(solverMatrices)
   CALL SolverEquations_SolverMatricesGet(solverEquations,solverMatrices,err,error,*999)
   CALL SolverMatrices_NumberOfSolverMatricesGet(solverMatrices,numberOfMatrices,err,error,*999)
@@ -3776,14 +3770,14 @@ SUBROUTINE Problem_SolverJacobianEvaluatePetsc(snes,x,A,B,ctx,err)
   
   CALL DistributedVector_OverrideSetOn(solverVector,x,err,error,*999)
   
-  CALL Problem_SolverJacobianEvaluate(ctx,err,error,*999)
+  CALL Problem_SolverJacobianEvaluate(solver,err,error,*999)
   
   CALL DistributedVector_OverrideSetOff(solverVector,err,error,*999)
   
 !!TODO: move this to Problem_SolverJacobianEvaluate or elsewhere?
-  CALL Solver_AssertIsNonlinear(ctx,err,error,*999)
+  CALL Solver_AssertIsNonlinear(solver,err,error,*999)
   NULLIFY(nonlinearSolver)
-  CALL Solver_NonlinearSolverGet(ctx,nonlinearSolver,err,error,*999)
+  CALL Solver_NonlinearSolverGet(solver,nonlinearSolver,err,error,*999)
   CALL SolverNonlinear_SolverTypeGet(nonlinearSolver,nonlinearSolveType,err,error,*999)
   SELECT CASE(nonlinearSolveType)
   CASE(SOLVER_NONLINEAR_NEWTON)
@@ -3817,6 +3811,7 @@ SUBROUTINE Problem_SolverJacobianFDCalculatePetsc(snes,x,A,B,ctx,err)
 
   USE BaseRoutines
   USE DistributedMatrixVector
+  USE ISO_C_BINDING, ONLY : C_LOC
   USE ISO_VARYING_STRING
   USE Kinds
   USE OpenCMISSPETSc
@@ -3836,7 +3831,9 @@ SUBROUTINE Problem_SolverJacobianFDCalculatePetsc(snes,x,A,B,ctx,err)
   TYPE(PetscVecType), INTENT(INOUT) :: x !<The PETSc x Vec
   TYPE(PetscMatType), INTENT(INOUT) :: A !<The PETSc A Mat
   TYPE(PetscMatType), INTENT(INOUT) :: B !<The PETSc B Mat
-  TYPE(SolverType), POINTER :: ctx !<The passed through context
+  !Newer versions of PETSc pass in the de-referrenced ctx
+  !TYPE(SolverType), POINTER :: ctx !<The passed through context
+  TYPE(SolverType), TARGET :: ctx !<The passed through context
   INTEGER(INTG), INTENT(INOUT) :: err !<The error code
   !Local Variables
   INTEGER(INTG) :: dummyErr,nonlinearSolveType,numberOfMatrices,sparsityType
@@ -3845,19 +3842,21 @@ SUBROUTINE Problem_SolverJacobianFDCalculatePetsc(snes,x,A,B,ctx,err)
   TYPE(NewtonLinesearchSolverType), POINTER :: linesearchSolver
   TYPE(QuasiNewtonSolverType), POINTER :: quasiNewtonSolver
   TYPE(QuasiNewtonLinesearchSolverType), POINTER :: quasiNewtonLinesearchSolver
+  TYPE(SolverType), POINTER :: solver
   TYPE(SolverEquationsType), POINTER :: solverEquations
   TYPE(SolverMatricesType), POINTER :: solverMatrices
   TYPE(SolverMatrixType), POINTER :: solverMatrix
-  TYPE(PetscMatFDColoringType), POINTER :: jacobianMatFDColoring
   TYPE(VARYING_STRING) :: dummyError,error,localError
 
-  IF(.NOT.ASSOCIATED(ctx)) CALL FlagError("Solver context is not associated.",err,error,*998)
-  CALL Solver_AssertIsNonlinear(ctx,err,error,*999)
+  solver=>ctx
+  
+  IF(.NOT.ASSOCIATED(solver)) CALL FlagError("Solver context is not associated.",err,error,*998)
+  CALL Solver_AssertIsNonlinear(solver,err,error,*999)
   
   NULLIFY(nonlinearSolver)
-  CALL Solver_NonlinearSolverGet(ctx,nonlinearSolver,err,error,*999)
+  CALL Solver_NonlinearSolverGet(solver,nonlinearSolver,err,error,*999)
   NULLIFY(solverEquations)
-  CALL Solver_SolverEquationsGet(ctx,solverEquations,err,error,*999)
+  CALL Solver_SolverEquationsGet(solver,solverEquations,err,error,*999)
   NULLIFY(solverMatrices)
   CALL SolverEquations_SolverMatricesGet(solverEquations,solverMatrices,err,error,*999)
   CALL SolverMatrices_NumberOfSolverMatricesGet(solverMatrices,numberOfMatrices,err,error,*999)
@@ -3879,27 +3878,26 @@ SUBROUTINE Problem_SolverJacobianFDCalculatePetsc(snes,x,A,B,ctx,err)
       CALL SolverNonlinear_NewtonSolverGet(nonlinearSolver,newtonSolver,err,error,*999)
       NULLIFY(linesearchSolver)
       CALL SolverNonlinearNewton_LinesearchSolverGet(newtonSolver,linesearchSolver,err,error,*999)
-      jacobianMatFDColoring=>linesearchSolver%jacobianMatFDColoring
+      CALL Petsc_SnesComputeJacobianDefaultColor(snes,x,A,B,linesearchSolver%jacobianMatFDColoring,err,error,*999)
     CASE(SOLVER_NONLINEAR_QUASI_NEWTON)
       NULLIFY(quasiNewtonSolver)
       CALL SolverNonlinear_QuasiNewtonSolverGet(nonlinearSolver,quasiNewtonSolver,err,error,*999)
       NULLIFY(quasiNewtonLinesearchSolver)
       CALL SolverNonlinearQuasiNewton_LinesearchSolverGet(quasiNewtonSolver,quasiNewtonLinesearchSolver,err,error,*999)
-      jacobianMatFDColoring=>quasiNewtonLinesearchSolver%jacobianMatFDColoring
+      CALL Petsc_SnesComputeJacobianDefaultColor(snes,x,A,B,quasiNewtonLinesearchSolver%jacobianMatFDColoring,err,error,*999)
     CASE DEFAULT
       localError="The nonlinear solver type of "//TRIM(NumberToVString(nonlinearSolveType,"*",err,error))// &
         & " is invalid."
       CALL FlagError(localError,err,error,*999)
     END SELECT
-    IF(.NOT.ASSOCIATED(jacobianMatFDColoring)) CALL FlagError("Linesearch solver FD colouring is not associated.",err,error,*998)
-    CALL Petsc_SnesComputeJacobianDefaultColor(snes,x,A,B,jacobianMatFDColoring,err,error,*999)
   CASE(SOLVER_FULL_MATRICES)
-    CALL Petsc_SnesComputeJacobianDefault(snes,x,A,B,ctx,err,error,*999)
+    CALL Petsc_SnesComputeJacobianDefault(snes,x,A,B,solver,err,error,*999)
   CASE DEFAULT
-    localError="The specified solver equations sparsity type of "//TRIM(NumberToVString(sparsityType,"*",err,error))//" is invalid."
+    localError="The specified solver equations sparsity type of "//TRIM(NumberToVString(sparsityType,"*",err,error))// &
+      & " is invalid."
     CALL FlagError(localError,err,error,*999)
   END SELECT
-  IF(ctx%outputType>=SOLVER_MATRIX_OUTPUT) THEN
+  IF(solver%outputType>=SOLVER_MATRIX_OUTPUT) THEN
     CALL DistributedMatrix_OverrideSetOn(solverMatrix%matrix,A,err,error,*999)
     CALL SolverMatrices_Output(GENERAL_OUTPUT_TYPE,SOLVER_MATRICES_JACOBIAN_ONLY,solverMatrices,err,error,*998)
     CALL DistributedMatrix_OverrideSetOff(solverMatrix%matrix,err,error,*999)
@@ -3938,21 +3936,26 @@ SUBROUTINE Problem_SolverObjectiveEvaluatePetsc(tao,x,f,ctx,err)
   TYPE(PetscTaoType), INTENT(INOUT) :: tao !<The PETSc tao type
   TYPE(PetscVecType), INTENT(INOUT) :: x !<The PETSc x Vec type
   REAL(DP), INTENT(OUT) :: f !<On exit, the evaluated objective
-  TYPE(SolverType), POINTER :: ctx !<The passed through context
+  !Newer versions of PETSc pass in the de-referred ctx
+  !TYPE(SolverType), POINTER :: ctx !<The passed through context
+  TYPE(SolverType), TARGET :: ctx !<The passed through context
   INTEGER(INTG), INTENT(INOUT) :: err !<The error code
   !Local Variables
   INTEGER(INTG) :: dummyErr
   TYPE(DistributedVectorType), POINTER :: solverVector
+  TYPE(SolverType), POINTER :: solver
   TYPE(SolverEquationsType), POINTER :: solverEquations
   TYPE(SolverMatricesType), POINTER :: solverMatrices
   TYPE(SolverMatrixType), POINTER :: solverMatrix
   TYPE(VARYING_STRING) :: dummyError,error,localError
 
-  IF(.NOT.ASSOCIATED(ctx)) CALL FlagError("Solver context is not associated.",err,error,*997)
-  CALL Solver_AssertIsOptimiser(ctx,err,error,*999)
+  solver=>ctx
+  
+  IF(.NOT.ASSOCIATED(solver)) CALL FlagError("Solver context is not associated.",err,error,*997)
+  CALL Solver_AssertIsOptimiser(solver,err,error,*999)
   
   NULLIFY(solverEquations)
-  CALL Solver_SolverEquationsGet(ctx,solverEquations,err,error,*999)
+  CALL Solver_SolverEquationsGet(solver,solverEquations,err,error,*999)
   NULLIFY(solverMatrices)
   CALL SolverEquations_SolverMatricesGet(solverEquations,solverMatrices,err,error,*999)  
   IF(solverMatrices%numberOfMatrices/=1) THEN
@@ -3967,7 +3970,7 @@ SUBROUTINE Problem_SolverObjectiveEvaluatePetsc(tao,x,f,ctx,err)
 
   CALL DistributedVector_OverrideSetOn(solverVector,x,err,error,*999)
     
-  !CALL Problem_SolverObjectiveEvaluate(ctx,err,error,*999)
+  !CALL Problem_SolverObjectiveEvaluate(solver,err,error,*999)
 
   f=0.0_DP
                     
@@ -4009,7 +4012,9 @@ SUBROUTINE Problem_SolverResidualEvaluatePetsc(snes,x,f,ctx,err)
   TYPE(PetscSnesType), INTENT(INOUT) :: snes !<The PETSc snes type
   TYPE(PetscVecType), INTENT(INOUT) :: x !<The PETSc x Vec type
   TYPE(PetscVecType), INTENT(INOUT) :: f !<The PETSc f Vec type
-  TYPE(SolverType), POINTER :: ctx !<The passed through context
+  !Newer version of PETSc seems to pass in the dereferrenced object
+  !TYPE(SolverType), POINTER :: ctx !<The passed through context
+  TYPE(SolverType), TARGET :: ctx !<The passed through context
   INTEGER(INTG), INTENT(INOUT) :: err !<The error code
   !Local Variables
   INTEGER(INTG) :: dummyErr
@@ -4017,16 +4022,19 @@ SUBROUTINE Problem_SolverResidualEvaluatePetsc(snes,x,f,ctx,err)
   TYPE(NewtonSolverType), POINTER :: newtonSolver
   TYPE(NonlinearSolverType), POINTER :: nonlinearSolver
   TYPE(QuasiNewtonSolverType), POINTER :: quasiNewtonSolver
+  TYPE(SolverType), POINTER :: solver
   TYPE(SolverEquationsType), POINTER :: solverEquations
   TYPE(SolverMatricesType), POINTER :: solverMatrices
   TYPE(SolverMatrixType), POINTER :: solverMatrix
   TYPE(VARYING_STRING) :: dummyError,error,localError
 
-  IF(.NOT.ASSOCIATED(ctx)) CALL FlagError("Solver context is not associated.",err,error,*997)
-  CALL Solver_AssertIsNonlinear(ctx,err,error,*999)
+  solver=>ctx
+  
+  IF(.NOT.ASSOCIATED(solver)) CALL FlagError("Solver context is not associated.",err,error,*997)
+  CALL Solver_AssertIsNonlinear(solver,err,error,*999)
 
   NULLIFY(nonlinearSolver)
-  CALL Solver_NonlinearSolverGet(ctx,nonlinearSolver,err,error,*997)
+  CALL Solver_NonlinearSolverGet(solver,nonlinearSolver,err,error,*997)
   SELECT CASE(nonLinearSolver%nonlinearSolveType)
   CASE(SOLVER_NONLINEAR_NEWTON)
     NULLIFY(newtonSolver)
@@ -4040,7 +4048,7 @@ SUBROUTINE Problem_SolverResidualEvaluatePetsc(snes,x,f,ctx,err)
     CALL FlagError(localError,err,error,*997)
   END SELECT
   NULLIFY(solverEquations)
-  CALL Solver_SolverEquationsGet(ctx,solverEquations,err,error,*997)
+  CALL Solver_SolverEquationsGet(solver,solverEquations,err,error,*997)
   NULLIFY(solverMatrices)
   CALL SolverEquations_SolverMatricesGet(solverEquations,solverMatrices,err,error,*997)
   IF(solverMatrices%numberOfMatrices/=1) THEN
@@ -4059,7 +4067,7 @@ SUBROUTINE Problem_SolverResidualEvaluatePetsc(snes,x,f,ctx,err)
   CALL DistributedVector_OverrideSetOn(solverVector,X,err,error,*998)
   CALL DistributedVector_OverrideSetOn(residualVector,F,err,error,*999)                
                     
-  CALL Problem_SolverResidualEvaluate(ctx,err,error,*999)
+  CALL Problem_SolverResidualEvaluate(solver,err,error,*999)
   
   CALL DistributedVector_OverrideSetOff(residualVector,err,error,*999)
   CALL DistributedVector_OverrideSetOff(solverVector,err,error,*998)
@@ -4113,22 +4121,27 @@ SUBROUTINE Problem_SolverConvergenceTestPetsc(snes,iterationNumber,xnorm,gnorm,f
   REAL(DP), INTENT(INOUT) :: gnorm !<The 2-norm of current step
   REAL(DP), INTENT(INOUT) :: fnorm !<The 2-norm of function
   INTEGER(INTG), INTENT(INOUT) :: reason !<The reason for convergence/divergence
-  TYPE(SolverType), POINTER :: ctx !<The passed through context
+  !Newer versions of PETSc pass the de-referenced ctx
+  !TYPE(SolverType), POINTER :: ctx !<The passed through context
+  TYPE(SolverType), TARGET :: ctx !<The passed through context
   INTEGER(INTG), INTENT(INOUT) :: err !<The error code
   !Local Variables
+  REAL(DP) :: energy,normalisedEnergy
   TYPE(PetscVecType) :: x,f,y,w,g
   TYPE(NewtonSolverType), POINTER :: newtonSolver
   TYPE(NonlinearSolverType), POINTER :: nonlinearSolver
   TYPE(QuasiNewtonSolverType), POINTER :: quasiNewtonSolver
   TYPE(PetscSnesLinesearchType) :: lineSearch
-  REAL(DP) :: energy,normalisedEnergy
+  TYPE(SolverType), POINTER :: solver
   TYPE(VARYING_STRING) :: error,localError
 
-  IF(.NOT.ASSOCIATED(ctx)) CALL FlagError("Solver context is not associated.",err,error,*999)
-  CALL Solver_AssertIsNonlinear(ctx,err,error,*999)
+  solver=>ctx
+  
+  IF(.NOT.ASSOCIATED(solver)) CALL FlagError("Solver context is not associated.",err,error,*999)
+  CALL Solver_AssertIsNonlinear(solver,err,error,*999)
 
   NULLIFY(nonlinearSolver)
-  CALL Solver_NonlinearSolverGet(ctx,nonlinearSolver,err,error,*999)
+  CALL Solver_NonlinearSolverGet(solver,nonlinearSolver,err,error,*999)
   
   SELECT CASE(nonlinearSolver%nonlinearSolveType)
   CASE(SOLVER_NONLINEAR_NEWTON)
@@ -4256,33 +4269,38 @@ SUBROUTINE Problem_SolverDAECellMLRHSPetsc(ts,time,states,rates,ctx,err)
   REAL(DP), INTENT(INOUT) :: time !<The current time
   TYPE(PetscVecType), INTENT(INOUT) :: states !<current states
   TYPE(PetscVecType), INTENT(INOUT) :: rates !<returned rates
-  TYPE(CellMLPETScContextType), POINTER :: ctx !<The passed through context
+  !Newer versions of PETSc pass the de-referrenced ctx
+  !TYPE(CellMLPETScContextType), POINTER :: ctx !<The passed through context
+  TYPE(CellMLPETScContextType), TARGET :: ctx !<The passed through context
   INTEGER(INTG), INTENT(INOUT) :: err !<The error code
   !Local Variables
   TYPE(CellMLType), POINTER :: cellML
+  TYPE(CellMLPETScContextType), POINTER :: cellMLPETScContext
   TYPE(SolverType), POINTER :: solver
   TYPE(VARYING_STRING) :: error
   INTEGER(INTG) :: dofIdx
   REAL(DP), POINTER :: stateData(:)
-
+  
   NULLIFY(stateData)
 
-  IF(.NOT.ASSOCIATED(ctx)) CALL FlagError("Context is not associated.",err,error,*999)
-  solver=>ctx%solver
+  cellMLPETScContext=>ctx
+
+  IF(.NOT.ASSOCIATED(cellMLPETScContext)) CALL FlagError("Context is not associated.",err,error,*999)
+  solver=>cellMLPETScContext%solver
   IF(.NOT.ASSOCIATED(solver)) CALL FlagError("Context solver is not associated.",err,error,*999)
-  cellML=>ctx%cellml
+  cellML=>cellMLPETScContext%cellml
   IF(.NOT.ASSOCIATED(cellml)) CALL FlagError("Context cellml is not associated.",err,error,*999)  
-  dofIdx=ctx%dofIdx
+  dofIdx=cellMLPETScContext%dofIdx
   
   !Get the state data
   NULLIFY(stateData)
   CALL Petsc_VecGetArrayReadF90(states,stateData,err,error,*999)
   !Evaluate the CellML model
-  CALL Problem_SolverDAECellMLRHSEvaluate(cellML,time,dofIdx,stateData,ctx%rates,err,error,*999)
+  CALL Problem_SolverDAECellMLRHSEvaluate(cellML,time,dofIdx,stateData,cellMLPETScContext%rates,err,error,*999)
   !Restore the state data
   CALL Petsc_VecRestoreArrayReadF90(states,stateData,err,error,*999)
   !Set the PETSc rates vector
-  CALL Petsc_VecSetValues(rates,SIZE(stateData,1),ctx%ratesIndices,ctx%rates,PETSC_INSERT_VALUES,err,error,*999)
+  CALL Petsc_VecSetValues(rates,SIZE(stateData,1),cellMLPETScContext%ratesIndices,cellMLPETScContext%rates,PETSC_INSERT_VALUES,err,error,*999)
   CALL VecAssemblyBegin(rates,err,error,*999)
   CALL VecAssemblyEnd(rates,err,error,*999)
   
@@ -4299,7 +4317,7 @@ END SUBROUTINE Problem_SolverDAECellMLRHSPetsc
 !
 
 !>Called from the PETSc SNES solvers to monitor a nonlinear solver
-SUBROUTINE Problem_SolverNonlinearMonitorPETSC(snes,iterationNumber,residualNorm,context,err)
+SUBROUTINE Problem_SolverNonlinearMonitorPETSC(snes,iterationNumber,residualNorm,ctx,err)
 
   USE BaseRoutines
   USE DistributedMatrixVector
@@ -4317,15 +4335,20 @@ SUBROUTINE Problem_SolverNonlinearMonitorPETSC(snes,iterationNumber,residualNorm
   TYPE(PetscSnesType), INTENT(INOUT) :: snes !<The PETSc snes type
   INTEGER(INTG), INTENT(INOUT) :: iterationNumber !<The iteration number
   REAL(DP), INTENT(INOUT) :: residualNorm !<The residual norm
-  TYPE(SolverType), POINTER :: context !<The passed through context
+  !Newer versions of PETSc pass the de-referrenced ctx
+  !TYPE(SolverType), POINTER :: ctx !<The passed through ctx
+  TYPE(SolverType), TARGET :: ctx !<The passed through ctx
   INTEGER(INTG), INTENT(INOUT) :: err !<The error code
   !Local Variables
+  TYPE(SolverType), POINTER :: solver
   TYPE(VARYING_STRING) :: error
 
-  IF(.NOT.ASSOCIATED(context)) CALL FlagError("Solver context is not associated.",err,error,*999)
-  CALL Solver_AssertIsNonlinear(context,err,error,*999)
+  solver=>ctx
   
-  CALL Problem_SolverNonlinearMonitor(context,iterationNumber,residualNorm,err,error,*999)
+  IF(.NOT.ASSOCIATED(solver)) CALL FlagError("Solver context is not associated.",err,error,*999)
+  CALL Solver_AssertIsNonlinear(solver,err,error,*999)
+  
+  CALL Problem_SolverNonlinearMonitor(solver,iterationNumber,residualNorm,err,error,*999)
   
   RETURN
 999 CALL WriteError(err,error,*998)
@@ -4339,7 +4362,7 @@ END SUBROUTINE Problem_SolverNonlinearMonitorPETSC
 !
 
 !>Called from the PETSc TAO solvers to monitor an optimiser solver
-SUBROUTINE Problem_SolverOptimiserMonitorPETSC(tao,context,err)
+SUBROUTINE Problem_SolverOptimiserMonitorPETSC(tao,ctx,err)
 
   USE BaseRoutines
   USE ISO_VARYING_STRING
@@ -4353,15 +4376,20 @@ SUBROUTINE Problem_SolverOptimiserMonitorPETSC(tao,context,err)
   
   !Argument variables
   TYPE(PetscTaoType), INTENT(INOUT) :: tao !<The PETSc tao type
-  TYPE(SolverType), POINTER :: context !<The passed through context (solver)
+  !Newer versions of PETSc pass the de-referrenced ctx
+  !TYPE(SolverType), POINTER :: ctx !<The passed through ctx (solver)
+  TYPE(SolverType), TARGET :: ctx !<The passed through ctx (solver)
   INTEGER(INTG), INTENT(INOUT) :: err !<The error code
   !Local Variables
+  TYPE(SolverType), POINTER :: solver
   TYPE(VARYING_STRING) :: error
 
-  IF(.NOT.ASSOCIATED(context)) CALL FlagError("Solver context is not associated.",err,error,*999)
-  CALL Solver_AssertIsOptimiser(context,err,error,*999)
+  solver=>ctx
+  
+  IF(.NOT.ASSOCIATED(solver)) CALL FlagError("Solver context is not associated.",err,error,*999)
+  CALL Solver_AssertIsOptimiser(solver,err,error,*999)
 
-  CALL Problem_SolverOptimiserMonitor(context,err,error,*999)
+  CALL Problem_SolverOptimiserMonitor(solver,err,error,*999)
   
   RETURN
 

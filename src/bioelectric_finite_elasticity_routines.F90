@@ -281,7 +281,7 @@ CONTAINS
     TYPE(ControlLoopType), POINTER :: monodomainSubLoop,elasticitySubLoop
     TYPE(SolverType), POINTER :: solver
     TYPE(SolverEquationsType), POINTER :: solverEquations
-    TYPE(SolversType), POINTER :: solvers,monodomainSolvers,elasticitySolvers
+    TYPE(SolversType), POINTER :: monodomainSolvers,elasticitySolvers
     TYPE(VARYING_STRING) :: localError
 
     ENTERS("BioelectricFiniteElasticity_ProblemSetup",err,error,*999)
@@ -769,11 +769,11 @@ CONTAINS
     INTEGER(INTG), INTENT(OUT) :: err !<The error code
     TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
     !Local Variables
-    INTEGER(INTG) :: dofIdx,elementIdx,equationsSetIdx,gaussPointIdx,iterationNumber,loopType,meshComponentNumber, &
+    INTEGER(INTG) :: elementIdx,equationsSetIdx,gaussPointIdx,iterationNumber,loopType, &
       & numberOfDimensions,numberOfElements,numberOfEquationsSets,numberOfGauss,numberOfIterations,numberOfSubLoops, &
       & numberOfXi,variableType
     REAL(DP) :: AZL(3,3),dNudXi(3,3),dXidNu(3,3),dZdNu(3,3),dZdNuT(3,3),dZdX(3,3),fibreVectors(3,3),JZ,JZNu
-    TYPE(BasisType), POINTER :: dependentBasis,geometricBasis
+    TYPE(BasisType), POINTER :: dependentBasis
     TYPE(DecompositionType), POINTER :: decomposition
     TYPE(DecompositionElementsType), POINTER :: decompositionElements
     TYPE(DecompositionTopologyType), POINTER :: decompositionTopology
@@ -982,27 +982,22 @@ CONTAINS
     INTEGER(INTG), INTENT(OUT) :: err !<The error code
     TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
     !Local Variables
-    INTEGER(INTG) :: counter,currentIteration,dofIdx,elementIdx,equationsSetIdx,gaussPointIdx,iterationNumber,loopType, &
-      & maximumIterations,meshComponentNumber,numberOfElements,numberOfEquationsSets,numberOfGauss,numberOfSubLoops, &
+    INTEGER(INTG) :: counter,currentIteration,elementIdx,equationsSetIdx,gaussPointIdx,iterationNumber,loopType, &
+      & maximumIterations,numberOfElements,numberOfEquationsSets,numberOfGauss,numberOfSubLoops, &
       & numberOfXi
     REAL(DP) :: absoluteTolerance,averageVelocity,averageStretch,currentTime,oldAverageStretch,lengthHS,lengthHS0,activeStress, &
       & fibreStretch,oldFibreStretch,lengthFactor,velocityFactor,relativeTolerance,sarcomereLength,timeIncrement,velocity, &
       & maxVelocity,timeStep,kappa,A,S,d,c
     LOGICAL :: continueLoop
-    TYPE(BasisType), POINTER :: dependentBasis,geometricBasis
+    TYPE(BasisType), POINTER :: dependentBasis
     TYPE(DecompositionType), POINTER :: decomposition
     TYPE(DecompositionElementsType), POINTER :: decompositionElements
     TYPE(DecompositionTopologyType), POINTER :: decompositionTopology
     TYPE(DomainType), POINTER :: domain
     TYPE(DomainElementsType), POINTER :: domainElements
     TYPE(DomainTopologyType), POINTER :: domainTopology
-    TYPE(ControlLoopType), POINTER :: controlLoopParent
-    TYPE(EquationsType), POINTER :: equations
     TYPE(EquationsSetType), POINTER :: equationsSet
-    TYPE(FieldType), POINTER :: dependentField,fibreField,geometricField,independentField
-    TYPE(FieldInterpolationParametersType), POINTER :: geometricInterpParameters,fibreInterpParameters,dependentInterpParameters
-    TYPE(FieldInterpolatedPointType), POINTER :: geometricInterpPoint,fibreInterpPoint,dependentInterpPoint
-    TYPE(FieldInterpolatedPointMetricsType), POINTER :: geometricInterpPointMetrics,dependentInterpPointMetrics
+    TYPE(FieldType), POINTER :: dependentField,independentField
     TYPE(FieldVariableType), POINTER :: uIndependentVariable,u1IndependentVariable
     TYPE(QuadratureSchemeType), POINTER :: dependentQuadratureScheme
     TYPE(SolverType), POINTER :: solver
@@ -1302,7 +1297,6 @@ CONTAINS
       & outputIteration,pSpecification(3),regionUserNumber
     REAL(DP) :: currentTime,startTime,stopTime,timeIncrement
     TYPE(ControlLoopType), POINTER :: elasticitySubLoop,bioelectricSubLoop
-    TYPE(ControlLoopTimeType), POINTER :: timeLoop
     TYPE(EquationsSetType), POINTER :: equationsSet
     TYPE(FieldType), POINTER :: dependentField
     TYPE(FieldsType), POINTER :: fields
@@ -1450,7 +1444,6 @@ CONTAINS
     TYPE(SolverType), POINTER :: solver
     TYPE(SolverEquationsType), POINTER :: solverEquations
     TYPE(SolverMappingType), POINTER :: solverMapping
-    TYPE(VARYING_STRING) :: localError
  
     ENTERS("BioelectricFiniteElasticity_ConvergenceCheck",err,error,*999)
 
@@ -1559,15 +1552,13 @@ CONTAINS
     INTEGER(INTG), INTENT(OUT) :: err !<The error code
     TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
     !Local Variables
-    INTEGER(INTG) :: componentIdx,dependentFieldInterpolation,dependentUserNumber,dependentVariableType,dofIdx,dofIdx2, &
+    INTEGER(INTG) :: componentIdx,dependentFieldInterpolation,dependentUserNumber,dependentVariableType, &
       & elementIdx,elementIdx2,elementNumber,elementNumber2,fibreIdx,gaussPoint,gaussPointIdx,geometricFieldInterpolation, &
-      & geometricUserNumber,geometricVariableType,myElementIdx,n1,n2,n3,n4,nodeIdx,nodeIdx2,nodesInXi1,nodesInXi2,nodesInXi3, &
-      & numberOfAdjacentElements,numberOfComponents,numberOfElements,numberOfGauss,numberOfSubLoops,offset,pSpecification(3), &
+      & geometricUserNumber,geometricVariableType,myElementIdx,n1,n2,n3,nodeIdx,nodeIdx2,nodesInXi1,nodesInXi2,nodesInXi3, &
+      & numberOfAdjacentElements,numberOfComponents,numberOfElements,numberOfGauss,numberOfSubLoops,pSpecification(3), &
       & startElem,startElement,startElementIdx
-    REAL(DP) :: currentTime,distance,distanceLeft,distanceRight,elasticityXValue,gaussPosition(3),h,initialDistance, &
-      & initialSarcomereLength,maxVelocity,monodomainXValue,oldDistance,oldDistance2,oldDistance3,oldDistance4,previousNode(3), &
-      & timeIncrement,timeStep,VALUE,valueLeft,valueRight,velocity,xi(3)
-    LOGICAL :: outsideNode
+    REAL(DP) :: currentTime,distance,gaussPosition(3),initialDistance,initialSarcomereLength,maxVelocity,oldDistance, &
+      & oldDistance2,oldDistance3,oldDistance4,previousNode(3),timeIncrement,timeStep,VALUE,valueLeft,velocity,xi(3)
     TYPE(BasisType), POINTER :: basis
     TYPE(ControlLoopType), POINTER :: controlLoopRoot,controlLoopParent,elasticityControlLoop,monodomainControlLoop
     TYPE(DecompositionType), POINTER :: decomposition
@@ -1575,7 +1566,6 @@ CONTAINS
     TYPE(DecompositionTopologyType), POINTER :: decompositionTopology
     TYPE(DomainType), POINTER :: domain
     TYPE(DomainElementsType), POINTER :: domainElements
-    TYPE(DomainMappingType), POINTER :: nodesMapping
     TYPE(DomainTopologyType), POINTER :: domainTopology
     TYPE(EquationsType), POINTER :: equations
     TYPE(EquationsInterpolationType), POINTER :: equationsInterpolation
@@ -2399,7 +2389,7 @@ CONTAINS
     INTEGER(INTG), INTENT(OUT) :: err !<The error code
     TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
     !Local Variables
-    INTEGER(INTG) :: boundaryFinish,dofIdx,elementIdx,elementNumber,gaussPointIdx,inElement,internalStart,nearestGP,nodeIdx, &
+    INTEGER(INTG) :: boundaryFinish,elementIdx,elementNumber,gaussPointIdx,inElement,internalStart,nearestGP,nodeIdx, &
       & numberOfGauss,numberOfLocal,numberOfSubLoops,pSpecification(3)
     INTEGER(INTG), PARAMETER :: MAX_NUMBER_OF_GAUSS_POINTS=64
     INTEGER(INTG) :: numberOfNodes(MAX_NUMBER_OF_GAUSS_POINTS)
@@ -2716,7 +2706,7 @@ CONTAINS
     INTEGER(INTG), INTENT(OUT) :: err !The error code
     TYPE(VARYING_STRING), INTENT(OUT) :: error !The error string
     !Local Variables
-    INTEGER(INTG) :: dofIdx,indexI,indexPseudo,indexRef,nodeIdx,numberOfLocal,numberOfSubLoops,pSpecification(3),switchModel
+    INTEGER(INTG) :: indexI,indexPseudo,indexRef,nodeIdx,numberOfLocal,numberOfSubLoops,pSpecification(3),switchModel
     INTEGER(INTG), PARAMETER :: DIM_DATA=250
     REAL(DP) :: actinMyosinDistance,d10,deltaF,diffQuot,elongation,elongationDistIG,elongationNew,elongationPEVK,f0,force, &
       & forceDistalIG,forcesDistIG(250),lengthDistIGF0,lengthDistIG,lengthsDistIG(250),lengthInitTitin,lengthTitin,sarcoLength, &

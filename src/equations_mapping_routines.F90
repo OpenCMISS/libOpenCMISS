@@ -3390,7 +3390,7 @@ CONTAINS
     INTEGER(INTG), INTENT(OUT) :: err !<The error code
     TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
     !Local Variables
-    INTEGER(INTG) :: previousNumberOfResiduals,residualIdx,variableIdx
+    INTEGER(INTG) :: residualIdx,variableIdx
     INTEGER(INTG), ALLOCATABLE :: newNumberOfResidualVariables(:),newResidualVariableTypes(:,:)
     REAL(DP), ALLOCATABLE :: newResidualCoefficients(:)
     TYPE(EquationsType), POINTER :: equations
@@ -3467,8 +3467,8 @@ CONTAINS
       newNumberOfResidualVariables=0
       newResidualVariableTypes=0
       newResidualCoefficients=1.0_DP
-      IF(previousNumberOfResiduals>0) THEN
-        DO residualIdx=1,MIN(numberOfResiduals,previousNumberOfResiduals)
+      IF(createValuesCache%numberOfResiduals>0) THEN
+        DO residualIdx=1,MIN(numberOfResiduals,createValuesCache%numberOfResiduals)
           newNumberOfResidualVariables(residualIdx)=createValuesCache%numberOfResidualVariables(residualIdx)
           DO variableIdx=1,createValuesCache%numberOfResidualVariables(residualIdx)
             newResidualVariableTypes(variableIdx,residualIdx)=createValuesCache%residualVariableTypes(variableIdx,residualIdx)

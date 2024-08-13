@@ -1086,7 +1086,7 @@ CONTAINS
 
     ENTERS("Petsc_ISFinalise",err,error,*999)
 
-    IF(ASSOCIATED(is%is)) THEN
+    IF(.NOT. PetscObjectIsNull(is%is)) THEN
       CALL Petsc_ISDestroy(is,err,error,*999)
     ENDIF
     
@@ -1112,9 +1112,7 @@ CONTAINS
 
     ENTERS("Petsc_ISInitialise",err,error,*999)
 
-    NULLIFY(is%is)
-    ALLOCATE(is%is,STAT=err)
-    IF(err/=0) CALL FlagError("Could not allocate PETSc IS object.",err,error,*999)
+    is%is%v=-2
     
     EXITS("Petsc_ISInitialise")
     RETURN
@@ -1145,8 +1143,6 @@ CONTAINS
       ENDIF
       CALL FlagError("PETSc error in ISDestroy.",err,error,*999)
     ENDIF
-    DEALLOCATE(is%is)
-    NULLIFY(is%is)
         
     EXITS("Petsc_ISDestroy")
     RETURN
@@ -1171,7 +1167,7 @@ CONTAINS
 
     ENTERS("Petsc_ISColoringFinalise",err,error,*999)
 
-    IF(ASSOCIATED(iscoloring%iscoloring)) THEN
+    IF(.NOT. PetscObjectIsNull(iscoloring%iscoloring)) THEN
       CALL Petsc_ISColoringDestroy(iscoloring,err,error,*999)
     ENDIF
     
@@ -1196,10 +1192,8 @@ CONTAINS
     !Local Variables
 
     ENTERS("Petsc_ISColoringInitialise",err,error,*999)
-
-    NULLIFY(iscoloring%iscoloring)
-    ALLOCATE(iscoloring%iscoloring,STAT=err)
-    IF(err/=0) CALL FlagError("Could not allocate PETSc ISColoring object.",err,error,*999)    
+    
+    iscoloring%iscoloring%v=-2
     
     EXITS("Petsc_ISColoringInitialise")
     RETURN
@@ -1230,8 +1224,6 @@ CONTAINS
       ENDIF
       CALL FlagError("PETSc error in ISColoringDestroy.",err,error,*999)
     ENDIF
-    DEALLOCATE(iscoloring%iscoloring)
-    NULLIFY(iscoloring%iscoloring)
     
     EXITS("Petsc_ISColoringDestroy")
     RETURN
@@ -1255,7 +1247,7 @@ CONTAINS
 
     ENTERS("Petsc_ISLocalToGlobalMappingFinalise",err,error,*999)
 
-    IF(ASSOCIATED(isLocalToGlobalMapping%isLocalToGlobalMapping)) THEN
+    IF(.NOT. PetscObjectIsNull(isLocalToGlobalMapping%isLocalToGlobalMapping)) THEN
       CALL Petsc_ISLocalToGlobalMappingDestroy(isLocalToGlobalMapping,err,error,*999)
     ENDIF
     
@@ -1281,9 +1273,7 @@ CONTAINS
 
     ENTERS("Petsc_ISLocalToGlobalMappingInitialise",err,error,*999)
 
-    NULLIFY(isLocalToGlobalMapping%isLocalToGlobalMapping)
-    ALLOCATE(isLocalToGlobalMapping%isLocalToGlobalMapping,STAT=err)
-    IF(err/=0) CALL FlagError("Could not allocate PETSc ISLocalToGlobalMapping object.",err,error,*999)
+    isLocalToGlobalMapping%isLocalToGlobalMapping%v=-2
     
     EXITS("Petsc_ISLocalToGlobalMappingInitialise")
     RETURN
@@ -1418,8 +1408,6 @@ CONTAINS
       ENDIF
       CALL FlagError("PETSc error in ISLocalToGlobalMappingDestroy.",err,error,*999)
     ENDIF
-    DEALLOCATE(isLocalToGlobalMapping%isLocalToGlobalMapping)
-    NULLIFY(isLocalToGlobalMapping%isLocalToGlobalMapping)
     
     EXITS("Petsc_ISLocalToGlobalMappingDestroy")
     RETURN
@@ -1443,7 +1431,7 @@ CONTAINS
 
     ENTERS("Petsc_KSPFinalise",err,error,*999)
 
-    IF(ASSOCIATED(ksp%ksp)) THEN
+    IF(.NOT. PetscObjectIsNull(ksp%ksp)) THEN
       CALL Petsc_KSPDestroy(ksp,err,error,*999)
     ENDIF
     
@@ -1469,9 +1457,7 @@ CONTAINS
 
     ENTERS("Petsc_KSPInitialise",err,error,*999)
 
-    NULLIFY(ksp%ksp)
-    ALLOCATE(ksp%ksp,STAT=err)
-    IF(err/=0) CALL FlagError("Could not allocate PETSc KSP object.",err,error,*999)
+    ksp%ksp%v=-2
     
     EXITS("Petsc_KSPInitialise")
     RETURN
@@ -1537,8 +1523,6 @@ CONTAINS
       ENDIF
       CALL FlagError("PETSc error in KSPDestroy.",err,error,*999)
     ENDIF
-    DEALLOCATE(ksp%ksp)
-    NULLIFY(ksp%ksp)
     
     EXITS("Petsc_KSPDestroy")
     RETURN
@@ -1975,7 +1959,7 @@ CONTAINS
 
     ENTERS("Petsc_MatFinalise",err,error,*999)
 
-    IF(ASSOCIATED(a%mat)) THEN
+    IF(.NOT. PetscObjectIsNull(a%mat)) THEN
       CALL Petsc_MatDestroy(a,err,error,*999)
     ENDIF
     
@@ -2001,9 +1985,7 @@ CONTAINS
 
     ENTERS("Petsc_MatInitialise",err,error,*999)
 
-    NULLIFY(a%mat)
-    ALLOCATE(a%mat,STAT=err)
-    IF(err/=0) CALL FlagError("Could not allocate PETSc Mat object.",err,error,*999)
+    a%mat%v=-2
      
     EXITS("Petsc_MatInitialise")
     RETURN
@@ -2359,8 +2341,6 @@ CONTAINS
       ENDIF
       CALL FlagError("PETSc error in MatDestroy.",err,error,*999)
     ENDIF
-    DEALLOCATE(a%mat)
-    NULLIFY(a%mat)
      
     EXITS("Petsc_MatDestroy")
     RETURN
@@ -3049,7 +3029,7 @@ CONTAINS
 
     ENTERS("Petsc_MatColoringFinalise",err,error,*999)
 
-    IF(ASSOCIATED(matColoring%matColoring)) THEN
+    IF(.NOT. PetscObjectIsNull(matColoring%matColoring)) THEN
       CALL Petsc_MatColoringDestroy(matColoring,err,error,*999)
     ENDIF
     
@@ -3075,9 +3055,7 @@ CONTAINS
 
     ENTERS("Petsc_MatColoringInitialise",err,error,*999)
 
-    NULLIFY(matColoring%matColoring)
-    ALLOCATE(matColoring%matColoring,STAT=err)
-    IF(err/=0) CALL FlagError("Could not allocate PETSc MatColoring object.",err,error,*999)
+    matColoring%matColoring%v=-2
     
     EXITS("Petsc_MatColoringInitialise")
     RETURN
@@ -3170,8 +3148,6 @@ CONTAINS
       ENDIF
       CALL FlagError("PETSc error in MatColoringDestroy.",err,error,*999)
     ENDIF
-    DEALLOCATE(matColoring%matColoring)
-    NULLIFY(matColoring%matColoring)
     
     EXITS("Petsc_MatColoringDestroy")
     RETURN
@@ -3256,7 +3232,7 @@ CONTAINS
 
     ENTERS("Petsc_MatFDColoringFinalise",err,error,*999)
 
-    IF(ASSOCIATED(matFDColoring%matFDColoring)) THEN
+    IF(.NOT. PetscObjectIsNull(matFDColoring%matFDColoring)) THEN
       CALL Petsc_MatFDColoringDestroy(matFDColoring,err,error,*999)
     ENDIF
     
@@ -3282,10 +3258,8 @@ CONTAINS
 
     ENTERS("Petsc_MatFDColoringInitialise",err,error,*999)
 
-    NULLIFY(matFDColoring%matFDColoring)
-    ALLOCATE(matFDColoring%matFDColoring,STAT=err)
-    IF(err/=0) CALL FlagError("Could not allocate PETSc MatFDColoring object.",err,error,*999)
-    
+    matFDColoring%matFDColoring%v=-2
+     
     EXITS("Petsc_MatFDColoringInitialise")
     RETURN
 999 ERRORSEXITS("Petsc_MatFDColoringInitialise",err,error)
@@ -3347,9 +3321,7 @@ CONTAINS
       ENDIF
       CALL FlagError("PETSc error in MatFDColoringDestroy.",err,error,*999)
     ENDIF
-    DEALLOCATE(matFDColoring%matFDColoring)
-    NULLIFY(matFDColoring%matFDColoring)
-     
+    
     EXITS("Petsc_MatFDColoringDestroy")
     RETURN
 999 ERRORSEXITS("Petsc_MatFDColoringDestroy",err,error)
@@ -3498,7 +3470,7 @@ CONTAINS
 
     ENTERS("Petsc_PCFinalise",err,error,*999)
 
-    IF(ASSOCIATED(pc%pc)) THEN      
+    IF(.NOT. PetscObjectIsNull(pc%pc)) THEN      
       !Do nothing - should be destroyed when the KSP is destroyed.
       !CALL Petsc_PCDestroy(pc,err,error,*999)
     ENDIF
@@ -3525,10 +3497,8 @@ CONTAINS
 
     ENTERS("Petsc_PCInitialise",err,error,*999)
 
-    NULLIFY(pc%pc)
-    ALLOCATE(pc%pc,STAT=err)
-    IF(err/=0) CALL FlagError("Could not allocate PETSc PC object.",err,error,*999)    
-    
+    pc%pc%v=-2
+   
     EXITS("Petsc_PCInitialise")
     RETURN
 999 ERRORSEXITS("Petsc_PCInitialise",err,error)
@@ -3558,8 +3528,6 @@ CONTAINS
       ENDIF
       CALL FlagError("PETSc error in PCDestroy.",err,error,*999)
     ENDIF
-    DEALLOCATE(pc%pc)
-    NULLIFY(pc%pc)
     
     EXITS("Petsc_PCDestroy")
     RETURN
@@ -3771,7 +3739,7 @@ CONTAINS
 
     ENTERS("Petsc_SnesFinalise",err,error,*999)
 
-    IF(ASSOCIATED(snes%snes)) THEN
+    IF(.NOT. PetscObjectIsNull(snes%snes)) THEN
       CALL Petsc_SnesDestroy(snes,err,error,*999)
     ENDIF
     
@@ -3797,9 +3765,7 @@ CONTAINS
 
     ENTERS("Petsc_SnesInitialise",err,error,*999)
 
-    NULLIFY(snes%snes)
-    ALLOCATE(snes%snes,STAT=err)
-    IF(err/=0) CALL FlagError("Could not allocate PETSc SNES object.",err,error,*999)
+    snes%snes%v=-2
      
     EXITS("Petsc_SnesInitialise")
     RETURN
@@ -3853,7 +3819,7 @@ CONTAINS
     TYPE(PetscVecType), INTENT(INOUT) :: x !<The PETSc X Vec
     TYPE(PetscMatType), INTENT(INOUT) :: j !<The PETSc J Mat
     TYPE(PetscMatType), INTENT(INOUT) :: b !<The PETSc B Mat
-    TYPE(PetscMatFDColoringType), POINTER :: ctx !<The passed through context
+    TYPE(PetscMatFDColoringType) :: ctx !<The passed through context
     INTEGER(INTG), INTENT(INOUT) :: err !<The error code
     TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
 
@@ -3931,8 +3897,6 @@ CONTAINS
       ENDIF
       CALL FlagError("PETSc error in SNESDestroy.",err,error,*999)
     ENDIF
-    DEALLOCATE(snes%snes)
-    NULLIFY(snes%snes)
      
     EXITS("Petsc_SnesDestroy")
     RETURN
@@ -4717,8 +4681,6 @@ CONTAINS
 
     !We don't actually call PETSc's SNESLineSearchDestroy as PETSc accesses and destroys the LineSearch when calling
     !SNESDestroy, so we'll just let PETSc clean it up.
-    DEALLOCATE(lineSearch%snesLineSearch)
-    NULLIFY(lineSearch%snesLineSearch)
 
     EXITS("Petsc_SnesLineSearchFinalise")
     RETURN
@@ -4742,9 +4704,7 @@ CONTAINS
 
     ENTERS("Petsc_SnesLineSearchInitialise",err,error,*999)
     
-    NULLIFY(lineSearch%snesLineSearch)
-    ALLOCATE(lineSearch%snesLineSearch,STAT=err)
-    IF(err/=0) CALL FlagError("Could not allocate PETSc SNESLineSearch object.",err,error,*999)
+    lineSearch%snesLineSearch%v=-2
     
     EXITS("Petsc_SnesLineSearchInitialise")
     RETURN
@@ -5100,7 +5060,7 @@ CONTAINS
 
     ENTERS("Petsc_TaoFinalise",err,error,*999)
 
-    IF(ASSOCIATED(tao%tao)) THEN
+    IF(.NOT. PetscObjectIsNull(tao%tao)) THEN
       CALL Petsc_TaoDestroy(tao,err,error,*999)
     ENDIF
     
@@ -5126,9 +5086,7 @@ CONTAINS
 
     ENTERS("Petsc_TaoInitialise",err,error,*999)
 
-    NULLIFY(tao%tao)
-    ALLOCATE(tao%tao,STAT=err)
-    IF(err/=0) CALL FlagError("Could not allocate PETSc TAO object.",err,error,*999)
+    tao%tao%v=-2
      
     EXITS("Petsc_TaoInitialise")
     RETURN
@@ -5193,8 +5151,6 @@ CONTAINS
       ENDIF
       CALL FlagError("PETSc error in TaoDestroy.",err,error,*999)
     ENDIF
-    DEALLOCATE(tao%tao)
-    NULLIFY(tao%tao)
     
     EXITS("Petsc_TaoDestroy")
     RETURN
@@ -5631,7 +5587,7 @@ CONTAINS
 
     ENTERS("Petsc_TSFinalise",err,error,*999)
 
-    IF(ASSOCIATED(ts%ts)) THEN
+    IF(.NOT. PetscObjectIsNull(ts%ts)) THEN
       CALL Petsc_TSDestroy(ts,err,error,*999)
     ENDIF
     
@@ -5657,9 +5613,7 @@ CONTAINS
 
     ENTERS("Petsc_TSInitialise",err,error,*999)
 
-    NULLIFY(ts%ts)
-    ALLOCATE(ts%ts,STAT=err)
-    IF(err/=0) CALL FlagError("Could not allocate PETSc TS object.",err,error,*999)
+    ts%ts%v=-2
      
     EXITS("Petsc_TSInitialise")
     RETURN
@@ -5724,8 +5678,6 @@ CONTAINS
       ENDIF
       CALL FlagError("PETSc error in TSDestroy.",err,error,*999)
     ENDIF
-    DEALLOCATE(ts%ts)
-    NULLIFY(ts%ts)
     
     EXITS("Petsc_TSDestroy")
     RETURN
@@ -6235,7 +6187,7 @@ CONTAINS
 
     ENTERS("Petsc_VecFinalise",err,error,*999)
 
-    IF(ASSOCIATED(x%vec)) THEN
+    IF(.NOT. PetscObjectIsNull(x%vec)) THEN
       CALL Petsc_VecDestroy(x,err,error,*999)
     ENDIF
     
@@ -6261,9 +6213,7 @@ CONTAINS
 
     ENTERS("Petsc_VecInitialise",err,error,*999)
 
-    NULLIFY(x%vec)
-    ALLOCATE(x%vec,STAT=err)
-    IF(err/=0) CALL FlagError("Could not allocate PETSc Vec object.",err,error,*999)
+    x%vec%v=-2
     
     EXITS("Petsc_VecInitialise")
     RETURN
@@ -6649,8 +6599,6 @@ CONTAINS
       ENDIF
       CALL FlagError("PETSc error in VecDestroy.",err,error,*999)
     ENDIF
-    DEALLOCATE(x%vec)
-    NULLIFY(x%vec)
     
     EXITS("Petsc_VecDestroy")
     RETURN

@@ -129,8 +129,6 @@ CONTAINS
     INTEGER(INTG) :: currentIteration,equationsSetIdx,inputIteration,loopType,numberOfEquationsSets,outputIteration,outputType, &
       & regionUserNumber
     REAL(DP) :: currentTime,startTime,stopTime,timeIncrement
-    TYPE(ControlLoopType), POINTER :: parentLoop
-    TYPE(ControlLoopTimeType), POINTER :: timeLoop,parentTimeLoop
     TYPE(EquationsSetType), POINTER :: equationsSet
     TYPE(FieldType), POINTER :: dependentField
     TYPE(FieldsType), POINTER :: regionFields
@@ -331,7 +329,7 @@ CONTAINS
     INTEGER(INTG) colsVariableType,columnComponentIdx,columnElementDOFIdx,columnElementParameterIdx,columnXiIdx,componentIdx, &
       & componentIdx2,esSpecification(3),gaussPointIdx,numberOfColumnElementParameters,numberOfColsComponents,numberOfDimensions, &
       & numberOfGauss,numberOfRowElementParameters,numberOfRowsComponents,numberOfXi,rowComponentIdx,rowElementDOFIdx, &
-      & rowElementParameterIdx,rowsVariableType,rowXiIdx,scalingType,solutionMethod,xiIdx
+      & rowElementParameterIdx,rowsVariableType,rowXiIdx,scalingType
     REAL(DP) :: columnPhi,columndPhidX(3),columndPhidXi(3),D(3,3),Df,Dt,dXidX(3,3),f(3),fnorm,gaussWeight,jacobian, &
       & jacobianGaussWeight,rowPhi,rowdPhidXi(3),rowdPhidX(3),sum
     LOGICAL :: update,updateDamping,updateMatrices,updateRHS,updateStiffness
@@ -351,7 +349,7 @@ CONTAINS
     TYPE(EquationsMatricesVectorType), POINTER :: vectorMatrices
     TYPE(EquationsMatrixType), POINTER :: dampingMatrix,stiffnessMatrix
     TYPE(EquationsVectorType), POINTER :: vectorEquations
-    TYPE(FieldType), POINTER :: dependentField,fibreField,geometricField,independentField,materialsField
+    TYPE(FieldType), POINTER :: dependentField,fibreField,geometricField,materialsField
     TYPE(FieldInterpolationParametersType), POINTER :: colsInterpParameters,fibreInterpParameters,geometricInterpParameters, &
       & materialsInterpParameters,rowsInterpParameters
     TYPE(FieldInterpolatedPointType), POINTER :: fibreInterpPoint,geometricInterpPoint,materialsInterpPoint
@@ -1445,7 +1443,7 @@ CONTAINS
     !Local Variables
     INTEGER(INTG) :: nodeIdx,numberOfNodes,pSpecification(3)
     REAL(DP) :: currentTime,tmpa,tmpv,timeIncrement
-    LOGICAL :: updateDamping,updateRHS,updateStiffness
+    LOGICAL :: updateRHS,updateStiffness
     TYPE(ControlLoopType), POINTER :: controlLoop
     TYPE(DomainType), POINTER :: domain
     TYPE(DomainNodesType), POINTER :: domainNodes

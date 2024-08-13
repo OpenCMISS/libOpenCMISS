@@ -1753,7 +1753,6 @@ CONTAINS
     REAL(DP) :: currentTime,timeIncrement    
     TYPE(ControlLoopType), POINTER :: controlLoop
     TYPE(EquationsType), POINTER :: equations
-    TYPE(EquationsMappingVectorType), POINTER :: vectorMapping
     TYPE(EquationsMatricesDynamicType), POINTER :: dynamicMatrices
     TYPE(EquationsMatricesRHSType), POINTER :: rhsVector
     TYPE(EquationsMatricesVectorType), POINTER :: vectorMatrices
@@ -1764,7 +1763,6 @@ CONTAINS
     TYPE(ProblemType), POINTER :: problem
     TYPE(SolverEquationsType), POINTER :: solverEquations
     TYPE(SolverMappingType), POINTER :: solverMapping
-    TYPE(SolversType), POINTER :: solvers
     TYPE(VARYING_STRING) :: localError
 
     ENTERS("Biodomain_PostSolve",err,error,*999)
@@ -1905,7 +1903,6 @@ CONTAINS
     TYPE(ProblemType), POINTER :: problem
     TYPE(SolverEquationsType), POINTER :: solverEquations
     TYPE(SolverMappingType), POINTER :: solverMapping
-    TYPE(SolversType), POINTER :: solvers
     TYPE(VARYING_STRING) :: localError
 
     ENTERS("Biodomain_PreSolve",err,error,*999)
@@ -2619,15 +2616,14 @@ CONTAINS
       & componentIdx2,esSpecification(3),gaussPointIdx,numberOfColsComponents, &
       & numberOfColumnElementParameters(MAX_NUMBER_OF_COMPONENTS),numberOfDimensions,numberOfGauss, &
       & numberOfRowElementParameters(MAX_NUMBER_OF_COMPONENTS), numberOfRowsComponents,numberOfXi,rowComponentIdx, &
-      & rowElementDOFIdx,rowElementParameterIdx,rowXiIdx,rowsVariableType,scalingType,variableType,xiIdx
-    REAL(DP) :: am,cm,columnPhi,columndPhidXi(MAX_NUMBER_OF_COMPONENTS), &
-      & conductivity(MAX_NUMBER_OF_COMPONENTS,MAX_NUMBER_OF_COMPONENTS),Df,dPhidX(MAX_NUMBER_OF_COMPONENTS,64),Dt, &
+      & rowElementDOFIdx,rowElementParameterIdx,rowXiIdx,rowsVariableType,scalingType,xiIdx
+    REAL(DP) :: am,cm,columnPhi,columndPhidXi(MAX_NUMBER_OF_COMPONENTS),Df,Dt, &
       & extraConductivity(MAX_NUMBER_OF_COMPONENTS,MAX_NUMBER_OF_COMPONENTS),f(MAX_NUMBER_OF_COMPONENTS),fnorm, &
       & gaussWeight,jacobian,jacobianGaussWeight,intraConductivity(MAX_NUMBER_OF_COMPONENTS,MAX_NUMBER_OF_COMPONENTS), &
       & rowPhi,rowdPhidXi(MAX_NUMBER_OF_COMPONENTS),sourceParam,sum
     LOGICAL :: extracellular,uFibres,update,updateDamping,updateMatrices,updateMatrix,updateRHS,updateSource,updateStiffness, &
-      & useFibre,uSource,vFibres    
-    TYPE(BasisType), POINTER :: dependentBasis,geometricBasis,fibreBasis
+      & uSource,vFibres    
+    TYPE(BasisType), POINTER :: dependentBasis,geometricBasis
     TYPE(BasisPtrType) :: columnBasis(MAX_NUMBER_OF_COMPONENTS),rowBasis(MAX_NUMBER_OF_COMPONENTS)
     TYPE(DecompositionType), POINTER :: dependentDecomposition,geometricDecomposition
     TYPE(DomainType), POINTER :: columnDomain,dependentDomain,geometricDomain,rowDomain
@@ -2657,7 +2653,7 @@ CONTAINS
       & vFibreInterpPoint
     TYPE(FieldInterpolatedPointMetricsType), POINTER :: geometricInterpPointMetrics
     TYPE(FieldVariableType), POINTER :: colsVariable,geometricVariable,rowsVariable
-    TYPE(QuadratureSchemeType), POINTER :: dependentQuadratureScheme,geometricQuadratureScheme
+    TYPE(QuadratureSchemeType), POINTER :: dependentQuadratureScheme
     TYPE(QuadratureSchemePtrType) :: columnQuadratureScheme(MAX_NUMBER_OF_COMPONENTS),rowQuadratureScheme(MAX_NUMBER_OF_COMPONENTS)
     TYPE(VARYING_STRING) :: localError
     

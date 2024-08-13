@@ -12,6 +12,8 @@ set(OpenCMISS_CPP_HEADERS
   dllexport.h
   opencmiss_version.h
 )
+set(OpenCMISS_CXX_SRC )
+set(OpenCMISS_CXX_HEADERS )
 set(OpenCMISS_Fortran_SRC
   advection_diffusion_equation_routines.F90
   advection_equation_routines.F90
@@ -156,6 +158,23 @@ else()
   message(WARNING "The operating system is not implemented.")
 endif()
 
+# Add in CellML files
+if(OpenCMISS_WITH_CellML)
+  list(APPEND OpenCMISS_C_HEADERS
+    opencmiss_cellml_model_f.h
+  )
+  list(APPEND OpenCMISS_CXX_HEADERS
+    opencmiss_cellml_model.hpp
+  )
+  list(APPEND OpenCMISS_CXX_SRC
+    opencmiss_cellml_model.cpp
+    opencmiss_cellml_model_f.cpp
+  )
+  list(APPEND OpenCMISS_Fortran_SRC
+    opencmiss_cellml_model.F90
+   )
+endif()
+
 # Add in FieldML files
 if(OpenCMISS_WITH_FieldML)
   list(APPEND OpenCMISS_C_HEADERS
@@ -174,7 +193,7 @@ if(OpenCMISS_WITH_FieldML)
 endif()
 
 # Fix paths to files
-set(FIXPATH_VARS OpenCMISS_C_SRC OpenCMISS_Fortran_SRC)
+set(FIXPATH_VARS OpenCMISS_C_SRC OpenCMISS_CXX_SRC OpenCMISS_Fortran_SRC)
 foreach(varname ${FIXPATH_VARS})
   set(_tmp )
   foreach(filename ${${varname}})
@@ -182,7 +201,7 @@ foreach(varname ${FIXPATH_VARS})
   endforeach()
   set(${varname} ${_tmp})
 endforeach()
-set(FIXPATH_VARS OpenCMISS_C_HEADERS OpenCMISS_CPP_HEADERS)
+set(FIXPATH_VARS OpenCMISS_C_HEADERS OpenCMISS_CXX_HEADERS OpenCMISS_CPP_HEADERS)
 foreach(varname ${FIXPATH_VARS})
   set(_tmp )
   foreach(filename ${${varname}})
@@ -192,8 +211,9 @@ foreach(varname ${FIXPATH_VARS})
 endforeach()
 
 # Set combined sources variable
-set(OpenCMISS_HEADERS ${OpenCMISS_C_HEADERS} ${OpenCMISS_CPP_HEADERS})
+set(OpenCMISS_HEADERS ${OpenCMISS_C_HEADERS} ${OpenCMISS_CXX_HEADERS} ${OpenCMISS_CPP_HEADERS})
 set(OpenCMISS_Fortran_SOURCES ${OpenCMISS_Fortran_SRC} ${OpenCMISS_CPP_HEADERS})
 set(OpenCMISS_Fortran_C_SOURCES ${OpenCMISS_C_SRC} ${OpenCMISS_C_HEADERS} ${OpenCMISS_CPP_HEADERS})
 set(OpenCMISS_C_SOURCES ${OpenCMISS_C_SRC} ${OpenCMISS_C_HEADERS} ${OpenCMISS_CPP_HEADERS})
-set(OpenCMISS_SOURCES ${OpenCMISS_C_SRC} ${OpenCMISS_Fortran_SRC} ${OpenCMISS_C_HEADERS} ${OpenCMISS_CPP_HEADERS})
+set(OpenCMISS_CXX_SOURCES ${OpenCMISS_CXX_SRC} ${OpenCMISS_CXX_HEADERS} ${OpenCMISS_CPP_HEADERS})
+set(OpenCMISS_SOURCES ${OpenCMISS_C_SRC} ${OpenCMISS_CXX_SRC} ${OpenCMISS_Fortran_SRC} ${OpenCMISS_C_HEADERS} ${OpenCMISS_CXX_HEADERS} ${OpenCMISS_CPP_HEADERS})

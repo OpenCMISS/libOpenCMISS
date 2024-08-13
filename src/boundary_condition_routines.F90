@@ -5134,7 +5134,7 @@ MODULE BoundaryConditionsRoutines
       IF(diagnostics2) CALL WriteStringValue(DIAGNOSTIC_OUTPUT_TYPE,"  Neumann point DOF index = ",neumannIdx,err,error,*999)
       DO domainIdx=1,numberOfDomains
         CALL DomainMapping_LocalTypeFromGlobalGet(rowsMapping,neumannIdx,domainIdx,localType,err,error,*999)
-        IF(localDOF==DOMAIN_LOCAL_GHOST) THEN
+        IF(localType==DOMAIN_LOCAL_GHOST) THEN
           CALL DomainMapping_DomainNumberFromGlobalGet(rowsMapping,globalDOF,domainIdx,domainNumber,err,error,*999)
           localDofNumbers(domainNumber)=localDofNumbers(domainNumber)+1
           pointDofMapping%globalToLocalMap(neumannIdx)%localNumber(domainIdx)=localDofNumbers(domainNumber)

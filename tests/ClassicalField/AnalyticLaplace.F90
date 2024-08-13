@@ -82,10 +82,8 @@ PROGRAM AnalyticLaplaceExample
 
   !Program variables
 
-  TYPE(OC_ComputationEnvironmentType) :: computationEnvironment
   TYPE(OC_ContextType) :: context
   TYPE(OC_RegionType) :: worldRegion
-  TYPE(OC_WorkGroupType) :: worldWorkGroup
 
   INTEGER(OC_Intg) :: NUMBER_OF_ARGUMENTS,ARGUMENT_LENGTH,STATUS,INTERPOLATION
   CHARACTER(LEN=255) :: COMMAND_ARGUMENT

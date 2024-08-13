@@ -259,7 +259,6 @@ CONTAINS
     INTEGER(OC_Intg), INTENT(IN) :: INTERPOLATION_SPECIFICATIONS !<the interpolation specifications
     TYPE(OC_FieldType) :: DEPENDENT_FIELD
     !Local Variables
-    INTEGER(OC_Intg) :: NUMBER_OF_DOMAINS
     INTEGER(OC_Intg) :: MPI_IERROR
 
     INTEGER(OC_Intg) :: AnalyticFunction

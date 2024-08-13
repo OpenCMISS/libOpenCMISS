@@ -93,7 +93,7 @@ PROGRAM NonlinearPoissonExample
   TYPE(OC_BoundaryConditionsType) :: BoundaryConditions
   TYPE(OC_ComputationEnvironmentType) :: ComputationEnvironment
   TYPE(OC_ContextType) :: context
-  TYPE(OC_CoordinateSystemType) :: CoordinateSystem,WorldCoordinateSystem
+  TYPE(OC_CoordinateSystemType) :: CoordinateSystem
   TYPE(OC_DecompositionType) :: Decomposition
   TYPE(OC_DecomposerType) :: Decomposer
   TYPE(OC_EquationsType) :: Equations

@@ -59,61 +59,63 @@ MODULE OpenCMISSPETScTypes
   
   !Module types
 
+  !The non-underscore types are for buffering OpenCMISS -> PETSc and the
+  !underscore types are for buffering PETSc -> OpenCMISS
+
   TYPE PetscISType
-    IS, POINTER :: is
+    IS :: is
   END TYPE PetscISType
 
   TYPE PetscISLocalToGloabalMappingType
-    ISLocalToGlobalMapping, POINTER :: isLocalToGlobalMapping
+    ISLocalToGlobalMapping :: isLocalToGlobalMapping
   END TYPE PetscISLocalToGloabalMappingType
 
   TYPE PetscISColoringType
-    ISColoring, POINTER :: isColoring
+    ISColoring :: isColoring
   END TYPE PetscISColoringType
 
   TYPE PetscKspType
-    KSP, POINTER :: ksp
+    KSP :: ksp
   END TYPE PetscKspType
 
   TYPE PetscMatType
-    Mat, POINTER :: mat
+    Mat :: mat
   END TYPE PetscMatType
   
   TYPE PetscMatColoringType
-    MatColoring, POINTER :: matColoring
+    MatColoring :: matColoring
   END TYPE PetscMatColoringType
   
   TYPE PETScMatFDColoringType
-    MatFDColoring, POINTER :: matFDColoring
+    MatFDColoring :: matFDColoring
   END TYPE PETScMatFDColoringType
-
   TYPE PetscPCType
-    PC, POINTER :: pc
+    PC :: pc
   END TYPE PetscPCType
   
   TYPE PetscSnesType
-    SNES, POINTER :: snes
+    SNES :: snes
   END TYPE PetscSnesType
 
   TYPE PetscSnesLineSearchType
-    SNESLineSearch, POINTER :: snesLineSearch
+    SNESLineSearch :: snesLineSearch
   END TYPE PetscSnesLineSearchType
 
   TYPE PetscTaoType
-    Tao, POINTER :: tao
+    Tao :: tao
   END TYPE PetscTaoType
     
   TYPE PetscTSType
-    TS, POINTER :: ts
+    TS :: ts
   END TYPE PetscTSType
   
   TYPE PetscVecType
-    Vec, POINTER :: vec
+    Vec :: vec
   END TYPE PetscVecType
   
   !Interfaces
- 
+
   PUBLIC PetscISType,PetscISLocalToGloabalMappingType,PetscISColoringType,PetscKspType,PetscMatType,PetscMatColoringType, &
     & PetscMatFDColoringType,PetscPCType,PetscSnesType,PetscSnesLineSearchType,PetscTaoType,PetscTSType,PetscVecType
-
+  
 END MODULE OpenCMISSPETScTypes

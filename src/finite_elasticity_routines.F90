@@ -652,7 +652,7 @@ CONTAINS
     TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
     !Local Variables
     INTEGER(INTG) :: columnIdx,esSpecification(3),rowIdx
-    REAL(DP) :: dQdEbarV(6),I1bar,I3bar,tempTerm1,tempTerm2,materialsB(6)
+    REAL(DP) :: dQdEbarV(6),I3bar,tempTerm1,tempTerm2,materialsB(6)
     REAL(DP), POINTER :: materialParameters(:)
     TYPE(VARYING_STRING) :: localError
 
@@ -1290,7 +1290,7 @@ CONTAINS
     INTEGER(INTG), INTENT(OUT) :: err !<The error code
     TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
     !Local Variables
-    REAL(DP) :: B(3,3),BBar(3,3),C(3,3),CBar(3,3),EV(6),EBarV(6),FBar(3,3),FBarT(3,3),I1Bar,I3Bar,SBarV(6),SDevV(6),SSphV(6), &
+    REAL(DP) :: B(3,3),BBar(3,3),C(3,3),CBar(3,3),EV(6),EBarV(6),FBar(3,3),FBarT(3,3),SBarV(6),SDevV(6),SSphV(6), &
       & tempTerm1,tempTerm2
 
     ENTERS("FiniteElasticity_MaterialStressTensorsCalculate",err,error,*999)
@@ -1530,7 +1530,6 @@ CONTAINS
     !Local Variables
     INTEGER(INTG) :: columnIdx,rowIdx
     REAL(DP) :: temp(6,6),tempTranspose(6,6)
-    TYPE(VARYING_STRING) :: localError
 
     ENTERS("FiniteElasticity_PushElasticityTensorForward",err,error,*999)
 
@@ -1586,7 +1585,6 @@ CONTAINS
     !Local Variables
     INTEGER(INTG) :: columnIdx,rowIdx
     REAL(DP) :: temp(6,6)
-    TYPE(VARYING_STRING) :: localError
 
     ENTERS("FiniteElasticity_PushStressTensorForward",err,error,*999)
 
@@ -2170,7 +2168,7 @@ CONTAINS
     TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
     !Local Variables
     INTEGER(INTG) :: componentIdx,dofIdx,esSpecification(3),i,interpolationType,j,numberOfComponents,pressureComponent
-    REAL(DP) :: P, I1, I3, lambda(3)
+    REAL(DP) :: P, I1, I3
     REAL(DP) :: dZdNuT(3,3),rightCauchyGreen(3,3),piolaDeformation(3,3),temp(3,3)
     REAL(DP) :: rightCauchyGreenV(6), piolaDeformationV(6) !<Voigt forms of the C and C^-1 tensors.
     REAL(DP) :: tempTerm1,tempTerm2,value
@@ -2181,7 +2179,7 @@ CONTAINS
     REAL(DP) :: dBdC(6,6)
     REAL(DP), POINTER :: C(:) !Parameters for constitutive laws
     TYPE(FieldType), POINTER :: independentField
-    TYPE(FieldVariableType), POINTER :: dependentVariable,independentVariable
+    TYPE(FieldVariableType), POINTER :: independentVariable
     TYPE(VARYING_STRING) :: localError
 
     ENTERS("FiniteElasticity_GaussElasticityTensor",err,error,*999)
@@ -2497,7 +2495,7 @@ CONTAINS
     TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
     !Local Variables
     INTEGER(INTG) :: colsElementBaseDOFIndex(4),colsInterpolationType,colsVariableType,columnComponentIdx,columnElementDOFIdx, &
-      & columnElementParameterIdx,componentIdx,dependentScalingType,elementBaseDOFIndex(4),equationsSetSubtype, &
+      & columnElementParameterIdx,dependentScalingType,elementBaseDOFIndex(4),equationsSetSubtype, &
       & esSpecification(3),gaussPointIdx, &
       & meshComponentNumber,numberOfColsComponents,numberOfColsElementParameters(4),numberOfComponents,numberOfDimensions, &
       & numberOfElementParameters(4),numberOfGauss,numberOfRowsComponents,numberOfRowsElementParameters(4),numberOfXi, &
@@ -2514,12 +2512,12 @@ CONTAINS
     TYPE(BoundaryConditionsType), POINTER :: boundaryConditions
     TYPE(BoundaryConditionsVariableType), POINTER :: boundaryConditionsVariable
     TYPE(CoordinateSystemType), POINTER :: coordinateSystem
-    TYPE(DecompositionType), POINTER :: decomposition,dependentDecomposition
+    TYPE(DecompositionType), POINTER :: dependentDecomposition
     TYPE(DecompositionElementsType), POINTER :: decompositionElements,dependentDecompElements
     TYPE(DecompositionTopologyType), POINTER :: decompositionTopology,dependentDecompTopology
-    TYPE(DomainType), POINTER :: colsDomain,domain,rowsDomain
+    TYPE(DomainType), POINTER :: colsDomain,rowsDomain
     TYPE(DomainElementsType), POINTER :: colsDomainElements,domainElements,rowsDomainElements
-    TYPE(DomainTopologyType), POINTER :: colsDomainTopology,domainTopology,rowsDomainTopology
+    TYPE(DomainTopologyType), POINTER :: colsDomainTopology,rowsDomainTopology
     TYPE(EquationsType), POINTER :: equations
     TYPE(EquationsInterpolationType), POINTER :: equationsInterpolation
     TYPE(EquationsMappingLHSType), POINTER :: lhsMapping
@@ -3105,7 +3103,7 @@ CONTAINS
       & numberOfDimensions,numberOfElementParameters(4),numberOfGauss,numberOfRowsComponents,numberOfRowsElementParameters(4), &
       & numberOfXi,oh,pressureComponent,pressureInterpolationType,rowComponentIdx,rowsElementBaseDOFIndex(4),rowElementDOFIdx, &
       & rowElementParameterIdx,rowsInterpolationType,rowsVariableType,sumElementParameters,totalNumberOfColsElementDOFs, &
-      & totalNumberOfRowsElementDOFs,totalNumSurfacePressureConditions,xiIdx,variableType
+      & totalNumberOfRowsElementDOFs,totalNumSurfacePressureConditions,xiIdx
     INTEGER(INTG), PARAMETER :: OFF_DIAG_COMP(3)=[0,1,3],OFF_DIAG_DEP_VAR1(3)=[1,1,2],OFF_DIAG_DEP_VAR2(3)=[2,3,3]
     REAL(DP) :: cauchyTensor(3,3),columnPhi,columndPhi,dJdZ(64,3),dNudXi(3,3),dPhidZ(3,64,3),dXidNu(3,3),dZdNu(3,3), &
       & dZdX(3,3),elasticityTensor(6,6),fibreVectors(3,3),FNu(3,3),gaussWeight, &
@@ -3881,6 +3879,7 @@ CONTAINS
     ENTERS("FiniteElasticity_FiniteElementResidualEvaluateNew",err,error,*999)
 
     CALL EquationsSet_SpecificationGet(equationsSet,3,esSpecification,err,error,*999)
+    equationsSetSubtype=esSpecification(3)
 
     NULLIFY(equations)
     CALL EquationsSet_EquationsGet(equationsSet,equations,err,error,*999)
@@ -3907,7 +3906,6 @@ CONTAINS
     ENDIF 
     NULLIFY(rhsVector)
     CALL EquationsMatricesVector_RHSVectorGet(vectorMatrices,rhsVector,err,error,*999)
-    
     CALL EquationsMatricesResidual_UpdateVectorGet(residualVector,updateResidual,err,error,*999)
     updateMass=.FALSE.
     IF(equationsSetSubtype == EQUATIONS_SET_DYNAMIC_ST_VENANT_KIRCHOFF_SUBTYPE.OR. &
@@ -4634,7 +4632,7 @@ CONTAINS
       & rowComponentIdx, &
       & rowElementDOFIdx,rowElementParameterIdx,rowInterpolationType, &
       & rowsVariableType,scalingType,timeDependence,totalNumberOfSurfacePressureConditions, &
-      & variableType,rowXiIdx
+      & rowXiIdx
     INTEGER(INTG), POINTER :: equationsSetFieldData(:)
     REAL(DP) ::  bfact,C(3,3),cauchyTensor(3,3),columnPhi,darcyMassIncrease,darcyVolIncrease,darcyRho0F,dColumnPhidXi, &
       & deformationGradientTensor(3,3),density,dFdZ(64,3,3),dNudXi(3,3),dPhidZ(3,64,3),dXidNu(3,3),dZdNu(3,3),dZdNuT(3,3), &
@@ -7434,10 +7432,9 @@ CONTAINS
     INTEGER(INTG), INTENT(OUT) :: err !<The error code
     TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
     !Local Variables
-    INTEGER(INTG) :: componentIdx,currentIteration,inputIteration,loopType,numberOfDimensions,outputIteration,pSpecification(3)
+    INTEGER(INTG) :: currentIteration,inputIteration,loopType,outputIteration,pSpecification(3)
     REAL(DP) :: currentTime,timeIncrement,startTIme,stopTime
     TYPE(EquationsSetType), POINTER :: equationsSet
-    TYPE(FieldType), POINTER :: dependentField,geometricField
     TYPE(FieldsType), POINTER :: fields
     TYPE(ProblemType), POINTER :: problem
     TYPE(RegionType), POINTER :: region
@@ -7529,8 +7526,8 @@ CONTAINS
     INTEGER(INTG) :: componentIdx,dataPointIdx,dataPointNumber,elementIdx,elementNumber,esSpecification(3),fieldInterpolation, &
       & fieldVarType,finishIdx,gaussPointIdx,meshComponentNumber,numberOfComponents,numberOfDataPoints, &
       & numberOfDependentComponents,numberOfDimensions,numberOfElementXi,numberOfGauss,numberOfTimes,numberOfXi,outputType, &
-      & partIdx,startIdx,residualVariableType,variableType
-    REAL(DP) :: dZdNu(3,3),Fg(3,3),Fe(3,3),J,Jg,Je,C(3,3),f(3,3),E(3,3),growthValues(3),xi(3),values(3,3)
+      & partIdx,startIdx,residualVariableType
+    REAL(DP) :: dZdNu(3,3),Fg(3,3),Fe(3,3),Jg,Je,C(3,3),E(3,3),growthValues(3),xi(3),values(3,3)
     REAL(SP) :: elementUserElapsed,elementSystemElapsed,systemElapsed,systemTime1(1),systemTime2(1),systemTime3(1), &
       & systemTime4(1),userElapsed,userTime1(1),userTime2(1),userTime3(1),userTime4(1)
     TYPE(BasisType), POINTER :: basis
@@ -8022,7 +8019,7 @@ CONTAINS
     INTEGER(INTG), INTENT(OUT) :: err !<The error code.
     TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string.
     !Local variables
-    INTEGER(INTG) :: componentIdx,columnComponentIdx,esSpecification(3),fieldInterpolation,rowComponentIdx
+    INTEGER(INTG) :: columnComponentIdx,esSpecification(3),fieldInterpolation,rowComponentIdx
     REAL(DP) :: B(3,3),BBar(3,3),cauchyStressTensor(3,3),C(3,3),CBar(3,3),dNudXi(3,3),dXidNu(3,3),E(3,3),Ebar(3,3),EbarV(6), &
       & EV(6),F(3,3),FNu(3,3),Fbar(3,3),Fe(3,3),Fg(3,3),fibreVectors(3,3),J,Je,Jg,JNu,JZ,p,SBarV(6),sigmaV(6)
     LOGICAL :: haveHydrostaticPressure
@@ -9033,7 +9030,7 @@ CONTAINS
     INTEGER(INTG), INTENT(OUT) :: err !<The error code
     TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
     !Local variables
-    INTEGER(INTG) :: componentIdx,elementBaseDOFIdx,elementDOFIdx,elementFaceIdx,equationsSetSubtype,esSpecification(3), &
+    INTEGER(INTG) :: elementBaseDOFIdx,elementDOFIdx,elementFaceIdx,equationsSetSubtype,esSpecification(3), &
       & faceElementParameter,faceNumber,faceParameterIdx,fieldUVariableType,fielddUdnVariableType,gaussPointIdx,localFaceIdx, &
       & meshComponentNumber,numberOfDimensions,numberOfElementParameters,numberOfGauss,numberOfLocalFaces, &
       & numberOfRowFaceParameters,orientation,parameterIdx,residualVariableType,rhsVariableType,rowComponentIdx, &
@@ -9308,7 +9305,7 @@ CONTAINS
     INTEGER(INTG), INTENT(OUT) :: err !<The error code
     TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
     !Local Variables
-    INTEGER(INTG) :: componentIdx,darcyMassIncreaseEntry,dofIdx,equationsSetSubtype,esSpecification(3),i,j,k,lWork,node1, &
+    INTEGER(INTG) :: componentIdx,darcyMassIncreaseEntry,dofIdx,equationsSetSubtype,esSpecification(3),i,j,lWork,node1, &
       & node2,pressureComponent
     INTEGER(INTG), PARAMETER :: lWMax=1000
     REAL(DP) :: a, A1,A2,activation,activeStress11,activeStress22,activeStress33,B(3,3),Ca(3,3),CaInv(3,3),Ce(3,3),deltaT, &
@@ -11773,7 +11770,7 @@ CONTAINS
     INTEGER(INTG) :: componentIdx,dependentFieldNumberOfVariables,derivedIdx,dimensionIdx,equationsSetFieldNumberOfComponents, &
       & equationsSetFieldNumberOfVariables,equationsSetSubtype,esSpecification(3),geometricComponentNumber, &
       & geometricMeshComponent,geometricScalingType,lumpingType,numberOfCompartments,numberOfComponents,numberOfComponents2, &
-      & numberOfDimensions,numberOfDarcyComponents,numberOfFluidComponents,numberOfTensorComponents,numberOfVariables, &
+      & numberOfDimensions,numberOfDarcyComponents,numberOfFluidComponents,numberOfTensorComponents, &
       & solutionMethod,sparsityType,variableIdx,variableType
     INTEGER(INTG), POINTER :: equationsSetFieldData(:)
     INTEGER(INTG), ALLOCATABLE :: variableTypes(:)
@@ -16438,6 +16435,7 @@ CONTAINS
     INTEGER(INTG) :: currentIteration,equationsSetIdx,inputIteration,maxNumberOfIterations,numberOfEquationsSets, &
       & numberOfSolvers,outputIteration,solverIdx
     LOGICAL :: dirExist
+    EXTERNAL :: SYSTEM
     TYPE(EquationsSetType), POINTER :: equationsSet
     TYPE(FieldsType), POINTER :: fields
     TYPE(RegionType), POINTER :: region

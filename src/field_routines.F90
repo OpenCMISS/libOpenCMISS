@@ -21922,9 +21922,9 @@ CONTAINS
       NULLIFY(interpolatedPoint)
       CALL Field_InterpolatedPointInitialise(interpolationParameters,interpolatedPoint,err,error,*999)
       CALL DomainNode_BoundaryNodeGet(domainNode,boundaryNode,err,error,*999)
+      numberOftangents=0
+      numberOfNormals=0
       IF(boundaryNode) THEN
-        numberOftangents=0
-        numberOfNormals=0
         SELECT CASE(numberOfDomainDimensions)
         CASE(1)
           !1D domain, no tangents, just a position

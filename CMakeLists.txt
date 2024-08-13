@@ -176,8 +176,7 @@ option(OpenCMISS_WITH_SLEPc "Build OpenCMISS with SLEPc integration." ON)
 option(OpenCMISS_WITH_ScaLAPACK "Build OpenCMISS with ScaLAPACK integration." ON)
 option(OpenCMISS_WITH_SUNDIALS "Build OpenCMISS with SUNDIALS integration." OFF)
 
-set(OpenCMISS_WITH_CellML OFF)
-set(OpenCMISS_WITH_MUMPS OFF)
+#set(OpenCMISS_WITH_CellML OFF)
 set(OpenCMISS_WITH_SUNDIALS OFF)
 
 # Set versions of external libraries/packages
@@ -305,6 +304,11 @@ if(OpenCMISS_WITH_FieldML)
   find_package(FieldML ${OpenCMISS_FieldML_VERSION} REQUIRED) 
 endif()
 
+# MUMPS
+if(OpenCMISS_WITH_MUMPS)
+  find_package(FieldML ${OpenCMISS_FieldML_VERSION} REQUIRED) 
+endif()
+
 # ParMETIS
 if(OpenCMISS_WITH_ParMETIS)
   find_package(ParMETIS ${OpenCMISS_ParMETIS_VERSION} REQUIRED)
@@ -351,8 +355,9 @@ if(CMAKE_Fortran_COMPILER_ID STREQUAL "IntelLLVM")
   add_compile_options( "$<$<AND:$<COMPILE_LANGUAGE:Fortran>,$<OR:$<CONFIG:Debug>,$<CONFIG:RelWitDebInfo>>>:-debug>" )
   add_compile_options( "$<$<AND:$<COMPILE_LANGUAGE:Fortran>,$<BOOL:${OpenCMISS_WITH_OpenMP}>>:-fopenmp>" )
   add_compile_options( "$<$<AND:$<COMPILE_LANGUAGE:Fortran>,$<BOOL:${OpenCMISS_WITH_WARN_ALL}>>:-warn;all>" )
-  add_compile_options( "$<$<AND:$<COMPILE_LANGUAGE:Fortran>,$<BOOL:${OpenCMISS_WITH_CHECK_ALL}>>:-check;all,nouninit>" )
+  add_compile_options( "$<$<AND:$<COMPILE_LANGUAGE:Fortran>,$<BOOL:${OpenCMISS_WITH_CHECK_ALL}>>:-check;all,nouninit;-fsanitize=address>" )
   add_compile_options( "$<$<AND:$<COMPILE_LANGUAGE:Fortran>,$<CONFIG:Release>>:-fast>" )
+  add_compile_options( "$<$<AND:$<COMPILE_LANGUAGE:Fortran>,$<CONFIG:Debug>>:-O0>" )
   add_compile_options( "$<$<AND:$<COMPILE_LANGUAGE:Fortran>,$<CONFIG:Debug>>:-O0>" )
 elseif(CMAKE_Fortran_COMPILER_ID STREQUAL "GNU")
   add_compile_options( "$<$<COMPILE_LANGUAGE:Fortran>:-fbacktrace>" )
@@ -498,7 +503,8 @@ foreach(_target ${OpenCMISS_Fortran_TARGETS})
   if(OpenCMISS_WITH_CellML)
     message(STATUS "Adding CellML to target ${_target}...")
     target_compile_definitions(${_target} PUBLIC WITH_CELLML)
-    target_link_libraries(${_target} PUBLIC libCellML::libCellML)
+    #target_link_libraries(${_target} PUBLIC libCellML::libCellML)
+    target_link_libraries(${_target} PUBLIC cellml)
   endif()
   if(OpenCMISS_WITH_FieldML)
     message(STATUS "Adding FieldML to target ${_target}...")
@@ -864,30 +870,6 @@ install(FILES
     DESTINATION ${OpenCMISS_INSTALL_CMAKE_PROJECT_CONFIG_SUBDIR}
     COMPONENT Development
 )
-# Bundle fixup for iron shared library
-# We need non-system libraries shipped out with the Runtime libraries.
-# This will probably also work on other platforms - need to check
-if (WIN32)
-    # The wild turkey is out! We need this generator-intermediate step to get a hold of the effective output location
-    # of the iron shared library. This in turn in placed inside a directory that is configuration-dependent,
-    # and in the cmake_install script the CMAKE_INSTALL_CONFIG_NAME helps us getting the job done.
-    file(GENERATE OUTPUT "${CMAKE_CURRENT_BINARY_DIR}/$<CONFIG>/wildturkey.cmake"
-        CONTENT "set(IRON_LIB_NAME \"$<TARGET_FILE:iron>\")")
-    # Hack: The BundleUtilities dont seem to work unless you give them an executable (just the dll wont work),
-    # and as we dont always have the tests around we just use the cmake executable, which will always be around.
-    install(FILES ${CMAKE_COMMAND}
-        DESTINATION bin)
-    get_filename_component(CMAKE_NAME "${CMAKE_COMMAND}" NAME)
-    install(CODE "
-       include(BundleUtilities)
-       include(${CMAKE_CURRENT_BINARY_DIR}/\${CMAKE_INSTALL_CONFIG_NAME}/wildturkey.cmake)
-       file(COPY \"${CMAKE_COMMAND}\" DESTINATION \"\${CMAKE_INSTALL_PREFIX}/bin\")
-       fixup_bundle(\"\${CMAKE_INSTALL_PREFIX}/bin/${CMAKE_NAME}\" \"\${IRON_LIB_NAME}\" \"\")
-       file(REMOVE \"\${CMAKE_INSTALL_PREFIX}/bin/${CMAKE_NAME}\")
-       "
-       COMPONENT Redist)
-endif()
-
 
 if(OpenCMISS_WITH_TESTS)
   enable_testing()

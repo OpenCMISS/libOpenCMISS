@@ -430,7 +430,7 @@ CONTAINS
     TYPE(EquationsSetMaterialsType), POINTER :: equationsMaterials
     TYPE(EquationsSetSourceType), POINTER :: equationsSource
     TYPE(EquationsSetIndependentType), POINTER :: equationsIndependent
-    TYPE(FieldType), POINTER :: analyticField,dependentField,equationsSetField,geometricField
+    TYPE(FieldType), POINTER :: dependentField,equationsSetField,geometricField
     TYPE(FieldVariableType), POINTER :: geometricVariable
     TYPE(RegionType), POINTER :: region
     TYPE(VARYING_STRING) :: localError
@@ -1853,11 +1853,11 @@ CONTAINS
       & sourceField
     TYPE(FieldInterpolationParametersType), POINTER :: colsInterpParameters,couplingInterpParameters,fibreInterpParameters, &
       & geometricInterpParameters,independentInterpParameters,rowsInterpParameters,sourceInterpParameters, &
-      & uDependentInterpParameters,uMaterialsInterpParameters,vDependentInterpParameters,vMaterialsInterpParameters
+      & uMaterialsInterpParameters,vDependentInterpParameters,vMaterialsInterpParameters
     TYPE(FieldInterpolatedPointType), POINTER :: fibreInterpPoint,geometricInterpPoint,independentInterpPoint,sourceInterpPoint, &
-      & uDependentInterpPoint,uMaterialsInterpPoint,vDependentInterpPoint,vMaterialsInterpPoint
+      & uMaterialsInterpPoint,vDependentInterpPoint,vMaterialsInterpPoint
     TYPE(FieldInterpolatedPointMetricsType), POINTER :: geometricInterpPointMetrics
-    TYPE(FieldVariableType), POINTER :: colsVariable,dependentVariable,equationsSetVariable,fibreVariable,geometricVariable, &
+    TYPE(FieldVariableType), POINTER :: colsVariable,equationsSetVariable,fibreVariable,geometricVariable, &
       & independentVariable,rowsVariable,sourceVariable,uMaterialsVariable,vDependentVariable,vMaterialsVariable
     TYPE(FieldVariablePtrType) :: couplingVariables(MAX_NUMBER_OF_COUPLING_MATRICES)
     TYPE(QuadratureSchemeType), POINTER :: columnQuadratureScheme,dependentQuadratureScheme,geometricQuadratureScheme, &
@@ -2741,7 +2741,6 @@ CONTAINS
     INTEGER(INTG) :: outputType,problemSubType,pSpecification(3)
     TYPE(ControlLoopType), POINTER :: controlLoop
     TYPE(ProblemType), POINTER :: problem
-    TYPE(SolverType), POINTER :: solver2
     TYPE(VARYING_STRING) :: localError
 
     ENTERS("AdvectionDiffusion_PreSolve",err,error,*999)
@@ -2801,7 +2800,7 @@ CONTAINS
     INTEGER(INTG), INTENT(OUT) :: err !<The error code
     TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
     !Local Variables
-    INTEGER(INTG) :: currentIteration,dofIdx,dofNumber,esSpecification(3),inputIteration,inputOption,inputType,numberOfDimensions, &
+    INTEGER(INTG) :: currentIteration,dofIdx,esSpecification(3),inputIteration,inputOption,inputType,numberOfDimensions, &
       &numberDOFsToPrint,outputIteration,outputTYpe,pSpecification(3),totalNumberOfDofs
     REAL(DP) :: alpha,currentTime,startTime,stopTime,timeIncrement
     REAL(DP), POINTER :: inputData1(:),meshDisplacementValues(:)
@@ -2809,7 +2808,6 @@ CONTAINS
     TYPE(FieldType), POINTER :: geometricField
     TYPE(FieldVariableType), POINTER :: geometricVariable
     TYPE(ProblemType), POINTER :: problem
-    TYPE(SolverType), POINTER :: solverALEDiffusion
     TYPE(SolverEquationsType), POINTER :: solverEquations
     TYPE(SolverMappingType), POINTER :: solverMapping
     TYPE(VARYING_STRING) :: localError
@@ -3152,14 +3150,13 @@ CONTAINS
     TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
     !Local Variables
     INTEGER(INTG) :: currentIteration,inputIteration,inputOption,inputType,numberOfDimensions,outputIteration,outputType, &
-      & problemSubtype,pSpecification(3)
+      & pSpecification(3)
     REAL(DP) :: currentTime,startTime,stopTime,timeIncrement
     REAL(DP), POINTER :: inputData1(:)
     TYPE(ControlLoopType), POINTER :: controlLoop
-    TYPE(EquationsType), POINTER :: equations
     TYPE(EquationsSetType), POINTER :: equationsSet
     TYPE(FieldType), POINTER :: geometricField,independentField
-    TYPE(FieldVariableType), POINTER :: geometricVariable,independentVariable
+    TYPE(FieldVariableType), POINTER :: independentVariable
     TYPE(ProblemType), POINTER :: problem
     TYPE(SolverEquationsType), POINTER :: solverEquations
     TYPE(SolverMappingType), POINTER :: solverMapping
@@ -3245,7 +3242,6 @@ CONTAINS
     INTEGER(INTG), POINTER :: boundaryNodes(:)    
     REAL(DP) :: currentTime,startTime,stopTime,timeIncrement
     REAL(DP), POINTER :: boundaryValues(:)
-    LOGICAL :: ghostDOF
     TYPE(BoundaryConditionsType), POINTER :: boundaryConditions
     TYPE(BoundaryConditionsVariableType), POINTER :: boundaryConditionsVariable
     TYPE(ControlLoopType), POINTER :: controlLoop !<A pointer to the control loop to solve.

@@ -3110,6 +3110,10 @@ END TYPE GeneratedMeshEllipsoidType
     INTEGER(INTG) :: globalNumber !< The global number of this CellML model within the parent CellML environment.
     TYPE(VARYING_STRING) :: modelId !<The ID of the model.
     TYPE(C_PTR) :: ptr !< The handle for the actual C++ CellML model definition object
+    INTEGER(INTG) :: numberOfAlgebraic !<The number of algebraic CellML variables in the model.
+    INTEGER(INTG) :: numberOfComputedConstants !<The number of computed constant CellML variables in the model.
+    INTEGER(INTG) :: numberOfConstants !<The number of constant CellML variables in the model.
+    INTEGER(INTG) :: numberOfRates !<The number of rates in the CellML model.
     INTEGER(INTG) :: numberOfState !<The number of state variables in the CellML model.
     TYPE(VARYING_STRING), ALLOCATABLE :: stateVariableId(:) !<stateVariableId(stateVariableIdx). The ID for the stateVariableIdx'th state variable.
     INTEGER(INTG) :: numberOfIntermediate !<The number of intermediate variables in the CellML model.

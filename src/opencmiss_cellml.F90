@@ -569,7 +569,6 @@ CONTAINS
     TYPE(CellMLModelType), POINTER :: cellMLModel
     INTEGER(C_INT) :: errorCode
     INTEGER(INTG) :: modelIdx
-    TYPE(VARYING_STRING) :: localError
     
     ENTERS("CellML_CreateFinish",err,error,*999)
 
@@ -583,21 +582,27 @@ CONTAINS
       CALL CellML_CellMLModelGet(cellML,modelIdx,cellMLModel,err,error,*999)
       
 #ifdef WITH_CELLML
-        
-      !CALL CellMLModel_SetSaveTemporaryFiles(cellMLModel%ptr,1)
-      errorCode=CellMLModel_Instantiate(cellMLModel%ptr)
-      IF(errorCode/=0) THEN
-        localError="Error "//TRIM(NumberToVString(errorCode,"*",err,error))// &
-          & " while instantiating CellML model index "//TRIM(NumberToVString(modelIdx,"*",err,error))//"."
-        CALL FlagError(localError,err,error,*999)
-      ENDIF
-      cellMLModel%numberOfState=CellMLModel_GetNumberRates(cellMLModel%ptr)
+
+      !Instatiate the model
+      errorCode=CellMLModel_Instatiate(cellMLModel%ptr)
+      CALL CellMLModel_CheckError(cellMLModel%ptr,errorCode,err,error,*999)
+      !Get the various number of variables
+      errorCode = CellMLModel_GetNumberOfAlgebraics(cellMLModel%ptr,cellMLModel%numberOfAlgebraic)
+      CALL CellMLModel_CheckError(cellMLModel%ptr,errorCode,err,error,*999)
+      errorCode = CellMLModel_GetNumberOfComputedConstants(cellMLModel%ptr,cellMLModel%numberOfComputedConstants)
+      CALL CellMLModel_CheckError(cellMLModel%ptr,errorCode,err,error,*999)
+      errorCode = CellMLModel_GetNumberOfConstants(cellMLModel%ptr,cellMLModel%numberOfConstants)
+      CALL CellMLModel_CheckError(cellMLModel%ptr,errorCode,err,error,*999)
+      errorCode = CellMLModel_GetNumberOfRates(cellMLModel%ptr,cellMLModel%numberOfRates)
+      CALL CellMLModel_CheckError(cellMLModel%ptr,errorCode,err,error,*999)
+      errorCode = CellMLModel_GetNumberOfStates(cellMLModel%ptr,cellMLModel%numberOfState)
+      CALL CellMLModel_CheckError(cellMLModel%ptr,errorCode,err,error,*999)
       IF(cellMLModel%numberOfState>cellML%maximumNumberOfState) cellML%maximumNumberOfState=cellMLModel%numberOfState
-      cellMLModel%numberOfParameters=CellMLMOdel_GetNumberConstantsS(cellMLModel%ptr)
+      cellMLModel%numberOfParameters=cellMLModel%numberOfConstants
       IF(cellMLModel%numberOfParameters>cellML%maximumNumberOfParameters) &
         & cellML%maximumNumberOfParameters=cellMLModel%numberOfParameters
-      cellMLModel%numberOfIntermediate=CellMLModel_GetNumberAlgebraic(cellMLModel%ptr)
-      IF(cellMLModel%numberOfIntermediate>cellML%maximumNumberOfIntermediate)  &
+      cellMLModel%numberOfIntermediate=cellMLModel%numberOfAlgebraic+cellMLModel%numberOfComputedConstants
+      IF(cellMLModel%numberOfIntermediate>cellML%maximumNumberOfIntermediate) &
         & cellML%maximumNumberOfIntermediate=cellMLModel%numberOfIntermediate
       
 #else
@@ -1269,7 +1274,7 @@ CONTAINS
 #ifdef WITH_CELLML
 
     IF(ASSOCIATED(cellMLModel)) THEN
-      IF(C_ASSOCIATED(cellMLModel%ptr)) CALL CellMLModel_Destroy(cellMLModel%ptr)
+      !IF(C_ASSOCIATED(cellMLModel%ptr)) CALL CellMLModel_Destroy(cellMLModel%ptr)
       cellMLModel%modelId=""
       DEALLOCATE(cellMLModel)
     ENDIF
@@ -1517,7 +1522,7 @@ CONTAINS
     INTEGER(INTG), INTENT(OUT) :: err !<The error code.
     TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string.
     !Local variables
-    INTEGER(INTG) :: cellMLIdx
+    INTEGER(INTG) :: cellMLIdx,errorCode
     TYPE(CellMLModelType), POINTER :: newModel
     TYPE(CellMLModelPtrType), ALLOCATABLE :: newModels(:)
     CHARACTER(256) :: cURI
@@ -1536,10 +1541,12 @@ CONTAINS
     !Allocate new CellML model
     NULLIFY(newModel)
     CALL CellML_ModelInitialise(newModel,err,error,*999)
+    !Get the C URI 
     cURIL = LEN_TRIM(URI)
     WRITE(cURI,'(A,A)') URI(1:cURIL),C_NULL_CHAR
-    newModel%ptr=CellMLModel_Create(cURI)
-    IF(.NOT.C_ASSOCIATED(newModel%ptr)) CALL FlagError("Error instantiating CellML model.",err,error,*999)
+    !Create the model
+    errorCode = CellMLModel_Create(cURI,newModel%ptr)
+    CALL CellMLModel_CheckError(newModel%ptr,errorCode,err,error,*999)
     newModel%globalNumber=cellML%numberOfModels+1
     newModel%modelId=URI(1:cURIL)
     !Add model to this CellML environment's list of models
@@ -1618,7 +1625,6 @@ CONTAINS
     INTEGER(INTG) :: cNameL
     INTEGER(C_INT) :: errorCode
     TYPE(CellMLModelType), POINTER :: cellMLModel
-    TYPE(VARYING_STRING) :: localError
 
     ENTERS("CellML_VariableSetAsKnownC",err,error,*999)
 
@@ -1633,11 +1639,7 @@ CONTAINS
     cNameL = LEN_TRIM(variableID)
     WRITE(cName,'(A,A)') variableID(1:cNameL),C_NULL_CHAR
     errorCode=CellMLModel_SetVariableAsKnown(cellMLModel%ptr,cName)
-    IF(errorCode/=0) THEN
-      localError="Error "//TRIM(NumberToVString(errorCode,"*",err,error))// &
-        & ". The specified variable can not be set as known: "//variableID
-      CALL FlagError(localError,err,error,*999)
-    ENDIF
+    CALL CellMLModel_CheckError(cellMLModel%ptr,errorCode,err,error,*999)
 
 #else
 
@@ -1704,7 +1706,6 @@ CONTAINS
     INTEGER(C_INT) :: errorCode
     CHARACTER(LEN=MAXSTRLEN) :: cName
     TYPE(CellMLModelType), POINTER :: cellMLModel
-    TYPE(VARYING_STRING) :: localError
 
     ENTERS("CellML_VariableSetAsWantedC",err,error,*999)
 
@@ -1717,13 +1718,9 @@ CONTAINS
     !All input arguments are ok.
     cNameL = LEN_TRIM(variableID)
     WRITE(cName,'(A,A)') variableID(1:cNameL),C_NULL_CHAR
-    errorCode=CellMLModel_SetVariableOfWanted(cellMLModel%ptr,cName)
-    IF(errorCode/=0) THEN
-      localError="Error "//TRIM(NumberToVString(errorCode,"*",err,error))// &
-        & ". The specified variable can not be set as wanted: "//variableID
-      CALL FlagError(localError,err,error,*999)
-    ENDIF
-    
+    errorCode=CellMLModel_SetVariableAsWanted(cellMLModel%ptr,cName)
+    CALL CellMLModel_CheckError(cellMLModel%ptr,errorCode,err,error,*999)
+   
 #else
     
     CALL FlagError("Must compile with WITH_CELLML ON to use CellML functionality.",err,error,*999)
@@ -1826,14 +1823,10 @@ CONTAINS
     CALL CellMLFieldMaps_AssertNotFinished(cellMLfieldMaps,err,error,*999)
     NULLIFY(cellMLModelMaps)
     CALL CellMLFieldMaps_CellMLModelMapsGet(cellMLFieldMaps,modelIndex,cellMLModelMaps,err,error,*999)
-    CALL CMISSF2CString(variableID,cName)
+    CALL OpenCMISSF2CString(variableID,cName)
     !All input arguments are ok.Get the type of the variable being mapped
     errorC=CellMLModel_GetVariableType(cellMLModel%ptr,cName,cellMLVariableType)
-    IF(errorC /= 0) THEN
-      localError="Error "//TRIM(NumberToVString(errorC,"*",err,error))// &
-        & ". Failed to get the type of CellML variable: "//variableID
-      CALL FlagError(localError,err,error,*999)
-    ENDIF
+    CALL CellMLModel_CheckError(cellMLModel%ptr,errorC,err,error,*999)
     cellMLFieldType=CellML_MapCellMLVariableToFieldType(cellMLVariableType,err,error)
     IF(err/=0) GOTO 999
     CALL CellML_FieldComponentGet(cellML,modelIndex,cellMLFieldType,variableID,cellMLVariableNumber,err,error,*999)
@@ -1877,11 +1870,7 @@ CONTAINS
     ENDIF
     !Everything is OK so create the model map field. Get the type of the variable being mapped
     errorC=CellMLModel_GetVariableType(cellMLModel%ptr,cName,cellMLVariableType)
-    IF(errorC /= 0) THEN
-      localError="Error "//TRIM(NumberToVString(errorC,"*",err,error))//". Failed to get the type of CellML variable: "// &
-        & variableID
-      CALL FlagError(localError,err,error,*999)
-    ENDIF
+    CALL CellMLModel_CheckError(cellMLModel%ptr,errorC,err,error,*999)
     cellMLFieldType=CellML_MapCellMLVariableToFieldType(cellMLVariableType,err,error)
     IF(err/=0) GOTO 999
     CALL CellML_FieldComponentGet(cellML,modelIndex,cellMLFieldType,variableID,cellMLVariableNumber,err,error,*999)
@@ -2032,14 +2021,10 @@ CONTAINS
     CALL CellMLFieldMaps_AssertNotFinished(cellMLfieldMaps,err,error,*999)
     NULLIFY(cellMLModelMaps)
     CALL CellMLFieldMaps_CellMLModelMapsGet(cellMLFieldMaps,modelIndex,cellMLModelMaps,err,error,*999)
-    CALL CMISSF2CString(variableID,cName)    
+    CALL OpenCMISSF2CString(variableID,cName)    
     !All input arguments are ok. Get the type of the variable being mapped
-    errorC=CellMLMode; CELLML_MODEL_DEFINITION_GET_VARIABLE_TYPE(cellMLModel%ptr,cName,cellMLVariableType)
-    IF(errorC /= 0) THEN
-      localError="Error "//TRIM(NumberToVString(errorC,"*",err,error))// &
-        & ". Failed to get the type of CellML variable: "//variableID
-      CALL FlagError(localError,err,error,*999)
-    ENDIF
+    errorC=CellMLModel_GetVariableType(cellMLModel%ptr,cName,cellMLVariableType)
+    CALL CellMLModel_CheckError(cellMLModel%ptr,errorC,err,error,*999)
     cellMLFieldType=CellML_MapCellMLVariableToFieldType(cellMLVariableType,err,error)
     IF(err/=0) GOTO 999
     CALL CellML_FieldComponentGet(cellML,modelIndex,cellMLFieldType,variableID,cellMLVariableNumber,err,error,*999)
@@ -2792,7 +2777,6 @@ CONTAINS
     TYPE(CellMLModelsFieldType), POINTER :: cellMLModelsField
     TYPE(CellMLStateFieldType), POINTER :: cellMLStateField
     TYPE(FieldVariableType), POINTER :: modelsVariable
-    TYPE(VARYING_STRING) :: localError
 
     ENTERS("CellML_StateFieldCreateFinish",err,error,*999)
 
@@ -2817,15 +2801,9 @@ CONTAINS
         DO stateComponentIdx=1,cellMLModel%numberOfState
           cellMLVariableType=CellML_MapCellMLFieldTypeToVariableType(CELLML_STATE_FIELD,err,error)
           IF(err/=0) GOTO 999
-          errorCode = CELLML_MODEL_DEFINITION_GET_INITIAL_VALUE_BY_INDEX(cellMLModel%ptr,cellMLVariableType,&
+          errorCode = CellMLModel_GetInitialValueByIndex(cellMLModel%ptr,cellMLVariableType, &
             & stateComponentIdx,initialValue)
-          IF(errorCode/=0) THEN
-            !problem getting the initial value
-            localError="Error "//TRIM(NumberToVString(errorCode,"*",err,error))// &
-              & ". Failed to get an initial value for the state variable with component number "//&
-              & TRIM(NumberToVString(stateComponentIdx,"*",err,error))//"."
-            CALL FlagError(localError,err,error,*999)
-          ENDIF
+          CALL CellMLModel_CheckError(cellMLModel%ptr,errorCode,err,error,*999)
           CALL Field_ComponentValuesInitialise(cellMLStateField%stateField,FIELD_U_VARIABLE_TYPE,FIELD_VALUES_SET_TYPE, &
             & stateComponentIdx,initialValue,err,error,*999)
         ENDDO !stateComponentIdx
@@ -2845,15 +2823,9 @@ CONTAINS
             DO stateComponentIdx=1,cellMLModel%numberOfState
               cellMLVariableType=CellML_MapCellMLFieldTypeToVariableType(CELLML_STATE_FIELD,err,error)              
               IF(err/=0) GOTO 999
-              errorCode = CELLML_MODEL_DEFINITION_GET_INITIAL_VALUE_BY_INDEX(cellMLModel%ptr,cellMLVariableType,&
+              errorCode = CellMLModel_GetInitialValueByIndex(cellMLModel%ptr,cellMLVariableType,&
                 & stateComponentIdx,initialValue)
-              IF(errorCode/=0) THEN
-                !problem getting the initial value
-                localError="Error "//TRIM(NumberToVString(errorCode,"*",err,error))// &
-                  & ". Failed to get an initial value for the state variable with component number "//&
-                  & TRIM(NumberToVString(stateComponentIdx,"*",err,error))//"."
-                CALL FlagError(localError,err,error,*999)
-              ENDIF
+              CALL CellMLModel_CheckError(cellMLModel%ptr,errorCode,err,error,*999)
               CALL CellML_FieldModelDofSet(modelsVariable,modelsDOFIdx,cellMLStateField%stateField, &
                 & FIELD_U_VARIABLE_TYPE,FIELD_VALUES_SET_TYPE,stateComponentIdx,initialValue,err,error,*999)
             ENDDO !stateComponentIdx
@@ -2973,7 +2945,6 @@ CONTAINS
    INTEGER(INTG) :: cellMLVariableIndex
    INTEGER(C_INT) :: errorC
    TYPE(CellMLModelType), POINTER :: cellMLModel
-   TYPE(VARYING_STRING) :: localError
    CHARACTER(LEN=1,KIND=C_CHAR) :: cName(MAXSTRLEN)
    !INTEGER(INTG) :: cNameL
 
@@ -2983,13 +2954,9 @@ CONTAINS
 
    NULLIFY(cellMLModel)
    CALL CellML_CellMLModelGet(cellML,modelIndex,cellMLModel,err,error,*999)
-   CALL CMISSF2CString(variableID,cName)
-   errorC = CELLML_MODEL_DEFINITION_GET_VARIABLE_INDEX(cellMLModel%ptr,cName,cellMLVariableIndex)
-   IF(errorC /= 0) THEN
-     localError="Error "//TRIM(NumberToVString(errorC,"*",err,error))//". Failed to get the index for CellML variable: "// &
-       & variableID
-     CALL FlagError(localError,err,error,*999)
-   ENDIF
+   CALL OpenCMISSF2CString(variableID,cName)
+   errorC = CellMLModel_GetVariableIndex(cellMLModel%ptr,cName,cellMLVariableIndex)
+   CALL CellMLModel_CheckError(cellMLModel%ptr,errorC,err,error,*999)
    componentUserNumber=cellMLVariableIndex
 
 #else
@@ -3483,7 +3450,6 @@ CONTAINS
     TYPE(CellMLModelsFieldType), POINTER :: cellMLModelsField
     TYPE(CellMLParametersFieldType), POINTER :: cellMLParametersField
     TYPE(FieldVariableType), POINTER :: modelsVariable
-    TYPE(VARYING_STRING) :: localError
 
     ENTERS("CellML_ParametersFieldCreateFinish",err,error,*999)
 
@@ -3508,15 +3474,9 @@ CONTAINS
         DO parameterComponentIdx=1,cellMLModel%numberOfParameters
           cellMLVariableType=CellML_MapCellMLFieldTypeToVariableType(CELLML_PARAMETERS_FIELD,err,error)
           IF(err/=0) GOTO 999
-          errorCode = CELLML_MODEL_DEFINITION_GET_INITIAL_VALUE_BY_INDEX(cellMLModel%ptr,cellMLVariableType,&
+          errorCode = CellMLModel_GetInitialValueByIndex(cellMLModel%ptr,cellMLVariableType, &
             & parameterComponentIdx,initialValue)
-          IF(errorCode/=0) THEN
-            !problem getting the initial value
-            localError="Error "//TRIM(NumberToVString(errorCode,"*",err,error))// &
-              & ". Failed to get an initial value for the parameter variable with component number "//&
-              & TRIM(NumberToVString(parameterComponentIdx,"*",err,error))//"."
-            CALL FlagError(localError,err,error,*999)
-          ENDIF
+          CALL CellMLModel_CheckError(cellMLModel%ptr,errorCode,err,error,*999)
           CALL Field_ComponentValuesInitialise(cellMLParametersField%parametersField,FIELD_U_VARIABLE_TYPE, &
             & FIELD_VALUES_SET_TYPE,parameterComponentIdx,initialValue,err,error,*999)
         ENDDO !parameterComponentIdx
@@ -3536,15 +3496,9 @@ CONTAINS
             DO parameterComponentIdx=1,cellMLModel%numberOfParameters
               cellMLVariableType=CellML_MapCellMLFieldTypeToVariableType(CELLML_PARAMETERS_FIELD,err,error)
               IF(err/=0) GOTO 999
-              errorCode = CELLML_MODEL_DEFINITION_GET_INITIAL_VALUE_BY_INDEX(cellMLModel%ptr,cellMLVariableType,&
+              errorCode = CellMLModel_GetInitialValueByIndex(cellMLModel%ptr,cellMLVariableType,&
                 & parameterComponentIdx,initialValue)
-              IF(errorCode/=0) THEN
-                !problem getting the initial value
-                localError="Error "//TRIM(NumberToVString(errorCode,"*",err,error))// &
-                  & ". Failed to get an initial value for the parameter variable with component number "//&
-                  & TRIM(NumberToVString(parameterComponentIdx,"*",err,error))//"."
-                CALL FlagError(localError,err,error,*999)
-              ENDIF
+              CALL CellMLModel_CheckError(cellMLModel%ptr,errorCode,err,error,*999)
               CALL CellML_FieldModelDofSet(modelsVariable,modelsDOFIdx,cellMLParametersField%parametersField, &
                 & FIELD_U_VARIABLE_TYPE,FIELD_VALUES_SET_TYPE,parameterComponentIdx,initialValue,err,error,*999)
             ENDDO !parameterComponentIdx

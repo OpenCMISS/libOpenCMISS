@@ -47,9 +47,6 @@ MODULE SolverRoutines
   USE BaseRoutines
   USE BoundaryConditionsRoutines
   USE BoundaryConditionAccessRoutines
-#ifdef WITH_CELLML
-  USE CELLML_MODEL_DEFINITION
-#endif
   USE CellMLAccessRoutines
   USE ComputationRoutines
   USE ComputationAccessRoutines
@@ -77,6 +74,9 @@ MODULE SolverRoutines
   USE MPI_F08
 #endif  
   USE OpenCMISSCellML
+#ifdef WITH_CELLML
+  USE OpenCMISSCellMLModel
+#endif
 #ifdef WITH_PETSC  
   USE OpenCMISSPETSc
   USE OpenCMISSPETScTypes
@@ -959,8 +959,8 @@ CONTAINS
               CALL CellML_CellMLModelGet(cellML,modelIdx,cellMLModel,err,error,*999)
               CALL CellMLModel_NumberOfIntermediateGet(cellMLModel,numberOfIntermediates,err,error,*999)
               CALL CellMLModel_NumberOfParametersGet(cellMLModel,numberOfParameters,err,error,*999)
-              CALL CellMLModel_NumberOfStateGet(cellMLModel,numberOfStates,err,error,*999)
-              
+              CALL CellMLModel_NumberOfStateGet(cellMLModel,numberOfStates,err,error,*999)             
+                            
               !Copy CellML data to temporary arrays
               DO stateIdx=1,numberOfStates
                 states(stateIdx)=stateData((dofIdx-1)*N+stateIdx)
@@ -968,12 +968,23 @@ CONTAINS
               DO parameterIdx=1,numberOfParameters
                 parameters(parameterIdx)=parametersData((dofIdx-1)*N+parameterIdx)
               ENDDO !parameterIdx
+              DO intermediateIdx=1,numberOfIntermediates
+                intermediates(intermediateIdx)=intermediateData((dofIdx-1)*N+intermediateIdx)
+              ENDDO !intermediateIdx
 
               ASSERT_WITH_CELLML()
               
 #ifdef WITH_CELLML
-              
-              CALL CELLML_MODEL_DEFINITION_CALL_RHS_ROUTINE(cellMLModel%ptr,time,states,rates,intermediates,parameters)
+
+              IF(cellMLModel%numberOfComputedConstants>0) THEN
+                CALL CellMLModel_CallComputedConstantsRoutine(cellMLModel%ptr,intermediates)
+              ENDIF
+              IF(cellMLModel%numberOfRates>0) THEN
+                CALL CellMLModel_CallRatesRoutine(cellMLModel%ptr,time,states,rates,intermediates,parameters)
+              ENDIF
+              IF(cellMLModel%numberOfAlgebraic>0) THEN
+                CALL CellMLModel_CallVariablesRoutine(cellMLModel%ptr,time,states,rates,intermediates)
+              ENDIF
               
 #endif
 
@@ -1005,12 +1016,23 @@ CONTAINS
               DO parameterIdx=1,numberOfParameters
                 parameters(parameterIdx)=parametersData((dofIdx-1)*N+parameterIdx)
               ENDDO !parameterIdx
+              DO intermediateIdx=1,numberOfIntermediates
+                intermediates(intermediateIdx)=intermediateData((dofIdx-1)*N+intermediateIdx)
+              ENDDO !intermediateIdx
 
               ASSERT_WITH_CELLML()
               
 #ifdef WITH_CELLML
-              
-              CALL CELLML_MODEL_DEFINITION_CALL_RHS_ROUTINE(cellMLModel%ptr,time,states,rates,intermediates,parameters)
+
+              IF(cellMLModel%numberOfComputedConstants>0) THEN
+                CALL CellMLModel_CallComputedConstantsRoutine(cellMLModel%ptr,intermediates)
+              ENDIF
+              IF(cellMLModel%numberOfRates>0) THEN
+                CALL CellMLModel_CallRatesRoutine(cellMLModel%ptr,time,states,rates,intermediates,parameters)
+              ENDIF
+              IF(cellMLModel%numberOfAlgebraic>0) THEN
+                CALL CellMLModel_CallVariablesRoutine(cellMLModel%ptr,time,states,rates,intermediates)
+              ENDIF
               
 #endif
                       
@@ -1057,10 +1079,21 @@ CONTAINS
                     
 #ifdef WITH_CELLML
                     
-                    CALL CELLML_MODEL_DEFINITION_CALL_RHS_ROUTINE(cellMLModel%ptr,time, &
-                      & stateData(stateStartDOF:stateEndDOF), &
-                      & rates,intermediateData(intermediateStartDOF:intermediateEndDOF), &
-                      & parametersData(parameterStartDOF:parameterEndDOF))
+                    IF(cellMLModel%numberOfComputedConstants>0) THEN
+                      CALL CellMLModel_CallComputedConstantsRoutine(cellMLModel%ptr, &
+                        & intermediateData(intermediateStartDOF:intermediateEndDOF)) 
+                    ENDIF
+                    IF(cellMLModel%numberOfRates>0) THEN
+                      CALL CellMLModel_CallRatesRoutine(cellMLModel%ptr,time, &
+                        & stateData(stateStartDOF:stateEndDOF),rates, &
+                        & intermediateData(intermediateStartDOF:intermediateEndDOF), &
+                        & parametersData(parameterStartDOF:parameterEndDOF))
+                    ENDIF 
+                    IF(cellMLModel%numberOfAlgebraic>0) THEN
+                      CALL CellMLModel_CallVariablesRoutine(cellMLModel%ptr,time, &
+                        & stateData(stateStartDOF:stateEndDOF),rates, &
+                        & intermediateData(intermediateStartDOF:intermediateEndDOF))
+                    ENDIF
 
 #endif                            
                     
@@ -1075,10 +1108,21 @@ CONTAINS
                     
 #ifdef WITH_CELLML                    
                     
-                    CALL CELLML_MODEL_DEFINITION_CALL_RHS_ROUTINE(cellMLModel%ptr,time, & 
-                      & stateData(stateStartDOF:stateEndDOF), &
-                      & rates,intermediateData(intermediateStartDOF:intermediateEndDOF),parameters)
-                    
+                    IF(cellMLModel%numberOfComputedConstants>0) THEN
+                      CALL CellMLModel_CallComputedConstantsRoutine(cellMLModel%ptr, &
+                        & intermediateData(intermediateStartDOF:intermediateEndDOF)) 
+                    ENDIF
+                    IF(cellMLModel%numberOfRates>0) THEN
+                      CALL CellMLModel_CallRatesRoutine(cellMLModel%ptr,time, &
+                        & stateData(stateStartDOF:stateEndDOF),rates, &
+                        & intermediateData(intermediateStartDOF:intermediateEndDOF), &
+                        & parameters)
+                    ENDIF 
+                    IF(cellMLModel%numberOfAlgebraic>0) THEN
+                      CALL CellMLModel_CallVariablesRoutine(cellMLModel%ptr,time, &
+                        & stateData(stateStartDOF:stateEndDOF),rates, &
+                        & intermediateData(intermediateStartDOF:intermediateEndDOF))
+                    ENDIF                    
 #endif
                     
                   ENDIF
@@ -1093,11 +1137,22 @@ CONTAINS
                     ASSERT_WITH_CELLML()
                     
 #ifdef WITH_CELLML                    
-                                                 
-                    CALL CELLML_MODEL_DEFINITION_CALL_RHS_ROUTINE(cellMLModel%ptr,time, & 
-                      & stateData(stateStartDOF:stateEndDOF), &
-                      & rates,intermediates,parametersData(parameterStartDOF:parameterEndDOF))
-
+                    
+                    IF(cellMLModel%numberOfComputedConstants>0) THEN
+                      CALL CellMLModel_CallComputedConstantsRoutine(cellMLModel%ptr, &
+                        & intermediates) 
+                    ENDIF
+                    IF(cellMLModel%numberOfRates>0) THEN
+                      CALL CellMLModel_CallRatesRoutine(cellMLModel%ptr,time, &
+                        & stateData(stateStartDOF:stateEndDOF),rates, &
+                        & intermediates, &
+                        & parametersData(parameterStartDOF:parameterEndDOF))
+                    ENDIF 
+                    IF(cellMLModel%numberOfAlgebraic>0) THEN
+                      CALL CellMLModel_CallVariablesRoutine(cellMLModel%ptr,time, &
+                        & stateData(stateStartDOF:stateEndDOF),rates, &
+                        & intermediates)
+                    ENDIF                    
 #endif                    
                             
                   ELSE
@@ -1108,10 +1163,22 @@ CONTAINS
                     ASSERT_WITH_CELLML()
                     
 #ifdef WITH_CELLML                    
-                                                 
-                    CALL CELLML_MODEL_DEFINITION_CALL_RHS_ROUTINE(cellMLModel%ptr,time, & 
-                      & stateData(stateStartDOF:stateEndDOF), &
-                      & rates,intermediates,parameters)
+
+                    IF(cellMLModel%numberOfComputedConstants>0) THEN
+                      CALL CellMLModel_CallComputedConstantsRoutine(cellMLModel%ptr, &
+                        & intermediates) 
+                    ENDIF
+                    IF(cellMLModel%numberOfRates>0) THEN
+                      CALL CellMLModel_CallRatesRoutine(cellMLModel%ptr,time, &
+                        & stateData(stateStartDOF:stateEndDOF),rates, &
+                        & intermediates, &
+                        & parameters)
+                    ENDIF 
+                    IF(cellMLModel%numberOfAlgebraic>0) THEN
+                      CALL CellMLModel_CallVariablesRoutine(cellMLModel%ptr,time, &
+                        & stateData(stateStartDOF:stateEndDOF),rates, &
+                        & intermediates)
+                    ENDIF                 
 
 #endif                    
                     
@@ -1129,10 +1196,22 @@ CONTAINS
                     ASSERT_WITH_CELLML()
                     
 #ifdef WITH_CELLML                                                                     
-                            
-                    CALL CELLML_MODEL_DEFINITION_CALL_RHS_ROUTINE(cellMLModel%ptr,time,states,rates, &
-                      & intermediateData(intermediateStartDOF:intermediateEndDOF),parametersData( &
-                      & parameterStartDOF:parameterEndDOF))
+                    
+                    IF(cellMLModel%numberOfComputedConstants>0) THEN
+                      CALL CellMLModel_CallComputedConstantsRoutine(cellMLModel%ptr, &
+                        & intermediateData(intermediateStartDOF:intermediateEndDOF)) 
+                    ENDIF
+                    IF(cellMLModel%numberOfRates>0) THEN
+                      CALL CellMLModel_CallRatesRoutine(cellMLModel%ptr,time, &
+                        & states,rates, &
+                        & intermediateData(intermediateStartDOF:intermediateEndDOF), &
+                        & parametersData(parameterStartDOF:parameterEndDOF))
+                    ENDIF 
+                    IF(cellMLModel%numberOfAlgebraic>0) THEN
+                      CALL CellMLModel_CallVariablesRoutine(cellMLModel%ptr,time, &
+                        & states,rates, &
+                        & intermediateData(intermediateStartDOF:intermediateEndDOF))
+                    ENDIF
 
 #endif
                     
@@ -1144,9 +1223,22 @@ CONTAINS
                     ASSERT_WITH_CELLML()
                     
 #ifdef WITH_CELLML                                                                     
-                            
-                    CALL CELLML_MODEL_DEFINITION_CALL_RHS_ROUTINE(cellMLModel%ptr,time,states,rates, &
-                      & intermediateData(intermediateStartDOF:intermediateEndDOF),parameters)
+                   
+                   IF(cellMLModel%numberOfComputedConstants>0) THEN
+                      CALL CellMLModel_CallComputedConstantsRoutine(cellMLModel%ptr, &
+                        & intermediateData(intermediateStartDOF:intermediateEndDOF)) 
+                    ENDIF
+                    IF(cellMLModel%numberOfRates>0) THEN
+                      CALL CellMLModel_CallRatesRoutine(cellMLModel%ptr,time, &
+                        & states,rates, &
+                        & intermediateData(intermediateStartDOF:intermediateEndDOF), &
+                        & parameters)
+                    ENDIF 
+                    IF(cellMLModel%numberOfAlgebraic>0) THEN
+                      CALL CellMLModel_CallVariablesRoutine(cellMLModel%ptr,time, &
+                        & states,rates, &
+                        & intermediateData(intermediateStartDOF:intermediateEndDOF))
+                    ENDIF
 
 #endif                    
                     
@@ -1183,11 +1275,22 @@ CONTAINS
                     ASSERT_WITH_CELLML()
                     
 #ifdef WITH_CELLML
-                    
-                    CALL CELLML_MODEL_DEFINITION_CALL_RHS_ROUTINE(cellMLModel%ptr,time, & 
-                      & stateData(stateStartDOF:stateEndDOF), &
-                      & rates,intermediateData(intermediateStartDOF:intermediateEndDOF),parametersData( &
-                      & parameterStartDOF:parameterEndDOF))
+
+                    IF(cellMLModel%numberOfComputedConstants>0) THEN
+                      CALL CellMLModel_CallComputedConstantsRoutine(cellMLModel%ptr, &
+                        & intermediateData(intermediateStartDOF:intermediateEndDOF)) 
+                    ENDIF
+                    IF(cellMLModel%numberOfRates>0) THEN
+                      CALL CellMLModel_CallRatesRoutine(cellMLModel%ptr,time, &
+                        & stateData(stateStartDOF:stateEndDOF),rates, &
+                        & intermediateData(intermediateStartDOF:intermediateEndDOF), &
+                        & parametersData(parameterStartDOF:parameterEndDOF))
+                    ENDIF 
+                    IF(cellMLModel%numberOfAlgebraic>0) THEN
+                      CALL CellMLModel_CallVariablesRoutine(cellMLModel%ptr,time, &
+                        & stateData(stateStartDOF:stateEndDOF),rates, &
+                        & intermediateData(intermediateStartDOF:intermediateEndDOF))
+                    ENDIF
 
 #endif
                     
@@ -1206,10 +1309,22 @@ CONTAINS
                     ASSERT_WITH_CELLML()
                     
 #ifdef WITH_CELLML
-                                        
-                    CALL CELLML_MODEL_DEFINITION_CALL_RHS_ROUTINE(cellMLModel%ptr,time, & 
-                      & stateData(stateStartDOF:stateEndDOF), &
-                      & rates,intermediateData(intermediateStartDOF:intermediateEndDOF),parameters)
+                    
+                    IF(cellMLModel%numberOfComputedConstants>0) THEN
+                      CALL CellMLModel_CallComputedConstantsRoutine(cellMLModel%ptr, &
+                        & intermediateData(intermediateStartDOF:intermediateEndDOF)) 
+                    ENDIF
+                    IF(cellMLModel%numberOfRates>0) THEN
+                      CALL CellMLModel_CallRatesRoutine(cellMLModel%ptr,time, &
+                        & stateData(stateStartDOF:stateEndDOF),rates, &
+                        & intermediateData(intermediateStartDOF:intermediateEndDOF), &
+                        & parameters)
+                    ENDIF 
+                    IF(cellMLModel%numberOfAlgebraic>0) THEN
+                      CALL CellMLModel_CallVariablesRoutine(cellMLModel%ptr,time, &
+                        & stateData(stateStartDOF:stateEndDOF),rates, &
+                        & intermediateData(intermediateStartDOF:intermediateEndDOF))
+                    ENDIF
 
 #endif                    
                     
@@ -1230,10 +1345,22 @@ CONTAINS
                     ASSERT_WITH_CELLML()
                     
 #ifdef WITH_CELLML
-                                                                    
-                    CALL CELLML_MODEL_DEFINITION_CALL_RHS_ROUTINE(cellMLModel%ptr,time, & 
-                      & stateData(stateStartDOF:stateEndDOF), &
-                      & rates,intermediates,parametersData(parameterStartDOF:parameterEndDOF))
+
+                    IF(cellMLModel%numberOfComputedConstants>0) THEN
+                      CALL CellMLModel_CallComputedConstantsRoutine(cellMLModel%ptr, &
+                        & intermediates) 
+                    ENDIF
+                    IF(cellMLModel%numberOfRates>0) THEN
+                      CALL CellMLModel_CallRatesRoutine(cellMLModel%ptr,time, &
+                        & stateData(stateStartDOF:stateEndDOF),rates, &
+                        & intermediates, &
+                        & parametersData(parameterStartDOF:parameterEndDOF))
+                    ENDIF 
+                    IF(cellMLModel%numberOfAlgebraic>0) THEN
+                      CALL CellMLModel_CallVariablesRoutine(cellMLModel%ptr,time, &
+                        & stateData(stateStartDOF:stateEndDOF),rates, &
+                        & intermediates)
+                    ENDIF
 
 #endif
                     
@@ -1250,10 +1377,22 @@ CONTAINS
                     ASSERT_WITH_CELLML()
                    
 #ifdef WITH_CELLML
-                                                                                         
-                    CALL CELLML_MODEL_DEFINITION_CALL_RHS_ROUTINE(cellMLModel%ptr,time,& 
-                      & stateData(stateStartDOF:stateEndDOF), &
-                      & rates,intermediates,parameters)
+
+                   IF(cellMLModel%numberOfComputedConstants>0) THEN
+                      CALL CellMLModel_CallComputedConstantsRoutine(cellMLModel%ptr, &
+                        & intermediates) 
+                    ENDIF
+                    IF(cellMLModel%numberOfRates>0) THEN
+                      CALL CellMLModel_CallRatesRoutine(cellMLModel%ptr,time, &
+                        & stateData(stateStartDOF:stateEndDOF),rates, &
+                        & intermediates, &
+                        & parameters)
+                    ENDIF 
+                    IF(cellMLModel%numberOfAlgebraic>0) THEN
+                      CALL CellMLModel_CallVariablesRoutine(cellMLModel%ptr,time, &
+                        & stateData(stateStartDOF:stateEndDOF),rates, &
+                        & intermediates)
+                    ENDIF
                     
 #endif
                     
@@ -1277,10 +1416,22 @@ CONTAINS
                     ASSERT_WITH_CELLML()
                    
 #ifdef WITH_CELLML
-                                                                                                             
-                    CALL CELLML_MODEL_DEFINITION_CALL_RHS_ROUTINE(cellMLModel%ptr,time,states,rates, &
-                      & intermediateData(intermediateStartDOF:intermediateEndDOF),parametersData( &
-                      & parameterStartDOF:parameterEndDOF))
+
+                   IF(cellMLModel%numberOfComputedConstants>0) THEN
+                      CALL CellMLModel_CallComputedConstantsRoutine(cellMLModel%ptr, &
+                        & intermediateData(intermediateStartDOF:intermediateEndDOF)) 
+                    ENDIF
+                    IF(cellMLModel%numberOfRates>0) THEN
+                      CALL CellMLModel_CallRatesRoutine(cellMLModel%ptr,time, &
+                        & states,rates, &
+                        & intermediateData(intermediateStartDOF:intermediateEndDOF), &
+                        & parametersData(parameterStartDOF:parameterEndDOF))
+                    ENDIF 
+                    IF(cellMLModel%numberOfAlgebraic>0) THEN
+                      CALL CellMLModel_CallVariablesRoutine(cellMLModel%ptr,time, &
+                        & states,rates, &
+                        & intermediateData(intermediateStartDOF:intermediateEndDOF))
+                    ENDIF
 
 #endif                    
                     
@@ -1297,9 +1448,22 @@ CONTAINS
                     ASSERT_WITH_CELLML()
                    
 #ifdef WITH_CELLML
-                                                                                                             
-                    CALL CELLML_MODEL_DEFINITION_CALL_RHS_ROUTINE(cellMLModel%ptr,time,states,rates, &
-                      & intermediateData(intermediateStartDOF:intermediateEndDOF),parameters)
+
+                    IF(cellMLModel%numberOfComputedConstants>0) THEN
+                      CALL CellMLModel_CallComputedConstantsRoutine(cellMLModel%ptr, &
+                        & intermediateData(intermediateStartDOF:intermediateEndDOF)) 
+                    ENDIF
+                    IF(cellMLModel%numberOfRates>0) THEN
+                      CALL CellMLModel_CallRatesRoutine(cellMLModel%ptr,time, &
+                        & states,rates, &
+                        & intermediateData(intermediateStartDOF:intermediateEndDOF), &
+                        & parameters)
+                    ENDIF 
+                    IF(cellMLModel%numberOfAlgebraic>0) THEN
+                      CALL CellMLModel_CallVariablesRoutine(cellMLModel%ptr,time, &
+                        & states,rates, &
+                        & intermediateData(intermediateStartDOF:intermediateEndDOF))
+                    ENDIF
 
 #endif
                     
@@ -1760,12 +1924,23 @@ CONTAINS
               DO parameterIdx=1,numberOfParameters
                 parameters(parameterIdx)=parametersData((dofIdx-1)*N+parameterIdx)
               ENDDO !parameterIdx
+              DO intermediateIdx=1,numberOfIntermediates
+                intermediates(intermediateIdx)=intermediateData((dofIdx-1)*N+intermediateIdx)
+              ENDDO !intermediateIdx
 
               ASSERT_WITH_CELLML()
 
 #ifdef WITH_CELLML
 
-              CALL CELLML_MODEL_DEFINITION_CALL_RHS_ROUTINE(cellMLModel%ptr,time,states,rates,intermediates,parameters)
+              IF(cellMLModel%numberOfComputedConstants>0) THEN
+                CALL CellMLModel_CallComputedConstantsRoutine(cellMLModel%ptr,intermediates)
+              ENDIF
+              IF(cellMLModel%numberOfRates>0) THEN
+                CALL CellMLModel_CallRatesRoutine(cellMLModel%ptr,time,states,rates,intermediates,parameters)
+              ENDIF
+              IF(cellMLModel%numberOfAlgebraic>0) THEN
+                CALL CellMLModel_CallVariablesRoutine(cellMLModel%ptr,time,states,rates,intermediates)
+              ENDIF
 
 #endif
 
@@ -1801,12 +1976,23 @@ CONTAINS
               DO parameterIdx=1,numberOfParameters
                 parameters(parameterIdx)=parametersData((dofIdx-1)*N+parameterIdx)
               ENDDO !parameterIdx
+              DO intermediateIdx=1,numberOfIntermediates
+                intermediates(intermediateIdx)=intermediateData((dofIdx-1)*N+intermediateIdx)
+              ENDDO !intermediateIdx
 
               ASSERT_WITH_CELLML()
 
 #ifdef WITH_CELLML
 
-              CALL CELLML_MODEL_DEFINITION_CALL_RHS_ROUTINE(cellMLModel%ptr,time,states,rates,intermediates,parameters)
+              IF(cellMLModel%numberOfComputedConstants>0) THEN
+                CALL CellMLModel_CallComputedConstantsRoutine(cellMLModel%ptr,intermediates)
+              ENDIF
+              IF(cellMLModel%numberOfRates>0) THEN
+                CALL CellMLModel_CallRatesRoutine(cellMLModel%ptr,time,states,rates,intermediates,parameters)
+              ENDIF
+              IF(cellMLModel%numberOfAlgebraic>0) THEN
+                CALL CellMLModel_CallVariablesRoutine(cellMLModel%ptr,time,states,rates,intermediates)
+              ENDIF
 
 #endif
 
@@ -1854,10 +2040,22 @@ CONTAINS
 
 #ifdef WITH_CELLML
 
-                    CALL CELLML_MODEL_DEFINITION_CALL_RHS_ROUTINE(cellMLModel%ptr,time,stateData(stateStartDOF: &
-                      & stateEndDOF),rates,intermediateData(intermediateStartDOF:intermediateEndDOF), &
-                      & parametersData(parameterStartDOF:parameterEndDOF))
-
+                    IF(cellMLModel%numberOfComputedConstants>0) THEN
+                      CALL CellMLModel_CallComputedConstantsRoutine(cellMLModel%ptr, &
+                        & intermediateData(intermediateStartDOF:intermediateEndDOF)) 
+                    ENDIF
+                    IF(cellMLModel%numberOfRates>0) THEN
+                      CALL CellMLModel_CallRatesRoutine(cellMLModel%ptr,time, &
+                        & stateData(stateStartDOF:stateEndDOF),rates, &
+                        & intermediateData(intermediateStartDOF:intermediateEndDOF), &
+                        & parametersData(parameterStartDOF:parameterEndDOF))
+                    ENDIF 
+                    IF(cellMLModel%numberOfAlgebraic>0) THEN
+                      CALL CellMLModel_CallVariablesRoutine(cellMLModel%ptr,time, &
+                        & stateData(stateStartDOF:stateEndDOF),rates, &
+                        & intermediateData(intermediateStartDOF:intermediateEndDOF))
+                    ENDIF
+ 
 #endif                    
 
                   ELSE
@@ -1871,9 +2069,21 @@ CONTAINS
 
 #ifdef WITH_CELLML
 
-                    CALL CELLML_MODEL_DEFINITION_CALL_RHS_ROUTINE(cellMLModel%ptr,time,stateData(stateStartDOF: &
-                      & stateEndDOF),rates,intermediateData(intermediateStartDOF:intermediateEndDOF), &
-                      & parameters)
+                    IF(cellMLModel%numberOfComputedConstants>0) THEN
+                      CALL CellMLModel_CallComputedConstantsRoutine(cellMLModel%ptr, &
+                        & intermediateData(intermediateStartDOF:intermediateEndDOF)) 
+                    ENDIF
+                    IF(cellMLModel%numberOfRates>0) THEN
+                      CALL CellMLModel_CallRatesRoutine(cellMLModel%ptr,time, &
+                        & stateData(stateStartDOF:stateEndDOF),rates, &
+                        & intermediateData(intermediateStartDOF:intermediateEndDOF), &
+                        & parameters)
+                    ENDIF 
+                    IF(cellMLModel%numberOfAlgebraic>0) THEN
+                      CALL CellMLModel_CallVariablesRoutine(cellMLModel%ptr,time, &
+                        & stateData(stateStartDOF:stateEndDOF),rates, &
+                        & intermediateData(intermediateStartDOF:intermediateEndDOF))
+                    ENDIF
 
 #endif
 
@@ -1890,8 +2100,21 @@ CONTAINS
 
 #ifdef WITH_CELLML
 
-                    CALL CELLML_MODEL_DEFINITION_CALL_RHS_ROUTINE(cellMLModel%ptr,time,stateData(stateStartDOF: &
-                      & stateEndDOF),rates,intermediates,parametersData(parameterStartDOF:parameterEndDOF))
+                    IF(cellMLModel%numberOfComputedConstants>0) THEN
+                      CALL CellMLModel_CallComputedConstantsRoutine(cellMLModel%ptr, &
+                        & intermediates) 
+                    ENDIF
+                    IF(cellMLModel%numberOfRates>0) THEN
+                      CALL CellMLModel_CallRatesRoutine(cellMLModel%ptr,time, &
+                        & stateData(stateStartDOF:stateEndDOF),rates, &
+                        & intermediates, &
+                        & parametersData(parameterStartDOF:parameterEndDOF))
+                    ENDIF 
+                    IF(cellMLModel%numberOfAlgebraic>0) THEN
+                      CALL CellMLModel_CallVariablesRoutine(cellMLModel%ptr,time, &
+                        & stateData(stateStartDOF:stateEndDOF),rates, &
+                        & intermediates)
+                    ENDIF
 
 #endif                    
 
@@ -1904,8 +2127,21 @@ CONTAINS
 
 #ifdef WITH_CELLML
 
-                    CALL CELLML_MODEL_DEFINITION_CALL_RHS_ROUTINE(cellMLModel%ptr,time,stateData(stateStartDOF: &
-                      & stateEndDOF),rates,intermediates,parameters)
+                    IF(cellMLModel%numberOfComputedConstants>0) THEN
+                      CALL CellMLModel_CallComputedConstantsRoutine(cellMLModel%ptr, &
+                        & intermediates) 
+                    ENDIF
+                    IF(cellMLModel%numberOfRates>0) THEN
+                      CALL CellMLModel_CallRatesRoutine(cellMLModel%ptr,time, &
+                        & stateData(stateStartDOF:stateEndDOF),rates, &
+                        & intermediates, &
+                        & parameters)
+                    ENDIF 
+                    IF(cellMLModel%numberOfAlgebraic>0) THEN
+                      CALL CellMLModel_CallVariablesRoutine(cellMLModel%ptr,time, &
+                        & stateData(stateStartDOF:stateEndDOF),rates, &
+                        & intermediates)
+                    ENDIF
 
 #endif
 
@@ -1948,10 +2184,21 @@ CONTAINS
 
 #ifdef WITH_CELLML
 
-                    CALL CELLML_MODEL_DEFINITION_CALL_RHS_ROUTINE(cellMLModel%ptr,time, &
-                      & stateData(stateStartDOF:stateEndDOF), &
-                      & rates,intermediateData(intermediateStartDOF:intermediateEndDOF),parametersData( &
-                      & parameterStartDOF:parameterEndDOF))
+                    IF(cellMLModel%numberOfComputedConstants>0) THEN
+                      CALL CellMLModel_CallComputedConstantsRoutine(cellMLModel%ptr, &
+                        & intermediateData(intermediateStartDOF:intermediateEndDOF)) 
+                    ENDIF
+                    IF(cellMLModel%numberOfRates>0) THEN
+                      CALL CellMLModel_CallRatesRoutine(cellMLModel%ptr,time, &
+                        & stateData(stateStartDOF:stateEndDOF),rates, &
+                        & intermediateData(intermediateStartDOF:intermediateEndDOF), &
+                        & parametersData(parameterStartDOF:parameterEndDOF))
+                    ENDIF 
+                    IF(cellMLModel%numberOfAlgebraic>0) THEN
+                      CALL CellMLModel_CallVariablesRoutine(cellMLModel%ptr,time, &
+                        & stateData(stateStartDOF:stateEndDOF),rates, &
+                        & intermediateData(intermediateStartDOF:intermediateEndDOF))
+                    ENDIF
 
 #endif
 
@@ -1977,9 +2224,21 @@ CONTAINS
 
 #ifdef WITH_CELLML
 
-                    CALL CELLML_MODEL_DEFINITION_CALL_RHS_ROUTINE(cellMLModel%ptr,time, & 
-                      & stateData(stateStartDOF:stateEndDOF), &
-                      & rates,intermediateData(intermediateStartDOF:intermediateEndDOF),parameters)
+                    IF(cellMLModel%numberOfComputedConstants>0) THEN
+                      CALL CellMLModel_CallComputedConstantsRoutine(cellMLModel%ptr, &
+                        & intermediateData(intermediateStartDOF:intermediateEndDOF)) 
+                    ENDIF
+                    IF(cellMLModel%numberOfRates>0) THEN
+                      CALL CellMLModel_CallRatesRoutine(cellMLModel%ptr,time, &
+                        & stateData(stateStartDOF:stateEndDOF),rates, &
+                        & intermediateData(intermediateStartDOF:intermediateEndDOF), &
+                        & parameters)
+                    ENDIF 
+                    IF(cellMLModel%numberOfAlgebraic>0) THEN
+                      CALL CellMLModel_CallVariablesRoutine(cellMLModel%ptr,time, &
+                        & stateData(stateStartDOF:stateEndDOF),rates, &
+                        & intermediateData(intermediateStartDOF:intermediateEndDOF))
+                    ENDIF
 
 #endif                      
 
@@ -2007,9 +2266,21 @@ CONTAINS
 
 #ifdef WITH_CELLML
 
-                    CALL CELLML_MODEL_DEFINITION_CALL_RHS_ROUTINE(cellMLModel%ptr,time, & 
-                      & stateData(stateStartDOF:stateEndDOF), &
-                      & rates,intermediates,parametersData(parameterStartDOF:parameterEndDOF))
+                    IF(cellMLModel%numberOfComputedConstants>0) THEN
+                      CALL CellMLModel_CallComputedConstantsRoutine(cellMLModel%ptr, &
+                        & intermediates) 
+                    ENDIF
+                    IF(cellMLModel%numberOfRates>0) THEN
+                      CALL CellMLModel_CallRatesRoutine(cellMLModel%ptr,time, &
+                        & stateData(stateStartDOF:stateEndDOF),rates, &
+                        & intermediates, &
+                        & parametersData(parameterStartDOF:parameterEndDOF))
+                    ENDIF 
+                    IF(cellMLModel%numberOfAlgebraic>0) THEN
+                      CALL CellMLModel_CallVariablesRoutine(cellMLModel%ptr,time, &
+                        & stateData(stateStartDOF:stateEndDOF),rates, &
+                        & intermediates)
+                    ENDIF
 
 #endif                      
 
@@ -2033,9 +2304,21 @@ CONTAINS
 
 #ifdef WITH_CELLML
 
-                    CALL CELLML_MODEL_DEFINITION_CALL_RHS_ROUTINE(cellMLModel%ptr,time, & 
-                      & stateData(stateStartDOF:stateEndDOF), &
-                      & rates,intermediates,parameters)
+                    IF(cellMLModel%numberOfComputedConstants>0) THEN
+                      CALL CellMLModel_CallComputedConstantsRoutine(cellMLModel%ptr, &
+                        & intermediates) 
+                    ENDIF
+                    IF(cellMLModel%numberOfRates>0) THEN
+                      CALL CellMLModel_CallRatesRoutine(cellMLModel%ptr,time, &
+                        & stateData(stateStartDOF:stateEndDOF),rates, &
+                        & intermediates, &
+                        & parameters)
+                    ENDIF 
+                    IF(cellMLModel%numberOfAlgebraic>0) THEN
+                      CALL CellMLModel_CallVariablesRoutine(cellMLModel%ptr,time, &
+                        & stateData(stateStartDOF:stateEndDOF),rates, &
+                        & intermediates)
+                    ENDIF
 
 #endif                      
 
@@ -3471,6 +3754,11 @@ CONTAINS
         IF(intermediateDataOffset>1.OR.numberOfIntermediates==0) THEN
           !Intermediate data is not contiguous or there are no intermediates
           
+          !Copy intermediate data to temporary array
+          DO intermediateIdx=1,numberOfIntermediates
+            intermediates(intermediateIdx)=intermediateData((intermediateStartIdx-1)*intermediateDataOffset+intermediateIdx)
+          ENDDO !intermediateIdx
+          
           IF(rateDataOffset>1.OR.numberOfStates==0) THEN
             !Rates data is not contiguous or there are no rates
 
@@ -3478,7 +3766,16 @@ CONTAINS
 
 #ifdef WITH_CELLML
             
-            CALL CELLML_MODEL_DEFINITION_CALL_RHS_ROUTINE(cellMLModel%ptr,time,states,rates,intermediates,parameters)
+            IF(cellMLModel%numberOfComputedConstants>0) THEN
+              CALL CellMLModel_CallComputedConstantsRoutine(cellMLModel%ptr,intermediates) 
+            ENDIF
+            IF(cellMLModel%numberOfRates>0) THEN
+              CALL CellMLModel_CallRatesRoutine(cellMLModel%ptr,time,states,rates, &
+                & intermediates,parameters)
+            ENDIF
+            IF(cellMLModel%numberOfAlgebraic>0) THEN
+              CALL CellMLModel_CallVariablesRoutine(cellMLModel%ptr,time,states,rates,intermediates)
+            ENDIF
 
 #endif            
             
@@ -3502,8 +3799,17 @@ CONTAINS
 
 #ifdef WITH_CELLML
             
-            CALL CELLML_MODEL_DEFINITION_CALL_RHS_ROUTINE(cellMLModel%ptr,time,states,rateData(rateStartDOF:rateEndDOF), &
-              & intermediates,parameters)
+            IF(cellMLModel%numberOfComputedConstants>0) THEN 
+              CALL CellMLModel_CallComputedConstantsRoutine(cellMLModel%ptr,intermediates) 
+            ENDIF
+            IF(cellMLModel%numberOfRates>0) THEN
+              CALL CellMLModel_CallRatesRoutine(cellMLModel%ptr,time,states, &
+                & rateData(rateStartDOF:rateEndDOF),intermediates,parameters)
+            ENDIF
+            IF(cellMLModel%numberOfAlgebraic>0) THEN
+              CALL CellMLModel_CallVariablesRoutine(cellMLModel%ptr,time,states, &
+                & rateData(rateStartDOF:rateEndDOF),intermediates)
+            ENDIF
 
 #endif            
             
@@ -3527,8 +3833,19 @@ CONTAINS
 
 #ifdef WITH_CELLML
             
-            CALL CELLML_MODEL_DEFINITION_CALL_RHS_ROUTINE(cellMLModel%ptr,time,states,rates, &
-              & intermediateData(intermediateStartDOF:intermediateEndDOF),parameters)
+            IF(cellMLModel%numberOfComputedConstants>0) THEN
+              CALL CellMLModel_CallComputedConstantsRoutine(cellMLModel%ptr, &
+                & intermediateData(intermediateStartDOF:intermediateEndDOF)) 
+            ENDIF
+            IF(cellMLModel%numberOfRates>0) THEN
+              CALL CellMLModel_CallRatesRoutine(cellMLModel%ptr,time, &
+                & states,rates,intermediateData(intermediateStartDOF:intermediateEndDOF), &
+                & parameters)
+            ENDIF
+            IF(cellMLModel%numberOfAlgebraic>0) THEN
+              CALL CellMLModel_CallVariablesRoutine(cellMLModel%ptr,time, &
+                & states,rates,intermediateData(intermediateStartDOF:intermediateEndDOF))
+            ENDIF
 
 #endif            
               
@@ -3547,8 +3864,21 @@ CONTAINS
 
 #ifdef WITH_CELLML
             
-            CALL CELLML_MODEL_DEFINITION_CALL_RHS_ROUTINE(cellMLModel%ptr,time,states,rateData(rateStartDOF:rateEndDOF), &
-              & intermediateData(intermediateStartDOF:intermediateEndDOF),parameters)          
+            IF(cellMLModel%numberOfComputedConstants>0) THEN
+              CALL CellMLModel_CallComputedConstantsRoutine(cellMLModel%ptr, &
+                & intermediateData(intermediateStartDOF:intermediateEndDOF)) 
+            ENDIF
+            IF(cellMLModel%numberOfRates>0) THEN
+              CALL CellMLModel_CallRatesRoutine(cellMLModel%ptr,time, &
+                & states,rateData(rateStartDOF:rateEndDOF), &
+                & intermediateData(intermediateStartDOF:intermediateEndDOF), &
+                & parameters)
+            ENDIF
+            IF(cellMLModel%numberOfAlgebraic>0) THEN
+              CALL CellMLModel_CallVariablesRoutine(cellMLModel%ptr,time, &
+                & states,rateData(rateStartDOF:rateEndDOF), &
+                & intermediateData(intermediateStartDOF:intermediateEndDOF))
+            ENDIF
 
 #endif
             
@@ -3563,6 +3893,11 @@ CONTAINS
         IF(intermediateDataOffset>1.OR.numberOfIntermediates==0) THEN
           !Intermediate data is not contiguous or there are no intermediates
           
+          !Copy intermediate data to temporary array
+          DO intermediateIdx=1,numberOfIntermediates
+            intermediates(intermediateIdx)=intermediateData((intermediateStartIdx-1)*intermediateDataOffset+intermediateIdx)
+          ENDDO !intermediateIdx
+          
           IF(rateDataOffset>1.OR.numberOfStates==0) THEN
             !Rates data is not contiguous or there are no rates
 
@@ -3570,8 +3905,18 @@ CONTAINS
 
 #ifdef WITH_CELLML
             
-            CALL CELLML_MODEL_DEFINITION_CALL_RHS_ROUTINE(cellMLModel%ptr,time,states,rates,intermediates, &
-              & parameters(parameterStartDOF:parameterEndDOF))
+            IF(cellMLModel%numberOfComputedConstants>0) THEN
+              CALL CellMLModel_CallComputedConstantsRoutine(cellMLModel%ptr,intermediates) 
+            ENDIF
+            IF(cellMLModel%numberOfRates>0) THEN
+              CALL CellMLModel_CallRatesRoutine(cellMLModel%ptr,time, &
+                & states,rates,intermediates, &
+                & parameterData(parameterStartDOF:parameterEndDOF))
+            ENDIF
+            IF(cellMLModel%numberOfAlgebraic>0) THEN
+              CALL CellMLModel_CallVariablesRoutine(cellMLModel%ptr,time, &
+                & states,rates,intermediates)
+            ENDIF
 
 #endif            
               
@@ -3595,8 +3940,18 @@ CONTAINS
 
 #ifdef WITH_CELLML
             
-            CALL CELLML_MODEL_DEFINITION_CALL_RHS_ROUTINE(cellMLModel%ptr,time,states,rateData(rateStartDOF:rateEndDOF), &
-              & intermediates,parameters(parameterStartDOF:parameterEndDOF))
+            IF(cellMLModel%numberOfComputedConstants>0) THEN
+              CALL CellMLModel_CallComputedConstantsRoutine(cellMLModel%ptr,intermediates) 
+            ENDIF
+            IF(cellMLModel%numberOfRates>0) THEN
+              CALL CellMLModel_CallRatesRoutine(cellMLModel%ptr,time, &
+                & states,rateData(rateStartDOF:rateEndDOF),intermediates, &
+                & parameterData(parameterStartDOF:parameterEndDOF))
+            ENDIF
+            IF(cellMLModel%numberOfAlgebraic>0) THEN
+              CALL CellMLModel_CallVariablesRoutine(cellMLModel%ptr,time, &
+                & states,rateData(rateStartDOF:rateEndDOF),intermediates)
+            ENDIF
 
 #endif            
             
@@ -3620,9 +3975,21 @@ CONTAINS
 
 #ifdef WITH_CELLML
             
-            CALL CELLML_MODEL_DEFINITION_CALL_RHS_ROUTINE(cellMLModel%ptr,time,states,rates, &
-              & intermediateData(intermediateStartDOF:intermediateEndDOF), &
-              & parameters(parameterStartDOF:parameterEndDOF))
+            IF(cellMLModel%numberOfComputedConstants>0) THEN
+              CALL CellMLModel_CallComputedConstantsRoutine(cellMLModel%ptr, &
+                & intermediateData(intermediateStartDOF:intermediateEndDOF)) 
+            ENDIF
+            IF(cellMLModel%numberOfRates>0) THEN
+              CALL CellMLModel_CallRatesRoutine(cellMLModel%ptr,time, &
+                & states,rates, &
+                & intermediateData(intermediateStartDOF:intermediateEndDOF), &
+                & parameterData(parameterStartDOF:parameterEndDOF))
+            ENDIF
+            IF(cellMLModel%numberOfAlgebraic>0) THEN
+              CALL CellMLModel_CallVariablesRoutine(cellMLModel%ptr,time, &
+                & states,rates, &
+                & intermediateData(intermediateStartDOF:intermediateEndDOF))
+            ENDIF
 
 #endif            
             
@@ -3641,9 +4008,21 @@ CONTAINS
 
 #ifdef WITH_CELLML
             
-            CALL CELLML_MODEL_DEFINITION_CALL_RHS_ROUTINE(cellMLModel%ptr,time,states,rateData(rateStartDOF:rateEndDOF), &
-              & intermediateData(intermediateStartDOF:intermediateEndDOF), &
-              & parameters(parameterStartDOF:parameterEndDOF))
+            IF(cellMLModel%numberOfComputedConstants>0) THEN
+              CALL CellMLModel_CallComputedConstantsRoutine(cellMLModel%ptr, &
+                & intermediateData(intermediateStartDOF:intermediateEndDOF)) 
+            ENDIF
+            IF(cellMLModel%numberOfRates>0) THEN
+              CALL CellMLModel_CallRatesRoutine(cellMLModel%ptr,time, &
+                & states,rates(rateStartDOF:rateEndDOF), &
+                & intermediateData(intermediateStartDOF:intermediateEndDOF), &
+                & parameterData(parameterStartDOF:parameterEndDOF))
+            ENDIF
+            IF(cellMLModel%numberOfAlgebraic>0) THEN
+              CALL CellMLModel_CallVariablesRoutine(cellMLModel%ptr,time, &
+                & states,rates(rateStartDOF:rateEndDOF), &
+                & intermediateData(intermediateStartDOF:intermediateEndDOF))
+            ENDIF
 
 #endif            
               
@@ -3667,6 +4046,11 @@ CONTAINS
         IF(intermediateDataOffset>1.OR.numberOfIntermediates==0) THEN
           !Intermediate data is not contiguous or there are no intermediates
           
+          !Copy intermediate data to temporary array
+          DO intermediateIdx=1,numberOfIntermediates
+            intermediates(intermediateIdx)=intermediateData((intermediateStartIdx-1)*intermediateDataOffset+intermediateIdx)
+          ENDDO !intermediateIdx
+          
           IF(rateDataOffset>1.OR.numberOfStates==0) THEN
             !Rates data is not contiguous or there are no rates
 
@@ -3674,8 +4058,18 @@ CONTAINS
 
 #ifdef WITH_CELLML
             
-            CALL CELLML_MODEL_DEFINITION_CALL_RHS_ROUTINE(cellMLModel%ptr,time,stateData(stateStartDOF:stateEndDOF), &
-              & rates,intermediates,parameters)
+            IF(cellMLModel%numberOfComputedConstants>0) THEN
+              CALL CellMLModel_CallComputedConstantsRoutine(cellMLModel%ptr,intermediates) 
+            ENDIF
+            IF(cellMLModel%numberOfRates>0) THEN
+              CALL CellMLModel_CallRatesRoutine(cellMLModel%ptr,time, &
+                & stateData(stateStartDOF:stateEndDOF),rates, &
+                & intermediates,parameters)
+            ENDIF
+            IF(cellMLModel%numberOfAlgebraic>0) THEN
+              CALL CellMLModel_CallVariablesRoutine(cellMLModel%ptr,time, &
+                & stateData(stateStartDOF:stateEndDOF),rates,intermediates)
+            ENDIF
 
 #endif            
             
@@ -3699,8 +4093,19 @@ CONTAINS
 
 #ifdef WITH_CELLML
             
-            CALL CELLML_MODEL_DEFINITION_CALL_RHS_ROUTINE(cellMLModel%ptr,time,stateData(stateStartDOF:stateEndDOF), &
-              & rateData(rateStartDOF:rateEndDOF),intermediates,parameters)          
+            IF(cellMLModel%numberOfComputedConstants>0) THEN
+              CALL CellMLModel_CallComputedConstantsRoutine(cellMLModel%ptr,intermediates) 
+            ENDIF
+            IF(cellMLModel%numberOfRates>0) THEN
+              CALL CellMLModel_CallRatesRoutine(cellMLModel%ptr,time, &
+                & stateData(stateStartDOF:stateEndDOF),rateData(rateStartDOF:rateEndDOF), &
+                & intermediates,parameters)
+            ENDIF
+            IF(cellMLModel%numberOfAlgebraic>0) THEN
+              CALL CellMLModel_CallVariablesRoutine(cellMLModel%ptr,time, &
+                & stateData(stateStartDOF:stateEndDOF),rateData(rateStartDOF:rateEndDOF), &
+                & intermediates)
+            ENDIF
 
 #endif
             
@@ -3724,8 +4129,21 @@ CONTAINS
 
 #ifdef WITH_CELLML
             
-            CALL CELLML_MODEL_DEFINITION_CALL_RHS_ROUTINE(cellMLModel%ptr,time,stateData(stateStartDOF:stateEndDOF),rates, &
-              & intermediateData(intermediateStartDOF:intermediateEndDOF),parameters)          
+            IF(cellMLModel%numberOfComputedConstants>0) THEN
+              CALL CellMLModel_CallComputedConstantsRoutine(cellMLModel%ptr, &
+                & intermediateData(intermediateStartDOF:intermediateEndDOF)) 
+            ENDIF
+            IF(cellMLModel%numberOfRates>0) THEN
+              CALL CellMLModel_CallRatesRoutine(cellMLModel%ptr,time, &
+                & stateData(stateStartDOF:stateEndDOF),rates, &
+                & intermediateData(intermediateStartDOF:intermediateEndDOF), &
+                & parameters)
+            ENDIF
+            IF(cellMLModel%numberOfAlgebraic>0) THEN
+              CALL CellMLModel_CallVariablesRoutine(cellMLModel%ptr,time, &
+                & stateData(stateStartDOF:stateEndDOF),rates, &
+                & intermediateData(intermediateStartDOF:intermediateEndDOF))
+            ENDIF
 
 #endif
             
@@ -3744,9 +4162,21 @@ CONTAINS
 
 #ifdef WITH_CELLML
             
-            CALL CELLML_MODEL_DEFINITION_CALL_RHS_ROUTINE(cellMLModel%ptr,time,stateData(stateStartDOF:stateEndDOF), &
-              & rateData(rateStartDOF:rateEndDOF),intermediateData(intermediateStartDOF:intermediateEndDOF), &
-              & parameters)
+            IF(cellMLModel%numberOfComputedConstants>0) THEN
+              CALL CellMLModel_CallComputedConstantsRoutine(cellMLModel%ptr, &
+                & intermediateData(intermediateStartDOF:intermediateEndDOF)) 
+            ENDIF
+            IF(cellMLModel%numberOfRates>0) THEN
+              CALL CellMLModel_CallRatesRoutine(cellMLModel%ptr,time, &
+                & stateData(stateStartDOF:stateEndDOF),rateData(rateStartDOF:rateEndDOF), &
+                & intermediateData(intermediateStartDOF:intermediateEndDOF), &
+                & parameters)
+            ENDIF
+            IF(cellMLModel%numberOfAlgebraic>0) THEN
+              CALL CellMLModel_CallVariablesRoutine(cellMLModel%ptr,time, &
+                & stateData(stateStartDOF:stateEndDOF),rateData(rateStartDOF:rateEndDOF), &
+                & intermediateData(intermediateStartDOF:intermediateEndDOF))
+            ENDIF
 
 #endif            
             
@@ -3761,6 +4191,11 @@ CONTAINS
         IF(intermediateDataOffset>1.OR.numberOfIntermediates==0) THEN
           !Intermediate data is not contiguous or there are no intermediates
           
+          !Copy intermediate data from temporary array
+          DO intermediateIdx=1,numberOfIntermediates
+            intermediates(intermediateIdx)=intermediateData((intermediateStartIdx-1)*intermediateDataOffset+intermediateIdx)
+          ENDDO !intermediateIdx
+          
           IF(rateDataOffset>1.OR.numberOfStates==0) THEN
             !Rates data is not contiguous or there are no rates
 
@@ -3768,8 +4203,18 @@ CONTAINS
 
 #ifdef WITH_CELLML
             
-            CALL CELLML_MODEL_DEFINITION_CALL_RHS_ROUTINE(cellMLModel%ptr,time,stateData(stateStartDOF:stateEndDOF), &
-              & rates,intermediates,parameters(parameterStartDOF:parameterEndDOF))
+            IF(cellMLModel%numberOfComputedConstants>0) THEN
+              CALL CellMLModel_CallComputedConstantsRoutine(cellMLModel%ptr,intermediates) 
+            ENDIF
+            IF(cellMLModel%numberOfRates>0) THEN
+              CALL CellMLModel_CallRatesRoutine(cellMLModel%ptr,time, &
+                & stateData(stateStartDOF:stateEndDOF),rates, &
+                & intermediates,parameterData(parameterStartDOF:parameterEndDOF))
+            ENDIF
+            IF(cellMLModel%numberOfAlgebraic>0) THEN
+              CALL CellMLModel_CallVariablesRoutine(cellMLModel%ptr,time, &
+                & stateData(stateStartDOF:stateEndDOF),rates,intermediates)
+            ENDIF
             
 #endif
             
@@ -3793,8 +4238,19 @@ CONTAINS
 
 #ifdef WITH_CELLML
             
-            CALL CELLML_MODEL_DEFINITION_CALL_RHS_ROUTINE(cellMLModel%ptr,time,stateData(stateStartDOF:stateEndDOF), &
-              & rateData(rateStartDOF:rateEndDOF),intermediates,parameters(parameterStartDOF:parameterEndDOF))
+            IF(cellMLModel%numberOfComputedConstants>0) THEN
+              CALL CellMLModel_CallComputedConstantsRoutine(cellMLModel%ptr,intermediates) 
+            ENDIF
+            IF(cellMLModel%numberOfRates>0) THEN
+              CALL CellMLModel_CallRatesRoutine(cellMLModel%ptr,time, &
+                & stateData(stateStartDOF:stateEndDOF),rateData(rateStartDOF:rateEndDOF), &
+                & intermediates,parameterData(parameterStartDOF:parameterEndDOF))
+            ENDIF
+            IF(cellMLModel%numberOfAlgebraic>0) THEN
+              CALL CellMLModel_CallVariablesRoutine(cellMLModel%ptr,time, &
+                & stateData(stateStartDOF:stateEndDOF),rateData(rateStartDOF:rateEndDOF), &
+                & intermediates)
+            ENDIF
 
 #endif            
             
@@ -3818,9 +4274,21 @@ CONTAINS
 
 #ifdef WITH_CELLML
             
-            CALL CELLML_MODEL_DEFINITION_CALL_RHS_ROUTINE(cellMLModel%ptr,time,stateData(stateStartDOF:stateEndDOF), &
-              & rates,intermediateData(intermediateStartDOF:intermediateEndDOF), &
-              & parameters(parameterStartDOF:parameterEndDOF))
+            IF(cellMLModel%numberOfComputedConstants>0) THEN
+              CALL CellMLModel_CallComputedConstantsRoutine(cellMLModel%ptr, &
+                & intermediateData(intermediateStartDOF:intermediateEndDOF)) 
+            ENDIF
+            IF(cellMLModel%numberOfRates>0) THEN
+              CALL CellMLModel_CallRatesRoutine(cellMLModel%ptr,time, &
+                & stateData(stateStartDOF:stateEndDOF),rates, &
+                & intermediateData(intermediateStartDOF:intermediateEndDOF), &
+                & parameterData(parameterStartDOF:parameterEndDOF))
+            ENDIF
+            IF(cellMLModel%numberOfAlgebraic>0) THEN
+              CALL CellMLModel_CallVariablesRoutine(cellMLModel%ptr,time, &
+                & stateData(stateStartDOF:stateEndDOF),rates, &
+                & intermediateData(intermediateStartDOF:intermediateEndDOF))
+            ENDIF
 
 #endif            
             
@@ -3839,9 +4307,21 @@ CONTAINS
 
 #ifdef WITH_CELLML
             
-            CALL CELLML_MODEL_DEFINITION_CALL_RHS_ROUTINE(cellMLModel%ptr,time,stateData(stateStartDOF:stateEndDOF), &
-              & rateData(rateStartDOF:rateEndDOF),intermediateData(intermediateStartDOF:intermediateEndDOF), &
-              & parameters(parameterStartDOF:parameterEndDOF))
+            IF(cellMLModel%numberOfComputedConstants>0) THEN
+              CALL CellMLModel_CallComputedConstantsRoutine(cellMLModel%ptr, &
+                & intermediateData(intermediateStartDOF:intermediateEndDOF)) 
+            ENDIF
+            IF(cellMLModel%numberOfRates>0) THEN
+              CALL CellMLModel_CallRatesRoutine(cellMLModel%ptr,time, &
+                & stateData(stateStartDOF:stateEndDOF),rateData(rateStartDOF:rateEndDOF), &
+                & intermediateData(intermediateStartDOF:intermediateEndDOF), &
+                & parameterData(parameterStartDOF:parameterEndDOF))
+            ENDIF
+            IF(cellMLModel%numberOfAlgebraic>0) THEN
+              CALL CellMLModel_CallVariablesRoutine(cellMLModel%ptr,time, &
+                & stateData(stateStartDOF:stateEndDOF),rateData(rateStartDOF:rateEndDOF), &
+                & intermediateData(intermediateStartDOF:intermediateEndDOF))
+            ENDIF
 
 #endif
             
@@ -14925,7 +15405,7 @@ CONTAINS
       CASE(SOLVER_NEWTON_JACOBIAN_NOT_CALCULATED)
         CALL FlagError("Cannot have no Jacobian calculation for a PETSc nonlinear linesearch solver.",err,error,*999)
       CASE(SOLVER_NEWTON_JACOBIAN_EQUATIONS_CALCULATED)
-        solverJacobian%updateMatrix=.TRUE. !CMISS will fill in the Jacobian values
+        solverJacobian%updateMatrix=.TRUE. !OpenCMISS will fill in the Jacobian values
         !Pass the linesearch solver object rather than the temporary solver
         CALL PETSc_SNESSetJacobian(linesearchSolver%snes,jacobianPETScMatrix%matrix,jacobianPETScMatrix%matrix, &
           & Problem_SolverJacobianEvaluatePetsc,linesearchSolver%newtonSolver%nonlinearSolver%solver,err,error,*999)

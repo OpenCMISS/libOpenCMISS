@@ -94,7 +94,7 @@ PROGRAM SimpleShearExample
 
   INTEGER(OC_Intg) :: NumberGlobalXElements,NumberGlobalYElements,NumberGlobalZElements
   INTEGER(OC_Intg) :: decompositionIndex,EquationsSetIndex
-  INTEGER(OC_Intg) :: NumberOfComputationNodes,NumberOfDomains,ComputationNodeNumber
+  INTEGER(OC_Intg) :: NumberOfComputationNodes,ComputationNodeNumber
   INTEGER(OC_Intg) :: NodeNumber,NodeDomain,node_idx
   INTEGER(OC_Intg),ALLOCATABLE :: LeftSurfaceNodes(:)
   INTEGER(OC_Intg),ALLOCATABLE :: RightSurfaceNodes(:)

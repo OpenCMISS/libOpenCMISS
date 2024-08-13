@@ -1178,8 +1178,8 @@ CONTAINS
     TYPE(FieldInterpolatedPointType), POINTER :: dataInterpPoint,dataWeightInterpPoint,dependentInterpPoint, &
       & initialGeometricInterpPoint,geometricInterpPoint,materialsInterpPoint,sourceInterpPoint
     TYPE(FieldInterpolatedPointMetricsType), POINTER :: initialGeometricInterpPointMetrics,geometricInterpPointMetrics
-    TYPE(FieldVariableType), POINTER :: colsVariable,dataVariable,dataWeightVariable,independentVariable, &
-      & geometricVariable,materialsVariable,rowsVariable,sourceVariable
+    TYPE(FieldVariableType), POINTER :: colsVariable,dataVariable,dataWeightVariable,geometricVariable,materialsVariable, &
+      & rowsVariable,sourceVariable
     TYPE(QuadratureSchemeType), POINTER :: dependentQuadratureScheme
     TYPE(QuadratureSchemePtrType) :: columnQuadratureScheme(MAXIMUM_DATA_COMPONENTS),rowQuadratureScheme(MAXIMUM_DATA_COMPONENTS)
     TYPE(VARYING_STRING) :: localError
@@ -1684,7 +1684,7 @@ CONTAINS
         CALL EquationsSet_IndependentFieldGet(equationsSet,independentField,err,error,*999)
         NULLIFY(dataVariable)
         CALL Field_VariableGet(independentField,FIELD_U_VARIABLE_TYPE,dataVariable,err,error,*999)
-        CALL FieldVariable_NumberOfComponentsGet(independentVariable,numberOfDataComponents,err,error,*999)
+        CALL FieldVariable_NumberOfComponentsGet(dataVariable,numberOfDataComponents,err,error,*999)
         NULLIFY(dataWeightVariable)
         CALL Field_VariableGet(independentField,FIELD_V_VARIABLE_TYPE,dataWeightVariable,err,error,*999)
         NULLIFY(dataInterpParameters)
@@ -1697,7 +1697,7 @@ CONTAINS
         NULLIFY(dataWeightInterpParameters)
         CALL EquationsInterpolation_IndependentParametersGet(equationsInterpolation,FIELD_V_VARIABLE_TYPE, &
           & dataWeightInterpParameters,err,error,*999)
-        NULLIFY(dataWeightInterpParameters)
+        NULLIFY(dataWeightInterpPoint)
         CALL EquationsInterpolation_IndependentPointGet(equationsInterpolation,FIELD_V_VARIABLE_TYPE, &
           & dataWeightInterpPoint,err,error,*999)
         CALL Field_InterpolationParametersElementGet(FIELD_VALUES_SET_TYPE,elementNumber,dataWeightInterpParameters, &

@@ -624,7 +624,6 @@ CONTAINS
     INTEGER(INTG) :: equationsSetIdx,esSpecification(3),pSpecification(3),solveType
     LOGICAL :: fluidEquationsSetFound
     TYPE(ControlLoopType), POINTER :: controlLoop
-    TYPE(EquationsType), POINTER :: equations
     TYPE(EquationsSetType), POINTER :: equationsSet
     TYPE(ProblemType), POINTER :: problem
     TYPE(SolverType), POINTER :: dynamicSolver

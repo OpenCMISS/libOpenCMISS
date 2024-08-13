@@ -37015,10 +37015,6 @@ CONTAINS
     REAL(DP), INTENT(OUT) :: lineLength !<On return, the line length of the chosen line 
     INTEGER(INTG), INTENT(OUT) :: err !<The error code.
     !Local variables
-    TYPE(ContextType), POINTER :: context
-    TYPE(FieldType), POINTER :: geometricField
-    TYPE(RegionType), POINTER :: region
-    TYPE(RegionsType), POINTER :: regions
 
     ENTERS("OC_Field_GeometricParametersElementLineLengthGetNumber0",err,error,*999)
 

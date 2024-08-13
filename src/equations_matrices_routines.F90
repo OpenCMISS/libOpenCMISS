@@ -835,7 +835,7 @@ MODULE EquationsMatricesRoutines
     RETURN
 999 ERRORSEXITS("EquationsMatrices_ElementMatrixFinalise",err,error)
     RETURN 1
-    
+   
   END SUBROUTINE EquationsMatrices_ElementMatrixFinalise
 
   !
@@ -2796,10 +2796,8 @@ MODULE EquationsMatricesRoutines
       NULLIFY(colsVariable)
       CALL EquationsMappingDynamic_DynamicVariableGet(dynamicMapping,colsVariable,err,error,*999)
       DO matrixIdx=1,dynamicMatrices%numberOfDynamicMatrices
-        NULLIFY(dynamicMatrix)
-        CALL EquationsMatricesDynamic_EquationsMatrixGet(dynamicMatrices,matrixIdx,dynamicMatrix,err,error,*999)        
-        CALL EquationsMatrices_ElementMatrixSetup(dynamicMatrix%elementMatrix,rowsVariable,colsVariable, &
-          & rowsNumberOfElements,colsNumberOfElements,err,error,*999)
+        CALL EquationsMatrices_ElementMatrixSetup(vectorMatrices%dynamicMatrices%matrices(matrixIdx)%ptr%elementMatrix, &
+          & rowsVariable,colsVariable,rowsNumberOfElements,colsNumberOfElements,err,error,*999)
       ENDDO !matrixIdx
     ENDIF
     NULLIFY(LinearMatrices)
@@ -2809,12 +2807,10 @@ MODULE EquationsMatricesRoutines
       NULLIFY(linearMapping)
       CALL EquationsMappingVector_LinearMappingGet(vectorMapping,linearMapping,err,error,*999)
       DO matrixIdx=1,linearMatrices%numberOfLinearMatrices
-        NULLIFY(linearMatrix)
-        CALL EquationsMatricesLinear_EquationsMatrixGet(linearMatrices,matrixIdx,linearMatrix,err,error,*999)
         NULLIFY(colsVariable)
         CALL EquationsMappingLinear_LinearMatrixVariableGet(linearMapping,matrixIdx,colsVariable,err,error,*999)
-        CALL EquationsMatrices_ElementMatrixSetup(linearMatrix%elementMatrix,rowsVariable,colsVariable, &
-          & rowsNumberOfElements,colsNumberOfElements,err,error,*999)
+        CALL EquationsMatrices_ElementMatrixSetup(vectorMatrices%linearMatrices%matrices(matrixIdx)%ptr%elementMatrix, &
+          & rowsVariable,colsVariable,rowsNumberOfElements,colsNumberOfElements,err,error,*999)
       ENDDO !matrixIdx
     ENDIF
     NULLIFY(nonlinearMatrices)
@@ -2828,16 +2824,16 @@ MODULE EquationsMatricesRoutines
         CALL EquationsMappingNonlinear_ResidualMappingGet(nonlinearMapping,residualIdx,residualMapping,err,error,*999)
         NULLIFY(residualVector)
         CALL EquationsMatricesNonlinear_ResidualVectorGet(nonlinearMatrices,residualIdx,residualVector,err,error,*999)
-        CALL EquationsMatrices_ElementVectorSetup(residualVector%elementResidual,rowsVariable,err,error,*999)
+        CALL EquationsMatrices_ElementVectorSetup(vectorMatrices%nonlinearMatrices%residuals(residualIdx)%ptr%elementResidual, &
+          & rowsVariable,err,error,*999)
         residualVector%elementResidualCalculated=0
         DO matrixIdx=1,residualVector%numberOfJacobians
           !Initialise the Jacobian element matrices
-          NULLIFY(jacobianMatrix)
-          CALL EquationsMatricesResidual_JacobianMatrixGet(residualVector,matrixIdx,jacobianMatrix,err,error,*999)
           NULLIFY(colsVariable)
           CALL EquationsMappingResidual_JacobianMatrixVariableGet(residualMapping,matrixIdx,colsVariable,err,error,*999)
-          CALL EquationsMatrices_ElementMatrixSetup(jacobianMatrix%elementJacobian,rowsVariable,colsVariable, &
-            & rowsNumberOfElements,colsNumberOfElements,err,error,*999)
+          CALL EquationsMatrices_ElementMatrixSetup(vectorMatrices%nonlinearMatrices%residuals(residualIdx)%ptr% &
+            & jacobians(matrixIdx)%ptr%elementJacobian,rowsVariable,colsVariable,rowsNumberOfElements,colsNumberOfElements, &
+            & err,error,*999)
         ENDDO !matrixIdx
       ENDDO !residualIdx
     ENDIF
@@ -2845,16 +2841,15 @@ MODULE EquationsMatricesRoutines
     CALL EquationsMatricesVector_RHSVectorExists(vectorMatrices,rhsVector,err,error,*999)
     IF(ASSOCIATED(rhsVector)) THEN
       !Initialise the RHS element vector
-      CALL EquationsMatrices_ElementVectorSetup(rhsVector%elementVector,rowsVariable,err,error,*999)
+      CALL EquationsMatrices_ElementVectorSetup(vectorMatrices%rhsVector%elementVector,rowsVariable,err,error,*999)
     ENDIF
     NULLIFY(sourceVectors)
     CALL EquationsMatricesVector_SourceVectorsExists(vectorMatrices,sourceVectors,err,error,*999)
     IF(ASSOCIATED(sourceVectors)) THEN
       DO sourceIdx=1,sourceVectors%numberOfSources
-        NULLIFY(sourceVector)
-        CALL EquationsMatricesSources_SourceVectorGet(sourceVectors,sourceIdx,sourceVector,err,error,*999)
         !Initialise the source element vector. 
-        CALL EquationsMatrices_ElementVectorSetup(sourceVector%elementVector,rowsVariable,err,error,*999)
+        CALL EquationsMatrices_ElementVectorSetup(vectorMatrices%sourceVectors%sources(sourceIdx)%ptr%elementVector, &
+          & rowsVariable,err,error,*999)
       ENDDO !sourceIdx
     ENDIF
    
@@ -2951,8 +2946,8 @@ MODULE EquationsMatricesRoutines
     equationsMatrix%numberOfColumns=equationsMatrixToVarMap%numberOfColumns
     equationsMatrixToVarMap%equationsMatrix=>equationsMatrix
     NULLIFY(equationsMatrix%matrix)
-    CALL EquationsMatrices_ElementMatrixInitialise(equationsMatrix%elementMatrix,err,error,*999)
-    CALL EquationsMatrices_NodalMatrixInitialise(equationsMatrix%nodalMatrix,err,error,*999)
+    CALL EquationsMatrices_ElementMatrixInitialise(dynamicMatrices%matrices(matrixNumber)%ptr%elementMatrix,err,error,*999)
+    CALL EquationsMatrices_NodalMatrixInitialise(dynamicMatrices%matrices(matrixNumber)%ptr%nodalMatrix,err,error,*999)
     NULLIFY(equationsMatrix%tempVector)
     
     EXITS("EquationsMatrices_EquationsMatrixDynamicInitialise")
@@ -3020,8 +3015,8 @@ MODULE EquationsMatricesRoutines
     equationsMatrix%numberOfColumns=equationsMatrixToVarMap%numberOfColumns
     equationsMatrixToVarMap%equationsMatrix=>equationsMatrix
     NULLIFY(equationsMatrix%matrix)
-    CALL EquationsMatrices_ElementMatrixInitialise(equationsMatrix%elementMatrix,err,error,*999)
-    CALL EquationsMatrices_NodalMatrixInitialise(equationsMatrix%nodalMatrix,err,error,*999)
+    CALL EquationsMatrices_ElementMatrixInitialise(linearMatrices%matrices(matrixNumber)%ptr%elementMatrix,err,error,*999)
+    CALL EquationsMatrices_NodalMatrixInitialise(linearMatrices%matrices(matrixNumber)%ptr%nodalMatrix,err,error,*999)
     NULLIFY(equationsMatrix%tempVector)
    
     EXITS("EquationsMatrices_EquationsMatrixLinearInitialise")
