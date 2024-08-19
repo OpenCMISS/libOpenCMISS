@@ -855,6 +855,8 @@ MODULE FieldRoutines
 
   PUBLIC Field_VariableTypesSet,Field_VariableTypesSetAndLock
 
+  PUBLIC FieldVariable_AnalyticValuesSetElement,FieldVariable_AnalyticValuesSetGaussPoint,FieldVariable_AnalyticValuesSetNode
+
   PUBLIC FieldVariable_ComponentInterpolationCheck
 
   PUBLIC FieldVariable_ComponentValuesInitialise
@@ -13729,9 +13731,9 @@ CONTAINS
     INTEGER(INTG), INTENT(IN) :: componentNumber !<The component number of the node to compute the geometric information for
     INTEGER(INTG), INTENT(IN) :: localNodeNumber !<The local node number to compute the geometric information for
 
-    REAL(DP), INTENT(OUT) :: position(:) !<position(coordinateIdx), on exit the geometric position of the node
+    REAL(DP), INTENT(OUT) :: position(:,:) !<position(coordinateIdx,globalDerivativeIdx), on exit the geometric position of the node and the global derivatives
     REAL(DP), INTENT(OUT) :: normal(:) !<normal(coordinateIdx), on exit the normal vector. If the node is internal the normal vector is zero.
-    REAL(DP), INTENT(OUT) :: tangents(:,:) !<tangents(coordinateIdx,tangentIdx), on exit the tangent vectors for the tangentIdx'th tangent at the node. There are up to numberOfXi tangent vectors.
+    REAL(DP), INTENT(OUT) :: tangents(:,:) !<tangents(coordinateIdx,tangentIdx), on exit the tangent vectors for the tangentIdx'th tangent at the node. There are up to numberOfXi-1 tangent vectors.
     INTEGER(INTG), INTENT(OUT) :: err !<The error code
     TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
     !Local Variables
@@ -15204,6 +15206,349 @@ CONTAINS
     RETURN 1
     
   END SUBROUTINE Field_VariablesInitialise
+
+  !
+  !================================================================================================================================
+  !
+
+  !>Sets the analytic values for a field variable at an element
+  SUBROUTINE FieldVariable_AnalyticValuesSetElement(fieldVariable,componentNumber,domainElement, &
+    & setValues,valuesParameterSetType,analyticValue,setVelocity,velocityParameterSetType,velocityAnalyticValue, &
+    & setAcceleration,accelerationParameterSetType,accelerationAnalyticValue,err,error,*)
+
+    !Argument variables
+    TYPE(FieldVariableType), POINTER :: fieldVariable !<The field variable to set the analytic values at
+    INTEGER(INTG), INTENT(IN) :: componentNumber !<The component number of the field variable to set the analytic values at
+    TYPE(DomainElementType), POINTER :: domainElement !<The domain element to set the analytic values for
+    LOGICAL, INTENT(IN) :: setValues !<.TRUE. if the analytic values are to be set
+    INTEGER(INTG), INTENT(IN) :: valuesParameterSetType !<The parameters set type to set the analytic values for
+    REAL(DP), INTENT(IN) :: analyticValue !<The analytic value at the node to set
+    LOGICAL, INTENT(IN) :: setVelocity !<.TRUE. if the velocity analytic values are to be set.
+    INTEGER(INTG), INTENT(IN) :: velocityParameterSetTYpe !<The parameter set type to set the velocity analytic values for
+    REAL(DP), INTENT(IN) :: velocityAnalyticValue !<The value of the velocity analytic value to set    
+    LOGICAL, INTENT(IN) :: setAcceleration !<.TRUE. if the acceleration analytic values are to be set
+    INTEGER(INTG), INTENT(IN) :: accelerationParameterSetType !<The parameter set type to set the acceleration analytic values for
+    REAL(DP), INTENT(IN) :: accelerationAnalyticValue !<The value of the acceleration analytic value to set.
+    INTEGER(INTG), INTENT(OUT) :: err !<The error code
+    TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
+    !Local Variables
+    INTEGER(INTG) :: localDOFIdx,localElementNumber,variableType
+
+    ENTERS("FieldVariable_AnalyticValuesSetElement",err,error,*999)
+
+    CALL FieldVariable_VariableTypeGet(fieldVariable,variableType,err,error,*999)
+    CALL FieldVariable_AssertComponentNumberOK(fieldVariable,componentNumber,err,error,*999)
+    CALL DomainElement_LocalNumberGet(domainElement,localElementNumber,err,error,*999)
+    CALL FieldVariable_LocalElementDOFGet(fieldVariable,localElementNumber,componentNumber,localDOFIdx,err,error,*999)
+    IF(setValues) THEN
+      CALL FieldVariable_ParameterSetUpdateLocalDOF(fieldVariable,valuesParameterSetType,localDOFIdx, &
+        & analyticValue,err,error,*999)
+    ENDIF
+    IF(setVelocity) THEN
+      CALL FieldVariable_ParameterSetUpdateLocalDOF(fieldVariable,velocityParameterSetType,localDOFIdx, &
+        & velocityAnalyticValue,err,error,*999)
+    ENDIF
+    IF(setAcceleration) THEN
+      CALL FieldVariable_ParameterSetUpdateLocalDOF(fieldVariable,accelerationParameterSetType,localDOFIdx, &
+        & accelerationAnalyticValue,err,error,*999)
+    ENDIF
+    
+    EXITS("FieldVariable_AnalyticValuesSetElement")
+    RETURN
+999 ERRORSEXITS("FieldVariable_AnalyticValuesSetElement",err,error)
+    RETURN 1
+
+  END SUBROUTINE FieldVariable_AnalyticValuesSetElement
+
+  !
+  !================================================================================================================================
+  !
+
+  !>Sets the analytic values for a field variable at a Gauss point
+  SUBROUTINE FieldVariable_AnalyticValuesSetGaussPoint(fieldVariable,componentNumber,domainElement,gaussPointNumber, &
+    & setValues,valuesParameterSetType,analyticValue,setVelocity,velocityParameterSetType,velocityAnalyticValue, &
+    & setAcceleration,accelerationParameterSetType,accelerationAnalyticValue,err,error,*)
+
+    !Argument variables
+    TYPE(FieldVariableType), POINTER :: fieldVariable !<The field variable to set the analytic values at
+    INTEGER(INTG), INTENT(IN) :: componentNumber !<The component number of the field variable to set the analytic values at
+    TYPE(DomainElementType), POINTER :: domainElement !<The domain element to set the analytic values for
+    INTEGER(INTG), INTENT(IN) :: gaussPointNumber !<The gauss point number to set the analytic values for
+    LOGICAL, INTENT(IN) :: setValues !<.TRUE. if the analytic values are to be set
+    INTEGER(INTG), INTENT(IN) :: valuesParameterSetType !<The parameters set type to set the analytic values for
+    REAL(DP), INTENT(IN) :: analyticValue !<The analytic value at the node to set
+    LOGICAL, INTENT(IN) :: setVelocity !<.TRUE. if the velocity analytic values are to be set.
+    INTEGER(INTG), INTENT(IN) :: velocityParameterSetTYpe !<The parameter set type to set the velocity analytic values for
+    REAL(DP), INTENT(IN) :: velocityAnalyticValue !<The value of the velocity analytic value to set    
+    LOGICAL, INTENT(IN) :: setAcceleration !<.TRUE. if the acceleration analytic values are to be set
+    INTEGER(INTG), INTENT(IN) :: accelerationParameterSetType !<The parameter set type to set the acceleration analytic values for
+    REAL(DP), INTENT(IN) :: accelerationAnalyticValue !<The value of the acceleration analytic value to set.
+    INTEGER(INTG), INTENT(OUT) :: err !<The error code
+    TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
+    !Local Variables
+    INTEGER(INTG) :: localDOFIdx,localElementNumber,variableType
+
+    ENTERS("FieldVariable_AnalyticValuesSetGaussPoint",err,error,*999)
+
+    CALL FieldVariable_VariableTypeGet(fieldVariable,variableType,err,error,*999)
+    CALL FieldVariable_AssertComponentNumberOK(fieldVariable,componentNumber,err,error,*999)
+    CALL DomainElement_LocalNumberGet(domainElement,localElementNumber,err,error,*999)
+    CALL FieldVariable_LocalGaussDOFGet(fieldVariable,gaussPointNumber,localElementNumber,componentNumber,localDOFIdx, &
+      & err,error,*999)
+    IF(setValues) THEN
+      CALL FieldVariable_ParameterSetUpdateLocalDOF(fieldVariable,valuesParameterSetType,localDOFIdx, &
+        & analyticValue,err,error,*999)
+    ENDIF
+    IF(setVelocity) THEN
+      CALL FieldVariable_ParameterSetUpdateLocalDOF(fieldVariable,velocityParameterSetType,localDOFIdx, &
+        & velocityAnalyticValue,err,error,*999)
+    ENDIF
+    IF(setAcceleration) THEN
+      CALL FieldVariable_ParameterSetUpdateLocalDOF(fieldVariable,accelerationParameterSetType,localDOFIdx, &
+        & accelerationAnalyticValue,err,error,*999)
+    ENDIF
+    
+    EXITS("FieldVariable_AnalyticValuesSetGaussPoint")
+    RETURN
+999 ERRORSEXITS("FieldVariable_AnalyticValuesSetGaussPoint",err,error)
+    RETURN 1
+
+  END SUBROUTINE FieldVariable_AnalyticValuesSetGaussPoint
+
+  !
+  !================================================================================================================================
+  !
+
+  !>Sets the analytic values for a field variable at a node
+  SUBROUTINE FieldVariable_AnalyticValuesSetNode(fieldVariable,componentNumber,numberOfDimensions,domainNode,normal,tangents, &
+    & setValues,valuesParameterSetType,analyticValue,gradientAnalyticValue,hessianAnalyticValue,setVelocity, &
+    & velocityParameterSetType,velocityAnalyticValue,setAcceleration,accelerationParameterSetType,accelerationAnalyticValue, &
+    & err,error,*)
+
+    !Argument variables
+    TYPE(FieldVariableType), POINTER :: fieldVariable !<The field variable to set the analytic values at
+    INTEGER(INTG), INTENT(IN) :: componentNumber !<The component number of the field variable to set the analytic values at
+    INTEGER(INTG), INTENT(IN) :: numberOfDimensions !<The number of dimensions 
+    TYPE(DomainNodeType), POINTER :: domainNode !<The domain node to set the analytic values for
+    REAL(DP), INTENT(IN) :: normal(:) !<The geometric normal at the node.
+    REAL(DP), INTENT(IN) :: tangents(:,:) !<The geometric tangents at the node.
+    LOGICAL, INTENT(IN) :: setValues !<.TRUE. if the analytic values are to be set
+    INTEGER(INTG), INTENT(IN) :: valuesParameterSetType !<The parameters set type to set the analytic values for
+    REAL(DP), INTENT(IN) :: analyticValue !<The analytic value at the node to set
+    REAL(DP), INTENT(IN) :: gradientAnalyticValue(:) !<The gradient of the analytic value at the node to set.
+    REAL(DP), INTENT(IN) :: hessianAnalyticValue(:,:) !<The Hessian of the analytic value at the node to set.
+    LOGICAL, INTENT(IN) :: setVelocity !<.TRUE. if the velocity analytic values are to be set.
+    INTEGER(INTG), INTENT(IN) :: velocityParameterSetTYpe !<The parameter set type to set the velocity analytic values for
+    REAL(DP), INTENT(IN) :: velocityAnalyticValue !<The value of the velocity analytic value to set    
+    LOGICAL, INTENT(IN) :: setAcceleration !<.TRUE. if the acceleration analytic values are to be set
+    INTEGER(INTG), INTENT(IN) :: accelerationParameterSetType !<The parameter set type to set the acceleration analytic values for
+    REAL(DP), INTENT(IN) :: accelerationAnalyticValue !<The value of the acceleration analytic value to set.
+    INTEGER(INTG), INTENT(OUT) :: err !<The error code
+    TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
+    !Local Variables
+    INTEGER(INTG) :: componentIdx1,componentIdx2,derivativeGlobalIndex,derivativeIdx,localDOFIdx,localNodeNumber, &
+      & numberOfNodeDerivatives,numberOfVersions,variableType,versionIdx
+    REAL(DP) :: dofValue
+    TYPE(VARYING_STRING) :: localError
+
+    ENTERS("FieldVariable_AnalyticValuesSetNode",err,error,*999)
+
+    CALL FieldVariable_VariableTypeGet(fieldVariable,variableType,err,error,*999)
+    CALL FieldVariable_AssertComponentNumberOK(fieldVariable,componentNumber,err,error,*999)
+    CALL DomainNode_LocalNodeNumberGet(domainNode,localNodeNumber,err,error,*999)
+    CALL DomainNode_NumberOfDerivativesGet(domainNode,numberOfNodeDerivatives,err,error,*999)
+    DO derivativeIdx=1,numberOfNodeDerivatives
+      CALL DomainNode_DerivativeGlobalDerivativeIndexGet(domainNode,derivativeIdx,derivativeGlobalIndex,err,error,*999)
+      dofValue=0.0_DP
+      IF(setValues) THEN
+        SELECT CASE(variableType)
+        CASE(FIELD_U_VARIABLE_TYPE) 
+          SELECT CASE(derivativeGlobalIndex)
+          CASE(NO_GLOBAL_DERIV)
+            dofValue=analyticValue
+          CASE(GLOBAL_DERIV_S1)
+            !Compute grad(u).s1
+            DO componentIdx1=1,numberOfDimensions
+              dofValue=dofValue+gradientAnalyticValue(componentIdx1)*tangents(componentIdx1,1)
+            ENDDO !componentIdx1
+          CASE(GLOBAL_DERIV_S2)
+            !Compute grad(u).s2
+            DO componentIdx1=1,numberOfDimensions
+              dofValue=dofValue+gradientAnalyticValue(componentIdx1)*tangents(componentIdx1,2)
+            ENDDO !componentIdx1
+          CASE(GLOBAL_DERIV_S3)
+            !Compute grad(u).s3
+            DO componentIdx1=1,numberOfDimensions
+              dofValue=dofValue+gradientAnalyticValue(componentIdx1)*tangents(componentIdx1,3)
+            ENDDO !componentIdx1
+          CASE(GLOBAL_DERIV_S1_S2)
+            !Compute grad s1^t.H(u).s2
+            DO componentIdx2=1,numberOfDimensions
+              DO componentIdx1=1,numberOfDimensions
+                dofValue=dofValue+ &
+                  & tangents(componentIdx1,1)*hessianAnalyticValue(componentIdx1,componentIdx2)*tangents(componentIdx2,2)
+              ENDDO !componentIdx1
+            ENDDO !componentIdx2
+          CASE(GLOBAL_DERIV_S1_S3)
+            !Compute grad s1^t.H(u).s3
+            DO componentIdx2=1,numberOfDimensions
+              DO componentIdx1=1,numberOfDimensions
+                dofValue=dofValue+ &
+                  & tangents(componentIdx1,1)*hessianAnalyticValue(componentIdx1,componentIdx2)*tangents(componentIdx2,3)
+              ENDDO !componentIdx1
+            ENDDO !componentIdx2
+          CASE(GLOBAL_DERIV_S2_S3)
+            !Compute grad s2^t.H(u).s3
+            DO componentIdx2=1,numberOfDimensions
+              DO componentIdx1=1,numberOfDimensions
+                dofValue=dofValue+ &
+                  & tangents(componentIdx1,2)*hessianAnalyticValue(componentIdx1,componentIdx2)*tangents(componentIdx2,3)
+              ENDDO !componentIdx1
+            ENDDO !componentIdx2
+          CASE(GLOBAL_DERIV_S1_S2_S3)
+!!TODO: not implemented
+            dofValue=0.0_DP
+          CASE DEFAULT
+            localError="The global derivative index of "//TRIM(NumberToVString(derivativeGlobalIndex,"*",err,error))// &
+              & " for derivative index "//TRIM(NumberToVString(derivativeIdx,"*",err,error))//" of local node number "// &
+              & TRIM(NumberToVString(localNodeNumber,"*",err,error))//" of component number "// &
+              & TRIM(NumberToVString(componentNumber,"*",err,error))//" of variable type "// &
+              & TRIM(NumberToVString(variableType,"*",err,error))//" is invalid."
+            CALL FlagError(localError,err,error,*999)
+          END SELECT
+        CASE(FIELD_DELUDELN_VARIABLE_TYPE)
+          SELECT CASE(derivativeGlobalIndex)
+          CASE(NO_GLOBAL_DERIV)
+            !Compute grad(u).n
+            DO componentIdx1=1,numberOfDimensions
+              dofValue=dofValue+gradientAnalyticValue(componentIdx1)*normal(componentIdx1)
+            ENDDO !componentIdx1
+            dofValue=analyticValue
+          CASE(GLOBAL_DERIV_S1)
+            !Compute grad s1^t.H(u).n
+            DO componentIdx2=1,numberOfDimensions
+              DO componentIdx1=1,numberOfDimensions
+                dofValue=dofValue+ &
+                  & tangents(componentIdx1,1)*hessianAnalyticValue(componentIdx1,componentIdx2)*normal(componentIdx2)
+              ENDDO !componentIdx1
+            ENDDO !componentIdx2
+          CASE(GLOBAL_DERIV_S2)
+            !Compute grad s2^t.H(u).n
+            DO componentIdx2=1,numberOfDimensions
+              DO componentIdx1=1,numberOfDimensions
+                dofValue=dofValue+ &
+                  & tangents(componentIdx1,2)*hessianAnalyticValue(componentIdx1,componentIdx2)*normal(componentIdx2)
+              ENDDO !componentIdx1
+            ENDDO !componentIdx2
+          CASE(GLOBAL_DERIV_S3)
+            !Compute grad s3^t.H(u).n
+            DO componentIdx2=1,numberOfDimensions
+              DO componentIdx1=1,numberOfDimensions
+                dofValue=dofValue+ &
+                  & tangents(componentIdx1,3)*hessianAnalyticValue(componentIdx1,componentIdx2)*normal(componentIdx2)
+              ENDDO !componentIdx1
+            ENDDO !componentIdx2
+          CASE(GLOBAL_DERIV_S1_S2)
+!!TODO: not implemented
+            dofValue=0.0_DP
+          CASE(GLOBAL_DERIV_S1_S3)
+!!TODO: not implemented
+            dofValue=0.0_DP
+          CASE(GLOBAL_DERIV_S2_S3)
+!!TODO: not implemented
+            dofValue=0.0_DP
+          CASE(GLOBAL_DERIV_S1_S2_S3)
+!!TODO: not implemented
+            dofValue=0.0_DP
+          CASE DEFAULT
+            localError="The global derivative index of "//TRIM(NumberToVString(derivativeGlobalIndex,"*",err,error))// &
+              & " for derivative index "//TRIM(NumberToVString(derivativeIdx,"*",err,error))//" of local node number "// &
+              & TRIM(NumberToVString(localNodeNumber,"*",err,error))//" of component number "// &
+              & TRIM(NumberToVString(componentNumber,"*",err,error))//" of variable type "// &
+              & TRIM(NumberToVString(variableType,"*",err,error))//" is invalid."
+            CALL FlagError(localError,err,error,*999)
+          END SELECT
+        CASE(FIELD_T_VARIABLE_TYPE)
+          SELECT CASE(derivativeGlobalIndex)
+          CASE(NO_GLOBAL_DERIV)
+            !Compute grad(u).n
+            DO componentIdx1=1,numberOfDimensions
+              dofValue=dofValue+gradientAnalyticValue(componentIdx1)*normal(componentIdx1)
+            ENDDO !componentIdx1
+            dofValue=analyticValue
+          CASE(GLOBAL_DERIV_S1)
+            !Compute grad s1^t.H(u).n
+            DO componentIdx2=1,numberOfDimensions
+              DO componentIdx1=1,numberOfDimensions
+                dofValue=dofValue+ &
+                  & tangents(componentIdx1,1)*hessianAnalyticValue(componentIdx1,componentIdx2)*normal(componentIdx2)
+              ENDDO !componentIdx1
+            ENDDO !componentIdx2
+          CASE(GLOBAL_DERIV_S2)
+            !Compute grad s2^t.H(u).n
+            DO componentIdx2=1,numberOfDimensions
+              DO componentIdx1=1,numberOfDimensions
+                dofValue=dofValue+ &
+                  & tangents(componentIdx1,2)*hessianAnalyticValue(componentIdx1,componentIdx2)*normal(componentIdx2)
+              ENDDO !componentIdx1
+            ENDDO !componentIdx2
+          CASE(GLOBAL_DERIV_S3)
+            !Compute grad s3^t.H(u).n
+            DO componentIdx2=1,numberOfDimensions
+              DO componentIdx1=1,numberOfDimensions
+                dofValue=dofValue+ &
+                  & tangents(componentIdx1,3)*hessianAnalyticValue(componentIdx1,componentIdx2)*normal(componentIdx2)
+              ENDDO !componentIdx1
+            ENDDO !componentIdx2
+          CASE(GLOBAL_DERIV_S1_S2)
+!!TODO: not implemented
+            dofValue=0.0_DP
+          CASE(GLOBAL_DERIV_S1_S3)
+!!TODO: not implemented
+            dofValue=0.0_DP
+          CASE(GLOBAL_DERIV_S2_S3)
+!!TODO: not implemented
+            dofValue=0.0_DP
+          CASE(GLOBAL_DERIV_S1_S2_S3)
+!!TODO: not implemented
+            dofValue=0.0_DP
+          CASE DEFAULT
+            localError="The global derivative index of "//TRIM(NumberToVString(derivativeGlobalIndex,"*",err,error))// &
+              & " for derivative index "//TRIM(NumberToVString(derivativeIdx,"*",err,error))//" of local node number "// &
+              & TRIM(NumberToVString(localNodeNumber,"*",err,error))//" of component number "// &
+              & TRIM(NumberToVString(componentNumber,"*",err,error))//" of variable type "// &
+              & TRIM(NumberToVString(variableType,"*",err,error))//" is invalid."
+            CALL FlagError(localError,err,error,*999)
+          END SELECT
+        CASE DEFAULT
+          !Do nothing or error???
+        END SELECT
+      ENDIF
+      CALL DomainNode_DerivativeNumberOfVersionsGet(domainNode,derivativeIdx,numberOfVersions,err,error,*999)
+      DO versionIdx=1,numberOfVersions
+        CALL FieldVariable_LocalNodeDOFGet(fieldVariable,versionIdx,derivativeIdx,localNodeNumber,componentNumber, &
+          & localDOFIdx,err,error,*999)
+        IF(setValues) THEN
+          CALL FieldVariable_ParameterSetUpdateLocalDOF(fieldVariable,valuesParameterSetType,localDOFIdx,dofValue, &
+            & err,error,*999)
+        ENDIF
+        IF(setVelocity) THEN
+          CALL FieldVariable_ParameterSetUpdateLocalDOF(fieldVariable,velocityParameterSetType,localDOFIdx, &
+            & velocityAnalyticValue,err,error,*999)
+        ENDIF
+        IF(setAcceleration) THEN
+          CALL FieldVariable_ParameterSetUpdateLocalDOF(fieldVariable,accelerationParameterSetType,localDOFIdx, &
+            & accelerationAnalyticValue,err,error,*999)
+        ENDIF
+      ENDDO !versionIdx      
+    ENDDO !derivativeIdx
+    
+    EXITS("FieldVariable_AnalyticValuesSetNode")
+    RETURN
+999 ERRORSEXITS("FieldVariable_AnalyticValuesSetNode",err,error)
+    RETURN 1
+
+  END SUBROUTINE FieldVariable_AnalyticValuesSetNode
 
   !
   !================================================================================================================================
@@ -21794,11 +22139,6 @@ CONTAINS
   !================================================================================================================================
   !
 
-
-    !
-  !================================================================================================================================
-  !
-
   !>Computes the geometric position, normal and tangent vectors at a node in a field variable. If the node is internal to the mesh the normal and tangents are zero.
   SUBROUTINE FieldVariable_PositionNormalTangentsCalculateNode(fieldVariable,componentNumber,localNodeNumber, &
     & position,normal,tangents,err,error,*)
@@ -21807,18 +22147,23 @@ CONTAINS
     TYPE(FieldVariableType), POINTER, INTENT(IN) :: fieldVariable !<A pointer to the field variable to interpolate the geometric information for
     INTEGER(INTG), INTENT(IN) :: componentNumber !<The component number of the node to compute the geometric information for
     INTEGER(INTG), INTENT(IN) :: localNodeNumber !<The local node number to compute the geometric information for
-    REAL(DP), INTENT(OUT) :: position(:) !<position(coordinateIdx), on exit the geometric position of the node
+    REAL(DP), INTENT(OUT) :: position(:,:) !<position(coordinateIdx,globalDerivativeIndex), on exit the geometric position of the node
     REAL(DP), INTENT(OUT) :: normal(:) !<normal(coordinateIdx), on exit the normal vector. If the node is internal the normal vector is zero.
-    REAL(DP), INTENT(OUT) :: tangents(:,:) !<tangents(coordinateIdx,tangentIdx), on exit the tangent vectors for the tangentIdx'th tangent at the node. There are up to numberOfXi tangent vectors.
+    REAL(DP), INTENT(OUT) :: tangents(:,:) !<tangents(coordinateIdx,tangentIdx), on exit the tangent vectors for the tangentIdx'th tangent at the node. If the node is internal the tangent vectors are zero. There are up to numberOfXi-1 tangent vectors.
     INTEGER(INTG), INTENT(OUT) :: err !<The error code
     TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
     !Local Variables
-    INTEGER(INTG) :: basisFamilyType,elementIdx,faceIdx,faceNode,index,interpolationType,lineIdx,lineNode, &
-      & localElementNumber,localNode,nodeFaceNumber,nodeLineNumber,numberOfDimensions,numberOfDomainDimensions, &
-      & numberOfNodeFaces,numberOfNodeLines,numberOfNormals,numberOfSurroundingElements,numberOfTangents,numberOfXi, &
-      & numberOfXiCoordinates,tangentIdx,variableType
+    INTEGER(INTG) :: basisFamilyType,derivativesCount(MAXIMUM_GLOBAL_DERIV_NUMBER), &
+      & elementIdx,faceIdx,faceNode,globalDerivativeIdx,globalDerivativeIndex, &
+      & interpolationType,lineIdx,lineNode,localDerivativeIdx,localElementNumber,localNode, &
+      & maxInterpDerivative,nodeFaceNumber,nodeLineNumber, &
+      & numberOfDimensions,numberOfDomainDimensions,numberOfNodeDerivatives,numberOfNodeFaces, &
+      & numberOfNodeLines,numberOfNormals,numberOfSurroundingElements,numberOfTangents, &
+      & numberOfXi,numberOfXiCoordinates,partialDerivativeIndex,tangentIdx,totalNumberOfTangents, &
+      & variableType,xiIdx,xiPartialDerivative
     REAL(DP) :: dXdXi(3,3),vector1(3),vector2(3),xi(3)
     LOGICAL :: boundaryFace,boundaryLine,boundaryNode
+    CHARACTER(LEN=MAXSTRLEN) :: formatString
     TYPE(BasisType), POINTER :: basis
     TYPE(DomainType), POINTER :: domain
     TYPE(DomainElementType), POINTER :: domainElement
@@ -21851,9 +22196,17 @@ CONTAINS
     CALL Field_VariableGet(geometricField,FIELD_U_VARIABLE_TYPE,geometricVariable,err,error,*999)
     CALL FieldVariable_NumberOfComponentsGet(geometricVariable,numberOfDimensions,err,error,*999)
     IF(SIZE(position,1)<numberOfDimensions) THEN
-      localError="The size of the supplied position array of "//TRIM(NumberToVString(SIZE(position,1), &
-        & "*",err,error))//" is too small. The size of the supplied array must be >= "// &
+      localError="The size of the first index of the supplied position array of "// &
+        & TRIM(NumberToVString(SIZE(position,1),"*",err,error))// &
+        & " is too small. The size of the supplied array must be >= "// &
         & TRIM(NumberToVString(numberOfDimensions,"*",err,error))//"."
+      CALL FlagError(localError,err,error,*999)
+    ENDIF
+    IF(SIZE(position,2)<MAXIMUM_GLOBAL_DERIV_NUMBER) THEN
+      localError="The size of the second index of the supplied position array of "// &
+        & TRIM(NumberToVString(SIZE(position,2),"*",err,error))// &
+        & " is too small. The size of the supplied array must be >= "// &
+        & TRIM(NumberToVString(MAXIMUM_GLOBAL_DERIV_NUMBER,"*",err,error))//"."
       CALL FlagError(localError,err,error,*999)
     ENDIF
     IF(SIZE(normal,1)<numberOfDimensions) THEN
@@ -21862,6 +22215,24 @@ CONTAINS
         & TRIM(NumberToVString(numberOfDimensions,"*",err,error))//"."
       CALL FlagError(localError,err,error,*999)
     ENDIF
+    numberOfNodeDerivatives=1 
+    NULLIFY(domain)
+    CALL FieldVariable_ComponentDomainGet(fieldVariable,componentNumber,domain,err,error,*999)
+    CALL Domain_NumberOfDimensionsGet(domain,numberOfDomainDimensions,err,error,*999)
+    SELECT CASE(numberOfDomainDimensions)
+    CASE(1)
+      totalNumberOfTangents=0
+    CASE(2)
+      totalNumberOfTangents=1      
+    CASE(3)
+      totalNumberOfTangents=2
+    CASE DEFAULT
+      localError="The number of domain dimensions of "//TRIM(NumberToVString(numberOfDomainDimensions,"*",err,error))// &
+        & " is invalid for component number "//TRIM(NumberToVString(componentNumber,"*",err,error))//" of variable type "// &
+        & TRIM(NumberToVString(variableType,"*",err,error))//" of field number "// &
+        & TRIM(NumberToVString(field%userNumber,"*",err,error))//". The number of domain dimensions must be >= 1 and <= 3."
+      CALL FlagError(localError,err,error,*999) 
+    END SELECT
     IF(SIZE(tangents,1)<numberOfDimensions) THEN
       localError="The first dimension of the supplied tangent array of "// &
         & TRIM(NumberToVString(SIZE(tangents,1),"*",err,error))// &
@@ -21869,9 +22240,13 @@ CONTAINS
         & TRIM(NumberToVString(numberOfDimensions,"*",err,error))//"."
       CALL FlagError(localError,err,error,*999)
     ENDIF       
-    NULLIFY(domain)
-    CALL FieldVariable_ComponentDomainGet(fieldVariable,componentNumber,domain,err,error,*999)
-    CALL Domain_NumberOfDimensionsGet(domain,numberOfDomainDimensions,err,error,*999)
+    IF(SIZE(tangents,2)<totalNumberOfTangents) THEN
+      localError="The second dimension of the supplied tangent array of "// &
+        & TRIM(NumberToVString(SIZE(tangents,2),"*",err,error))// &
+        & " is too small. The second dimension of the supplied array must be >= "// &
+        & TRIM(NumberToVString(totalNumberOfTangents,"*",err,error))//"."
+      CALL FlagError(localError,err,error,*999)
+    ENDIF       
     NULLIFY(domainTopology)
     CALL Domain_DomainTopologyGet(domain,domainTopology,err,error,*999)
     NULLIFY(decomposition)
@@ -21913,7 +22288,7 @@ CONTAINS
       CALL DomainNodes_NodeGet(domainNodes,localNodeNumber,domainNode,err,error,*999)
       !Normal & tangent will be calculated as averages in all surrounding elements. This is
       !because there could be discontinuity in the surface gradients across elements.
-      position(1:numberOfDimensions)=0.0_DP
+      derivativesCount=0
       dXdXi=0.0_DP
       normal(1:numberOfDimensions)=0.0_DP
       tangents(1:numberOfDimensions,:)=0.0_DP
@@ -21921,13 +22296,76 @@ CONTAINS
       CALL FieldVariable_InterpolationParameterInitialise(geometricVariable,interpolationParameters,err,error,*999)
       NULLIFY(interpolatedPoint)
       CALL Field_InterpolatedPointInitialise(interpolationParameters,interpolatedPoint,err,error,*999)
+      !Find the position. As it may be a Hermite node with derivatives and it may be on a boundary loop over surrounding elements.
+      CALL DomainNode_NumberOfSurroundingElementsGet(domainNode,numberOfSurroundingElements,err,error,*999)
+      CALL DomainNode_NumberOfDerivativesGet(domainNode,numberOfNodeDerivatives,err,error,*999)
+      IF(numberOfNodeDerivatives>1) THEN
+        maxInterpDerivative=FIRST_PART_DERIV
+        position(1:numberOfDimensions,:)=0.0_DP
+      ELSE
+        maxInterpDerivative=NO_PART_DERIV
+        position(1:numberOfDimensions,NO_GLOBAL_DERIV)=0.0_DP
+      ENDIF
+      elementLoop: DO elementIdx=1,numberOfSurroundingElements
+        CALL DomainNode_SurroundingElementGet(domainNode,elementIdx,localElementNumber,err,error,*999)
+        NULLIFY(domainElement)
+        CALL DomainElements_ElementGet(domainElements,localElementNumber,domainElement,err,error,*999)
+        NULLIFY(decompositionElement)
+        CALL DecompositionElements_ElementGet(decompositionElements,localElementNumber,decompositionElement,err,error,*999)
+        NULLIFY(basis)
+        CALL DomainElement_BasisGet(domainElement,basis,err,error,*999)
+        CALL Basis_NumberOfXiGet(basis,numberOfXi,err,error,*999)
+        CALL Basis_NumberOfXiCoordinatesGet(basis,numberOfXiCoordinates,err,error,*999)
+        CALL Basis_TypeGet(basis,basisFamilyType,err,error,*999)
+        !Find local node number in the basis
+        CALL DomainElement_NodeLocalNodeGet(domainElement,localNodeNumber,localNode,err,error,*999)
+        !Find the xi position of the node in the element. In most cases this will be 0,1.0 etc
+        !but in some cases the geometric field may not contain this node in which case xi can be
+        !arbitrary
+        CALL Basis_LocalNodeXiCalculate(basis,localNode,xi,err,error,*999)
+        !Interpolate the geometric field at the xi position.
+        CALL Field_InterpolationParametersElementGet(FIELD_VALUES_SET_TYPE,localElementNumber,interpolationParameters, &
+          & err,error,*999)
+        CALL Field_InterpolateXi(maxInterpDerivative,xi(1:numberOfXi),interpolatedPoint,err,error,*999)
+        !Grab the position. This shouldn't vary between elements so do it once only
+        IF(elementIdx==1) THEN
+          position(1:numberOfDimensions,NO_GLOBAL_DERIV)=interpolatedPoint%values(1:numberOfDimensions,NO_PART_DERIV)
+          derivativesCount(NO_PART_DERIV)=derivativesCount(NO_PART_DERIV)+1
+        ENDIF
+        IF(numberOfNodeDerivatives>1) THEN
+          !Need to calculate s directions
+          DO localDerivativeIdx=1,numberOfNodeDerivatives
+            CALL DomainNode_DerivativePartialDerivativeIndexGet(domainNode,localDerivativeIdx,partialDerivativeIndex, &
+              & err,error,*999)
+            CALL DomainNode_DerivativeGlobalDerivativeIndexGet(domainNode,localDerivativeIdx,globalDerivativeIndex, &
+              & err,error,*999)
+            DO xiIdx=1,numberOfXi
+              xiPartialDerivative=PARTIAL_DERIVATIVE_INDEX(partialDerivativeIndex,xiIdx)
+              IF(xiPartialDerivative==FIRST_PART_DERIV) THEN                
+                position(1:numberOfDimensions,globalDerivativeIndex)=position(1:numberOfDimensions,globalDerivativeIndex)+ &
+                  & interpolatedPoint%values(1:numberOfDimensions,partialDerivativeIndex)
+                derivativesCount(globalDerivativeIndex)=derivativesCount(globalDerivativeIndex)+1
+              ENDIF
+            ENDDO !xiIdx
+          ENDDO !localDerivativeIdx
+        ELSE
+          EXIT elementLoop
+        ENDIF
+      ENDDO elementLoop !elementIdx
+      DO globalDerivativeIdx=1,MAXIMUM_GLOBAL_DERIV_NUMBER
+        IF(derivativesCount(globalDerivativeIdx)>1) THEN
+          position(1:numberOfDimensions,globalDerivativeIdx)=position(1:numberOfDimensions,globalDerivativeIdx)/ &
+            & REAL(derivativesCount(globalDerivativeIdx),DP)
+        ENDIF
+      ENDDO !globalDerivativeIdx
+      !See if we are on the boundary and need to calculate tangents and normals etc.
       CALL DomainNode_BoundaryNodeGet(domainNode,boundaryNode,err,error,*999)
       numberOftangents=0
       numberOfNormals=0
       IF(boundaryNode) THEN
         SELECT CASE(numberOfDomainDimensions)
         CASE(1)
-          !1D domain, no tangents, just a position
+          !1D domain, no tangents, just a normal
           CALL DomainNode_NumberOfSurroundingElementsGet(domainNode,numberOfSurroundingElements,err,error,*999)
           DO elementIdx=1,numberOfSurroundingElements
             CALL DomainNode_SurroundingElementGet(domainNode,elementIdx,localElementNumber,err,error,*999)
@@ -21949,9 +22387,13 @@ CONTAINS
             CALL Field_InterpolationParametersElementGet(FIELD_VALUES_SET_TYPE,localElementNumber,interpolationParameters, &
               & err,error,*999)
             CALL Field_InterpolateXi(FIRST_PART_DERIV,xi(1:numberOfXi),interpolatedPoint,err,error,*999)
-            !Grab the position. This shouldn't vary between elements so do it once only
-            IF(elementIdx==1) position(1:numberOfDimensions)=interpolatedPoint%values(1:numberOfDimensions,NO_PART_DERIV)
-          ENDDO !ElementIdx
+            IF(ABS(xi(1))<ZERO_TOLERANCE) THEN
+              normal(1:numberOfDimensions)=-interpolatedPoint%values(1:numberOfDimensions,FIRST_PART_DERIV)              
+            ELSE
+              normal(1:numberOfDimensions)=interpolatedPoint%values(1:numberOfDimensions,FIRST_PART_DERIV)              
+            ENDIF
+            numberOfNormals=numberOfNormals+1
+          ENDDO !elementIdx
         CASE(2)
           !2D domain, one tangent and one normal
           NULLIFY(domainLines)
@@ -21980,15 +22422,14 @@ CONTAINS
                 CALL FlagError(localError,err,error,*999)
               ENDIF
               !Find the xi position of the node in the element. In most cases this will be 0,1.0 etc
-              ! but in some cases the geometric field may not contain this node in which case xi can be
-              ! arbitrary
+              !but in some cases the geometric field may not contain this node in which case xi can be
+              !arbitrary
               CALL Basis_LocalNodeXiCalculate(basis,lineNode,xi,err,error,*999)
               !Interpolate the geometric field at the xi position.
               CALL Field_InterpolationParametersLineGet(FIELD_VALUES_SET_TYPE,nodeLineNumber,interpolationParameters, &
                 & err,error,*999)
               CALL Field_InterpolateXi(FIRST_PART_DERIV,xi(1:1),interpolatedPoint,err,error,*999)
               !Grab the position. This shouldn't vary between lines
-              position(1:numberOfDimensions)=interpolatedPoint%values(1:numberOfDimensions,NO_PART_DERIV)
               vector1(1:numberOfDimensions)=interpolatedPoint%values(1:numberOfDimensions,FIRST_PART_DERIV)
               CALL Normalise(vector1(1:numberOfDimensions),vector1(1:numberOfDimensions),err,error,*999)
               tangents(1:numberOfDimensions,1)=tangents(1:numberOfDimensions,1)+vector1(1:numberOfDimensions)
@@ -22038,8 +22479,6 @@ CONTAINS
               CALL Field_InterpolationParametersFaceGet(FIELD_VALUES_SET_TYPE,nodeFaceNumber,interpolationParameters, &
                 & err,error,*999)
               CALL Field_InterpolateXi(FIRST_PART_DERIV,xi(1:2),interpolatedPoint,err,error,*999)
-              !Grab the position. This shouldn't vary between lines
-              position(1:numberOfDimensions)=interpolatedPoint%values(1:numberOfDimensions,NO_PART_DERIV)
               vector1(1:numberOfDimensions)=interpolatedPoint%values(1:numberOfDimensions,PART_DERIV_S1)
               CALL Normalise(vector1(1:numberOfDimensions),vector1(1:numberOfDimensions),err,error,*999)
               tangents(1:numberOfDimensions,1)=tangents(1:numberOfDimensions,1)+vector1(1:numberOfDimensions)
@@ -22050,7 +22489,7 @@ CONTAINS
               !Compute normal from the cross product
               CALL CrossProduct(vector1(1:numberOfDimensions),vector2(1:numberOfDimensions), &
                 & vector1(1:numberOfDimensions),err,error,*999)
-              CALL Normalise(vector1(1:2),vector1(1:2),err,error,*999)
+              CALL Normalise(vector1(1:numberOfDimensions),vector1(1:numberOfDimensions),err,error,*999)
               normal(1:numberOfDimensions)=normal(1:numberOfDimensions)+vector1(1:numberOfDimensions)
               numberOfNormals=numberOfNormals+1           
             ENDIF
@@ -22062,167 +22501,7 @@ CONTAINS
             & TRIM(NumberToVString(field%userNumber,"*",err,error))//". The local node number must be >= 1 and <= 3."
           CALL FlagError(localError,err,error,*999) 
         END SELECT
-      ELSE
-        CALL DomainNode_NumberOfSurroundingElementsGet(domainNode,numberOfSurroundingElements,err,error,*999)
-        DO elementIdx=1,numberOfSurroundingElements
-          CALL DomainNode_SurroundingElementGet(domainNode,elementIdx,localElementNumber,err,error,*999)
-          NULLIFY(domainElement)
-          CALL DomainElements_ElementGet(domainElements,localElementNumber,domainElement,err,error,*999)
-          NULLIFY(decompositionElement)
-          CALL DecompositionElements_ElementGet(decompositionElements,localElementNumber,decompositionElement,err,error,*999)
-          NULLIFY(basis)
-          CALL DomainElement_BasisGet(domainElement,basis,err,error,*999)
-          CALL Basis_NumberOfXiGet(basis,numberOfXi,err,error,*999)
-          CALL Basis_NumberOfXiCoordinatesGet(basis,numberOfXiCoordinates,err,error,*999)
-          CALL Basis_TypeGet(basis,basisFamilyType,err,error,*999)
-          !Find local node number in the basis
-          CALL DomainElement_NodeLocalNodeGet(domainElement,localNodeNumber,localNode,err,error,*999)
-          !Find the xi position of the node in the element. In most cases this will be 0,1.0 etc
-          ! but in some cases the geometric field may not contain this node in which case xi can be
-          ! arbitrary
-          CALL Basis_LocalNodeXiCalculate(basis,localNode,xi,err,error,*999)
-          !Interpolate the geometric field at the xi position.
-          CALL Field_InterpolationParametersElementGet(FIELD_VALUES_SET_TYPE,localElementNumber,interpolationParameters, &
-            & err,error,*999)
-          CALL Field_InterpolateXi(FIRST_PART_DERIV,xi(1:numberOfXi),interpolatedPoint,err,error,*999)
-          !Grab the position. This shouldn't vary between elements so do it once only
-          IF(elementIdx==1) position(1:numberOfDimensions)=interpolatedPoint%values(1:numberOfDimensions,NO_PART_DERIV)
-        ENDDO !ElementIdx
       ENDIF
-      ! CALL DomainNode_NumberOfSurroundingElementsGet(domainNode,numberOfSurroundingElements,err,error,*999)
-      ! numberOfElements=0
-      ! DO elementIdx=1,numberOfSurroundingElements
-      !   CALL DomainNode_SurroundingElementGet(domainNode,elementIdx,localElementNumber,err,error,*999)
-      !   NULLIFY(domainElement)
-      !   CALL DomainElements_ElementGet(domainElements,localElementNumber,domainElement,err,error,*999)
-      !   NULLIFY(decompositionElement)
-      !   CALL DecompositionElements_ElementGet(decompositionElements,localElementNumber,decompositionElement,err,error,*999)
-      !   NULLIFY(basis)
-      !   CALL DomainElement_BasisGet(domainElement,basis,err,error,*999)
-      !   CALL Basis_NumberOfXiGet(basis,numberOfXi,err,error,*999)
-      !   CALL Basis_NumberOfXiCoordinatesGet(basis,numberOfXiCoordinates,err,error,*999)
-      !   CALL Basis_TypeGet(basis,basisFamilyType,err,error,*999)
-      !   !Find local node number in the basis
-      !   CALL DomainElement_NodeLocalNodeGet(domainElement,localNodeNumber,localNode,err,error,*999)
-      !   !Find the xi position of the node in the element. In most cases this will be 0,1.0 etc
-      !   ! but in some cases the geometric field may not contain this node in which case xi can be
-      !   ! arbitrary
-      !   CALL Basis_LocalNodeXiCalculate(basis,localNode,xi,err,error,*999)
-      !   !Interpolate the geometric field at the xi position.
-      !   CALL Field_InterpolationParametersElementGet(FIELD_VALUES_SET_TYPE,localElementNumber,interpolationParameters, &
-      !     & err,error,*999)
-      !   CALL Field_InterpolateXi(FIRST_PART_DERIV,xi(1:numberOfXi),interpolatedPoint,err,error,*999)
-      !   !Grab the position. This shouldn't vary between elements so do it once only
-      !   IF(elementIdx==1) position(1:numberOfDimensions)=interpolatedPoint%values(1:numberOfDimensions,NO_PART_DERIV)
-      !   !Get dXdXi
-      !   !\todo: What if the surrounding elements have different number of xi? then dXdXi will be different in size.
-      !   !       Which one do we return in that case?
-      !   DO componentIdx=1,numberOfDimensions
-      !     DO xiIdx=1,numberOfXi
-      !       derivativeIdx=PARTIAL_DERIVATIVE_FIRST_DERIVATIVE_MAP(xiIdx) !2,4,7
-      !       dXdXi(componentIdx,xiIdx)=interpolatedPoint%values(componentIdx,derivativeIdx) !dx/dxi
-      !     ENDDO !xiIdx
-      !   ENDDO !componentIdx
-      !   !Calculate the tangents and normal vectors
-      !   IF(boundaryNode) THEN
-      !     SELECT CASE(basisFamilyType)
-      !     CASE(BASIS_LAGRANGE_HERMITE_TP_TYPE)            
-      !       !Calculate tangents from dXdXi: which xi corresponds to normal direction?
-      !       CALL Basis_NumberOfNodesXiCGet(basis,numberOfNodesXiC,err,error,*999)
-      !       DO xiCoordIdx=-numberOfXiCoordinates,numberOfXiCoordinates
-      !         CALL DecompositionElement_NumberAdjacentGet(decompositionElement,ABS(xiCoordIdx),numberOfAdjacentElements, &
-      !           & err,error,*999)
-      !         IF(numberOfAdjacentElements==0) THEN
-      !           IF(xiCoordIdx>0) THEN
-      !             indexMatch=numberOfNodesXiC(ABS(xiCoordIdx))
-      !           ELSE IF(xiCoordIdx<0) THEN
-      !             indexMatch=1
-      !           ENDIF
-      !           CALL Basis_NodePositionIndexGet(basis,localNode,ABS(xiCoordIdx),nodePositionIdx,err,error,*999)
-      !           IF(nodePositionIdx==indexMatch) THEN
-      !             !1D/2D/3D: tangents and normal
-      !             SELECT CASE(numberOfXi)
-      !             CASE(1)
-      !               !There are no tangents.
-      !               vector1(1:numberOfDimensions)=dXdXi(1:numberOfDimensions,1)
-      !               CALL Normalise(vector1(1:numberOfDimensions),vector1(1:numberOfDimensions),err,error,*999)
-      !               normal(1:numberOfDimensions)=normal(1:numberOfDimensions)+vector1(1:numberOfDimensions)
-      !             CASE(2)
-      !               !One tangent vector, one normal vector
-      !               tangentXiIdx=OTHER_XI_DIRECTIONS2(ABS(xiCoordIdx))
-      !               vector1(1:numberOfDimensions)=dXdXi(1:numberOfDimensions,tangentXiIdx)
-      !               CALL Normalise(vector1(1:numberOfDimensions),vector1(1:numberOfDimensions),err,error,*999)
-      !               tangents(1:numberOfDimensions,1)=tangents(1:numberOfDimensions,1)+vector1(1:numberOfDimensions)
-      !               !Normal is the other component in dXdXi (correct?) Ensure the direction is outward
-      !               vector1(1:numberOfDimensions)=dXdXi(1:numberOfDimensions,ABS(xiCoordIdx))
-      !               IF(xiCoordIdx<0) vector1=-vector1
-      !               CALL Normalise(vector1(1:numberOfDimensions),vector1(1:numberOfDimensions),err,error,*999)
-      !               normal(1:numberOfDimensions)=normal(1:numberOfDimensions)+vector1(1:numberOfDimensions)
-      !             CASE(3)
-      !               !Two tangent vectors, one normal vector
-      !               tangents=0.0_DP
-      !               tangentXiIdx=OTHER_XI_DIRECTIONS3(ABS(xiCoordIdx),2,1)
-      !               vector1(1:numberOfDimensions)=dXdXi(1:numberOfDimensions,1)
-      !               CALL Normalise(vector1(1:numberOfDimensions),vector1(1:numberOfDimensions),err,error,*999)
-      !               tangents(1:numberOfDimensions,1)=tangents(1:numberOfDimensions,1)+vector1(1:numberOfDimensions)
-      !               tangentXiIdx=OTHER_XI_DIRECTIONS3(ABS(xiCoordIdx),3,1)
-      !               vector2(1:numberOfDimensions)=dXdXi(1:numberOfDimensions,tangentXiIdx)
-      !               CALL Normalise(vector2(1:numberOfDimensions),vector2(1:numberOfDimensions),err,error,*999)
-      !               tangents(1:numberOfDimensions,2)=tangents(1:numberOfDimensions,2)+vector2(1:numberOfDimensions)
-      !               !Calculate the normal vector
-      !               CALL CrossProduct(vector1(1:numberOfDimensions),vector2(1:numberOfDimensions), &
-      !                 & vector1(1:numberOfDimensions),err,error,*999)
-      !               !Yes below is compicated, but that's what it takes to get the normals pointing outwards
-      !               IF(xiCoordIdx<0) vector1=-vector1
-      !               IF(ABS(xiCoordIdx)==2) vector1=-vector1
-      !               normal(1:numberOfDimensions)=normal(1:numberOfDimensions)+vector1(1:numberOfDimensions)
-      !             CASE DEFAULT
-      !               !Should never happen anyway
-      !             END SELECT
-      !             numberOfElements=numberOfElements+1
-      !           ENDIF
-      !         ENDIF
-      !       ENDDO !xiCoordIdx
-      !     CASE(BASIS_SIMPLEX_TYPE)
-      !       CALL FlagError("Not implemented.",err,error,*999)
-      !       !Loop over the lines, faces that have this local node. If it is a boundary face calculate normal and tangents
-      !       SELECT CASE(numberOfXi)
-      !       CASE(1)
-      !         !There are no tangents.
-      !         vector1(1:numberOfDimensions)=dXdXi(1:numberOfDimensions,1)
-      !         CALL Normalise(vector1(1:numberOfDimensions),vector1(1:numberOfDimensions),err,error,*999)
-      !         normal(1:numberOfDimensions)=normal(1:numberOfDimensions)+vector1(1:numberOfDimensions)
-      !       CASE(2)
-      !         !Loop over the lines
-              
-      !         DO localLineIdx=1,
-      !       CASE(3)
-      !       CASE DEFAULT
-      !       END SELECT
-      !     CASE(BASIS_SERENDIPITY_TYPE)
-      !       CALL FlagError("Not implemented.",err,error,*999)
-      !     CASE(BASIS_AUXILLIARY_TYPE)
-      !       CALL FlagError("Not implemented.",err,error,*999)
-      !     CASE(BASIS_B_SPLINE_TP_TYPE)
-      !       CALL FlagError("Not implemented.",err,error,*999)
-      !     CASE(BASIS_FOURIER_LAGRANGE_HERMITE_TP_TYPE)
-      !       CALL FlagError("Not implemented.",err,error,*999)
-      !     CASE(BASIS_EXTENDED_LAGRANGE_TP_TYPE)
-      !       CALL FlagError("Not implemented.",err,error,*999)
-      !     CASE DEFAULT
-      !       localError="The basis type of "//TRIM(NumberToVString(basis%type,"*",err,error))//" is invalid."
-      !       CALL FlagError(localError,err,error,*999)
-      !     END SELECT
-      !   ELSE
-      !     !Node is internal to the mesh. Assign zero normal and compute tangents only
-      !     DO tangentIdx=1,numberOfXi
-      !       vector1(1:numberOfDimensions)=dXdXi(1:numberOfDimensions,tangentIdx)
-      !       CALL Normalise(vector1(1:numberOfDimensions),vector1(1:numberOfDimensions),err,error,*999)
-      !       tangents(1:numberOfDimensions,tangentIdx)=tangents(1:numberOfDimensions,tangentIdx)+vector1(1:numberOfDimensions)
-      !     ENDDO !tangentIdx
-      !     numberOfElements=numberOfElements+1
-      !   ENDIF
-      ! ENDDO !elementIdx
       
       !Normalise the normal vector
       IF(numberOfNormals>0) normal(1:numberOfDimensions)=normal(1:numberOfDimensions)/REAL(numberOfNormals,DP)
@@ -22269,14 +22548,27 @@ CONTAINS
  
     IF(diagnostics1) THEN
       CALL WriteString(DIAGNOSTIC_OUTPUT_TYPE,"Field variable at a node:",err,error,*999)
-      CALL WriteStringValue(DIAGNOSTIC_OUTPUT_TYPE,"  Field number      = ",field%userNumber,err,error,*999)
-      CALL WriteStringValue(DIAGNOSTIC_OUTPUT_TYPE,"  Variable type     = ",variableType,err,error,*999)
-      CALL WriteStringValue(DIAGNOSTIC_OUTPUT_TYPE,"  Component number  = ",componentNumber,err,error,*999)
-      CALL WriteStringValue(DIAGNOSTIC_OUTPUT_TYPE,"  Local node number = ",localNodeNumber,err,error,*999)
-      CALL WriteStringVector(DIAGNOSTIC_OUTPUT_TYPE,1,1,numberOfDimensions,3,3,position, &
-        & '("  Position          :",3(X,E13.6))','(21X,3(X,E13.6))',err,error,*999)      
+      CALL WriteStringValue(DIAGNOSTIC_OUTPUT_TYPE,"  Field number        = ",field%userNumber,err,error,*999)
+      CALL WriteStringValue(DIAGNOSTIC_OUTPUT_TYPE,"  Variable type       = ",variableType,err,error,*999)
+      CALL WriteStringValue(DIAGNOSTIC_OUTPUT_TYPE,"  Component number    = ",componentNumber,err,error,*999)
+      CALL WriteStringValue(DIAGNOSTIC_OUTPUT_TYPE,"  Local node number   = ",localNodeNumber,err,error,*999)
+      CALL WriteStringVector(DIAGNOSTIC_OUTPUT_TYPE,1,1,numberOfDimensions,3,3,position(:,NO_PART_DERIV), &
+        & '("  Position            :",3(X,E13.6))','(23X,3(X,E13.6))',err,error,*999)
+      DO globalDerivativeIdx=2,MAXIMUM_GLOBAL_DERIV_NUMBER
+        WRITE(formatString,'("  Global derivative ",I1," :")') globalDerivativeIdx
+        formatString='("'//formatString(1:LEN_TRIM(formatString))//'",3(X,E13.6))'
+        CALL WriteStringVector(DIAGNOSTIC_OUTPUT_TYPE,1,1,numberOfDimensions,3,3, &
+          & position(:,globalDerivativeIdx),formatString(1:LEN_TRIM(formatString)), &
+          & '(23X,3(X,E13.6))',err,error,*999)
+      ENDDO !globalDerivativeIdx
+      DO tangentIdx=1,totalNumberOfTangents
+        WRITE(formatString,'("  Tangent ",I1,"           :")') tangentIdx
+        formatString='("'//formatString(1:LEN_TRIM(formatString))//'",3(X,E13.6))'
+        CALL WriteStringVector(DIAGNOSTIC_OUTPUT_TYPE,1,1,numberOfDimensions,3,3,tangents(:,tangentIdx), &
+          & formatString(1:LEN_TRIM(formatString)),'(23X,3(X,E13.6))',err,error,*999)
+      ENDDO !tangentIdx
       CALL WriteStringVector(DIAGNOSTIC_OUTPUT_TYPE,1,1,numberOfDimensions,3,3,normal, &
-        & '("  Normal            :",3(X,E13.6))','(21X,3(X,E13.6))',err,error,*999)      
+        &   '("  Normal              :",3(X,E13.6))','(23X,3(X,E13.6))',err,error,*999)
     ENDIF
 
     EXITS("FieldVariable_PositionNormalTangentsCalculateNode")

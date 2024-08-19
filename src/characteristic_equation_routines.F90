@@ -227,7 +227,6 @@ CONTAINS
     TYPE(EquationsMappingVectorType), POINTER :: vectorMapping
     TYPE(EquationsMatricesVectorType), POINTER :: vectorMatrices
     TYPE(EquationsVectorType), POINTER :: vectorEquations
-    TYPE(EquationsSetIndependentType), POINTER :: equationsIndependent
     TYPE(EquationsSetMaterialsType), POINTER :: equationsMaterials
     TYPE(EquationsSetEquationsFieldType), POINTER :: equationsField
     TYPE(FieldType), POINTER :: equationsSetField,geometricField
@@ -756,7 +755,6 @@ CONTAINS
     INTEGER(INTG) :: columnIdx,componentIdx,componentIdx2,derivativeIdx,esSpecification(3),numberOfVersions,rowIdx,versionIdx, &
       & versionIdx2
     REAL(DP) :: qBif(4),aBif(4),a0Param(4),eParam(4),h0Param(4),beta(4),w(2,4),normalWave(2,4),sum,rho
-    REAL(DP), POINTER :: dependentParameters(:),independentParameters(:),materialsParameters(:)
     LOGICAL :: boundaryNode,update,updateMatrix,updateResidual
     TYPE(DecompositionType), POINTER :: dependentDecomposition
     TYPE(DecompositionElementsType), POINTER :: dependentDecompositionElements
@@ -988,11 +986,9 @@ CONTAINS
     INTEGER(INTG) :: columnIdx,columnIdx2,componentIdx,derivativeIdx,endRow,esSpecification(3),numberOfVersions,localDOFIdx, &
       & rowIdx,startColumn2,startRow,versionIdx
     REAL(DP) :: qBif(4),aBif(4),a0Param(4),eParam(4),h0Param(4),beta(4),w(2,4),normalWave(2,4),rho
-    REAL(DP), POINTER :: geometricParameters(:),independentParameters(:)
+    REAL(DP), POINTER :: independentParameters(:)
     LOGICAL :: update,updateMatrix,boundaryNode
     TYPE(DecompositionType), POINTER :: dependentDecomposition
-    TYPE(DecompositionElementsType), POINTER :: geometricDecompositionElements
-    TYPE(DecompositionTopologyType), POINTER :: geometricDecompositionTopology
     TYPE(DomainType), POINTER :: dependentDomain
     TYPE(DomainNodesType), POINTER :: dependentDomainNodes
     TYPE(DomainTopologyType), POINTER :: dependentDomainTopology

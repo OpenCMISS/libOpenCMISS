@@ -130,7 +130,7 @@ CONTAINS
     !Argument variables
     TYPE(EquationsSetType), POINTER, INTENT(IN) :: equationsSet !<The equations set to evaluate
     INTEGER(INTG), INTENT(IN) :: analyticFunctionType !<The type of analytic function to evaluate
-    REAL(DP), INTENT(IN) :: x(:) !<x(dimention_idx). The geometric position to evaluate at
+    REAL(DP), INTENT(IN) :: x(:) !<x(dimensionIdx). The geometric position to evaluate at
     REAL(DP), INTENT(IN) :: time !<The time to evaluate at
     INTEGER(INTG), INTENT(IN) :: componentNumber !<The dependent field component number to evaluate
     REAL(DP), INTENT(IN) :: analyticParameters(:) !<A pointer to any analytic field parameters
@@ -232,9 +232,9 @@ CONTAINS
     TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
     !Local Variables
     INTEGER(INTG) :: analyticFunctionType,componentIdx,esSpecification(3),nodeIdx,numberOfComponents, &
-      & numberOfDimensions,numberOfNodes,numberOfVariables,numberOfVersions,variableIdx,variableType
+      & numberOfDimensions,numberOfNodes,numberOfVariables,variableIdx,variableType
     REAL(DP) :: analyticAccelerationValue,analyticValue,analyticVelocityValue,gradientAnalyticValue(3),hessianAnalyticValue(3,3), &
-      & normal(3),position(3),tangents(3,3),time
+      & normal(3),position(3,MAXIMUM_GLOBAL_DERIV_NUMBER),tangents(3,2),time
     REAL(DP), POINTER :: analyticParameters(:)
     LOGICAL :: boundaryNode,setAcceleration,setVelocity
     TYPE(DomainType), POINTER :: domain
@@ -303,8 +303,8 @@ CONTAINS
           IF((.NOT.boundaryOnly).OR.(boundaryOnly.AND.boundaryNode)) THEN
             CALL Field_PositionNormalTangentsCalculateNode(dependentField,FIELD_U_VARIABLE_TYPE,componentIdx,nodeIdx, &
               & position,normal,tangents,err,error,*999)
-            CALL Burgers_AnalyticFunctionsEvaluate(equationsSet,analyticFunctionType,position,time,componentIdx, &
-              & analyticParameters,analyticValue,gradientAnalyticValue,hessianAnalyticValue,analyticVelocityValue, &
+            CALL Burgers_AnalyticFunctionsEvaluate(equationsSet,analyticFunctionType,position(:,NO_PART_DERIV),time, &
+              & componentIdx,analyticParameters,analyticValue,gradientAnalyticValue,hessianAnalyticValue,analyticVelocityValue, &
               & analyticAccelerationValue,err,error,*999)
             CALL BoundaryConditions_SetAnalyticBoundaryNode(boundaryConditions,numberOfDimensions,dependentVariable,componentIdx, &
               & domainNodes,nodeIdx,boundaryNode,tangents,normal,analyticValue,gradientAnalyticValue,hessianAnalyticValue, &
@@ -1290,7 +1290,7 @@ CONTAINS
     INTEGER(INTG) :: analyticFunctionType,componentIdx,equationsSetIdx,nodeIdx,numberOfComponents,numberOfDimensions, &
       & numberOfEquationsSets,numberOfNodes,numberOfVariables,pSpecification(3),variableIdx,variableType
     REAL(DP) :: analyticAccelerationValue,analyticValue,analyticVelocityValue,currentTime,gradientAnalyticValue(3), &
-      & hessianAnalyticValue(3,3),normal(3),position(3),tangents(3,3),timeIncrement
+      & hessianAnalyticValue(3,3),normal(3),position(3,MAXIMUM_GLOBAL_DERIV_NUMBER),tangents(3,3),timeIncrement
     REAL(DP), POINTER :: analyticParameters(:)
     LOGICAL :: boundaryNode,setAcceleration,setVelocity
     TYPE(BoundaryConditionsType), POINTER :: boundaryConditions
@@ -1386,9 +1386,9 @@ CONTAINS
                 IF((.NOT.boundaryOnly).OR.(boundaryOnly.AND.boundaryNode)) THEN
                   CALL Field_PositionNormalTangentsCalculateNode(dependentField,FIELD_U_VARIABLE_TYPE,componentIdx,nodeIdx, &
                     & position,normal,tangents,err,error,*999)
-                  CALL Burgers_AnalyticFunctionsEvaluate(equationsSet,analyticFunctionType,position,currentTime,componentIdx, &
-                    & analyticParameters,analyticValue,gradientAnalyticValue,hessianAnalyticValue,analyticVelocityValue, &
-                    & analyticAccelerationValue,err,error,*999)
+                  CALL Burgers_AnalyticFunctionsEvaluate(equationsSet,analyticFunctionType,position(:,NO_PART_DERIV), &
+                    & currentTime,componentIdx,analyticParameters,analyticValue,gradientAnalyticValue,hessianAnalyticValue, &
+                    & analyticVelocityValue,analyticAccelerationValue,err,error,*999)
                   CALL BoundaryConditions_UpdateAnalyticNode(boundaryConditions,numberOfDimensions,dependentVariable, &
                     & componentIdx,domainNodes,nodeIdx,tangents,normal,analyticValue,gradientAnalyticValue,hessianAnalyticValue, &
                     & setVelocity,analyticVelocityValue,setAcceleration,analyticAccelerationValue,err,error,*999)
@@ -1532,6 +1532,7 @@ CONTAINS
       & pSpecification(3)
     REAL(DP) :: currentTime,timeIncrement,startTime,stopTime
     CHARACTER(20) :: file,outputFile
+    EXTERNAL :: SYSTEM
     TYPE(ControlLoopType), POINTER :: controlLoop
     TYPE(EquationsSetType), POINTER :: equationsSet
     TYPE(EquationsSetAnalyticType), POINTER :: equationsAnalytic
@@ -1848,7 +1849,7 @@ CONTAINS
     INTEGER(INTG) columnComponentIdx,columnElementDOFIdx,columnElementParameterIdx,colsVariableType,componentIdx, &
       & esSpecification(3),gaussPointIdx,numberOfColsComponents,numberOfColsElementParameters, &
       & numberOfDimensions,numberOfGauss,numberOfRowsComponents,numberOfRowsElementParameters,numberOfXi,rowComponentIdx, &
-      & rowElementDOFIdx,rowElementParameterIdx,rowsVariableType,scalingType,xiIdx,variableType    
+      & rowElementDOFIdx,rowElementParameterIdx,rowsVariableType,scalingType,xiIdx    
     REAL(DP) :: cParam,colsdPhidX,colsdPhidXi,colsPhi,dudX(3),dXidX(3,3),jacobian,jacobianGaussWeight,gaussWeight, &
       & matrixValue,sum1,sum2,rowsPhi,uValue(3),uDeriv(3,3)
     LOGICAL :: updateJacobian
@@ -2163,7 +2164,7 @@ CONTAINS
     INTEGER(INTG) colsXiIdx,columnComponentIdx,columnElementDOFIdx,columnElementParameterIdx,colsVariableType, &
       & esSpecification(3),gaussPointIdx,numberOfColsComponents,numberOfDimensions, &
       & numberOfColsElementParameters,numberOfGauss,numberOfRowsComponents,numberOfRowsElementParameters,numberOfXi, &
-      & rowComponentIdx,rowElementDOFIdx,rowElementParameterIdx,rowsVariableType,rowsXiIdx,scalingType,variableType
+      & rowComponentIdx,rowElementDOFIdx,rowElementParameterIdx,rowsVariableType,rowsXiIdx,scalingType
     REAL(DP) :: aParam,bParam,cParam,colsPhi,colsdPhidXi(3),dudX(3),dudXi(3,3),gaussWeight,jacobian,jacobianGaussWeight, &
       & sum,rowsdPhidXi(3),rowsPhi,ududX,uValue(3)
     LOGICAL :: update,updateDamping,updateMatrices,updateStiffness,updateRHS,updateResidual

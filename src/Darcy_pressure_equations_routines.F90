@@ -121,14 +121,12 @@ CONTAINS
       & numberOfDimensions,numberOfFluidColsComponents,numberOfFluidComponents,numberOfFluidXi,numberOfGauss, &
       & numberOfRowsComponents,numberOfRowsElementParameters,numberOfRowsXi,numberOfSolidColsComponents,numberOfSolidXi, &
       & numberOfXi,rowComponentIdx,rowElementDOFIdx,rowXiIdx,rowElementParameterIdx,rowsVariableType,scalingType, &
-      & solidComponentNumber,solidColsVariableType,solidNumberOfXi,xiIdx   
-    REAL(DP) :: colsdPhidXi(3),density,dNudXi(3,3),dNudZ(3,3),dNudZT(3,3),dXidNu(3,3),dZdNu(3,3),dZdX(3,3),fibreVectors(3,3), &
-      & gaussWeight,jacobian,jacobianGaussWeight,JZ,JZNu,K(3,3),rowsdPhidXi(3),sigma(3,3),sum,tempMatrix(3,3)
-    REAL(DP), POINTER :: elementResidualVector(:)
+      & solidColsVariableType,xiIdx   
+    REAL(DP) :: colsdPhidXi(3),density,dNudXi(3,3),dXidNu(3,3),dZdNu(3,3),dZdX(3,3),fibreVectors(3,3), &
+      & gaussWeight,jacobian,jacobianGaussWeight,JZ,JZNu,rowsdPhidXi(3),sigma(3,3),sum,tempMatrix(3,3)
     LOGICAL :: update,updateResidual,updateRHS
     TYPE(BasisType), POINTER :: dependentBasis,fluidBasis,geometricBasis,rowsBasis,solidBasis
     TYPE(DecompositionType), POINTER :: geometricDecomposition
-    TYPE(DecompositionTopologyType), POINTER :: geometricDecompositionTopology
     TYPE(DomainType), POINTER :: colsDomain,geometricDomain,rowsDomain   
     TYPE(DomainElementsType), POINTER :: fluidDomainElements,geometricDomainElements,rowsDomainElements,solidDomainElements
     TYPE(DomainTopologyType), POINTER :: colsDomainTopology,geometricDomainTopology,rowsDomainTopology
@@ -145,9 +143,8 @@ CONTAINS
     TYPE(EquationsMatricesVectorType), POINTER :: vectorMatrices
     TYPE(EquationsVectorType), POINTER :: vectorEquations
     TYPE(FieldType), POINTER :: dependentField,fibreField,geometricField,materialsField
-    TYPE(FieldVariableType), POINTER :: fieldVariable,fluidColsVariable,geometricVariable,materialsVariable,rowsVariable, &
-      & solidColsVariable
-    TYPE(FieldInterpolationParametersType), POINTER :: geometricInterpParameters,dependentInterpParameters, &
+    TYPE(FieldVariableType), POINTER :: fluidColsVariable,geometricVariable,materialsVariable,rowsVariable,solidColsVariable
+    TYPE(FieldInterpolationParametersType), POINTER :: geometricInterpParameters, &
       & fibreInterpParameters,fluidDependentInterpParameters,materialsInterpParameters,rowsDependentInterpParameters, &
       & solidDependentInterpParameters
     TYPE(FieldInterpolatedPointType), POINTER :: geometricInterpPoint,fibreInterpPoint,fluidDependentInterpPoint, &

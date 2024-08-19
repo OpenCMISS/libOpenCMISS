@@ -45,9 +45,11 @@
 MODULE Maths
 
   USE BaseRoutines
+  USE BLAS
   USE Constants
   USE Kinds
   USE ISO_VARYING_STRING
+  USE LAPACK
   USE Strings
 
 #include "macros.h"  
@@ -4547,7 +4549,7 @@ CONTAINS
         CALL FlagError(localError,err,error,*999)
       ENDIF
       !Solve the LU problem
-      CALL SGETRS('N',1,A,SIZE(A,1),iPivot,b,SIZE(b,1),info)
+      CALL SGETRS('N',1,1,A,SIZE(A,1),iPivot,b,SIZE(b,1),info)
       IF(info/=0) THEN
         localError="Parameter number "//TRIM(NumberToVString(-info,"*",err,error))//" is illegal."
         CALL FlagError(localError,err,error,*999)
@@ -4608,7 +4610,7 @@ CONTAINS
         CALL FlagError(localError,err,error,*999)
       ENDIF
       !Solve the LU problem
-      CALL DGETRS('N',1,A,SIZE(A,1),iPivot,b,SIZE(b,1),info)
+      CALL DGETRS('N',1,1,A,SIZE(A,1),iPivot,b,SIZE(b,1),info)
       IF(info/=0) THEN
         localError="Parameter number "//TRIM(NumberToVString(-info,"*",err,error))//" is illegal."
         CALL FlagError(localError,err,error,*999)

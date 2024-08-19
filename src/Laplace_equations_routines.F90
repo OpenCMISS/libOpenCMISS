@@ -116,16 +116,15 @@ CONTAINS
   !
   
   !>Evaluate the analytic solutions for a Laplace equation
-  SUBROUTINE Laplace_AnalyticFunctionsEvaluate(equationsSet,analyticFunctionType,x,time,componentNumber,analyticParameters, &
+  SUBROUTINE Laplace_AnalyticFunctionsEvaluate(equationsSet,analyticFunctionType,componentNumber,x,analyticParameters, &
     & analyticValue,gradientAnalyticValue,hessianAnalyticValue,err,error,*)
 
     !Argument variables
     TYPE(EquationsSetType), POINTER, INTENT(IN) :: equationsSet !<The equations set to evaluate
     INTEGER(INTG), INTENT(IN) :: analyticFunctionType !<The type of analytic function to evaluate
-    REAL(DP), INTENT(IN) :: x(:) !<x(dimensionIdx). The geometric position to evaluate at
-    REAL(DP), INTENT(IN) :: time !<The time to evaluate at
     INTEGER(INTG), INTENT(IN) :: componentNumber !<The component number of the dependent field to evaluate
-    REAL(DP), POINTER, INTENT(IN) :: analyticParameters(:) !<A pointer to any analytic field parameters
+    REAL(DP), INTENT(IN) :: x(:) !<x(dimensionIdx). The geometric position to evaluate at
+    REAL(DP), INTENT(IN) :: analyticParameters(:) !<A pointer to any analytic field parameters
     REAL(DP), INTENT(OUT) :: analyticValue !<On return, the analytic function value.
     REAL(DP), INTENT(OUT) :: gradientAnalyticValue(:) !<On return, the gradient of the analytic function value.
     REAL(DP), INTENT(OUT) :: hessianAnalyticValue(:,:) !<On return, the Hessian of the analytic function value.
@@ -261,9 +260,10 @@ CONTAINS
     INTEGER(INTG), INTENT(OUT) :: err !<The error code
     TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
     !Local Variables
-    INTEGER(INTG) :: analyticFunctionType,componentIdx,dimensionIdx,esSpecification(3),nodeIdx,numberOfComponents, &
+    INTEGER(INTG) :: analyticFunctionType,componentIdx,esSpecification(3),nodeIdx,numberOfComponents, &
       & numberOfDimensions,numberOfNodes,numberOfVariables,variableIdx,variableType
-    REAL(DP) :: analyticValue,gradientAnalyticValue(3),hessianAnalyticValue(3,3),normal(3),position(3),tangents(3,3),time
+    REAL(DP) :: analyticValue,gradientAnalyticValue(3),hessianAnalyticValue(3,3),normal(3), &
+      & position(3,MAXIMUM_GLOBAL_DERIV_NUMBER),tangents(3,2),time
     REAL(DP), POINTER :: analyticParameters(:),geometricParameters(:)
     LOGICAL :: boundaryNode
     TYPE(DomainType), POINTER :: domain
@@ -271,7 +271,6 @@ CONTAINS
     TYPE(DomainTopologyType), POINTER :: domainTopology
     TYPE(FieldType), POINTER :: analyticField,dependentField,geometricField
     TYPE(FieldVariableType), POINTER :: analyticVariable,dependentVariable,geometricVariable
-    TYPE(VARYING_STRING) :: localError    
    
     ENTERS("Laplace_BoundaryConditionsAnalyticCalculate",err,error,*999)
 
@@ -320,7 +319,7 @@ CONTAINS
           !IF((.NOT.boundaryOnly).OR.(boundaryOnly.AND.boundaryNode)) THEN
           CALL Field_PositionNormalTangentsCalculateNode(dependentField,FIELD_U_VARIABLE_TYPE,componentIdx,nodeIdx, &
             & position,normal,tangents,err,error,*999)
-          CALL Laplace_AnalyticFunctionsEvaluate(equationsSet,analyticFunctionType,position,time,componentIdx, &
+          CALL Laplace_AnalyticFunctionsEvaluate(equationsSet,analyticFunctionType,componentIdx,position(:,NO_PART_DERIV), &
             & analyticParameters,analyticValue,gradientAnalyticValue,hessianAnalyticValue,err,error,*999)
           CALL BoundaryConditions_SetAnalyticBoundaryNode(boundaryConditions,numberOfDimensions,dependentVariable,componentIdx, &
             & domainNodes,nodeIdx,boundaryNode,tangents,normal,analyticValue,gradientAnalyticValue,hessianAnalyticValue, &
@@ -357,15 +356,11 @@ CONTAINS
     !Local Variables
     INTEGER(INTG), PARAMETER :: MAX_NUMBER_OF_COMPONENTS=3
     INTEGER(INTG) columnComponentIdx,columnElementDOFIdx,columnElementParameterIdx,columnXiIdx,colsVariableType, &
-      & dependentVariableType,esSpecification(3),gaussPointIdx,numberOfColsComponents, &
+      & esSpecification(3),gaussPointIdx,numberOfColsComponents, &
       & numberOfColumnElementParameters(MAX_NUMBER_OF_COMPONENTS),numberOfDimensions,numberOfDependentXi,numberOfGauss, &
       & numberOfGeometricXi,numberOfRowsComponents,numberOfRowElementParameters(MAX_NUMBER_OF_COMPONENTS),rowComponentIdx, &
       & rowElementDOFIdx,rowElementParameterIdx,rowsVariableType,rowXiIdx,scalingType,xiIdx
-    REAL(DP) :: columndPhidXi(MAX_NUMBER_OF_COMPONENTS),conductivityMaterial(MAX_NUMBER_OF_COMPONENTS,MAX_NUMBER_OF_COMPONENTS), &
-      & conductivity(MAX_NUMBER_OF_COMPONENTS,MAX_NUMBER_OF_COMPONENTS), &
-      & conductivityTemp(MAX_NUMBER_OF_COMPONENTS,MAX_NUMBER_OF_COMPONENTS), &
-      & dNudXi(MAX_NUMBER_OF_COMPONENTS,MAX_NUMBER_OF_COMPONENTS),dXidNu(MAX_NUMBER_OF_COMPONENTS,MAX_NUMBER_OF_COMPONENTS), &
-      & dXdNu(MAX_NUMBER_OF_COMPONENTS,MAX_NUMBER_OF_COMPONENTS),dNudX(MAX_NUMBER_OF_COMPONENTS,MAX_NUMBER_OF_COMPONENTS), &
+    REAL(DP) :: columndPhidXi(MAX_NUMBER_OF_COMPONENTS),conductivity(MAX_NUMBER_OF_COMPONENTS,MAX_NUMBER_OF_COMPONENTS), &
       & gaussWeight,jacobian,jacobianGaussWeight,sum,kValue(MAX_NUMBER_OF_COMPONENTS),rowdPhidXi(MAX_NUMBER_OF_COMPONENTS)
     LOGICAL :: update,updateMatrix,updateRHS
     TYPE(BasisType), POINTER :: dependentBasis,geometricBasis
@@ -391,7 +386,7 @@ CONTAINS
       & independentInterpParameters,materialsInterpParameters,rowsInterpParameters
     TYPE(FieldInterpolatedPointType), POINTER :: geometricInterpPoint,fibreInterpPoint,independentInterpPoint,materialsInterpPoint
     TYPE(FieldInterpolatedPointMetricsType), POINTER :: geometricInterpPointMetrics
-    TYPE(QuadratureSchemeType), POINTER :: dependentQuadratureScheme,geometricQuadratureScheme
+    TYPE(QuadratureSchemeType), POINTER :: dependentQuadratureScheme
     TYPE(QuadratureSchemePtrType) :: columnQuadratureScheme(MAX_NUMBER_OF_COMPONENTS),rowQuadratureScheme(MAX_NUMBER_OF_COMPONENTS)
     TYPE(VARYING_STRING) :: localError    
 

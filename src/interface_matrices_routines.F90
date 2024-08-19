@@ -785,7 +785,7 @@ CONTAINS
     TYPE(InterfaceMatrixType), POINTER :: interfaceMatrix
     TYPE(InterfaceMatrixToVarMapType), POINTER :: interfaceMatrixToVarMap
     TYPE(InterfaceRHSType), POINTER :: rhsVector
-    TYPE(VARYING_STRING) :: dummyError,localError
+    TYPE(VARYING_STRING) :: dummyError
 
     ENTERS("InterfaceMatrices_CreateFinish",err,error,*998)
 

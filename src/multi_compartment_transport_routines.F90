@@ -235,8 +235,8 @@ CONTAINS
     !Local Variables
     INTEGER(INTG) :: pSpecification(3)
     TYPE(ControlLoopType), POINTER :: controlLoop,controlLoopRoot
-    TYPE(SolverType), POINTER :: solverDiffusion, solverAdvectionDiffusion
-    TYPE(SolverEquationsType), POINTER :: solverEquationsDiffusion, solverEquationsAdvectionDiffusion
+    TYPE(SolverType), POINTER :: solverDiffusion
+    TYPE(SolverEquationsType), POINTER :: solverEquationsDiffusion
     TYPE(SolversType), POINTER :: solvers
     TYPE(VARYING_STRING) :: localError
     
@@ -388,7 +388,6 @@ CONTAINS
     !Local Variables
     INTEGER(INTG) :: pSpecification(3)
     TYPE(ControlLoopType), POINTER :: controlLoop
-    TYPE(EquationsType), POINTER :: equations
     TYPE(EquationsSetType), POINTER :: equationsSet
     TYPE(EquationsSetAnalyticType), POINTER :: equationsAnalytic
     TYPE(ProblemType), POINTER :: problem
@@ -450,10 +449,11 @@ CONTAINS
     INTEGER(INTG), INTENT(OUT) :: err !<The error code
     TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
     !Local Variables
-    INTEGER(INTG) :: analyticFunctionType,boundaryConditionCheckVariable,componentIdx,derivativeIdx,dimensionIdx, &
-      & equationsSetIdx,globalDerivativeIndex,localDOFIdx,nodeIdx,numberOfComponents,numberOfDimensions,numberOfEquationsSets, &
+    INTEGER(INTG) :: analyticFunctionType,componentIdx,derivativeIdx,dimensionIdx, &
+      & equationsSetIdx,localDOFIdx,nodeIdx,numberOfComponents,numberOfDimensions,numberOfEquationsSets, &
       & numberOfNodes,numberOfNodeDerivatives,pSpecification(3),variableIndex,variableType
-    REAL(DP) :: analyticValue,currentTime,normal(3),tangents(3,3),timeIncrement,X(3),valueSource
+    REAL(DP) :: accelerationAnalyticValue,analyticValue,currentTime,gradientAnalyticValue(3),hessianAnalyticValue(3,3), &
+      & normal(3),position(3,MAXIMUM_GLOBAL_DERIV_NUMBER),tangents(3,3),timeIncrement,valueSource,velocityAnalyticValue,x(3)
 !     REAL(DP) :: k_xx, k_yy, k_zz
     REAL(DP) :: A1,A2,A3,A4,D1,D2,D3,D4,lambda12,lambda13,lambda23
     REAL(DP), POINTER :: analyticParameters(:),geometricParameters(:),materialsParameters(:)
@@ -464,8 +464,7 @@ CONTAINS
     TYPE(DomainType), POINTER :: domain
     TYPE(DomainNodesType), POINTER :: domainNodes
     TYPE(DomainTopologyType), POINTER :: domainTopology
-    TYPE(EquationsType), POINTER :: equations
-    TYPE(EquationsSetType), POINTER :: equationsSet 
+   TYPE(EquationsSetType), POINTER :: equationsSet 
     TYPE(EquationsSetAnalyticType), POINTER :: equationsAnalytic
     TYPE(FieldType), POINTER :: analyticField,dependentField,geometricField,materialsField,sourceField
     TYPE(FieldVariableType), POINTER :: analyticVariable,dependentVariable,geometricVariable,materialsVariable,sourceVariable
@@ -564,39 +563,15 @@ CONTAINS
             !Loop over the local nodes excluding the ghosts.
             CALL DomainNodes_NumberOfNodesGet(domainNodes,numberOfNodes,err,error,*999)
             DO nodeIdx=1,numberOfNodes
-!!TODO \todo We should interpolate the geometric field here and the node position.
-              DO dimensionIdx=1,numberOfDimensions
-                !Default to version 1 of each node derivative
-                CALL FieldVariable_LocalNodeDofGet(geometricVariable,1,1,nodeIdx,dimensionIdx,localDOFIdx,err,error,*999)
-                x(dimensionIdx)=geometricParameters(localDOFIdx)
-              ENDDO !dimensionIdx
               CALL DomainNodes_NodeBoundaryNodeGet(domainNodes,nodeIdx,boundaryNode,err,error,*999)
-              !Loop over the derivatives
-              CALL DomainNodes_NodeNumberOfDerivativesGet(domainNodes,nodeIdx,numberOfNodeDerivatives,err,error,*999)
-              DO derivativeIdx=1,numberOfNodeDerivatives
-                CALL DomainNodes_DerivativeGlobalIndexGet(domainNodes,derivativeIdx,nodeIdx,globalDerivativeIndex,err,error,*999)
-                CALL Diffusion_AnalyticFunctionsEvaluate(equationsSet,analyticFunctionType,x,tangents,normal,currentTime, &
-                  & variableType,globalDerivativeIndex,componentIdx,analyticParameters,materialsParameters,analyticValue, &
-                  & err,error,*999)
-                !Default to version 1 of each node derivative
-                CALL FieldVariable_LocalNodeDOFGet(dependentVariable,1,derivativeIdx,nodeIdx,componentIdx,localDOFIdx, &
-                  & err,error,*999)
-                CALL FieldVariable_ParameterSetUpdateLocalDOF(dependentVariable,FIELD_ANALYTIC_VALUES_SET_TYPE,localDOFIdx, &
-                  & analyticValue,err,error,*999)
-                CALL BoundaryConditionsVariable_ConditionTypeGet(boundaryConditionsVariable,localDOFIdx, &
-                  & boundaryConditionCheckVariable,err,error,*999)
-                IF(boundaryConditionCheckVariable==BOUNDARY_CONDITION_FIXED) THEN
-                  CALL FieldVariable_ParameterSetUpdateLocalDOF(dependentVariable,FIELD_VALUES_SET_TYPE,localDOFIdx, &
-                    & analyticValue,err,error,*999)
-                ENDIF                
-                !IF(variableType==FIELD_U_VARIABLE_TYPE) THEN
-                !  IF(boundaryNode) THEN
-                !    !If we are a boundary node then set the analytic value on the boundary
-                !    CALL BoundaryConditions_SetLocalDOF(boundaryConditions,variable_type,localDOFIdx,BOUNDARY_CONDITION_FIXED, &
-                !      & analyticValue,err,error,*999)
-                !  ENDIF
-                !ENDIF
-              ENDDO !derivativeIdx
+              CALL Field_PositionNormalTangentsCalculateNode(dependentField,FIELD_U_VARIABLE_TYPE,componentIdx,nodeIdx, &
+                & position,normal,tangents,err,error,*999)
+              CALL Diffusion_AnalyticFunctionsEvaluate(equationsSet,analyticFunctionType,componentIdx,currentTime, &
+                & position(:,NO_PART_DERIV),analyticParameters,analyticValue,gradientAnalyticValue,hessianAnalyticValue, &
+                & velocityAnalyticValue,accelerationAnalyticValue,err,error,*999)
+              CALL BoundaryConditions_SetAnalyticBoundaryNode(boundaryConditions,numberOfDimensions,dependentVariable, &
+                & componentIdx,domainNodes,nodeIdx,boundaryNode,tangents,normal,analyticValue,gradientAnalyticValue, &
+                & hessianAnalyticValue,.TRUE.,velocityAnalyticValue,.TRUE.,accelerationAnalyticValue,err,error,*999)
             ENDDO !nodeIdx
           ENDDO !componentIdx
           CALL FieldVariable_ParameterSetUpdateStart(dependentVariable,FIELD_ANALYTIC_VALUES_SET_TYPE,err,error,*999)

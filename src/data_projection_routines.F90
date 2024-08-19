@@ -1328,7 +1328,7 @@ CONTAINS
     !Local Variables
     INTEGER(INTG) :: computationNodeIdx,dataNumberOfCandidates,dataPointIdx,dataProjectionGlobalNumber,elementIdx,elementNumber, &
       & finishIdx,lineFaceIdx,lineFaceNumber,localElementNumber,localLineFaceNumber, &
-      & myComputationNode,myComputationalNode,numberOfCandidates,numberOfDataDimensions, &
+      & myComputationNode,numberOfCandidates,numberOfDataDimensions, &
       & numberOfDataPoints,numberOfDimensions,numberOfElementFaces,numberOfElementLines,numberOfElements,numberOfFaces, &
       & numberOfGroupComputationNodes,numberOfLines,numberOfLocal,reducedNumberOfCLosestCandidates,startIdx, &
       & totalNumberOfClosestCandidates,totalNumberOfElements,xiIdx
@@ -2462,8 +2462,7 @@ CONTAINS
     INTEGER(INTG), INTENT(OUT) :: err !<The error code
     TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
     !Local Variables
-    INTEGER(INTG) :: bound(2),elementIdx,elementNumber,exitTag,fixedXiIdx,iterationIdx1,iterationIdx2,meshComponentNumber, &
-      & numberOfCoordinates,xiIdx
+    INTEGER(INTG) :: bound(2),elementIdx,elementNumber,exitTag,fixedXiIdx,iterationIdx1,iterationIdx2,numberOfCoordinates,xiIdx
     REAL(DP) :: absoluteTolerance,delta,determinant,distanceVector(3),functionGradient(2),functionGradientNorm, &
       & functionHessian(2,2),functionValue,hessianDiagonal(2),maximumDelta,maxEigen,minimumDelta,minEigen,eigenShift, &
       & newFunctionValue,newXi(2),predictionAccuracy,predictedReduction,relativeTolerance,temp1,temp2,updateXi(2), &
@@ -3568,7 +3567,6 @@ CONTAINS
     TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
     !Local Variables
     INTEGER(INTG) :: dataPointIdx,dataPointGlobalNumber
-    TYPE(VARYING_STRING) :: localError
    
     ENTERS("DataProjection_ProjectionCancelByDataPoints1",err,error,*999)
 

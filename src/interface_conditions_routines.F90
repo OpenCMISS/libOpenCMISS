@@ -166,8 +166,8 @@ CONTAINS
     TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
     !Local Variables
     INTEGER(INTG) :: boundaryStart,elementIdx,elementNumber,ghostFinish,internalFinish,internalStart,numberOfTimes,outputType
-    REAL(SP) :: elementUserElapsed,elementSystemElapsed,userElapsed,userTime1(1),userTime2(1),userTime3(1),userTime4(1), &
-      & userTime5(1),userTime6(1),systemElapsed,systemTime1(1),systemTime2(1),systemTime3(1),systemTime4(1), &
+    REAL(SP) :: elementUserElapsed,elementSystemElapsed,userElapsed,userTime1(1),userTime2(1),userTime3(1), &
+      & userTime5(1),userTime6(1),systemElapsed,systemTime1(1),systemTime2(1),systemTime3(1), &
       & systemTime5(1),systemTime6(1)
     TYPE(DecompositionType), POINTER :: decomposition
     TYPE(DomainType), POINTER :: domain
@@ -426,10 +426,8 @@ CONTAINS
     TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
     !Local Variables
     INTEGER(INTG) :: dummyErr,interfaceConditionIdx,interfaceUserNumber
-    TYPE(InterfaceType), POINTER :: geometricInterface
     TYPE(InterfaceConditionType), POINTER :: newInterfaceCondition
     TYPE(InterfaceConditionPtrType), POINTER :: newInterfaceConditions(:)
-    TYPE(RegionType), POINTER :: geometricRegion,geometricInterfaceParentRegion,interfaceParentRegion
     TYPE(VARYING_STRING) :: dummyError,localError
     
     ENTERS("InterfaceCondition_CreateStart",err,error,*997)
@@ -581,7 +579,7 @@ CONTAINS
     TYPE(FieldVariablePtrType), POINTER :: newFieldVariables(:)
     TYPE(InterfaceType), POINTER :: INTERFACE
     TYPE(InterfaceDependentType), POINTER :: interfaceDependent
-    TYPE(MeshType), POINTER :: decompositionMesh,dependentMesh,interfaceMesh
+    TYPE(MeshType), POINTER :: decompositionMesh,interfaceMesh
     TYPE(VARYING_STRING) :: localError
 
     ENTERS("InterfaceCondition_DependentVariableAdd",err,error,*999)
@@ -1131,7 +1129,6 @@ CONTAINS
     INTEGER(INTG), INTENT(OUT) :: err !<The error code
     TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
     !Local Variables
-    INTEGER(INTG) :: LagrangeFieldUVariableNumberOfComponents,LagrangeFieldDelUDelNVariableNumberOfComponents
     TYPE(InterfaceLagrangeType), POINTER :: interfaceLagrange
     
     ENTERS("InterfaceCondition_LagrangeFieldCreateFinish",err,error,*999)
@@ -1417,7 +1414,7 @@ CONTAINS
     INTEGER(INTG), INTENT(OUT) :: err !<The error code
     TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
     !Local Variables
-    INTEGER(INTG) :: componentIdx,fieldUserNumber,fieldRegionUserNumber,geometricScalingType,interfaceUserNumber, &
+    INTEGER(INTG) :: componentIdx,fieldUserNumber,geometricScalingType,interfaceUserNumber, &
       & numberOfComponents,parentRegionUserNumber
     TYPE(DecompositionType), POINTER :: geometricDecomposition
     TYPE(FieldType), POINTER :: field,geometricField
@@ -1425,7 +1422,7 @@ CONTAINS
     TYPE(InterfaceType), POINTER :: INTERFACE
     TYPE(InterfaceDependentType), POINTER :: interfaceDependent
     TYPE(InterfacePenaltyType), POINTER :: interfacePenalty
-    TYPE(RegionType), POINTER :: interfaceRegion,parentRegion,penaltyFieldRegion
+    TYPE(RegionType), POINTER :: interfaceRegion,parentRegion
     TYPE(VARYING_STRING) :: localError
 
     ENTERS("InterfaceCondition_PenaltyFieldCreateStart",err,error,*999)
@@ -1760,8 +1757,8 @@ CONTAINS
     TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
     !Local Variables
     INTEGER(INTG) :: boundaryStart,elementIdx,elementNumber,ghostFinish,internalFinish,internalStart,numberOfTimes,outputType
-    REAL(SP) :: elementUserElapsed,elementSystemElapsed,userElapsed,userTime1(1),userTime2(1),userTime3(1),userTime4(1), &
-      & userTime5(1),userTime6(1),systemElapsed,systemTime1(1),systemTime2(1),systemTime3(1),systemTime4(1), &
+    REAL(SP) :: elementUserElapsed,elementSystemElapsed,userElapsed,userTime1(1),userTime2(1),userTime3(1), &
+      & userTime5(1),userTime6(1),systemElapsed,systemTime1(1),systemTime2(1),systemTime3(1), &
       & systemTime5(1),systemTime6(1)
     TYPE(DecompositionType), POINTER :: decomposition
     TYPE(DomainType), POINTER :: domain

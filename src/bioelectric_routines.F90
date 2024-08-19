@@ -305,7 +305,6 @@ CONTAINS
     INTEGER(INTG) :: pSpecification(2)
     TYPE(ControlLoopType), POINTER :: controlLoop
     TYPE(ProblemType), POINTER :: problem
-    TYPE(SolversType), POINTER :: solvers
     TYPE(VARYING_STRING) :: localError
 
     ENTERS("Bioelectric_PreSolve",err,error,*999)
@@ -348,7 +347,6 @@ CONTAINS
     INTEGER(INTG) :: pSpecification(2)
     TYPE(ControlLoopType), POINTER :: controlLoop
     TYPE(ProblemType), POINTER :: problem
-    TYPE(SolversType), POINTER :: solvers
     TYPE(VARYING_STRING) :: localError
 
     ENTERS("Bioelectric_PostSolve",err,error,*999)

@@ -62,6 +62,52 @@ MODULE LAPACK
       INTEGER(INTG), INTENT(OUT) :: INFO
     END SUBROUTINE DGESV
 
+    SUBROUTINE DGETRF(M, N, A, LDA, IPIV, INFO )
+      USE KINDS
+      INTEGER(INTG), INTENT(IN) :: M
+      INTEGER(INTG), INTENT(IN) :: N
+      INTEGER(INTG), INTENT(IN) :: LDA
+      REAL(DP), INTENT(INOUT) :: A(LDA,*)
+      INTEGER(INTG), INTENT(OUT) :: IPIV(*)
+      INTEGER(INTG), INTENT(OUT) :: INFO
+    END SUBROUTINE DGETRF
+
+    SUBROUTINE SGETRF(M, N, A, LDA, IPIV, INFO )
+      USE KINDS
+      INTEGER(INTG), INTENT(IN) :: M
+      INTEGER(INTG), INTENT(IN) :: N
+      INTEGER(INTG), INTENT(IN) :: LDA
+      REAL(SP), INTENT(INOUT) :: A(LDA,*)
+      INTEGER(INTG), INTENT(OUT) :: IPIV(*)
+      INTEGER(INTG), INTENT(OUT) :: INFO
+    END SUBROUTINE SGETRF
+
+    SUBROUTINE DGETRS(TRANS, N, NRHS, A, LDA, IPIV, B, LDB, INFO )
+      USE KINDS
+      CHARACTER(1) :: TRANS
+      INTEGER(INTG), INTENT(IN) :: N
+      INTEGER(INTG), INTENT(IN) :: NRHS
+      INTEGER(INTG), INTENT(IN) :: LDA
+      REAL(DP), INTENT(INOUT) :: A(LDA,*)
+      INTEGER(INTG), INTENT(OUT) :: IPIV(*)
+      INTEGER(INTG), INTENT(IN) :: LDB
+      REAL(DP), INTENT(INOUT) :: B(LDB,*)
+      INTEGER(INTG), INTENT(OUT) :: INFO
+    END SUBROUTINE DGETRS
+
+    SUBROUTINE SGETRS(TRANS, N, NRHS, A, LDA, IPIV, B, LDB, INFO )
+      USE KINDS
+      CHARACTER(1) :: TRANS
+      INTEGER(INTG), INTENT(IN) :: N
+      INTEGER(INTG), INTENT(IN) :: NRHS
+      INTEGER(INTG), INTENT(IN) :: LDA
+      REAL(SP), INTENT(INOUT) :: A(LDA,*)
+      INTEGER(INTG), INTENT(OUT) :: IPIV(*)
+      INTEGER(INTG), INTENT(IN) :: LDB
+      REAL(SP), INTENT(INOUT) :: B(LDB,*)
+      INTEGER(INTG), INTENT(OUT) :: INFO
+    END SUBROUTINE SGETRS
+    
     ! DGESVD - compute the singular value decomposition (SVD) of a
     !  real M-by-N matrix A, optionally computing the left and/or
     !  right singular vectors
@@ -71,15 +117,15 @@ MODULE LAPACK
       CHARACTER(1) :: JOBVT ! Specifies options for computing all or part of the matrix V**T (options: A,S,O,N)
       INTEGER(INTG), INTENT(IN) :: M ! Number of rows in A
       INTEGER(INTG), INTENT(IN) :: N ! Number of columns in A
-      REAL(DP), INTENT(INOUT) :: A(LDA,*) ! The matrix to perform the SVD on
       INTEGER(INTG), INTENT(IN) :: LDA ! Leading dimension of A
+      REAL(DP), INTENT(INOUT) :: A(LDA,*) ! The matrix to perform the SVD on
       REAL(DP), INTENT(OUT) :: S(MIN(M,N)) ! Singular values of A, sorted S(i) >= S(i+1)
-      REAL(DP), INTENT(OUT) :: U(LDU,*) ! If JOBU = 'A', U contains the M-by-M orthogonal matrix U
       INTEGER(INTG), INTENT(IN) :: LDU ! Leading dimension of U
-      REAL(DP), INTENT(OUT) :: VT(LDVT,N) ! If JOBVT = 'A', VT contains the N-by-N orthogonal matrix V**T
+      REAL(DP), INTENT(OUT) :: U(LDU,*) ! If JOBU = 'A', U contains the M-by-M orthogonal matrix U
       INTEGER(INTG), INTENT(IN) :: LDVT ! The leading dimension of the array VT
-      REAL(DP), INTENT(INOUT) :: WORK(*) ! On exit, if INFO = 0, WORK(1) returns the optimal LWORK
+      REAL(DP), INTENT(OUT) :: VT(LDVT,N) ! If JOBVT = 'A', VT contains the N-by-N orthogonal matrix V**T
       INTEGER(INTG), INTENT(IN) :: LWORK ! The dimension of the array WORK
+      REAL(DP), INTENT(INOUT) :: WORK(LWORK) ! On exit, if INFO = 0, WORK(1) returns the optimal LWORK
       INTEGER(INTG), INTENT(OUT) :: INFO ! 0 if successful exit; < 0 if INFO = -i (the i-th argument had an illegal value); > 0 if DBDSQR did not converge
     END SUBROUTINE DGESVD
     
@@ -88,13 +134,26 @@ MODULE LAPACK
       CHARACTER(LEN=1), INTENT(IN) :: JOBZ
       CHARACTER(LEN=1), INTENT(IN) :: UPLO
       INTEGER(INTG), INTENT(IN) :: N
-      REAL(DP), INTENT(INOUT) :: A(LDA,N)
       INTEGER(INTG), INTENT(IN) :: LDA
+      REAL(DP), INTENT(INOUT) :: A(LDA,N)
       REAL(DP), INTENT(OUT) :: W(N)
-      REAL(DP), INTENT(OUT) :: WORK(LWORK)
       INTEGER(INTG), INTENT(IN) :: LWORK
+      REAL(DP), INTENT(OUT) :: WORK(LWORK)
       INTEGER(INTG), INTENT(OUT) :: INFO
     END SUBROUTINE DSYEV
+      
+   SUBROUTINE SSYEV( JOBZ, UPLO, N, A, LDA, W, WORK, LWORK, INFO )
+      USE KINDS
+      CHARACTER(LEN=1), INTENT(IN) :: JOBZ
+      CHARACTER(LEN=1), INTENT(IN) :: UPLO
+      INTEGER(INTG), INTENT(IN) :: N
+      REAL(SP), INTENT(OUT) :: W(N)
+      INTEGER(INTG), INTENT(IN) :: LDA
+      REAL(SP), INTENT(INOUT) :: A(LDA,N)
+      INTEGER(INTG), INTENT(IN) :: LWORK
+      REAL(SP), INTENT(OUT) :: WORK(LWORK)
+      INTEGER(INTG), INTENT(OUT) :: INFO
+    END SUBROUTINE SSYEV
       
   END INTERFACE
 

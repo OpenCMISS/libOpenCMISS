@@ -703,7 +703,6 @@ CONTAINS
     TYPE(DomainNodesType), POINTER :: domainNodes
     TYPE(DomainTopologyType), POINTER :: domainTopology
     TYPE(EquationsSetType), POINTER :: equationsSet,navierStokesEquationsSet
-    TYPE(EquationsType), POINTER :: equations,navierStokesEquations
     TYPE(FieldType), POINTER :: materialsField,navierStokesDependentField
     TYPE(FieldVariableType), POINTER :: dependentFieldVariable
     TYPE(ProblemType), POINTER :: problem

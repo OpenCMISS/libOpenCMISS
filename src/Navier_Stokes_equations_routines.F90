@@ -5034,13 +5034,13 @@ CONTAINS
       & numberOfXi,pressureComponent,residualVariableType,rowComponentIdx,rowElementDOFIdx,rowElementParameterIdx, &
       & rowMeshComponent,rowXiIdx,rowsVariableType,stabilisationType,velocityInterpolationOrder(4),versionIdx,xiIdx,xiIdx1,xiIdx2
     REAL(DP) :: aDeriv,a0Deriv,a0Param,alpha,area,AUpwind,aValue,beta,C1,columnPhi,crossStress,currentTime,dColumnPhidXi(3), &
-      & deltaTime,doubleDotG,dPhidX(3),dPhidXi,dRowPhidXi(3),dXidX(3,3),eDeriv,elementInverse,eParam,g0Param,gaussWeight, &
+      & deltaTime,doubleDotG,dPhidX(3),dRowPhidXi(3),dXidX(3,3),eDeriv,elementInverse,eParam,g0Param,gaussWeight, &
       & hDeriv,hParam,jacobian,jacobianGaussWeight,kappa,Lref,LSIC,mass,meshVelocity(3),momentum,momentumTerm,Mref,muParam, &
       & muScale,normal,normalWave,nuLSIC,pExternal,pressure,pressureDeriv(3),PSPG,qDeriv,QUpwind,qValue,residualContinuity, &
       & residualMomentum(3),reynoldsStress,rhoParam,rowPhi,stabilisationValueDP,sum,sum2,SUPG,tauC,tauMp,tauMu,tauSUPS,traceG, &
       & Tref,uDotGu,velocityDeriv(3,3),velocity2Deriv(3,3,3),velocity(3),velocityPrevious(3),x(3)
     LOGICAL :: ALE,firstAssemblyDamping,firstAssemblyRHS,firstAssemblyStiffness,linearElement,RBSStabilisation,RBVMStabilisation, &
-      & stabilisation,static,update,updateDamping,updateLinear,updateMatrices,updateResidual,updateRHS,updateStiffness
+      & stabilisation,static,update,updateDamping,updateMatrices,updateResidual,updateRHS,updateStiffness
     TYPE(BasisType), POINTER :: dependentBasis,geometricBasis,independentBasis
     TYPE(BasisPtrType) :: columnBasis(4),rowBasis(4)
     TYPE(CoordinateSystemType), POINTER :: coordinateSystem
@@ -6292,13 +6292,13 @@ CONTAINS
       & numberOfDimensions,numberOfElementNodes,numberOfGauss,numberOfParameters, &
       & numberOfResidualComponents,numberOfRowsComponents,numberOfRowElementParameters(4),numberOfVersions,numberOfXi, &
       & pressureComponent,residualVariableType,rowComponentIdx,rowElementDOFIdx,rowElementParameterIdx,rowMeshComponent, &
-      & solverGlobalNumber,solveType,stabilisationType,velocityInterpolationOrder(3),versionIdx,xiIdx,xiIdx1,xiIdx2
+      & stabilisationType,velocityInterpolationOrder(3),versionIdx,xiIdx,xiIdx1,xiIdx2
     REAL(DP) :: a0Deriv,a0Param,aDeriv,alpha,aValue,beta,C1,columnPhi,columndPhi2dXi(3,3),currentTime,dColumnPhidXi(3), &
       & deltaTime,dPhidXPressure(3,3),dPhidXVelocity(3,3),dRowPhidXi(3),dXidX(3,3),eDeriv,elementInverse, &
       & eParam,gaussWeight,hDeriv,hParam,jacobian,jacobianContinuity,jacobianGaussWeight,jacobianMomentum(3),kappa,mass, &
       & momentum1,momentum2,muParam,muScale,normal,normalWave,pressure,pressureDeriv(3),qDeriv,qValue,rhoParam,rowPhi, &
       & stabilisationValueDP,sum,velocity(3),velocityDeriv(3,3),velocity2Deriv(3,3,3),meshVelocity(3)
-    LOGICAL  :: ALE,linearElement,RBSStabilisation,RBVMStabilisation,stabilisation,static,updateJacobian,updateResidual,updateRHS
+    LOGICAL  :: ALE,linearElement,RBSStabilisation,RBVMStabilisation,stabilisation,static,updateJacobian
     TYPE(BasisType), POINTER :: dependentBasis,geometricBasis,independentBasis
     TYPE(BasisPtrType) :: columnBasis(4),rowBasis(4)
     TYPE(DecompositionType), POINTER :: dependentDecomposition,geometricDecomposition,independentDecomposition
@@ -6312,17 +6312,11 @@ CONTAINS
     TYPE(EquationsInterpolationType), POINTER :: equationsInterpolation
     TYPE(EquationsMappingVectorType), POINTER :: vectorMapping
     TYPE(EquationsMappingLHSType), POINTER :: lhsMapping
-    TYPE(EquationsMappingLinearType), POINTER :: linearMapping
-    TYPE(EquationsMappingDynamicType), POINTER :: dynamicMapping
     TYPE(EquationsMappingNonlinearType), POINTER :: nonlinearMapping
     TYPE(EquationsMappingResidualType), POINTER :: residualMapping
     TYPE(EquationsMatricesVectorType), POINTER :: vectorMatrices
-    TYPE(EquationsMatricesLinearType), POINTER :: linearMatrices
-    TYPE(EquationsMatricesDynamicType), POINTER :: dynamicMatrices
     TYPE(EquationsMatricesNonlinearType), POINTER :: nonlinearMatrices
     TYPE(EquationsMatricesResidualType), POINTER :: residualVector
-    TYPE(EquationsMatricesRHSType), POINTER :: rhsVector
-    TYPE(EquationsMatrixType), POINTER :: stiffnessMatrix
     TYPE(EquationsVectorType), POINTER :: vectorEquations
     TYPE(FieldType), POINTER :: dependentField,equationsSetField,geometricField,materialsField,independentField
     TYPE(FieldInterpolatedPointType), POINTER :: dependentInterpPoint,geometricInterpPoint,independentInterpPoint, &
@@ -6333,7 +6327,7 @@ CONTAINS
     TYPE(FieldVariableType), POINTER :: geometricVariable,independentVariable,residualVariable,rowsVariable,uMaterialsVariable, &
       & u1EquationsVariable,vEquationsVariable,vMaterialsVariable
     TYPE(JacobianMatrixType), POINTER :: jacobianMatrix
-    TYPE(QuadratureSchemeType), POINTER :: dependentQuadratureScheme,quadratureScheme
+    TYPE(QuadratureSchemeType), POINTER :: dependentQuadratureScheme
     TYPE(QuadratureSchemePtrType) :: columnQuadratureScheme(4),rowQuadratureScheme(4)
     TYPE(VARYING_STRING) :: localError
 
@@ -7039,7 +7033,7 @@ CONTAINS
     INTEGER(INTG), INTENT(OUT) :: err !<The error code
     TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
     !Local Variables
-    INTEGER(INTG) :: equationsSetIdx,equationsSetNumber,esSpecification(3),inputIteration,iterationNumber,loopLevel,loopType, &
+    INTEGER(INTG) :: equationsSetIdx,esSpecification(3),inputIteration,iterationNumber,loopLevel,loopType, &
       & maxIterations,numberOfEquationsSets,outputIteration,pSpecification(3),solverGlobalNumber,solveType,solveType2, &
       & subLoopIndex,timestep
     REAL(DP) :: absoluteTolerance,currentTime,relativeTolerance,startTime,stopTime,timeIncrement
@@ -7048,7 +7042,6 @@ CONTAINS
     TYPE(DynamicSolverType), POINTER :: dynamicSolver
     TYPE(EquationsSetType), POINTER :: equationsSet
     TYPE(FieldType), POINTER :: dependentField
-    TYPE(FieldParameterSetType), POINTER :: upwindParameterSet
     TYPE(FieldVariableType), POINTER :: dependentVariable
     TYPE(ProblemType), POINTER :: problem
     TYPE(SolverType), POINTER :: solver2
@@ -7374,10 +7367,10 @@ CONTAINS
     INTEGER(INTG), INTENT(OUT) :: err !<The error code
     TYPE(VARYING_STRING), INTENT(OUT) :: error !The error string
     !Local Variables
-    INTEGER(INTG) :: analyticFunctionType,boundaryConditionCheckVariable,componentIdx,componentNumberVelocity,coordinateIdx, &
+    INTEGER(INTG) :: analyticFunctionType,boundaryConditionCheckVariable,componentIdx,componentNumberVelocity, &
       & computationNode,coupledNodeNumber,currentTimeLoopIteration,dependentDof,dependentVariableType,derivativeIdx, &
       & dimensionIdx,elementIdx,elementNodeIdx,equationsSetIdx,equationsSetIndex,esSpecification(3),fluidNodeNumber, &
-      & fluidVariableType,globalDerivIndex,globalDof,I,independentDof,independentVariableType,inputIteration,interpolationType, &
+      & fluidVariableType,globalDerivIndex,globalDof,I,independentDof,inputIteration,interpolationType, &
       & J,K,localDOF,localNodeNumber,loopOutputType,maxNumberOfElementParameters,nodeIdx,nodeNumber,numberOfDependentComponents, &
       & numberOfDimensions,numberOfEquationsSets,numberOfFittedNodes,numberOfGlobalNodes,numberOfInterfaceNodes,numberOfNodes, &
       & numberOfNodeDerivatives,numberOfNodesXIC(3),numberOfSourceTimesteps,numberOfVariables,numberOfVersions, &
@@ -7388,7 +7381,7 @@ CONTAINS
     REAL(DP), POINTER :: analyticParameters(:),boundaryValues(:),geometricParameters(:),materialsParameters(:), &
       & meshVelocityValues(:),nodeData(:,:),qSpline(:),qValues(:),tValues(:)
     REAL(DP), ALLOCATABLE :: fittedNodes(:)
-    LOGICAL :: fluidEquationsSetFound=.FALSE.,ghostNode,importDataFromFile,nodeExists,parameterSetCreated, &
+    LOGICAL :: fluidEquationsSetFound=.FALSE.,ghostNode,importDataFromFile,nodeExists, &
       & solidEquationsSetFound=.FALSE.,solidNodeFound=.FALSE.
     CHARACTER(70) :: inputFile,tempString
     TYPE(BasisType), POINTER :: basis
@@ -8743,9 +8736,9 @@ CONTAINS
     !Local Variables
     INTEGER(INTG) :: componentIdx,currentIteration,derivativeIdx,equationsSetIdx,esSpecification(3),fluidNode, &
       & fluidNumberOfDimensions,geometricMeshComponent,inputIteration,interfaceNumberOfDimensions,interpolationType, &
-      & inputType,inputOption,laplaceNumberOfDimensions,localDOF,nodeIdx,numberOfComponents,numberOfDependentComponents, &
-      & numberOfEquationsSets,numberOfNodes,numberOfNodeDerivatives,numberOfVariables,numberOfVersions,outputIteration, &
-      & pSpecification(3),solidNode,solveType,totalNumberOfNodes,variableIdx,variableType,versionIdx
+      & laplaceNumberOfDimensions,localDOF,nodeIdx,numberOfComponents, &
+      & numberOfEquationsSets,numberOfNodes,numberOfNodeDerivatives,numberOfVersions,outputIteration, &
+      & pSpecification(3),solidNode,solveType,totalNumberOfNodes,versionIdx
     REAL(DP) :: alpha,currentTime,previousSolidNodePosition,solidDelta,solidNodePosition,startTime,stopTime,timeIncrement
     REAL(DP), POINTER :: meshDisplacementValues(:)
     LOGICAL :: fluidEquationsSetFound=.FALSE.
@@ -9309,7 +9302,8 @@ CONTAINS
       & inputIteration,numberOfDimensions,numberOfEquationsSets,outputIterationNumber,outputType,pSpecification(3), &
       & solverGlobalNumber
     REAL(DP) :: currentTime,timeIncrement,startTime,stopTime
-    CHARACTER(20) :: file,outputFile                                    
+    CHARACTER(20) :: file,outputFile
+    EXTERNAL :: SYSTEM
     TYPE(ControlLoopType), POINTER :: controlLoop
     TYPE(EquationsSetType), POINTER :: equationsSet
     TYPE(EquationsSetAnalyticType), POINTER :: equationsAnalytic
@@ -9611,7 +9605,7 @@ CONTAINS
     !Local Variables
     INTEGER(INTG) :: analyticFunctionType,boundaryConditionsCheckVariable,boundaryCount,componentIdx,derivativeIdx,dimensionIdx, &
       & elementIdx,elementNodeIdx,elementNodeNumber,elementNumber,globalDerivativeIndex,globalDOF,I,interpolationType,J,K, &
-      & localDOF,maximumNumberOfElementParameters,nodeIdx,nodeNumber,numberOfComponents,numberOfDimensions,numberOfNodes, &
+      & localDOF,maximumNumberOfElementParameters,nodeIdx,numberOfComponents,numberOfDimensions,numberOfNodes, &
       & numberOfNodeDerivatives,numberOfNodesXiCoord(3),numberOfParameters,numberOfVariables,numberOfVersions,numberOfXi, &
       & parameterIdx,userNodeNumber,variableIdx,variableType,versionIdx
     REAL(DP) :: initialValue,nodeAnalyticParameters(10),time,tCoordinates(20,3),VALUE,x(3),xiCoordinates(3)
@@ -9625,7 +9619,7 @@ CONTAINS
     TYPE(DomainTopologyType), POINTER :: domainTopology
     TYPE(FieldInterpolatedPointType), POINTER :: interpolatedPoint
     TYPE(FieldInterpolationParametersType), POINTER :: interpolationParameters
-    TYPE(FieldParameterSetType), POINTER :: analyticParameterSet,pressureParameterSet
+    TYPE(FieldParameterSetType), POINTER :: pressureParameterSet
     TYPE(FieldType), POINTER :: analyticField,dependentField,geometricField,materialsField
     TYPE(FieldVariableType), POINTER :: dependentVariable,geometricVariable,analyticVariable,materialsVariable
     TYPE(VARYING_STRING) :: localError
@@ -12026,7 +12020,6 @@ CONTAINS
     TYPE(DecompositionElementsType), POINTER :: decompositionElements
     TYPE(DecompositionFaceType), POINTER :: face
     TYPE(DecompositionFacesType), POINTER :: decompositionFaces
-    TYPE(DecompositionLineType), POINTER :: line
     TYPE(DecompositionLinesType), POINTER :: decompositionLines
     TYPE(DecompositionTopologyType), POINTER :: decompositionTopology
     TYPE(DomainType), POINTER :: domain1,domain2
@@ -12531,7 +12524,6 @@ CONTAINS
     LOGICAL, ALLOCATABLE :: globalConverged(:)
     TYPE(BasisType), POINTER :: dependentBasis,dependentBasis2,faceBasis
     TYPE(DecompositionType), POINTER :: decomposition3D
-    TYPE(DecompositionElementType), POINTER :: decompositionElement
     TYPE(DecompositionElementsType), POINTER :: decompositionElements3D
     TYPE(DecompositionFaceType), POINTER :: face
     TYPE(DecompositionFacesType), POINTER :: decompositionFaces3D
@@ -13300,7 +13292,7 @@ CONTAINS
     TYPE(VARYING_STRING), INTENT(OUT) :: error
     !Local Variables
     INTEGER(INTG) :: boundaryConditionType,boundaryNumber,componentIdx,dependentDof,derivativeIdx, &
-      & inputIteration,iteration,nodeIdx,nodeNumber,numberOfBoundaries,numberOfGroupComputationNodes, &
+      & inputIteration,iteration,nodeIdx,numberOfBoundaries,numberOfGroupComputationNodes, &
       & numberOfLocalNodes1D,outputIteration,pSpecification(3),solverNumber,solver1dNavierStokesNumber,timestep,versionIdx
 #ifdef WITH_F08_MPI
     TYPE(MPI_Comm) :: groupCommunicator
@@ -13328,8 +13320,7 @@ CONTAINS
     TYPE(EquationsVectorType), POINTER :: vectorEquations
     TYPE(EquationsSetType), POINTER :: equationsSet
     TYPE(FieldType), POINTER :: dependentField,materialsField,independentField
-    TYPE(FieldParameterSetType), POINTER :: previousParameterSet
-    TYPE(FieldVariableType), POINTER :: dependentVariable,uDependentVariable,u1DependentVariable,dynamicVariable, &
+    TYPE(FieldVariableType), POINTER :: uDependentVariable,u1DependentVariable,dynamicVariable, &
       & independentVariable,vMaterialsVariable
     TYPE(ProblemType), POINTER :: problem
     TYPE(SolverEquationsType), POINTER :: solverEquations
@@ -13647,8 +13638,8 @@ CONTAINS
     TYPE(EquationsMappingVectorType), POINTER :: vectorMapping1D,vectorMapping3D
     TYPE(EquationsMappingDynamicType), POINTER :: dynamicMapping1D,dynamicMapping3D
     TYPE(EquationsVectorType), POINTER :: vectorEquations1D,vectorEquations3D
-    TYPE(FieldType), POINTER :: dependentField1D,dependentField3D,independentField,independentField1D
-    TYPE(FieldVariableType), POINTER :: dependentVariable,uDependentVariable1D,u1DependentVariable1D,u2DependentVariable1D, &
+    TYPE(FieldType), POINTER :: dependentField1D,dependentField3D,independentField1D
+    TYPE(FieldVariableType), POINTER :: uDependentVariable1D,u1DependentVariable1D,u2DependentVariable1D, &
       & dynamicVariable1D,dynamicVariable3D,independentVariable1D
     TYPE(ProblemType), POINTER :: problem
     TYPE(SolverType), POINTER :: solver1D,solver3D
@@ -13952,7 +13943,7 @@ CONTAINS
     TYPE(VARYING_STRING), INTENT(OUT) :: error
     !Local Variables
     INTEGER(INTG) :: branchNumber,componentIdx,derivativeIdx,i,inputIteration,iteration,nodeIdx, &
-      & nodeNumber,numberOfBranches,numberOfGroupComputationNodes,numberOfNodes,numberOfVersions,outputIteration, &
+      & numberOfBranches,numberOfGroupComputationNodes,numberOfNodes,numberOfVersions,outputIteration, &
       & pSpecification(3),solver1dNavierStokesNumber,solverNumber,timestep,versionIdx
 #ifdef WITH_F08_MPI
     TYPE(MPI_Comm) :: groupCommunicator
@@ -14250,7 +14241,7 @@ CONTAINS
       & numberOfDimensions,numberOfGauss,numberOfXi,outputType,startElement,stopElement,userElementNumber,variableType,xiIdx
     REAL(DP) :: dUdXi(3,3),dXidX(3,3),dUdX(3,3),dUdXTrans(3,3),D(3,3),gaussWeight,rateOfStrainMag,shearRateDefault, &
       & shearRate,strainRate,velocityGauss(3)
-    LOGICAL :: calculateFaces,calculateLines,defaultUpdate,elementExists,ghostElement
+    LOGICAL :: defaultUpdate,elementExists,ghostElement
     TYPE(BasisType), POINTER :: dependentBasis
     TYPE(DecompositionType), POINTER :: decomposition
     TYPE(DecompositionElementsType), POINTER :: decompositionElements
@@ -14513,7 +14504,7 @@ CONTAINS
       & numberOfEquationsSets,numberOfEquationsSets2,numberOfSolvers,numberOfSolvers2,numberOfSubLoops,numberOfSubLoops2, &
       & numberOfSubLoops3,numberOfSubLoops4,pSpecification(3),solverIdx,solverIdx2,solveType,subloopIdx,subloopIdx2,subloopIdx3
     REAL(DP) :: absolute3D0DTolerance,relative3D0DTolerance
-    LOGICAL :: calculateFaces,calculateLines,continueLoop,convergedFlag
+    LOGICAL :: continueLoop,convergedFlag
     CHARACTER(70) :: label
     TYPE(ControlLoopType), POINTER :: subloop,subloop2,subloop3,iterativeWhileLoop2,iterativeWhileLoop3,parentLoop
     TYPE(DecompositionType), POINTER :: decomposition
@@ -14880,7 +14871,7 @@ CONTAINS
     TYPE(DomainTopologyType), POINTER :: dependentDomainTopology
     TYPE(EquationsType), POINTER :: equations
     TYPE(FieldType), POINTER :: dependentField,materialsField,independentField,geometricField
-    TYPE(FieldVariableType), POINTER :: dependentVariable,uDependentVariable,u1DependentVariable,vDependentVariable, &
+    TYPE(FieldVariableType), POINTER :: uDependentVariable,u1DependentVariable,vDependentVariable, &
       & uIndependentVariable,uMaterialsVariable,vMaterialsVariable
     TYPE(VARYING_STRING) :: localError
 
@@ -15241,7 +15232,7 @@ CONTAINS
     TYPE(FieldInterpolatedPointType), POINTER :: dependentInterpPoint,geometricInterpPoint
     TYPE(FieldInterpolationParametersType), POINTER :: dependentInterpParameters,geometricInterpParameters
     TYPE(FieldInterpolatedPointMetricsType), POINTER :: geometricInterpPointMetrics
-    TYPE(FieldVariableType), POINTER :: dependentVariable3D,uDependentVariable3D,uMaterialsVariable,uEquationsSetVariable3D, &
+    TYPE(FieldVariableType), POINTER :: dependentVariable3D,uMaterialsVariable,uEquationsSetVariable3D, &
       & u1EquationsSetVariable3D,vEquationsSetVariable3D
     TYPE(QuadratureSchemeType), POINTER :: faceQuadratureScheme
     TYPE(VARYING_STRING) :: localError

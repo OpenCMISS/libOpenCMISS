@@ -382,6 +382,14 @@ MODULE DecompositionAccessRoutines
 
   PUBLIC DomainNode_BoundaryNodeGet
 
+  PUBLIC DomainNode_DerivativeGlobalDerivativeIndexGet
+
+  PUBLIC DomainNode_DerivativeNumberOfVersionsGet
+
+  PUBLIC DomainNode_DerivativePartialDerivativeIndexGet
+
+  PUBLIC DomainNode_DerivativeVersionNumberGet
+
   PUBLIC DomainNode_NodeDerivativeGet
 
   PUBLIC DomainNode_GlobalNodeNumberGet
@@ -406,7 +414,7 @@ MODULE DecompositionAccessRoutines
 
   PUBLIC DomainNode_UserNodeNumberGet
 
-  PUBLIC DomainNodeDerivative_DerivativeGlobalIndexGet
+  PUBLIC DomainNodeDerivative_GlobalDerivativeIndexGet
 
   PUBLIC DomainNodeDerivative_NumberOfVersionsGet
 
@@ -6813,6 +6821,181 @@ CONTAINS
   !================================================================================================================================
   !
 
+  !>Gets the global derivative index of a local derivative of a domain node. 
+  SUBROUTINE DomainNode_DerivativeGlobalDerivativeIndexGet(domainNode,derivativeIdx,globalDerivativeIndex,err,error,*)
+
+    !Argument variables
+    TYPE(DomainNodeType), POINTER :: domainNode !<A pointer to the domain node to get the global derivative index for
+    INTEGER(INTG), INTENT(IN) :: derivativeIdx !<The derivative index to get the node deriviative for
+    INTEGER(INTG), INTENT(OUT) :: globalDerivativeIndex !<On exit, the global derivative index of the domain node derivative.
+    INTEGER(INTG), INTENT(OUT) :: err !<The error code
+    TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
+    !Local Variables
+#ifdef WITH_PRECHECKS    
+    TYPE(VARYING_STRING) :: localError
+#endif
+    
+    ENTERS("DomainNode_DerivativeGlobalDerivativeIndexGet",err,error,*999)
+
+#ifdef WITH_PRECHECKS    
+    IF(.NOT.ASSOCIATED(domainNode)) CALL FlagError("Domain node is not associated.",err,error,*999)
+    IF(derivativeIdx<1.OR.derivativeIdx>domainNode%numberOfDerivatives) THEN
+      localError="The specified derivative index of "//TRIM(NumberToVString(derivativeIdx,"*",err,error))// &
+        & " is invalid. The derivative index should be >= 1 and <= "// &
+        & TRIM(NumberToVString(domainNode%numberOfDerivatives,"*",err,error))//"."
+      CALL FlagError(localError,err,error,*999)    
+    ENDIF
+    IF(.NOT.ALLOCATED(domainNode%derivatives)) &
+      & CALL FlagError("Derivatives not allocated for the domain node.",err,error,*999)
+#endif
+
+    globalDerivativeIndex=domainNode%derivatives(derivativeIdx)%globalDerivativeIndex
+
+    EXITS("DomainNode_DerivativeGlobalDerivativeIndexGet")
+    RETURN
+999 ERRORSEXITS("DomainNode_DerivativeGlobalDerivativeIndexGet",err,error)
+    RETURN 1
+
+  END SUBROUTINE DomainNode_DerivativeGlobalDerivativeIndexGet
+
+  !
+  !================================================================================================================================
+  !
+
+  !>Gets the number of versions at a local derivative of a domain node. 
+  SUBROUTINE DomainNode_DerivativeNumberOfVersionsGet(domainNode,derivativeIdx,numberOfVersions,err,error,*)
+
+    !Argument variables
+    TYPE(DomainNodeType), POINTER :: domainNode !<A pointer to the domain node to get the number of versions for
+    INTEGER(INTG), INTENT(IN) :: derivativeIdx !<The derivative index to get the node deriviative for
+    INTEGER(INTG), INTENT(OUT) :: numberOfVersions !<On exit, the number of versions of the domain node derivative.
+    INTEGER(INTG), INTENT(OUT) :: err !<The error code
+    TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
+    !Local Variables
+#ifdef WITH_PRECHECKS    
+    TYPE(VARYING_STRING) :: localError
+#endif
+    
+    ENTERS("DomainNode_NumberOfVersionsGet",err,error,*999)
+
+#ifdef WITH_PRECHECKS    
+    IF(.NOT.ASSOCIATED(domainNode)) CALL FlagError("Domain node is not associated.",err,error,*999)
+    IF(derivativeIdx<1.OR.derivativeIdx>domainNode%numberOfDerivatives) THEN
+      localError="The specified derivative index of "//TRIM(NumberToVString(derivativeIdx,"*",err,error))// &
+        & " is invalid. The derivative index should be >= 1 and <= "// &
+        & TRIM(NumberToVString(domainNode%numberOfDerivatives,"*",err,error))//"."
+      CALL FlagError(localError,err,error,*999)    
+    ENDIF
+#endif
+
+    numberOfVersions=domainNode%derivatives(derivativeIdx)%numberofVersions
+
+    EXITS("DomainNode_DerivativeNumberOfVersionsGet")
+    RETURN
+999 ERRORSEXITS("DomainNode_DerivativeNumberOfVersionsGet",err,error)
+    RETURN 1
+
+  END SUBROUTINE DomainNode_DerivativeNumberOfVersionsGet
+
+  !
+  !================================================================================================================================
+  !
+
+  !>Gets the partial derivative index of a local derivative of a domain node. 
+  SUBROUTINE DomainNode_DerivativePartialDerivativeIndexGet(domainNode,derivativeIdx,partialDerivativeIndex,err,error,*)
+
+    !Argument variables
+    TYPE(DomainNodeType), POINTER :: domainNode !<A pointer to the domain node to get the partial derivative index for
+    INTEGER(INTG), INTENT(IN) :: derivativeIdx !<The derivative index to get the node deriviative for
+    INTEGER(INTG), INTENT(OUT) :: partialDerivativeIndex !<On exit, the partial derivative index of the domain node derivative.
+    INTEGER(INTG), INTENT(OUT) :: err !<The error code
+    TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
+    !Local Variables
+#ifdef WITH_PRECHECKS    
+    TYPE(VARYING_STRING) :: localError
+#endif
+    
+    ENTERS("DomainNode_DerivativePartialDerivativeIndexGet",err,error,*999)
+
+#ifdef WITH_PRECHECKS    
+    IF(.NOT.ASSOCIATED(domainNode)) CALL FlagError("Domain node is not associated.",err,error,*999)
+    IF(derivativeIdx<1.OR.derivativeIdx>domainNode%numberOfDerivatives) THEN
+      localError="The specified derivative index of "//TRIM(NumberToVString(derivativeIdx,"*",err,error))// &
+        & " is invalid. The derivative index should be >= 1 and <= "// &
+        & TRIM(NumberToVString(domainNode%numberOfDerivatives,"*",err,error))//"."
+      CALL FlagError(localError,err,error,*999)    
+    ENDIF
+    IF(.NOT.ALLOCATED(domainNode%derivatives)) &
+      & CALL FlagError("Derivatives not allocated for the domain node.",err,error,*999)
+#endif
+
+    partialDerivativeIndex=domainNode%derivatives(derivativeIdx)%partialDerivativeIndex
+
+    EXITS("DomainNode_DerivativePartialDerivativeIndexGet")
+    RETURN
+999 ERRORSEXITS("DomainNode_DerivativePartialDerivativeIndexGet",err,error)
+    RETURN 1
+
+  END SUBROUTINE DomainNode_DerivativePartialDerivativeIndexGet
+
+  !
+  !================================================================================================================================
+  !
+
+  !>Gets the version number of a local version of local derivative of a domain node. 
+  SUBROUTINE DomainNode_DerivativeVersionNumberGet(domainNode,versionIdx,derivativeIdx,versionNumber,err,error,*)
+
+    !Argument variables
+    TYPE(DomainNodeType), POINTER :: domainNode !<A pointer to the domain node to get the version number for
+    INTEGER(INTG), INTENT(IN) :: versionIdx !<The version index to get the node deriviative version for
+    INTEGER(INTG), INTENT(IN) :: derivativeIdx !<The derivative index to get the node deriviative for
+    INTEGER(INTG), INTENT(OUT) :: versionNumber !<On exit, the version number of the domain node derivative version.
+    INTEGER(INTG), INTENT(OUT) :: err !<The error code
+    TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
+    !Local Variables
+#ifdef WITH_PRECHECKS    
+    TYPE(VARYING_STRING) :: localError
+#endif
+    
+    ENTERS("DomainNode_DerivativeVersionNumberGet",err,error,*999)
+
+#ifdef WITH_PRECHECKS    
+    IF(.NOT.ASSOCIATED(domainNode)) CALL FlagError("Domain node is not associated.",err,error,*999)
+    IF(derivativeIdx<1.OR.derivativeIdx>domainNode%numberOfDerivatives) THEN
+      localError="The specified derivative index of "//TRIM(NumberToVString(derivativeIdx,"*",err,error))// &
+        & " is invalid. The derivative index should be >= 1 and <= "// &
+        & TRIM(NumberToVString(domainNode%numberOfDerivatives,"*",err,error))//"."
+      CALL FlagError(localError,err,error,*999)    
+    ENDIF
+    IF(.NOT.ALLOCATED(domainNode%derivatives)) &
+      & CALL FlagError("Derivatives not allocated for the domain node.",err,error,*999)
+    IF(versionIdx<1.OR.versionIdx>domainNode%derivatives(derivativeIdx)%numberOfVersions) THEN
+      localError="The specified version index of "//TRIM(NumberToVString(versionIdx,"*",err,error))// &
+        & " is invalid. The version index for derivative index "//TRIM(NumberToVString(derivativeIdx,"*",err,error))// &
+        & " should be >= 1 and <= "// &
+        & TRIM(NumberToVString(domainNode%derivatives(derivativeIdx)%numberOfVersions,"*",err,error))//"."
+      CALL FlagError(localError,err,error,*999)
+    ENDIF
+    IF(.NOT.ALLOCATED(domainNode%derivatives(derivativeIdx)%userVersionNumbers)) THEN
+      localError="User version numbers is not allocated for derivative index "// &
+        & TRIM(NumberToVString(derivativeIdx,"*",err,error))//" of the domain node."
+      CALL FlagError(localError,err,error,*999)
+    ENDIF
+#endif
+
+    versionNumber=domainNode%derivatives(derivativeIdx)%userVersionNumbers(versionIdx)
+
+    EXITS("DomainNode_DerivativeVersionNumberGet")
+    RETURN
+999 ERRORSEXITS("DomainNode_DerivativeVersionNumberGet",err,error)
+    RETURN 1
+
+  END SUBROUTINE DomainNode_DerivativeVersionNumberGet
+
+  !
+  !================================================================================================================================
+  !
+
   !>Gets a node derivative for a domain node. 
   SUBROUTINE DomainNode_NodeDerivativeGet(domainNode,derivativeIdx,domainNodeDerivative,err,error,*)
 
@@ -7220,7 +7403,7 @@ CONTAINS
   !
 
   !>Gets the derivative number for a domain node derivative. 
-  SUBROUTINE DomainNodeDerivative_DerivativeGlobalIndexGet(domainNodeDerivative,derivativeNumber,err,error,*)
+  SUBROUTINE DomainNodeDerivative_GlobalDerivativeIndexGet(domainNodeDerivative,derivativeNumber,err,error,*)
 
     !Argument variables
     TYPE(DomainNodeDerivativeType), POINTER :: domainNodeDerivative !<A pointer to the domain node derivative to get the derivative number for
@@ -7229,7 +7412,7 @@ CONTAINS
     TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
     !Mesh Variables
 
-    ENTERS("DomainNodeDerivative_DerivativeGlobalIndexGet",err,error,*999)
+    ENTERS("DomainNodeDerivative_GlobalDerivativeIndexGet",err,error,*999)
 
 #ifdef WITH_PRECHECKS    
     IF(.NOT.ASSOCIATED(domainNodeDerivative)) CALL FlagError("Domain node derivative is not associated.",err,error,*999)
@@ -7237,12 +7420,12 @@ CONTAINS
 
     derivativeNumber=domainNodeDerivative%globalDerivativeIndex
 
-    EXITS("DomainNodeDerivatives_DerivativeNumberGet")
+    EXITS("DomainNodeDerivatives_GlobalDerivativeIndexGet")
     RETURN
-999 ERRORSEXITS("DomainNodeDerivative_DerivativeGlobalIndexGet",err,error)
+999 ERRORSEXITS("DomainNodeDerivative_GlobalDerivativeIndexGet",err,error)
     RETURN 1
 
-  END SUBROUTINE DomainNodeDerivative_DerivativeGlobalIndexGet
+  END SUBROUTINE DomainNodeDerivative_GlobalDerivativeIndexGet
 
   !
   !================================================================================================================================

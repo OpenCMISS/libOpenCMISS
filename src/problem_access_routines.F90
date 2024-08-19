@@ -1043,9 +1043,15 @@ CONTAINS
     INTEGER(INTG), INTENT(OUT) :: err !<The error code
     TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
     !Local Variables
+    TYPE(VARYING_STRING) :: localError
 
     ENTERS("Problem_SpecificationSet0",err,error,*999)
 
+    IF(specificationLength /= 1) THEN
+      localError="The supplied specification length is "//TRIM(NumberToVString(specificationLength,"*",err,error))// &
+        & " but a scalar was supplified for the specification array."
+      CALL FlagError(localError,err,error,*999)
+    ENDIF
     CALL Problem_SpecificationSet1(problem,1,[problemSpecification],err,error,*999)
 
     EXITS("Problem_SpecificationSet0")

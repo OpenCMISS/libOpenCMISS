@@ -131,15 +131,14 @@ CONTAINS
       & globalDerivativeIndex,localDOFIdx,nodeIdx,numberOfAxisNodes(MAX_NUMBER_OF_COMPONENTS,MAX_NUMBER_OF_VARIABLES), &
       & numberOfComponents,numberOfDimensions,numberOfNodes,numberOfNodeDerivatives,numberOfVariables,numberofVersions, &
       & variableIdx,variableType,versionIdx
-    REAL(DP) :: analyticDisplacement,analyticValue,bcValue,E,F,H,Iyy,L,maxExtent(MAX_NUMBER_OF_COMPONENTS),normal(3),position(3), &
-      & tangents(3,3),W
+    REAL(DP) :: analyticDisplacement,analyticValue,E,F,H,Iyy,L,maxExtent(MAX_NUMBER_OF_COMPONENTS),normal(3), &
+      & position(3,MAXIMUM_GLOBAL_DERIV_NUMBER),tangents(3,2),W,x(3)
     REAL(DP), PARAMETER :: GEOMETRIC_TOLERANCE=1.0E-6_DP
     REAL(DP), POINTER :: analyticParameters(:)
     LOGICAL :: onAxis,setBC
     TYPE(DomainType), POINTER :: domain
     TYPE(DomainNodesType), POINTER :: domainNodes
     TYPE(DomainTopologyType), POINTER :: domainTopology
-    TYPE(EquationsSetAnalyticType), POINTER :: equationsAnalytic
     TYPE(FieldType), POINTER :: analyticField,dependentField,geometricField
     TYPE(FieldVariableType), POINTER :: analyticVariable,dependentVariable,geometricVariable
     TYPE(VARYING_STRING) :: localError,localWarning
@@ -202,15 +201,16 @@ CONTAINS
           !Find the position of the node (interpolated since the geometric field might not have these nodes)
           CALL FieldVariable_PositionNormalTangentsCalculateNode(dependentVariable,componentIdx,nodeIdx, &
             & position,normal,tangents,err,error,*999)
+          x(1:numberOfDimensions)=position(1:numberOfDimensions,NO_PART_DERIV)
           onAxis=.TRUE.
           DO dimensionIdx=1,numberOfDimensions
             IF(dimensionIdx/=componentIdx) THEN
-              onAxis=onAxis.AND.(ABS(position(dimensionIdx))<=GEOMETRIC_TOLERANCE)
+              onAxis=onAxis.AND.(ABS(x(dimensionIdx))<=GEOMETRIC_TOLERANCE)
             ENDIF
           ENDDO !dimensionIdx
           IF(onAxis) THEN
             numberOfAxisNodes(componentIdx,variableIdx)=numberOfAxisNodes(componentIdx,variableIdx)+1
-            IF(position(componentIdx)>maxExtent(componentIdx)) maxExtent(componentIdx)=position(componentIdx)
+            IF(x(componentIdx)>maxExtent(componentIdx)) maxExtent(componentIdx)=x(componentIdx)
           ENDIF
         ENDDO !nodeIdx
       ENDDO !componentIdx
@@ -284,11 +284,12 @@ CONTAINS
           !Find the position of the node
           CALL FieldVariable_PositionNormalTangentsCalculateNode(dependentVariable,componentIdx,nodeIdx, &
             & position,normal,tangents,err,error,*999)
+          x(1:numberOfDimensions)=position(1:numberOfDimensions,NO_PART_DERIV)
           !Loop over the derivatives
           CALL DomainNodes_NodeNumberOfDerivativesGet(domainNodes,nodeIdx,numberOfNodeDerivatives,err,error,*999)
           DO derivativeIdx=1,numberOfNodeDerivatives
             CALL DomainNodes_DerivativeGlobalIndexGet(domainNodes,derivativeIdx,nodeIdx,globalDerivativeIndex,err,error,*999)
-            CALL DomainNOdes_DerivativeNumberOfVersionsGet(domainNodes,derivativeIdx,nodeIdx,numberOfVersions,err,error,*999)
+            CALL DomainNodes_DerivativeNumberOfVersionsGet(domainNodes,derivativeIdx,nodeIdx,numberOfVersions,err,error,*999)
             DO versionIdx=1,numberOfVersions             
               setBC = .FALSE.            
               SELECT CASE(equationsSetSubType)
@@ -310,15 +311,15 @@ CONTAINS
                   E=analyticParameters(4)
                   F=analyticParameters(5)
                   Iyy=W*H*H*H/12.0_DP
-                  analyticDisplacement=F*position(1)*position(1)*(3.0_DP*L-position(1))/(6.0_DP*E*Iyy)                
-                  IF(ABS(position(1))<=GEOMETRIC_TOLERANCE) THEN
+                  analyticDisplacement=F*x(1)*x(1)*(3.0_DP*L-x(1))/(6.0_DP*E*Iyy)                
+                  IF(ABS(x(1))<=GEOMETRIC_TOLERANCE) THEN
                     !Build in end
                     SELECT CASE(variableType)
                     CASE(FIELD_U_VARIABLE_TYPE)
                       analyticValue=0.0_DP
                       setBC=.TRUE.
                     CASE(FIELD_T_VARIABLE_TYPE)
-                      IF(ABS(position(3))<=GEOMETRIC_TOLERANCE) THEN
+                      IF(ABS(x(3))<=GEOMETRIC_TOLERANCE) THEN
                         !Bottom built-in edge. Reaction force
                         IF(componentIdx==3) THEN
                           analyticValue=-F/REAL(numberOfAxisNodes(3,2),DP)                          
@@ -331,9 +332,9 @@ CONTAINS
                     CASE DEFAULT
                       !Do nothing
                     END SELECT
-                  ELSE IF(ABS(position(1)-L)<=GEOMETRIC_TOLERANCE) THEN
+                  ELSE IF(ABS(x(1)-L)<=GEOMETRIC_TOLERANCE) THEN
                     !Free end
-                    IF(ABS(position(3)-H)<=GEOMETRIC_TOLERANCE) THEN
+                    IF(ABS(x(3)-H)<=GEOMETRIC_TOLERANCE) THEN
                       !Upper end edge
                       SELECT CASE(variableType)
                       CASE(FIELD_U_VARIABLE_TYPE)
@@ -449,19 +450,17 @@ CONTAINS
     TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
     !Local Variables
     INTEGER(INTG), PARAMETER :: MAX_NUMBER_OF_ELEMENT_PARAMETERS=64
-    INTEGER(INTG) :: colsComponentIdx,colsVariableType,columnXiIdx,columnElementDOFIdx,columnElementParameterIdx, &
-      & esSpecification(3),fieldVarType,gaussPointIdx,numberOfColumnComponents,numberOfColumnElementParameters(3), &
+    INTEGER(INTG) :: colsComponentIdx,colsVariableType,columnElementDOFIdx,columnElementParameterIdx, &
+      & esSpecification(3),gaussPointIdx,numberOfColumnElementParameters(3), &
       & numberOfColsComponents,numberOfDimensions,numberOfGauss,numberOfRowsComponents,numberOfRowElementParameters(3), &
-      & numberOfXi,rowsComponentIdx,rowElementParameterIdx,rowElementDOFIdx,rowXiIdx,rowsVariableType,scalingType, &
-      & totalNumberOfColumnElementParameters,totalNumberOfRowElementParameters,voigtIdx,xiIdx
-    INTEGER(INTG) :: offDiagonalComponents(3),offDiagonalDependentVariable(2,2,3),diagonalSubMatrixLocation(3), &
-      & offDiagonalSubMatLocation(2,3)
+      & numberOfXi,rowsComponentIdx,rowElementParameterIdx,rowElementDOFIdx,rowsVariableType,scalingType, &
+      & totalNumberOfColumnElementParameters,totalNumberOfRowElementParameters,voigtIdx
+    !INTEGER(INTG) :: offDiagonalComponents(3),offDiagonalDependentVariable(2,2,3),diagonalSubMatrixLocation(3), &
+    !  & offDiagonalSubMatLocation(2,3)
     REAL(DP) :: BtCB,BtCMatrix(6,MAX_NUMBER_OF_ELEMENT_PARAMETERS*3),columnBMatrix(6,MAX_NUMBER_OF_ELEMENT_PARAMETERS*3), &
-      & colsdPhidXi,colsSF(64*3),gaussWeight,jacobian,jacobianGaussWeight,C(6,6),jacobianGaussWeightDiagC(3,3), &
-      & jacobianGaussWeightOffDiagC(2,3),rowBMatrix(6,MAX_NUMBER_OF_ELEMENT_PARAMETERS*3), &
-      & rowsSF(MAX_NUMBER_OF_ELEMENT_PARAMETERS*3),sourceParam,thickness
+      & gaussWeight,jacobian,jacobianGaussWeight,C(6,6),rowBMatrix(6,MAX_NUMBER_OF_ELEMENT_PARAMETERS*3),sourceParam,thickness
     LOGICAL :: update,updateMatrix,updateRHS,updateSource
-    TYPE(BasisType), POINTER :: columnBasis,dependentBasis,geometricBasis,rowBasis
+    TYPE(BasisType), POINTER :: dependentBasis,geometricBasis
     TYPE(BasisPtrType) :: columnBases(3),rowBases(3)
     TYPE(DecompositionType), POINTER :: dependentDecomposition,geometricDecomposition
     TYPE(DomainType), POINTER :: columnDomain,dependentDomain,geometricDomain,rowDomain
@@ -1108,7 +1107,7 @@ CONTAINS
     TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
     !Local Variables
     REAL(DP) :: delta,E,E1,E2,E3,v,v13,v23,v12,v31,v32,v21
-    REAL(DP) :: C11,C22,C33,C12,C13,C23,C21,C31,C32,C44,C55,C66,G12,G13,G23
+    REAL(DP) :: G12,G13,G23
     TYPE(VARYING_STRING) :: localError
 
     ENTERS("LinearElasticity_ElasticityTensor",err,error,*999)
@@ -1252,7 +1251,7 @@ CONTAINS
     TYPE(EquationsSetDerivedType), POINTER :: equationsDerived
     TYPE(EquationsSetMaterialsType), POINTER :: equationsMaterials
     TYPE(EquationsVectorType), POINTER :: vectorEquations
-    TYPE(FieldType), POINTER :: analyticField,dependentField,geometricField,materialsField
+    TYPE(FieldType), POINTER :: analyticField,geometricField,materialsField
     TYPE(RegionType), POINTER :: region
     TYPE(VARYING_STRING) :: localError
 
@@ -2205,10 +2204,8 @@ CONTAINS
     TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
     !Local variables
     INTEGER(INTG), PARAMETER :: MAX_NUMBER_OF_ELEMENT_PARAMETERS=64
-    INTEGER(INTG) :: componentIdx1,componentIdx2,componentIdx3,elementDOFIdx,elementParameterIdx,maxNumberOfElementParameters, &
-      & totalNumberOfElementParameters,xiIdx
+    INTEGER(INTG) :: componentIdx1,componentIdx2,elementDOFIdx,elementParameterIdx,totalNumberOfElementParameters,xiIdx
     REAL(DP) :: dPhidX(3,3*MAX_NUMBER_OF_ELEMENT_PARAMETERS),dPhidXi(3,3*MAX_NUMBER_OF_ELEMENT_PARAMETERS)
-    TYPE(VARYING_STRING) :: localError
 
     ENTERS("LinearElasticity_StrainMatrixCalculateGauss",err,error,*999)
 
@@ -2335,10 +2332,10 @@ CONTAINS
     TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
     !Local Variables
     INTEGER(INTG) :: componentIdx,dataPointIdx,dataPointNumber,dependentVariableType,elementIdx,elementNumber, &
-      & esSpecification(3),fieldInterpolation,fieldVarType,finishIdx,gaussPointIdx,meshComponentNumber,numberOfComponents, &
+      & esSpecification(3),fieldInterpolation,fieldVarType,finishIdx,gaussPointIdx,numberOfComponents, &
       & numberOfDataPoints,numberOfDependentComponents,numberOfDimensions,numberOfElementXi,numberOfGauss,numberOfTimes, &
-      & numberOfXi,outputType,partIdx,startIdx,variableType
-    REAL(DP) :: dZdNu(3,3),Fg(3,3),Fe(3,3),J,Jg,Je,C(3,3),f(3,3),E(3,3),growthValues(3),xi(3),values(3,3)
+      & numberOfXi,outputType,partIdx,startIdx
+    REAL(DP) :: xi(3),values(3,3)
     REAL(SP) :: elementUserElapsed,elementSystemElapsed,systemElapsed,systemTime1(1),systemTime2(1),systemTime3(1), &
       & systemTime4(1),userElapsed,userTime1(1),userTime2(1),userTime3(1),userTime4(1)
     TYPE(BasisType), POINTER :: basis
@@ -2770,7 +2767,6 @@ CONTAINS
     !Local variables
     INTEGER(INTG) :: coordinateIdx,dimensionIdx,esSpecification(3),partialDerivativeIndex,voigtIdx1,voigtIdx2,xiIdx
     REAL(DP) :: C(6,6),dudx(3,3),eV(6),sigmaV(6),W
-    TYPE(VARYING_STRING) :: localError
 
     ENTERS("LinearElasticity_StressStrainPoint",err,error,*999)
 

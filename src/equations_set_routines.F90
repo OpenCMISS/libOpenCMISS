@@ -218,12 +218,9 @@ CONTAINS
     INTEGER(INTG), INTENT(OUT) :: err !<The error code
     TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
     !Local Variables
-    INTEGER(INTG) :: dummyErr,fieldUserNumber
-    TYPE(DecompositionType), POINTER :: analyticDecomposition,geometricDecomposition
+    INTEGER(INTG) :: dummyErr
     TYPE(EquationsSetSetupType) equationsSetSetupInfo
-    TYPE(FieldType), POINTER :: field,geometricField
-    TYPE(RegionType), POINTER :: region,analyticFieldRegion
-    TYPE(VARYING_STRING) :: dummyError,localError
+    TYPE(VARYING_STRING) :: dummyError
 
     ENTERS("EquationsSet_AnalyticCreateStart",err,error,*998)
 
@@ -300,22 +297,22 @@ CONTAINS
     INTEGER(INTG) :: analyticFunctionType,componentInterpolationType,componentIdx,derivativeIdx,elementIdx,gaussPointIdx, &
       & globalDerivativeIndex,nodeIdx,numberOfAnalyticComponents,numberOfComponents,numberOfDimensions,numberOfElements, &
       & numberOfGauss,numberOfNodes,numberOfNodeDerivatives,numberOfVariables,numberOfVersions,variableIdx,variableType,versionIdx
-    REAL(DP) :: analyticTime,normal(3),position(3),tangents(3,3),analyticValue
+    REAL(DP) :: accelerationAnalyticValue,analyticTime,analyticValue,gradientAnalyticValue(3),hessianAnalyticValue(3,3), &
+      & normal(3),position(3,MAXIMUM_GLOBAL_DERIV_NUMBER),tangents(3,2),velocityAnalyticValue
     REAL(DP) :: analyticDummyValues(1)=0.0_DP
-    REAL(DP) :: materialsDummyValues(1)=0.0_DP
+    LOGICAL :: haveAcceleration,haveVelocity
     LOGICAL :: reverseNormal=.FALSE.
     TYPE(BasisType), POINTER :: basis
     TYPE(DomainType), POINTER :: domain
     TYPE(DomainElementsType), POINTER :: domainElements
     TYPE(DomainNodesType), POINTER :: domainNodes
     TYPE(DomainTopologyType), POINTER :: domainTopology
-    TYPE(FieldType), POINTER :: analyticField,dependentField,geometricField,materialsField
-    TYPE(FieldInterpolationParametersType), POINTER :: analyticInterpParameters,geometricInterpParameters, &
-      & materialsInterpParameters
-    TYPE(FieldInterpolatedPointType), POINTER :: analyticInterpPoint,geometricInterpPoint,materialsInterpPoint
+    TYPE(FieldType), POINTER :: analyticField,dependentField,geometricField
+    TYPE(FieldInterpolationParametersType), POINTER :: analyticInterpParameters,geometricInterpParameters
+    TYPE(FieldInterpolatedPointType), POINTER :: analyticInterpPoint,geometricInterpPoint
     TYPE(FieldInterpolatedPointMetricsType), POINTER :: geometricInterpPointMetrics
-    TYPE(FieldPhysicalPointType), POINTER :: analyticPhysicalPoint,materialsPhysicalPoint
-    TYPE(FieldVariableType), POINTER :: analyticVariable,dependentVariable,geometricVariable,materialsVariable
+    TYPE(FieldPhysicalPointType), POINTER :: analyticPhysicalPoint
+    TYPE(FieldVariableType), POINTER :: analyticVariable,dependentVariable,geometricVariable
     TYPE(QuadratureSchemeType), POINTER :: quadratureScheme
     TYPE(VARYING_STRING) :: localError
 
@@ -343,16 +340,6 @@ CONTAINS
       CALL Field_InterpolatedPointInitialise(analyticInterpParameters,analyticInterpPoint,err,error,*999)
       CALL Field_PhysicalPointInitialise(analyticInterpPoint,geometricInterpPoint,analyticPhysicalPoint,err,error,*999)
     ENDIF
-    NULLIFY(materialsField)
-    CALL EquationsSet_MaterialsFieldExists(equationsSet,materialsField,err,error,*999)
-    IF(ASSOCIATED(materialsField)) THEN
-      NULLIFY(materialsVariable)
-      CALL Field_VariableGet(materialsField,FIELD_U_VARIABLE_TYPE,materialsVariable,err,error,*999)
-      CALL FieldVariable_NumberOfComponentsGet(materialsVariable,numberOfAnalyticComponents,err,error,*999)
-      CALL FieldVariable_InterpolationParameterInitialise(materialsVariable,materialsInterpParameters,err,error,*999)
-      CALL Field_InterpolatedPointInitialise(materialsInterpParameters,materialsInterpPoint,err,error,*999)
-      CALL Field_PhysicalPointInitialise(materialsInterpPoint,geometricInterpPoint,materialsPhysicalPoint,err,error,*999)
-    ENDIF
     CALL EquationsSet_AnalyticFunctionTypeGet(equationsSet,analyticFunctionType,err,error,*999)
     CALL EquationsSet_AnalyticTimeGet(equationsSet,analyticTime,err,error,*999)
     CALL Field_NumberOfVariablesGet(dependentField,numberOfVariables,err,error,*999)
@@ -377,44 +364,27 @@ CONTAINS
           DO elementIdx=1,numberOfElements
             NULLIFY(basis)
             CALL DomainElements_ElementBasisGet(domainElements,elementIdx,basis,err,error,*999)
-            CALL Field_InterpolationParametersElementGet(FIELD_VALUES_SET_TYPE,elementIdx,geometricInterpParameters,err,error,*999)
+            CALL Field_InterpolationParametersElementGet(FIELD_VALUES_SET_TYPE,elementIdx,geometricInterpParameters, &
+              &err,error,*999)
             IF(ASSOCIATED(analyticField)) THEN
               CALL Field_InterpolationParametersElementGet(FIELD_VALUES_SET_TYPE,elementIdx,analyticInterpParameters, &
                 & err,error,*999)
             ENDIF
-            IF(ASSOCIATED(materialsField)) THEN
-              CALL Field_InterpolationParametersElementGet(FIELD_VALUES_SET_TYPE,elementIdx,materialsInterpParameters, &
-                & err,error,*999)
-            ENDIF
             CALL Field_InterpolateXi(FIRST_PART_DERIV,[0.5_DP,0.5_DP,0.5_DP],geometricInterpPoint,err,error,*999)
             CALL Field_InterpolatedPointMetricsCalculate(COORDINATE_JACOBIAN_NO_TYPE,geometricInterpPointMetrics,err,error,*999)
-            CALL Field_PositionNormalTangentsCalculateIntPtMetric(geometricInterpPointMetrics,reverseNormal,position,normal, &
-              & tangents,err,error,*999)
-            IF(ASSOCIATED(analyticField)) CALL Field_InterpolateXi(NO_PART_DERIV,[0.5_DP,0.5_DP,0.5_DP],analyticInterpPoint, &
-              & err,error,*999)
-            IF(ASSOCIATED(materialsField)) CALL Field_InterpolateXi(NO_PART_DERIV,[0.5_DP,0.5_DP,0.5_DP],materialsInterpPoint, &
-              & err,error,*999)
-!! \todo Maybe do this with optional arguments?
+            CALL Field_PositionNormalTangentsCalculateIntPtMetric(geometricInterpPointMetrics,reverseNormal, &
+              & position(:,NO_PART_DERIV),normal,tangents,err,error,*999)
             IF(ASSOCIATED(analyticField)) THEN
-              IF(ASSOCIATED(materialsField)) THEN
-                CALL EquationsSet_AnalyticFunctionsEvaluate(equationsSet,analyticFunctionType,position,tangents,normal, &
-                  & analyticTime,variableType,globalDerivativeIndex,componentIdx,analyticInterpPoint%values(:,NO_PART_DERIV), &
-                  & materialsInterpPoint%values(:,NO_PART_DERIV),analyticValue,err,error,*999)
-              ELSE
-                CALL EquationsSet_AnalyticFunctionsEvaluate(equationsSet,analyticFunctionType,position,tangents,normal, &
-                  & analyticTime,variableType,globalDerivativeIndex,componentIdx,analyticInterpPoint%values(:,NO_PART_DERIV), &
-                  & materialsDummyValues,analyticValue,err,error,*999)
-              ENDIF
+              CALL Field_InterpolateXi(NO_PART_DERIV,[0.5_DP,0.5_DP,0.5_DP],analyticInterpPoint,err,error,*999)
+              CALL EquationsSet_AnalyticFunctionsEvaluate(equationsSet,analyticFunctionType,componentIdx, &
+                & analyticTime,position(:,NO_PART_DERIV),analyticInterpPoint%values(:,NO_PART_DERIV),analyticValue, &
+                & gradientAnalyticValue,hessianAnalyticValue,haveVelocity,velocityAnalyticValue,haveAcceleration, &
+                & accelerationAnalyticValue,err,error,*999)
             ELSE
-              IF(ASSOCIATED(materialsField)) THEN
-                CALL EquationsSet_AnalyticFunctionsEvaluate(equationsSet,analyticFunctionType,position,tangents,normal, &
-                  & analyticTime,variableType,globalDerivativeIndex,componentIdx,analyticDummyValues,materialsInterpPoint% &
-                  & values(:,NO_PART_DERIV),analyticValue,err,error,*999)
-              ELSE
-                CALL EquationsSet_AnalyticFunctionsEvaluate(equationsSet,analyticFunctionType,position,tangents,normal, &
-                  & analyticTime,variableType,globalDerivativeIndex,componentIdx,analyticDummyValues,materialsDummyValues, &
-                  & analyticValue,err,error,*999)
-              ENDIF
+              CALL EquationsSet_AnalyticFunctionsEvaluate(equationsSet,analyticFunctionType,componentIdx, &
+                & analyticTime,position(:,NO_PART_DERIV),analyticDummyValues,analyticValue, &
+                & gradientAnalyticValue,hessianAnalyticValue,haveVelocity,velocityAnalyticValue,haveAcceleration, &
+                & accelerationAnalyticValue,err,error,*999)
             ENDIF
             CALL FieldVariable_ParameterSetUpdateLocalElement(dependentVariable,FIELD_ANALYTIC_VALUES_SET_TYPE,elementIdx, &
               & componentIdx,analyticValue,err,error,*999)
@@ -427,37 +397,23 @@ CONTAINS
           DO nodeIdx=1,numberOfNodes
             CALL Field_PositionNormalTangentsCalculateNode(dependentField,variableType,componentIdx,nodeIdx,position,normal, &
               & tangents,err,error,*999)
-            IF(ASSOCIATED(analyticField)) CALL Field_InterpolateFieldVariableNode(NO_PHYSICAL_DERIVATIVE,FIELD_VALUES_SET_TYPE, &
-              & analyticVariable,componentIdx,nodeIdx,analyticPhysicalPoint,err,error,*999)
-            IF(ASSOCIATED(materialsField)) CALL Field_InterpolateFieldVariableNode(NO_PHYSICAL_DERIVATIVE,FIELD_VALUES_SET_TYPE, &
-              & materialsVariable,componentIdx,nodeIdx,materialsPhysicalPoint,err,error,*999)
+            IF(ASSOCIATED(analyticField)) THEN
+              CALL Field_InterpolateFieldVariableNode(NO_PHYSICAL_DERIVATIVE,FIELD_VALUES_SET_TYPE, &
+                & analyticVariable,componentIdx,nodeIdx,analyticPhysicalPoint,err,error,*999)
+              CALL EquationsSet_AnalyticFunctionsEvaluate(equationsSet,analyticFunctionType,componentIdx, &
+                & analyticTime,position(:,NO_PART_DERIV),analyticPhysicalPoint%values(:,NO_PHYSICAL_DERIV),analyticValue, &
+                & gradientAnalyticValue,hessianAnalyticValue,haveVelocity,velocityAnalyticValue,haveAcceleration, &
+                & accelerationAnalyticValue,err,error,*999)
+            ELSE
+              CALL EquationsSet_AnalyticFunctionsEvaluate(equationsSet,analyticFunctionType,componentIdx, &
+                & analyticTime,position(:,NO_PART_DERIV),analyticDummyValues,analyticValue, &
+                & gradientAnalyticValue,hessianAnalyticValue,haveVelocity,velocityAnalyticValue,haveAcceleration, &
+                & accelerationAnalyticValue,err,error,*999)
+            ENDIF
             !Loop over the derivatives
             CALL DomainNodes_NodeNumberOfDerivativesGet(domainNodes,nodeIdx,numberOfNodeDerivatives,err,error,*999)
             DO derivativeIdx=1,numberOfNodeDerivatives                                
               CALL DomainNodes_DerivativeGlobalIndexGet(domainNodes,derivativeIdx,nodeIdx,globalDerivativeIndex,err,error,*999)
-!! \todo Maybe do this with optional arguments?
-              IF(ASSOCIATED(analyticField)) THEN
-                IF(ASSOCIATED(materialsField)) THEN
-                  CALL EquationsSet_AnalyticFunctionsEvaluate(equationsSet,analyticFunctionType,position,tangents,normal, &
-                    & analyticTime,variableType,globalDerivativeIndex,componentIdx,analyticPhysicalPoint% &
-                    & values(:,NO_PHYSICAL_DERIV),materialsPhysicalPoint%values(:,NO_PHYSICAL_DERIV),analyticValue, &
-                    & err,error,*999)
-                ELSE
-                  CALL EquationsSet_AnalyticFunctionsEvaluate(equationsSet,analyticFunctionType,position,tangents,normal, &
-                    & analyticTime,variableType,globalDerivativeIndex,componentIdx,analyticPhysicalPoint% &
-                    & values(:,NO_PHYSICAL_DERIV),materialsDummyValues,analyticValue,err,error,*999)
-                ENDIF
-              ELSE
-                IF(ASSOCIATED(materialsField)) THEN
-                  CALL EquationsSet_AnalyticFunctionsEvaluate(equationsSet,analyticFunctionType,position,tangents,normal, &
-                    & analyticTime,variableType,globalDerivativeIndex,componentIdx,analyticDummyValues, &
-                    & materialsPhysicalPoint%values(:,NO_PHYSICAL_DERIV),analyticValue,err,error,*999)
-                ELSE
-                  CALL EquationsSet_AnalyticFunctionsEvaluate(equationsSet,analyticFunctionType,position,tangents,normal, &
-                    & analyticTime,variableType,globalDerivativeIndex,componentIdx,analyticDummyValues,materialsDummyValues, &
-                    & analyticValue,err,error,*999)
-                ENDIF
-              ENDIF
               !Loop over the versions
               CALL DomainNodes_DerivativeNumberOfVersionsGet(domainNodes,derivativeIdx,nodeIdx,numberOfVersions,err,error,*999)
               DO versionIdx=1,numberOfVersions
@@ -479,8 +435,6 @@ CONTAINS
             CALL Field_InterpolationParametersElementGet(FIELD_VALUES_SET_TYPE,elementIdx,geometricInterpParameters,err,error,*999)
             IF(ASSOCIATED(analyticField)) CALL Field_InterpolationParametersElementGet(FIELD_VALUES_SET_TYPE,elementIdx, &
               & analyticInterpParameters,err,error,*999)
-            IF(ASSOCIATED(materialsField)) CALL Field_InterpolationParametersElementGet(FIELD_VALUES_SET_TYPE,elementIdx, &
-              & materialsInterpParameters,err,error,*999)
             !Loop over the Gauss points in the element
             NULLIFY(quadratureScheme)
             CALL Basis_QuadratureSchemeGet(basis,BASIS_DEFAULT_QUADRATURE_SCHEME,quadratureScheme,err,error,*999)
@@ -489,33 +443,20 @@ CONTAINS
               CALL Field_InterpolateGauss(FIRST_PART_DERIV,BASIS_DEFAULT_QUADRATURE_SCHEME,gaussPointIdx,geometricInterpPoint, &
                 & err,error,*999)
               CALL Field_InterpolatedPointMetricsCalculate(COORDINATE_JACOBIAN_NO_TYPE,geometricInterpPointMetrics,err,error,*999)
-              CALL Field_PositionNormalTangentsCalculateIntPtMetric(geometricInterpPointMetrics,reverseNormal,position,normal, &
-                & tangents,err,error,*999)
-              IF(ASSOCIATED(analyticField)) CALL Field_InterpolateGauss(NO_PART_DERIV,BASIS_DEFAULT_QUADRATURE_SCHEME, &
-                & gaussPointIdx,analyticInterpPoint,err,error,*999)
-              IF(ASSOCIATED(materialsField)) CALL Field_InterpolateGauss(NO_PART_DERIV,BASIS_DEFAULT_QUADRATURE_SCHEME, &
-                & gaussPointIdx,materialsInterpPoint,err,error,*999)
-!! \todo Maybe do this with optional arguments?
+              CALL Field_PositionNormalTangentsCalculateIntPtMetric(geometricInterpPointMetrics,reverseNormal, &
+                & position(:,NO_PART_DERIV),normal,tangents,err,error,*999)
               IF(ASSOCIATED(analyticField)) THEN
-                IF(ASSOCIATED(materialsField)) THEN
-                  CALL EquationsSet_AnalyticFunctionsEvaluate(equationsSet,analyticFunctionType,position,tangents,normal, &
-                    & analyticTime,variableType,globalDerivativeIndex,componentIdx,analyticInterpPoint%values(:,NO_PART_DERIV), &
-                    & materialsInterpPoint%values(:,NO_PART_DERIV),analyticValue,err,error,*999)
-                ELSE
-                  CALL EquationsSet_AnalyticFunctionsEvaluate(equationsSet,analyticFunctionType,position,tangents,normal, &
-                    & analyticTime,variableType,globalDerivativeIndex,componentIdx,analyticInterpPoint%values(:,NO_PART_DERIV), &
-                    & materialsDummyValues,analyticValue,err,error,*999)
-                ENDIF
+                CALL Field_InterpolateGauss(NO_PART_DERIV,BASIS_DEFAULT_QUADRATURE_SCHEME, &
+                  & gaussPointIdx,analyticInterpPoint,err,error,*999)
+                CALL EquationsSet_AnalyticFunctionsEvaluate(equationsSet,analyticFunctionType,componentIdx, &
+                  & analyticTime,position(:,NO_PART_DERIV),analyticInterpPoint%values(:,NO_PART_DERIV),analyticValue, &
+                  & gradientAnalyticValue,hessianAnalyticValue,haveVelocity,velocityAnalyticValue,haveAcceleration, &
+                  & accelerationAnalyticValue,err,error,*999)
               ELSE
-                IF(ASSOCIATED(materialsField)) THEN
-                  CALL EquationsSet_AnalyticFunctionsEvaluate(equationsSet,analyticFunctionType,position,tangents,normal, &
-                    & analyticTime,variableType,globalDerivativeIndex,componentIdx,analyticDummyValues, &
-                    & materialsInterpPoint%values(:,NO_PART_DERIV),analyticValue,err,error,*999)
-                ELSE
-                  CALL EquationsSet_AnalyticFunctionsEvaluate(equationsSet,analyticFunctionType,position,tangents,normal, &
-                    & analyticTime,variableType,globalDerivativeIndex,componentIdx,analyticDummyValues,materialsDummyValues, &
-                    & analyticValue,err,error,*999)
-                ENDIF
+                CALL EquationsSet_AnalyticFunctionsEvaluate(equationsSet,analyticFunctionType,componentIdx, &
+                  & analyticTime,position(:,NO_PART_DERIV),analyticDummyValues,analyticValue, &
+                  & gradientAnalyticValue,hessianAnalyticValue,haveVelocity,velocityAnalyticValue,haveAcceleration, &
+                  & accelerationAnalyticValue,err,error,*999)
               ENDIF
               CALL FieldVariable_ParameterSetUpdateLocalGaussPoint(dependentVariable,FIELD_ANALYTIC_VALUES_SET_TYPE, &
                 & gaussPointIdx,elementIdx,componentIdx,analyticValue,err,error,*999)
@@ -531,11 +472,6 @@ CONTAINS
       CALL FieldVariable_ParameterSetUpdateStart(dependentVariable,FIELD_ANALYTIC_VALUES_SET_TYPE,err,error,*999)
       CALL FieldVariable_ParameterSetUpdateFinish(dependentVariable,FIELD_ANALYTIC_VALUES_SET_TYPE,err,error,*999)
     ENDDO !variableIdx
-    IF(ASSOCIATED(materialsField)) THEN
-      CALL Field_PhysicalPointFinalise(materialsPhysicalPoint,err,error,*999)
-      CALL Field_InterpolatedPointFinalise(materialsInterpPoint,err,error,*999)
-      CALL FieldVariable_InterpolationParameterFinalise(materialsInterpParameters,err,error,*999)
-    ENDIF
     IF(ASSOCIATED(analyticField)) THEN
       CALL Field_PhysicalPointFinalise(analyticPhysicalPoint,err,error,*999)
       CALL Field_InterpolatedPointFinalise(analyticInterpPoint,err,error,*999)
@@ -579,24 +515,26 @@ CONTAINS
   !
   !================================================================================================================================
   !
-
+ 
   !>Evaluate the analytic solution for an equations set.
-  SUBROUTINE EquationsSet_AnalyticFunctionsEvaluate(equationsSet,analyticFunctionType,position,tangents,normal,time, &
-    & variableType,globalDerivative,componentNumber,analyticParameters,materialsParameters,analyticValue,err,error,*)
+  SUBROUTINE EquationsSet_AnalyticFunctionsEvaluate(equationsSet,analyticFunctionType,componentNumber,time,position, &
+    & analyticParameters,analyticValue,gradientAnalyticValue,hessianAnalyticValue,haveVelocity,velocityAnalyticValue, &
+    & haveAcceleration,accelerationAnalyticValue,err,error,*)
 
     !Argument variables
     TYPE(EquationsSetType), POINTER :: equationsSet !<A pointer to the equations set to evaluate the analytic for
     INTEGER(INTG), INTENT(IN) :: analyticFunctionType !<The type of analytic function to evaluate
-    REAL(DP), INTENT(IN) :: position(:) !<position(dimention_idx). The geometric position to evaluate at
-    REAL(DP), INTENT(IN) :: tangents(:,:) !<tangents(dimention_idx,xi_idx). The geometric tangents at the point to evaluate at.
-    REAL(DP), INTENT(IN) :: normal(:) !<normal(dimension_idx). The normal vector at the point to evaluate at.
-    REAL(DP), INTENT(IN) :: time !<The time to evaluate at
-    INTEGER(INTG), INTENT(IN) :: variableType !<The field variable type to evaluate at
-    INTEGER(INTG), INTENT(IN) :: globalDerivative !<The global derivative direction to evaluate at
     INTEGER(INTG), INTENT(IN) :: componentNumber !<The dependent field component number to evaluate
+    REAL(DP), INTENT(IN) :: time !<The time to evaluate at
+    REAL(DP), INTENT(IN) :: position(:) !<position(dimensionIdx). The geometric position to evaluate at
     REAL(DP), INTENT(IN) :: analyticParameters(:) !<A pointer to any analytic field parameters
-    REAL(DP), INTENT(IN) :: materialsParameters(:) !<A pointer to any materials field parameters
     REAL(DP), INTENT(OUT) :: analyticValue !<On return, the analtyic function value.
+    REAL(DP), INTENT(OUT) :: gradientAnalyticValue(:) !<On return, the gradient of the analytic value
+    REAL(DP), INTENT(OUT) :: hessianAnalyticValue(:,:) !<On return, the Hessian of the analytic value
+    LOGICAL, INTENT(OUT) :: haveVelocity !<On return, .TRUE. if there is an analytic velocity value
+    REAL(DP), INTENT(OUT) :: velocityAnalyticValue !<On return, the analytic velocity value.
+    LOGICAL, INTENT(OUT) :: haveAcceleration !<On return, .TRUE. if there is an analytic acceleration value
+    REAL(DP), INTENT(OUT) :: accelerationAnalyticValue !<On return, the analytic acceleration value
     INTEGER(INTG), INTENT(OUT) :: err !<The error code
     TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
     !Local Variables
@@ -620,9 +558,9 @@ CONTAINS
     CASE(EQUATIONS_SET_CLASSICAL_FIELD_CLASS)
       IF(SIZE(equationsSet%specification,1)<2) CALL FlagError("Equations set specification must have at least two "// &
         & "entries for a classical field equations set.",err,error,*999)
-      CALL ClassicalField_AnalyticFunctionsEvaluate(equationsSet,equationsSet%specification(2),analyticFunctionType,position, &
-        & tangents,normal,time,variableType,globalDerivative,componentNumber,analyticParameters,materialsParameters, &
-        & analyticValue,err,error,*999)
+      CALL ClassicalField_AnalyticFunctionsEvaluate(equationsSet,equationsSet%specification(2),analyticFunctionType, &
+        & componentNumber,time,position,analyticParameters,analyticValue,gradientAnalyticValue,hessianAnalyticValue, &
+        & haveVelocity,velocityAnalyticValue,haveAcceleration,accelerationAnalyticValue,err,error,*999)
     CASE(EQUATIONS_SET_FITTING_CLASS)
       CALL FlagError("Not implemented.",err,error,*999)
     CASE(EQUATIONS_SET_BIOELECTRICS_CLASS)
@@ -1480,18 +1418,14 @@ CONTAINS
     INTEGER(INTG), INTENT(OUT) :: err !<The error code
     TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
     !Local Variables
-    INTEGER(INTG) :: dampingMatrixNumber,dynamicMatrixIdx,equationsColumnIdx,equationsColumnNumber,equationsMatrixIdx, &
-      & equationsRowNumber,equationsStorageType,lhsBoundaryCondition,lhsVariableDOF,linearMatrixIdx,massMatrixNumber, &
-      & numberOfDirichletConditions,numberOfDynamicMatrices,numberOfLinearMatrices,numberOfResiduals,numberOfRows, &
-      & numberOfSources,residualIdx,rhsBoundaryCondition,rhsGlobalDOF,rhsVariableDOF,rhsVariableType,rowCondition, &
-      & sourceIdx,stiffnessMatrixNumber,variableDOF,variableType
+    INTEGER(INTG) :: dampingMatrixNumber,dynamicMatrixIdx,equationsRowNumber,lhsBoundaryCondition,lhsVariableDOF, &
+      & linearMatrixIdx,massMatrixNumber,numberOfDirichletConditions,numberOfDynamicMatrices,numberOfLinearMatrices, &
+      & numberOfResiduals,numberOfRows,numberOfSources,residualIdx,rhsVariableDOF,rowCondition,sourceIdx,stiffnessMatrixNumber
     INTEGER(INTG), POINTER :: equationsRowToLHSDOFMap(:),equationsRowToRHSDOFMap(:)
-    INTEGER(INTG), POINTER :: columnIndices(:),rowIndices(:)
-    REAL(DP) :: dampingAlpha,dependentValue,lhsSum,linearAlpha,massAlpha,matrixValue,residualAlpha,residualValue,rhsValue, &
-      & sourceAlpha,sourceValue,stiffnessAlpha
+    REAL(DP) :: dampingAlpha,lhsSum,linearAlpha,massAlpha,residualAlpha,residualValue,rhsAlpha, &
+      & rhsValue,sourceAlpha,sourceValue,stiffnessAlpha
     TYPE(BoundaryConditionsVariableType), POINTER :: lhsBoundaryConditionsVariable
     TYPE(BoundaryConditionsRowVariableType), POINTER :: lhsBoundaryConditionsRowVariable
-    TYPE(DomainMappingType), POINTER :: columnDomainMapping,rhsDomainMapping
     TYPE(DistributedMatrixType), POINTER :: dampingDistributedMatrix,linearDistributedMatrix,massDistributedMatrix, &
       & stiffnessDistributedMatrix
     TYPE(DistributedVectorType), POINTER :: accelerationDistributedVector,displacementDistributedVector,linearDistributedVector, &
@@ -1501,7 +1435,6 @@ CONTAINS
     TYPE(EquationsMappingLHSType), POINTER :: lhsMapping
     TYPE(EquationsMappingLinearType), POINTER :: linearMapping
     TYPE(EquationsMappingNonlinearType), POINTER :: nonlinearMapping
-    TYPE(EquationsMappingResidualType), POINTER :: residualMapping
     TYPE(EquationsMappingRHSType), POINTER :: rhsMapping
     TYPE(EquationsMappingSourcesType), POINTER :: sourcesMapping
     TYPE(EquationsMappingVectorType), POINTER :: vectorMapping
@@ -1515,7 +1448,6 @@ CONTAINS
     TYPE(EquationsMatricesVectorType), POINTER :: vectorMatrices
     TYPE(EquationsMatrixType), POINTER :: dampingMatrix,linearMatrix,massMatrix,stiffnessMatrix
     TYPE(EquationsVectorType), POINTER :: vectorEquations
-    TYPE(FieldType), POINTER :: dependentField
     TYPE(FieldParameterSetType), POINTER :: accelerationParameters,displacementParameters,linearParameters,velocityParameters
     TYPE(FieldVariableType), POINTER :: dynamicVariable,lhsVariable,linearVariable,rhsVariable
     TYPE(VARYING_STRING) :: localError
@@ -1561,6 +1493,9 @@ CONTAINS
       
         NULLIFY(vectorMatrices)
         CALL EquationsVector_VectorMatricesGet(vectorEquations,vectorMatrices,err,error,*999)
+        CALL EquationsMatricesVector_RHSVectorGet(vectorMatrices,rhsVector,err,error,*999)
+        CALL EquationsMatricesRHS_VectorCoefficientGet(rhsVector,rhsAlpha,err,error,*999)
+        IF(ABS(rhsAlpha)<=ZERO_TOLERANCE) CALL FlagError("The RHS coefficient is zero.",err,error,*999)
 
         NULLIFY(dynamicMapping)
         CALL EquationsMappingVector_DynamicMappingExists(vectorMapping,dynamicMapping,err,error,*999)
@@ -1717,8 +1652,10 @@ CONTAINS
                 lhsSum=lhsSum+sourceAlpha*SourceValue              
               ENDDO !sourceIdx
             ENDIF
-            !Set the RHS value. Note OpenCMISS defines the equation as ... + RHS = 0 and so the LHS + RHS = 0 therefore RHS = -LHS
-            CALL FieldVariable_ParameterSetUpdateLocalDOF(rhsVariable,FIELD_VALUES_SET_TYPE,rhsVariableDOF,-lhsSum,err,error,*999)
+            !Set the RHS value. Note OpenCMISS defines the equation as ... + alpha.RHS = 0 and so the LHSSum + alpha.RHS = 0
+            !therefore RHS = -LHSSum/alpha
+            rhsValue = -lhsSum/rhsAlpha
+            CALL FieldVariable_ParameterSetUpdateLocalDOF(rhsVariable,FIELD_VALUES_SET_TYPE,rhsVariableDOF,rhsValue,err,error,*999)
           CASE(BOUNDARY_CONDITION_NEUMANN_ROW)
             !OK, do nothing
           CASE(BOUNDARY_CONDITION_ROBIN_ROW)
@@ -1963,10 +1900,8 @@ CONTAINS
     TYPE(DecompositionType), POINTER :: equationsSetFieldDecomposition,geometricFibreFieldDecomposition
     TYPE(EquationsSetType), POINTER :: newEquationsSet
     TYPE(EquationsSetPtrType), POINTER :: newEquationsSets(:)
-    TYPE(EquationsSetEquationsFieldType), POINTER :: equationsField
     TYPE(EquationsSetSetupType) equationsSetSetupInfo
-    TYPE(FieldType), POINTER :: field
-    TYPE(RegionType), POINTER :: geometricFibreFieldRegion,equationsSetFieldRegion
+    TYPE(RegionType), POINTER :: geometricFibreFieldRegion
     TYPE(VARYING_STRING) :: dummyError,localError
 
     ENTERS("EquationsSet_CreateStart",err,error,*997)
@@ -2185,8 +2120,6 @@ CONTAINS
     !Local Variables
     INTEGER(INTG) :: matrixIdx,numberOfDynamicMatrices,numberOfLinearMatrices,numberOfSources,outputType,sourceIdx
     LOGICAL :: updateMatrix,updateVector
-    TYPE(ElementMatrixType), POINTER :: elementMatrix
-    TYPE(ElementVectorType), POINTER :: elementVector
     TYPE(EquationsType), POINTER :: equations
     TYPE(EquationsMatricesVectorType), POINTER :: vectorMatrices
     TYPE(EquationsMatricesDynamicType), POINTER :: dynamicMatrices
@@ -2318,7 +2251,6 @@ CONTAINS
     TYPE(EquationsMatricesVectorType), POINTER :: vectorMatrices
     TYPE(EquationsMatricesNonlinearType), POINTER :: nonlinearMatrices
     TYPE(EquationsMatricesResidualType), POINTER :: residualVector
-    TYPE(EquationsMatrixType), POINTER :: equationsMatrix
     TYPE(EquationsVectorType), POINTER :: vectorEquations
     TYPE(JacobianMatrixType), POINTER :: jacobianMatrix
     TYPE(VARYING_STRING) :: localError
@@ -2432,11 +2364,10 @@ CONTAINS
     INTEGER(INTG), INTENT(OUT) :: err  !<The error code
     TYPE(VARYING_STRING), INTENT(OUT) :: error  !<The error string
     !Local Variables
-    INTEGER(INTG) :: column,componentIdx,componentInterpolationType,derivative,derivativeIdx,globalDerivativeIndex,localDOF, &
-      & node,nodeIdx,numberOfComponents,numberOfLocalNodes,numberOfNodeDerivatives,numberOfResiduals,numberOfRows,residualIdx, &
+    INTEGER(INTG) :: column,componentIdx,componentInterpolationType,derivativeIdx,globalDerivativeIndex,localDOF, &
+      & node,nodeIdx,numberOfComponents,numberOfLocalNodes,numberOfNodeDerivatives,numberOfRows, &
       & version
     REAL(DP) :: delta,origDepVar
-    LOGICAL :: updateMatrix,updateVector
     TYPE(BasisType), POINTER :: basis
     TYPE(DomainType), POINTER :: domain
     TYPE(DomainElementsType), POINTER :: domainElements
@@ -2780,11 +2711,8 @@ CONTAINS
     TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
     !Local Variables
     INTEGER(INTG) :: dummyErr
-    TYPE(DecompositionType), POINTER :: geometricDecomposition,independentDecomposition
     TYPE(EquationsSetSetupType) equationsSetSetupInfo
-    TYPE(FieldType), POINTER :: field,geometricField
-    TYPE(RegionType), POINTER :: region,independentFieldRegion
-    TYPE(VARYING_STRING) :: dummyError,localError
+    TYPE(VARYING_STRING) :: dummyError
 
     ENTERS("EquationsSet_IndependentCreateStart",err,error,*998)
 
@@ -3064,11 +2992,8 @@ CONTAINS
     TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
     !Local Variables
     INTEGER(INTG) :: dummyErr
-    TYPE(DecompositionType), POINTER :: geometricDecomposition,materialsDecomposition
     TYPE(EquationsSetSetupType) equationsSetSetupInfo
-    TYPE(FieldType), POINTER :: field,geometricField
-    TYPE(RegionType), POINTER :: region,materialsFieldRegion
-    TYPE(VARYING_STRING) :: dummyError,localError
+    TYPE(VARYING_STRING) :: dummyError
 
     ENTERS("EquationsSet_MaterialsCreateStart",err,error,*998)
 
@@ -3243,11 +3168,8 @@ CONTAINS
     TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
     !Local Variables
     INTEGER(INTG) :: dummyErr
-    TYPE(DecompositionType), POINTER :: dependentDecomposition,geometricDecomposition
     TYPE(EquationsSetSetupType) equationsSetSetupInfo
-    TYPE(FieldType), POINTER :: field,geometricField
-    TYPE(RegionType), POINTER :: region,dependentFieldRegion
-    TYPE(VARYING_STRING) :: dummyError,localError
+    TYPE(VARYING_STRING) :: dummyError
     
     ENTERS("EquationsSet_DependentCreateStart",err,error,*998)
 
@@ -3418,11 +3340,8 @@ CONTAINS
     TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
     !Local Variables
     INTEGER(INTG) :: dummyErr
-    TYPE(DecompositionType), POINTER :: derivedDecomposition,geometricDecomposition
     TYPE(EquationsSetSetupType) :: equationsSetSetupInfo
-    TYPE(FieldType), POINTER :: field,geometricField
-    TYPE(RegionType), POINTER :: region,derivedFieldRegion
-    TYPE(VARYING_STRING) :: dummyError,localError
+    TYPE(VARYING_STRING) :: dummyError
 
     ENTERS("EquationsSet_DerivedCreateStart",err,error,*998)
 
@@ -4838,11 +4757,8 @@ CONTAINS
     TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
     !Local Variables
     INTEGER(INTG) :: dummyErr
-    TYPE(DecompositionType), POINTER :: geometricDecomposition,sourceDecomposition
     TYPE(EquationsSetSetupType) equationsSetSetupInfo
-    TYPE(FieldType), POINTER :: field,geometricField
-    TYPE(RegionType), POINTER :: region,sourceFieldRegion
-    TYPE(VARYING_STRING) :: dummyError,localError
+    TYPE(VARYING_STRING) :: dummyError
 
     ENTERS("EquationsSet_SourceCreateStart",err,error,*998)
 
@@ -5348,8 +5264,8 @@ CONTAINS
     INTEGER(INTG), INTENT(OUT) :: err !<The error code
     TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
     !Local variables
-    INTEGER(INTG) :: conditionGlobalDOF,conditionIdx,conditionLocalDOF,conditionType,dirichletIdx,dirichletDOFIdx, &
-      & dirichletDomainNumber,fixedIncrementedCount,ghostStart,globalDirichletDOFIdx,globalNeumannDOFIdx,globalPressureIncDOFIdx, &
+    INTEGER(INTG) :: conditionType,dirichletIdx,dirichletDomainNumber,fixedIncrementedCount,ghostStart, &
+      & globalDirichletDOFIdx,globalNeumannDOFIdx,globalPressureIncDOFIdx, &
       & localDirichletDOFIdx,localNeumannDOFIdx,localNeumannPointDOFIdx,localPressureIncDOFIdx,movedWallIncrementedCount, &
       & myGroupComputationNodeNumber,neumannDomainNumber,neumannIdx,neumannPointCount,neumannPointIncrementedCount, &
       & numberOfDirichletConditions,numberOfVariables,pressureIncDomainNumber,pressureIncIdx,pressureIncrementedCount, &
@@ -5800,7 +5716,6 @@ CONTAINS
     TYPE(EquationsMatricesResidualType), POINTER :: residualVector
     TYPE(EquationsVectorType), POINTER :: vectorEquations
     TYPE(JacobianMatrixType), POINTER :: jacobianMatrix
-    TYPE(NodalMatrixType), POINTER :: nodalMatrix
     TYPE(VARYING_STRING) :: localError
     
     ENTERS("EquationsSet_NodalJacobianEvaluate",err,error,*999)
@@ -5910,7 +5825,6 @@ CONTAINS
     LOGICAL :: updateMatrix,updateVector
     TYPE(EquationsType), POINTER :: equations
     TYPE(EquationsMappingNonlinearType), POINTER :: nonlinearMapping
-    TYPE(EquationsMappingResidualType), POINTER :: residualMapping
     TYPE(EquationsMappingVectorType), POINTER :: vectorMapping
     TYPE(EquationsMatricesDynamicType), POINTER :: dynamicMatrices
     TYPE(EquationsMatricesLinearType), POINTER :: linearMatrices
@@ -5922,8 +5836,6 @@ CONTAINS
     TYPE(EquationsMatricesVectorType), POINTER :: vectorMatrices
     TYPE(EquationsMatrixType), POINTER :: dynamicMatrix,linearMatrix
     TYPE(EquationsVectorType), POINTER :: vectorEquations
-    TYPE(NodalMatrixType), POINTER :: nodalMatrix
-    TYPE(NodalVectorType), POINTER :: nodalVector
     TYPE(VARYING_STRING) :: localError
     
     ENTERS("EquationsSet_NodalResidualEvaluate",err,error,*999)

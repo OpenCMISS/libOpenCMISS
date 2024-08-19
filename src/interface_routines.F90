@@ -893,7 +893,7 @@ CONTAINS
     TYPE(DecompositionType), POINTER :: decomposition
     TYPE(DecompositionTopologyType), POINTER :: decompositionTopology
     TYPE(DecompositionElementsType), POINTER :: decompositionElements
-    TYPE(FieldType), POINTER :: dependentFieldFixed,dependentFieldProjection,geometricFieldFixed
+    TYPE(FieldType), POINTER :: dependentFieldFixed,geometricFieldFixed
     TYPE(FieldInterpolatedPointType), POINTER :: interpolatedPoint
     TYPE(FieldInterpolationParametersType), POINTER :: interpolationParameters
     TYPE(FieldVariableType), POINTER :: dependentProjectionVariable,dependentVariableFixed,geometricVariableFixed
@@ -1582,7 +1582,6 @@ CONTAINS
     INTEGER(INTG), INTENT(OUT) :: err !<The error code
     TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
     !Local Variables
-    INTEGER(INTG) :: interfaceElementIdx,coupledMeshIdx
      
     ENTERS("InterfaceElementConnectivity_Finalise",err,error,*999)
 

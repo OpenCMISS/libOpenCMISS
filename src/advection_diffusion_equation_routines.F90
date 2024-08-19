@@ -1499,7 +1499,7 @@ CONTAINS
                 & equationsSetSubtype==EQUATIONS_SET_LINEAR_SOURCE_ADVEC_DIFF_SUPG_SUBTYPE .OR. &
                 & equationsSetSubtype==EQUATIONS_SET_LINEAR_SOURCE_ALE_ADVEC_DIFF_SUPG_SUBTYPE) THEN
                 CALL EquationsMappingVector_NumberOfSourcesSet(vectorMapping,1,err,error,*999)
-                CALL EquationsMappingVector_SourcesVariableTypesSet(vectorMapping,FIELD_U_VARIABLE_TYPE,err,error,*999)
+                CALL EquationsMappingVector_SourceVariableTypesSet(vectorMapping,FIELD_U_VARIABLE_TYPE,err,error,*999)
               ENDIF
             CASE(EQUATIONS_SET_MULTI_COMP_TRANSPORT_ADVEC_DIFF_SUBTYPE, &
               & EQUATIONS_SET_MULTI_COMP_TRANSPORT_ADVEC_DIFF_SUPG_SUBTYPE)
@@ -1534,7 +1534,7 @@ CONTAINS
               CALL EquationsMappingVector_RHSVariableTypeSet(vectorMapping,variableTypes(2*myMatrixIdx),err,error,*999)
               CALL EquationsMappingVector_RHSCoefficientSet(vectorMapping,-1.0_DP,err,error,*999)
               CALL EquationsMappingVector_NumberOfSourcesSet(vectorMapping,1,err,error,*999)
-              CALL EquationsMappingVector_SourcesVariableTypesSet(vectorMapping,FIELD_U_VARIABLE_TYPE,err,error,*999)
+              CALL EquationsMappingVector_SourceVariableTypesSet(vectorMapping,FIELD_U_VARIABLE_TYPE,err,error,*999)
             END SELECT
             CALL EquationsMapping_VectorCreateFinish(vectorMapping,err,error,*999)
             !Create the equations matrices
@@ -1601,7 +1601,7 @@ CONTAINS
             IF(equationsSetSubtype==EQUATIONS_SET_LINEAR_SOURCE_STATIC_ADVEC_DIFF_SUBTYPE .OR. &
               & equationsSetSubtype==EQUATIONS_SET_LINEAR_SOURCE_STATIC_ADVEC_DIFF_SUPG_SUBTYPE) THEN
               CALL EquationsMappingVector_NumberOfSourcesSet(vectorMapping,1,err,error,*999)
-              CALL EquationsMappingVector_SourcesVariableTypesSet(vectorMapping,FIELD_U_VARIABLE_TYPE,err,error,*999)
+              CALL EquationsMappingVector_SourceVariableTypesSet(vectorMapping,FIELD_U_VARIABLE_TYPE,err,error,*999)
             ENDIF
             CALL EquationsMapping_VectorCreateFinish(vectorMapping,err,error,*999)
             !Create the equations matrices

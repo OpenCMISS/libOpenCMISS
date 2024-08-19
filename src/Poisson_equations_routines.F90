@@ -122,18 +122,15 @@ CONTAINS
   !
   
   !>Evaluate the analytic solutions for a Poisson equation
-  SUBROUTINE Poisson_AnalyticFunctionsEvaluate(equationsSet,analyticFunctionType,x,time,componentNumber,analyticParameters, &
-    & materialsParameters,sourceParameters,analyticValue,gradientAnalyticValue,hessianAnalyticValue,err,error,*)
+  SUBROUTINE Poisson_AnalyticFunctionsEvaluate(equationsSet,analyticFunctionType,componentNumber,x,analyticParameters, &
+    & analyticValue,gradientAnalyticValue,hessianAnalyticValue,err,error,*)
 
     !Argument variables
     TYPE(EquationsSetType), POINTER, INTENT(IN) :: equationsSet !<The equations set to evaluate
     INTEGER(INTG), INTENT(IN) :: analyticFunctionType !<The type of analytic function to evaluate
-    REAL(DP), INTENT(IN) :: x(:) !<x(dimensionIdx). The geometric position to evaluate at
-    REAL(DP), INTENT(IN) :: time !<The time to evaluate at
     INTEGER(INTG), INTENT(IN) :: componentNumber !<The component number of the dependent field to evaluate
-    REAL(DP), POINTER, INTENT(IN) :: analyticParameters(:) !<A pointer to any analytic field parameters
-    REAL(DP), POINTER, INTENT(IN) :: materialsParameters(:) !<A pointer to any materials field parameters
-    REAL(DP), POINTER, INTENT(IN) :: sourceParameters(:) !<A pointer to any source field parameters
+    REAL(DP), INTENT(IN) :: x(:) !<x(dimensionIdx). The geometric position to evaluate at
+    REAL(DP), INTENT(IN) :: analyticParameters(:) !<A pointer to any analytic field parameters
     REAL(DP), INTENT(OUT) :: analyticValue !<On return, the analytic function value.
     REAL(DP), INTENT(OUT) :: gradientAnalyticValue(:) !<On return, the gradient of the analytic function value.
     REAL(DP), INTENT(OUT) :: hessianAnalyticValue(:,:) !<On return, the Hessian of the analytic function value.
@@ -293,9 +290,10 @@ CONTAINS
     INTEGER(INTG), INTENT(OUT) :: err !<The error code
     TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
     !Local Variables
-    INTEGER(INTG) :: analyticFunctionType,componentIdx,dimensionIdx,esSpecification(3),nodeIdx,numberOfComponents, &
-      & numberOfDimensions,numberOfNodeDerivatives,numberOfNodes,numberOfVariables,variableIdx,variableType
-    REAL(DP) :: analyticValue,gradientAnalyticValue(3),hessianAnalyticValue(3,3),normal(3),position(3),tangents(3,3),time
+    INTEGER(INTG) :: analyticFunctionType,componentIdx,esSpecification(3),nodeIdx,numberOfComponents, &
+      & numberOfDimensions,numberOfNodes,numberOfVariables,variableIdx,variableType
+    REAL(DP) :: analyticValue,gradientAnalyticValue(3),hessianAnalyticValue(3,3),normal(3), &
+      & position(3,MAXIMUM_GLOBAL_DERIV_NUMBER),tangents(3,2),time
     REAL(DP), POINTER :: analyticParameters(:),materialsParameters(:),sourceParameters(:),geometricParameters(:)
     LOGICAL :: boundaryNode
     TYPE(DomainType), POINTER :: domain
@@ -303,8 +301,7 @@ CONTAINS
     TYPE(DomainTopologyType), POINTER :: domainTopology
     TYPE(FieldType), POINTER :: analyticField,dependentField,geometricField,materialsField,sourceField
     TYPE(FieldVariableType), POINTER :: analyticVariable,dependentVariable,geometricVariable,materialsVariable,sourceVariable
-    TYPE(VARYING_STRING) :: localError    
-   
+  
     ENTERS("Poisson_BoundaryConditionsAnalyticCalculate",err,error,*999)
 
     IF(.NOT.ASSOCIATED(boundaryConditions)) CALL FlagError("Boundary conditions is not associated.",err,error,*999)
@@ -365,16 +362,15 @@ CONTAINS
         !Loop over the local nodes excluding the ghosts.
         DO nodeIdx=1,numberOfNodes
           CALL DomainNodes_NodeBoundaryNodeGet(domainNodes,nodeIdx,boundaryNode,err,error,*999)
-          IF((.NOT.boundaryOnly).OR.(boundaryOnly.AND.boundaryNode)) THEN
-            CALL Field_PositionNormalTangentsCalculateNode(dependentField,FIELD_U_VARIABLE_TYPE,1,nodeIdx, &
-              & position,normal,tangents,err,error,*999)
-            CALL Poisson_AnalyticFunctionsEvaluate(equationsSet,analyticFunctionType,position,time,componentIdx, &
-              & analyticParameters,materialsParameters,sourceParameters,analyticValue,gradientAnalyticValue, &
-              & hessianAnalyticValue,err,error,*999)
-            CALL BoundaryConditions_SetAnalyticBoundaryNode(boundaryConditions,numberOfDimensions,dependentVariable,componentIdx, &
-              & domainNodes,nodeIdx,boundaryNode,tangents,normal,analyticValue,gradientAnalyticValue,hessianAnalyticValue, &
-              & .FALSE.,0.0_DP,.FALSE.,0.0_DP,err,error,*999)
-          ENDIF !boundary only test
+          !IF((.NOT.boundaryOnly).OR.(boundaryOnly.AND.boundaryNode)) THEN
+          CALL Field_PositionNormalTangentsCalculateNode(dependentField,FIELD_U_VARIABLE_TYPE,1,nodeIdx, &
+            & position,normal,tangents,err,error,*999)
+          CALL Poisson_AnalyticFunctionsEvaluate(equationsSet,analyticFunctionType,componentIdx,position(:,NO_PART_DERIV), &
+            & analyticParameters,analyticValue,gradientAnalyticValue,hessianAnalyticValue,err,error,*999)
+          CALL BoundaryConditions_SetAnalyticBoundaryNode(boundaryConditions,numberOfDimensions,dependentVariable,componentIdx, &
+            & domainNodes,nodeIdx,boundaryNode,tangents,normal,analyticValue,gradientAnalyticValue,hessianAnalyticValue, &
+            & .FALSE.,0.0_DP,.FALSE.,0.0_DP,err,error,*999)
+          !ENDIF !boundary only test
         ENDDO !nodeIdx
       ENDDO !componentIdx
       CALL FieldVariable_ParameterSetUpdateStart(dependentVariable,FIELD_ANALYTIC_VALUES_SET_TYPE,err,error,*999)
@@ -1431,12 +1427,14 @@ CONTAINS
             CALL EquationsMappingVector_NumberOfResidualsSet(vectorMapping,1,err,error,*999)
             CALL EquationsMappingVector_ResidualNumberOfVariablesSet(vectorMapping,1,1,err,error,*999)
             CALL EquationsMappingVector_ResidualVariableTypesSet(vectorMapping,1,FIELD_U_VARIABLE_TYPE,err,error,*999)            
+            CALL EquationsMappingVector_ResidualCoefficientsSet(vectorMapping,-1.0_DP,err,error,*999)
           ENDIF
           CALL EquationsMappingVector_RHSVariableTypeSet(vectorMapping,FIELD_DELUDELN_VARIABLE_TYPE,err,error,*999)
           CALL EquationsMappingVector_RHSCoefficientSet(vectorMapping,-1.0_DP,err,error,*999)
           IF(ASSOCIATED(equationsSource)) THEN
             CALL EquationsMappingVector_NumberOfSourcesSet(vectorMapping,1,err,error,*999)
-            CALL EquationsMappingVector_SourcesVariableTypesSet(vectorMapping,FIELD_U_VARIABLE_TYPE,err,error,*999)
+            CALL EquationsMappingVector_SourceVariableTypesSet(vectorMapping,FIELD_U_VARIABLE_TYPE,err,error,*999)
+            CALL EquationsMappingVector_SourceCoefficientsSet(vectorMapping,-1.0_DP,err,error,*999)
           ENDIF
           CALL EquationsMapping_VectorCreateFinish(vectorMapping,err,error,*999)
           !Create the equations matrices
@@ -1639,8 +1637,8 @@ CONTAINS
     INTEGER(INTG) analyticFunctionType,colsVariableType,columnComponentIdx,columnElementDOFIdx,columnXiIdx, &
       & columnElementParameterIdx,componentIdx,componentIdx1,componentIdx2,dofIdx,elementNode,esSpecification(3), &
       & gaussPointIdx,localNodeIdx,nodeIdx,numberOfColsComponents,numberOfColumnElementParameters(MAX_NUMBER_OF_COMPONENTS), &
-      & numberOfDimensions,numberOfElementParameters,numberOfGauss,numberOfLocalNodes,numberOfRowsComponents, &
-      & numberOfRowElementParameters(MAX_NUMBER_OF_COMPONENTS),numberOfXi,rowComponentIdx,rowElementDOFIdx,rowBasisIdx, &
+      & numberOfDimensions,numberOfGauss,numberOfLocalNodes,numberOfRowsComponents, &
+      & numberOfRowElementParameters(MAX_NUMBER_OF_COMPONENTS),numberOfXi,rowComponentIdx,rowElementDOFIdx, &
       & rowElementParameterIdx,rowXiIdx,rowsVariableType,scalingType,xiIdx,xiIdx1,xiIdx2    
     REAL(DP) :: aParam,b(MAX_NUMBER_OF_COMPONENTS),columndPhidXi(MAX_NUMBER_OF_COMPONENTS),columnPhi, &
       & conductivity(MAX_NUMBER_OF_COMPONENTS,MAX_NUMBER_OF_COMPONENTS),deltaT,diffCoeff1,diffCoeff2, &
@@ -1653,7 +1651,7 @@ CONTAINS
       & Vm(64),wValue(MAX_NUMBER_OF_COMPONENTS),x(MAX_NUMBER_OF_COMPONENTS)
     REAL(DP), POINTER :: inputLabel(:)
     LOGICAL :: between,inside,update,updateMatrix,updateRHS,updateSource
-    TYPE(BasisType), POINTER :: dependentBasis,geometricBasis,independentBasis,sourceBasis
+    TYPE(BasisType), POINTER :: dependentBasis,geometricBasis
     TYPE(BasisPtrType) :: columnBasis(MAX_NUMBER_OF_COMPONENTS),rowBasis(MAX_NUMBER_OF_COMPONENTS)
     TYPE(DecompositionType), POINTER :: dependentDecomposition,geometricDecomposition
     TYPE(DomainType), POINTER :: columnDomain,dependentDomain,geometricDomain,rowDomain
@@ -1675,13 +1673,13 @@ CONTAINS
     TYPE(EquationsMatrixType), POINTER :: equationsMatrix
     TYPE(EquationsVectorType), POINTER :: vectorEquations
     TYPE(FieldType), POINTER :: dependentField,fibreField,geometricField,independentField,materialsField,sourceField
-    TYPE(FieldInterpolationParametersType), POINTER :: colsInterpParameters,dependentInterpParameters,fibreInterpParameters, &
+    TYPE(FieldInterpolationParametersType), POINTER :: colsInterpParameters,fibreInterpParameters, &
       & geometricInterpParameters,independentInterpParameters,materialsInterpParameters,oldSourceInterpParameters, &
       & rowsInterpParameters,sourceInterpParameters
     TYPE(FieldInterpolatedPointType), POINTER :: dependentInterpPoint,fibreInterpPoint,geometricInterpPoint, &
       & independentInterpPoint,materialsInterpPoint,oldSourceInterpPoint,sourceInterpPoint
     TYPE(FieldInterpolatedPointMetricsType), POINTER :: geometricInterpPointMetrics
-    TYPE(FieldVariableType), POINTER :: colsVariable,fieldVariable,geometricVariable,rowsVariable,sourceVariable
+    TYPE(FieldVariableType), POINTER :: colsVariable,geometricVariable,rowsVariable,sourceVariable
     TYPE(QuadratureSchemeType), POINTER :: dependentQuadratureScheme,geometricQuadratureScheme
     TYPE(QuadratureSchemePtrType) :: columnQuadratureScheme(MAX_NUMBER_OF_COMPONENTS),rowQuadratureScheme(MAX_NUMBER_OF_COMPONENTS)
     TYPE(VARYING_STRING) :: localError
@@ -2131,7 +2129,7 @@ CONTAINS
                         ENDDO !xiIdx
                       ENDDO !columnXiIdx
                     ENDDO !rowXiIdx
-                    sum=sum+aParam*rowPhi*columnPhi
+                    sum=sum-aParam*rowPhi*columnPhi
                   CASE(EQUATIONS_SET_NONLINEAR_PRESSURE_POISSON_SUBTYPE,EQUATIONS_SET_LINEAR_PRESSURE_POISSON_SUBTYPE, &
                     & EQUATIONS_SET_ALE_PRESSURE_POISSON_SUBTYPE,EQUATIONS_SET_FITTED_PRESSURE_POISSON_SUBTYPE)
                     DO rowXiIdx=1,numberOfXi
@@ -2366,7 +2364,7 @@ CONTAINS
     TYPE(EquationsMatricesNonlinearType), POINTER :: nonlinearMatrices
     TYPE(EquationsMatricesResidualType), POINTER :: residualVector
     TYPE(EquationsVectorType), POINTER :: vectorEquations
-    TYPE(FieldType), POINTER :: dependentField,fibreField,geometricField,materialsField
+    TYPE(FieldType), POINTER :: dependentField,geometricField,materialsField
     TYPE(FieldInterpolationParametersType), POINTER :: colsInterpParameters,dependentInterpParameters,geometricInterpParameters, &
       & materialsInterpParameters,rowsInterpParameters
     TYPE(FieldInterpolatedPointType), POINTER :: dependentInterpPoint,geometricInterpPoint,materialsInterpPoint
@@ -2597,9 +2595,9 @@ CONTAINS
                   & columnElementParameterIdx,NO_PART_DERIV,gaussPointIdx,columnPhi,err,error,*999)
                 SELECT CASE(esSpecification(3))
                 CASE(EQUATIONS_SET_QUADRATIC_SOURCE_POISSON_SUBTYPE)
-                  jacobianValue=-2.0_DP*bParam*rowPhi*columnPhi*uValue
+                  jacobianValue=2.0_DP*bParam*rowPhi*columnPhi*uValue
                 CASE(EQUATIONS_SET_EXPONENTIAL_SOURCE_POISSON_SUBTYPE)
-                  jacobianValue=-aParam*bParam*rowPhi*columnPhi*EXP(bParam*uValue)
+                  jacobianValue=aParam*bParam*rowPhi*columnPhi*EXP(bParam*uValue)
                 END SELECT
                 jacobianMatrix%elementJacobian%matrix(rowElementDOFIdx,columnElementDOFIdx)= &
                   & jacobianMatrix%elementJacobian%matrix(rowElementDOFIdx,columnElementDOFIdx)+ &
@@ -2666,12 +2664,12 @@ CONTAINS
     TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
     !Local Variables
     INTEGER(INTG), PARAMETER :: MAX_NUMBER_OF_COMPONENTS=3
-    INTEGER(INTG) colsVariableType,columnComponentIdx,columnElementDOFIdx,columnElementParameterIdx,columnXiIdx,componentIdx, &
+    INTEGER(INTG) colsVariableType,columnComponentIdx,columnElementDOFIdx,columnElementParameterIdx,columnXiIdx, &
       & esSpecification(3),gaussPointIdx,numberOfColsComponents,numberOfColumnElementParameters(MAX_NUMBER_OF_COMPONENTS), &
       & numberOfDimensions,numberOfGauss,numberOfRowsComponents,numberOfRowElementParameters(MAX_NUMBER_OF_COMPONENTS), &
       & numberOfXi,rowComponentIdx,rowElementDOFIdx,rowElementParameterIdx,rowXiIdx,rowsVariableType,scalingType,xiIdx
-    REAL(DP) :: aParam,bParam,columnPhi,columndPhidXi(3),conductivity(3,3),dRowPhidXi(3),gaussWeight,jacobian, &
-      & jacobianGaussWeight,rowPhi,rowdPhidXi(3),sourceValue,sum,sum1,sum2,uValue
+    REAL(DP) :: aParam,bParam,columnPhi,columndPhidXi(3),conductivity(3,3),gaussWeight,jacobian, &
+      & jacobianGaussWeight,rowPhi,rowdPhidXi(3),sourceValue,sum,uValue
     LOGICAL :: update,updateMatrix,updateResidual,updateRHS,updateSource
     TYPE(BasisType), POINTER :: dependentBasis,geometricBasis
     TYPE(BasisPtrType) :: columnBasis(MAX_NUMBER_OF_COMPONENTS),rowBasis(MAX_NUMBER_OF_COMPONENTS)
@@ -3002,7 +3000,7 @@ CONTAINS
                         ENDDO !xiIdx
                       ENDDO !columnXiIdx
                     ENDDO !rowXiIdx
-                    sum=sum+aParam*rowPhi*columnPhi
+                    sum=sum-aParam*rowPhi*columnPhi
                   CASE(EQUATIONS_SET_EXPONENTIAL_SOURCE_POISSON_SUBTYPE)
                     DO rowXiIdx=1,numberOfXi
                       DO columnXiIdx=1,numberOfXi
@@ -3282,7 +3280,6 @@ CONTAINS
     LOGICAL :: boundaryUpdate
     TYPE(ControlLoopType), POINTER :: controlLoop
     TYPE(EquationsSetType), POINTER :: equationsSet
-    TYPE(EquationsType), POINTER :: equations
     TYPE(FieldType), POINTER :: dependentField,geometricField,sourceField
     TYPE(ProblemType), POINTER :: problem
     TYPE(SolverEquationsType), POINTER :: solverEquations 
@@ -3606,7 +3603,7 @@ CONTAINS
     INTEGER(INTG), INTENT(OUT) :: err !<The error code
     TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
     !Local Variables
-    INTEGER(INTG) :: componentIdx,currentIteration,geometricMeshComponent,I,inputIteration,numberOfDimensionsPPE, &
+    INTEGER(INTG) :: componentIdx,currentIteration,geometricMeshComponent,inputIteration,numberOfDimensionsPPE, &
       & numberOfDimensionsFitted,outputIteration,outputType,pSpecification(3),solverGlobalNumber
     REAL(DP) :: currentTime,startTime,stopTime,timeIncrement
     TYPE(ControlLoopType), POINTER :: controlLoop

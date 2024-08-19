@@ -2758,7 +2758,6 @@ MODULE EquationsMatricesRoutines
     !Local Variables
     INTEGER(INTG) :: matrixIdx,residualIdx,sourceIdx
     INTEGER(INTG) :: rowsNumberOfElements,colsNumberOfElements !Number of elements in the row and col variables whose dofs are present in the element matrix
-    TYPE(JacobianMatrixType), POINTER :: jacobianMatrix
     TYPE(EquationsMappingVectorType), POINTER :: vectorMapping
     TYPE(EquationsMappingDynamicType), POINTER :: dynamicMapping
     TYPE(EquationsMappingLHSType), POINTER :: lhsMapping
@@ -2770,9 +2769,7 @@ MODULE EquationsMatricesRoutines
     TYPE(EquationsMatricesNonlinearType), POINTER :: nonlinearMatrices
     TYPE(EquationsMatricesResidualType), POINTER :: residualVector
     TYPE(EquationsMatricesRHSType), POINTER :: rhsVector
-    TYPE(EquationsMatricesSourceType), POINTER :: sourceVector
     TYPE(EquationsMatricesSourcesType), POINTER :: sourceVectors
-    TYPE(EquationsMatrixType), POINTER :: dynamicMatrix,linearMatrix
     TYPE(FieldVariableType), POINTER :: colsVariable,rowsVariable
     
     ENTERS("EquationsMatricesVector_ElementInitialise",err,error,*999)

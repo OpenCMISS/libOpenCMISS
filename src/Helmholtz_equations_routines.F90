@@ -272,10 +272,10 @@ CONTAINS
     TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
     !Local Variables
     INTEGER(INTG) :: columnComponentIdx,columnElementDOFIdx,columnElementParameterIdx,colsVariableType,columnXiIdx, &
-      & esSpecification(3),gaussPointIdx,numberOfColComponents,numberOfColElementParameters,numberOfColumnXi, &
+      & esSpecification(3),gaussPointIdx,numberOfColComponents,numberOfColElementParameters, &
       & numberOfDependentXi,numberOfDimensions,numberOfGauss,numberOfGeometricXi,numberOfMaterialsComponents, &
-      & numberOfRowComponents,numberOfRowElementParameters,numberOfXi,rowComponentIdx,rowElementDOFIdx, &
-      & rowElementParameterIdx,rowsVariableType,rowXiIdx,scalingType,xiIdx,variableType
+      & numberOfRowComponents,numberOfRowElementParameters,rowComponentIdx,rowElementDOFIdx, &
+      & rowElementParameterIdx,rowsVariableType,rowXiIdx,scalingType,xiIdx
     REAL(DP) :: columndPhidXi(3),columnPhi,conductivityTensor(3,3),gaussWeight,jacobian,jacobianGaussWeight,k,rowdPhidXi(3), &
       & rowPhi,sum
     LOGICAL :: update,updateMatrix,updateRHS
@@ -299,9 +299,8 @@ CONTAINS
       & materialsInterpParameters,rowsInterpParameters
     TYPE(FieldInterpolatedPointType), POINTER :: fibreInterpPoint,geometricInterpPoint,materialsInterpPoint
     TYPE(FieldInterpolatedPointMetricsType), POINTER :: geometricInterpPointMetrics
-    TYPE(FieldVariableType), POINTER :: colsVariable,dependentVariable,materialsVariable,rowsVariable
-    TYPE(QuadratureSchemeType), POINTER :: colQuadratureScheme,dependentQuadratureScheme,geometricQuadratureScheme, &
-      & rowQuadratureScheme
+    TYPE(FieldVariableType), POINTER :: colsVariable,materialsVariable,rowsVariable
+    TYPE(QuadratureSchemeType), POINTER :: colQuadratureScheme,dependentQuadratureScheme,rowQuadratureScheme
     TYPE(VARYING_STRING) :: localError
 
     ENTERS("Helmholtz_FiniteElementCalculate",err,error,*999)
@@ -709,7 +708,7 @@ CONTAINS
     INTEGER(INTG) :: componentIdx,esSpecification(3),geometricComponentNumber,geometricMeshComponent,geometricScalingType, &
       & numberOfmaterialsComponents,numberOfmaterialsVariables,numberOfDimensions,solutionMethod,sparsityType
     TYPE(DecompositionType), POINTER :: geometricDecomposition
-    TYPE(FieldType), POINTER :: analyticField,dependentField,geometricField
+    TYPE(FieldType), POINTER :: analyticField,geometricField
     TYPE(EquationsType), POINTER :: equations
     TYPE(EquationsMappingVectorType), POINTER :: vectorMapping
     TYPE(EquationsMatricesVectorType), POINTER :: vectorMatrices

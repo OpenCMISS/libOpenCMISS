@@ -376,9 +376,6 @@ CONTAINS
     INTEGER(INTG), INTENT(OUT) :: err !<The error code
     TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
     !Local Variables
-#ifdef WITH_POSTCHECKS    
-    TYPE(VARYING_STRING) :: localError
-#endif    
 
     ENTERS("CellML_CellMLIntermediateFieldExists",err,error,*998)
 

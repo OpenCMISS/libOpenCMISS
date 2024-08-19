@@ -828,10 +828,10 @@ CONTAINS
     INTEGER(INTG), INTENT(OUT) :: err
     TYPE(VARYING_STRING), INTENT(OUT) :: error
     !Local Variables
-    INTEGER(INTG) :: columnComponentIdx,columnElementDOFIdx,columnElementParameterIdx,colsVariableType,componentIdx, &
+    INTEGER(INTG) :: columnComponentIdx,columnElementDOFIdx,columnElementParameterIdx,componentIdx, &
       & dynamicVariableType,esSpecification(3),gaussPointIdx,numberOfColumnComponents,numberOfColumnElementParameters, &
       & numberOfDependentXi,numberOfDimensions,numberOfGauss,numberOfGeometricXi,numberOfRowComponents, &
-      & numberOfRowElementParameters,rowComponentIdx,rowElementDOFIdx,rowElementParameterIdx,rowsVariableType,scalingType,xiIdx     
+      & numberOfRowElementParameters,rowComponentIdx,rowElementDOFIdx,rowElementParameterIdx,rowsVariableType,scalingType,xiIdx
     REAL(DP) :: area,columndPhidXi(3),columnPhi,conc,D,dConc,dXidX,flow,gaussWeight,jacobian,jacobianGaussWeight,rowdPhidXi(3), &
       & rowPhi,sum
     LOGICAL :: update,updateDamping,updateMatrices,updateStiffness,updateRHS
@@ -858,9 +858,7 @@ CONTAINS
       & materialsInterpPoint
     TYPE(FieldInterpolatedPointMetricsType), POINTER :: geometricInterpPointMetrics
     TYPE(FieldVariableType), POINTER :: colsVariable,geometricVariable,rowsVariable
-    TYPE(QuadratureSchemeType), POINTER :: columnQuadratureScheme,dependentQuadratureScheme,geometricQuadratureScheme, &
-      & rowQuadratureScheme
-    TYPE(RegionType), POINTER :: region
+    TYPE(QuadratureSchemeType), POINTER :: columnQuadratureScheme,dependentQuadratureScheme,rowQuadratureScheme
     TYPE(VARYING_STRING) :: localError
 
     ENTERS("Advection_FiniteElementCalculate",err,error,*999)
@@ -1238,7 +1236,6 @@ CONTAINS
     TYPE(FieldType), POINTER :: dependentField
     TYPE(SolverEquationsType), POINTER :: solverEquations
     TYPE(SolverMappingType), POINTER :: solverMapping
-    TYPE(SolversType), POINTER :: solvers
     TYPE(ProblemType), POINTER :: problem
     TYPE(VARYING_STRING) :: localError
  

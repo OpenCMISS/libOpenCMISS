@@ -2274,8 +2274,7 @@ CONTAINS
     TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
     !Local Variables
     INTEGER(INTG) :: columnIdx,localColumn,globalColumn,numberOfGlobalColumns,numberOfLocalColumns,numberOfLocalRows, &
-      & numberOfRows,row,rowIdx,totalNumberOfLocalColumns,totalNumberOfLocalRows,transposePosition,transposeType
-    INTEGER(INTG), POINTER :: columnIndicesT(:),dataSwivelT(:),rowIndicesT(:)
+      & numberOfRows,totalNumberOfLocalColumns,totalNumberOfLocalRows
     REAL(DP) :: sum
     LOGICAL :: skewSymmetric,symmetric,useTranspose
     TYPE(DistributedMatrixCMISSType), POINTER :: cmissMatrix

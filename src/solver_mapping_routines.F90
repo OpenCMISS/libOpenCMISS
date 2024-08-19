@@ -134,7 +134,7 @@ MODULE SolverMappingRoutines
       & equationsRHSVariables(:,:)
     INTEGER(INTG), ALLOCATABLE :: numberOfVariableGlobalSolverDOFs(:),numberOfVariableLocalSolverDOFs(:), &
       & totalNumberOfVariableLocalSolverDOFs(:),subMatrixInformation(:,:,:),subMatrixList(:,:,:),variableTypes(:)
-    REAL(DP) :: couplingCoefficient,variableCoefficient
+    REAL(DP) :: couplingCoefficient
     LOGICAL :: found,haveDynamic,haveLinear,haveNonlinear,includeColumn,includeRow,constrainedDOF
     LOGICAL, ALLOCATABLE :: variableProcessed(:),variableRankProcessed(:,:)
     TYPE(BoundaryConditionsType), POINTER :: boundaryConditions
@@ -5135,16 +5135,16 @@ MODULE SolverMappingRoutines
     INTEGER(INTG), INTENT(OUT) :: err !<The error code
     TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
     !Local Variables
-    INTEGER(INTG) :: equationsMatrixIdx
     
     ENTERS("SolverMappingEMToSMSMap_Finalise",err,error,*999)
 
     IF(ASSOCIATED(equationsMatrixToSolverMatricesMap)) THEN
       IF(ALLOCATED(equationsMatrixToSolverMatricesMap%equationsMatrixToSolverMatrixMaps)) THEN
-        DO equationsMatrixIdx=1,SIZE(equationsMatrixToSolverMatricesMap%equationsMatrixToSolverMatrixMaps,1)
-          CALL SolverMappingEMToSMMap_Finalise(equationsMatrixToSolverMatricesMap% &
-            & equationsMatrixToSolverMatrixMaps(equationsMatrixIdx)%ptr,err,error,*999)        
-        ENDDO !equationsMatrixIdx
+        !Don't finalise these maps as it will be done elsewhere
+        !DO equationsMatrixIdx=1,SIZE(equationsMatrixToSolverMatricesMap%equationsMatrixToSolverMatrixMaps,1)
+        !  CALL SolverMappingEMToSMMap_Finalise(equationsMatrixToSolverMatricesMap% &
+        !    & equationsMatrixToSolverMatrixMaps(equationsMatrixIdx)%ptr,err,error,*999)        
+        !ENDDO !equationsMatrixIdx
         DEALLOCATE(equationsMatrixToSolverMatricesMap%equationsMatrixToSolverMatrixMaps)
       ENDIF
       DEALLOCATE(equationsMatrixToSolverMatricesMap)
@@ -5374,8 +5374,8 @@ MODULE SolverMappingRoutines
     solverEquations%solverMapping%numberOfGlobalRows=0
     solverEquations%solverMapping%numberOfEquationsSets=0
     solverEquations%solverMapping%numberOfInterfaceConditions=0
-    NULLIFY(solverEquations%solverMapping%rhsVariablesList)
     NULLIFY(solverEquations%solverMapping%rowDOFsMapping)
+    NULLIFY(solverEquations%solverMapping%rhsVariablesList)
     NULLIFY(solverEquations%solverMapping%createValuesCache)
     CALL SolverMapping_CreateValuesCacheInitialise(solverEquations%solverMapping,err,error,*999)
     

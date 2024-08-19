@@ -102,17 +102,17 @@ CONTAINS
     INTEGER(INTG) :: columnComponentIdx,columnElementDOFIdx,columnElementParameterIdx,connectedLineFace,coupledElementNumber, &
       & coupledMeshIdx,coupledDependentScalingType,coupledDependentVariableType,dataPointIdx,coupledDecompositionFaceNumber, &
       & coupledDecompositionLineNumber,derivative,derivativeIdx,gaussPointIdx,interfaceConditionMethod, &
-      & interfaceDependentScalingType,interfaceDerivative,interfaceDerivativeIdx,interfaceElementNumber,interfaceMatrixIdx, &
-      & interfaceNode,interfaceNodeIdx,lagrangeVariableType,integrationType,localElementNode,localElementNodeIdx, &
-      & localElementNumber,localFaceNodeIdx,localLineNodeIdx,localNodeIdx,matrixElementIdx,numberOfCoupledElements, &
+      & interfaceDependentScalingType,interfaceDerivativeIdx,interfaceElementNumber,interfaceMatrixIdx, &
+      & interfaceNodeIdx,lagrangeVariableType,integrationType,localElementNode,localElementNodeIdx, &
+      & localElementNumber,localFaceNodeIdx,localLineNodeIdx,matrixElementIdx,numberOfCoupledElements, &
       & numberOfCoupledMeshes,numberOfCoupledDerivatives,numberOfCoupledElementParameters,numberOfCoupledGeometricComponents, &
       & numberOfCoupledNodes,numberOfCoupledVariableComponents,numberOfCoupledXi,numberOfElementDataPoints,numberOfGauss, &
       & numberOfInterfaceGeometricXi,numberOfInterfaceNodeDerivatives,numberOfInterfaceDependentElementParameters, &
       & numberOfInterfaceDependentNodes,numberOfInterfaceDependentXi,numberOfInterfaceMatrices,numberOfInterfaceMeshXi, &
-      & numberOfInterfaceVariableComponents,numberOfLagrangeComponents,numberOfMatrixCoupledElements,numberOfFaceNodeDerivatives, &
+      & numberOfLagrangeComponents,numberOfMatrixCoupledElements,numberOfFaceNodeDerivatives, &
       & numberOfLineNodeDerivatives,numberOfNodesInFace,numberOfNodesInLine,numberOfRowElementParameters,numberOfXi, &
       & rowComponentIdx,rowElementDOFIdx,rowElementParameterIdx  
-    REAL(DP) :: columnBasisFunction,gaussWeight,jacobian,jacobianGaussWeight,matrixCoefficient,rowBasisFunction,xi(3)
+    REAL(DP) :: columnBasisFunction,gaussWeight,jacobian,jacobianGaussWeight,rowBasisFunction,xi(3)
     LOGICAL :: continueSearch,found,updateMatrix,updateMatrices
     TYPE(BasisType), POINTER :: coupledBasis,coupledDependentBasis,coupledFaceBasis,coupledLineBasis,interfaceDependentBasis, &
       & interfaceGeometricBasis,interfacePenaltyBasis,interfaceConnectivityBasis,rowBasis
@@ -120,9 +120,8 @@ CONTAINS
       & interfaceGeometricDecomposition,lagrangeDecomposition,penaltyDecomposition
     TYPE(DecompositionDataPointsType), POINTER :: dataPoints
     TYPE(DecompositionElementDataPointsType), POINTER :: elementDataPoints
-    TYPE(DecompositionElementsType), POINTER :: coupledDependentDecompositionElements,interfaceDependentDecompositionElements
-    TYPE(DecompositionTopologyType), POINTER :: coupledDependentDecompositionTopology,interfaceDependentDecompositionTopology, &
-      & lagrangeDecompositionTopology
+    TYPE(DecompositionElementsType), POINTER :: coupledDependentDecompositionElements
+    TYPE(DecompositionTopologyType), POINTER :: coupledDependentDecompositionTopology,lagrangeDecompositionTopology
     TYPE(DomainType), POINTER :: coupledDependentDomain,interfaceDependentDomain,interfaceGeometricDomain,penaltyDomain,rowDomain
     TYPE(DomainElementsType), POINTER :: coupledDependentDomainElements,interfaceDependentDomainElements, &
       & interfaceGeometricDomainElements,penaltyDomainElements,rowDomainElements
@@ -829,7 +828,6 @@ CONTAINS
     TYPE(DecompositionElementType), POINTER :: coupledDependentDecompositionElement
     TYPE(DecompositionElementsType), POINTER :: coupledDependentDecompositionElements
     TYPE(DecompositionTopologyType), POINTER :: coupledDependentDecompositionTopology,lagrangeDecompositionTopology
-    TYPE(DecompositionElementDataPointsType), POINTER :: decompositionElementData 
     TYPE(DomainType), POINTER :: coupledDependentDomain
     TYPE(DomainElementsType), POINTER :: coupledDependentDomainElements
     TYPE(DomainTopologyType), POINTER :: coupledDependentDomainTopology
@@ -1255,14 +1253,13 @@ CONTAINS
     INTEGER(INTG) :: columnComponentIdx,columnElementDOFIdx,columnElementParameterIdx,connectedLineFace,coupledElementNumber, &
       & coupledMeshIdx,coupledDependentScalingType,coupledDependentVariableType,decompositionFaceNumber,decompositionLineNumber, &
       & derivative,derivativeIdx,gaussPointIdx,integrationType,interfaceConditionMethod,interfaceDependentScalingType, &
-      & interfaceDerivative,interfaceDerivativeIdx,interfaceMatrixIdx,interfaceNode,interfaceNodeIdx,lagrangeVariableType, &
-      & localElementNode,localElementNodeIdx,localFaceNodeIdx,localLineNodeIdx,localNodeIdx, &
+      & interfaceDerivative,interfaceDerivativeIdx,interfaceMatrixIdx,interfaceNodeIdx,lagrangeVariableType, &
+      & localElementNode,localElementNodeIdx,localFaceNodeIdx,localLineNodeIdx, &
       & numberOfCoupledElementParameters,numberOfCoupledNodes,numberOfCoupledNodeDerivatives,numberOfCoupledXi, &
       & numberOfFaceNodes,numberOfFaceNodeDerivatives,numberOfGauss,numberOfInterfaceGeometricXi, &
       & numberOfInterfaceDependentElementParameters,numberOfInterfaceDependentNodes,numberOfInterfaceNodeDerivatives, &
       & numberOfInterfaceDependentXi,numberOfInterfaceMatrices,numberOfCoupledDependentComponents,numberOfLagrangeComponents, &
-      & numberOfLineNodeDerivatives,numberOfNodeDerivatives,numberOfNodesInLine,rowComponentIdx,rowElementDOFIdx, &
-      & rowElementParameterIdx
+      & numberOfNodeDerivatives,numberOfNodesInLine,rowComponentIdx,rowElementDOFIdx,rowElementParameterIdx
     REAL(DP) :: columnBasisFunction,jacobian,jacobianGaussWeight,gaussWeight,rowBasisFunction,xi(3)
     LOGICAL :: updateMatrix,updateMatrices
     TYPE(BasisType), POINTER :: faceBasis,interfaceDependentBasis,coupledBasis,interfaceGeometricBasis, &
@@ -1271,8 +1268,8 @@ CONTAINS
     TYPE(DecompositionType), POINTER :: coupledDependentDecomposition,interfaceDependentDecomposition, &
       & interfaceGeometricDecomposition
     TYPE(DecompositionElementType), POINTER :: coupledDependentDecompositionElement,interfaceDependentDecompositionElement
-    TYPE(DecompositionElementsType), POINTER :: coupledDependentDecompositionElements,interfaceDependentDecompositionElements
-    TYPE(DecompositionTopologyType), POINTER :: coupledDependentDecompositionTopology,interfaceDependentDecompositionTopology
+    TYPE(DecompositionElementsType), POINTER :: interfaceDependentDecompositionElements
+    TYPE(DecompositionTopologyType), POINTER :: interfaceDependentDecompositionTopology
     TYPE(DomainType), POINTER :: coupledDependentDomain,interfaceDependentDomain,interfaceGeometricDomain
     TYPE(DomainElementsType), POINTER :: coupledDependentDomainElements,interfaceDependentDomainElements, &
       & interfaceGeometricDomainElements

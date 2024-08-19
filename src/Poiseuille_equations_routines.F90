@@ -123,7 +123,7 @@ CONTAINS
     TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
     !Local Variables
     INTEGER(INTG) :: analyticFunctionType,componentIdx,derivativeIdx,dimensionIdx,derivativeGlobalIndex,globalDerivativeIndex, &
-      & localDOFIdx,nodeIdx,numberOfDimensions,numberOfComponents,numberOfNodes,numberOfNodeDerivatives,numberOfVersions, &
+      & localDOFIdx,nodeIdx,numberOfDimensions,numberOfComponents,numberOfNodes,numberOfNodeDerivatives, &
       & numberOfVariables,variableIdx,variableType
     REAL(DP) :: dependentValue,x(3)
     REAL(DP), POINTER :: geometricParameters(:)
@@ -696,13 +696,13 @@ CONTAINS
     TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
     !Local Variables
     INTEGER(INTG) :: colsVariableType,esSpecification(3),gaussPointIdx,numberOfColsComponents,numberOfDimensions, &
-      & numberOfGauss,numberOfRowsComponents,numberOfXi,scalingType,variableType
+      & numberOfGauss,numberOfRowsComponents,numberOfXi,scalingType
     LOGICAL :: update,updateMatrix,updateRHS
-    TYPE(BasisType), POINTER :: columnBasis,dependentBasis,geometricBasis
+    TYPE(BasisType), POINTER :: dependentBasis,geometricBasis
     TYPE(DecompositionType), POINTER :: dependentDecomposition,geometricDecomposition
-    TYPE(DomainType), POINTER :: columnDomain,dependentDomain,geometricDomain
-    TYPE(DomainElementsType), POINTER :: columnDomainElements,dependentDomainElements,geometricDomainElements
-    TYPE(DomainTopologyType), POINTER :: columnDomainTopology,dependentDomainTopology,geometricDomainTopology
+    TYPE(DomainType), POINTER :: dependentDomain,geometricDomain
+    TYPE(DomainElementsType), POINTER :: dependentDomainElements,geometricDomainElements
+    TYPE(DomainTopologyType), POINTER :: dependentDomainTopology,geometricDomainTopology
     TYPE(EquationsType), POINTER :: equations
     TYPE(EquationsInterpolationType), POINTER :: equationsInterpolation
     TYPE(EquationsMappingVectorType), POINTER :: vectorMapping
@@ -718,8 +718,7 @@ CONTAINS
     TYPE(FieldInterpolationParametersType), POINTER :: geometricInterpParameters,materialsInterpParameters
     TYPE(FieldInterpolatedPointType), POINTER :: geometricInterpPoint,materialsInterpPoint
     TYPE(FieldInterpolatedPointMetricsType), POINTER :: geometricInterpPointMetrics
-    TYPE(FieldVariableType), POINTER :: colsVariable,fieldVariable,geometricVariable,rowsVariable
-    TYPE(QuadratureSchemeType), POINTER :: quadratureScheme
+    TYPE(FieldVariableType), POINTER :: colsVariable,geometricVariable,rowsVariable
     TYPE(VARYING_STRING) :: localError
 
     ENTERS("Poiseuille_FiniteElementCalculate",err,error,*999)

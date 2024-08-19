@@ -108,7 +108,6 @@ CONTAINS
       & numberOfInterfaceMatrices,totalNumberOfDOFs,variableType
     REAL(DP) :: matrixCoefficient,transposeMatrixCoefficient
     LOGICAL :: hasTranspose
-    TYPE(DomainType), POINTER :: domain
     TYPE(DomainMappingType), POINTER :: domainMapping
     TYPE(EquationsSetType), POINTER :: equationsSet
     TYPE(FieldType), POINTER :: lagrangeField
@@ -1337,7 +1336,7 @@ CONTAINS
     TYPE(InterfaceEquationsType), POINTER :: interfaceEquations
     TYPE(InterfaceMappingCreateValuesCacheType), POINTER :: createValuesCache
     TYPE(FieldType), POINTER :: lagrangeField
-    TYPE(FieldVariableType), POINTER :: lagrangeVariable,rhsVariable
+    TYPE(FieldVariableType), POINTER :: rhsVariable
     TYPE(VARYING_STRING) :: localError
 
     ENTERS("InterfaceMapping_RHSVariableTypeSet",err,error,*999)

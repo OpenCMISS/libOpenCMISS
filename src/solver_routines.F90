@@ -10803,7 +10803,8 @@ CONTAINS
                   IF(ASSOCIATED(solverMappingVariable)) rhsResidual=.FALSE.
                 ENDDO !residualVariableIdx
               ENDDO !solverMatrixIdx
-              IF(rhsResidual.OR.solver%solveType==SOLVER_NONLINEAR_TYPE) THEN
+              IF(rhsResidual.OR.(solver%solveType==SOLVER_DYNAMIC_TYPE.AND.dynamicSolver%linearity==SOLVER_DYNAMIC_NONLINEAR).OR. &
+                & solver%solveType==SOLVER_NONLINEAR_TYPE) THEN
                 CALL EquationsMappingResidual_VectorCoefficientGet(residualMapping,residualCoefficient,err,error,*999)
                 NULLIFY(residualVector)
                 CALL EquationsMatricesNonlinear_ResidualVectorGet(nonlinearMatrices,residualIdx,residualVector,err,error,*999)
