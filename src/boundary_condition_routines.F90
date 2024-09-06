@@ -163,6 +163,8 @@ MODULE BoundaryConditionsRoutines
 
   PUBLIC BoundaryConditions_AddNode
 
+  PUBLIC BoundaryConditions_AnalyticNodeSet
+
   PUBLIC BoundaryConditions_ConstrainNodeDOFsEqual
 
   PUBLIC BoundaryConditions_CreateFinish,BoundaryConditions_CreateStart
@@ -182,8 +184,6 @@ MODULE BoundaryConditionsRoutines
   PUBLIC BoundaryConditions_RowVariableExists
 
   PUBLIC BoundaryConditions_RowVariableGet
-
-  PUBLIC BoundaryConditions_SetAnalyticBoundaryNode
 
   PUBLIC BoundaryConditions_SetConstant
 
@@ -2579,8 +2579,8 @@ MODULE BoundaryConditionsRoutines
   !
 
   !>Sets the analytic value as a boundary condition on the specified node.
-  SUBROUTINE BoundaryConditions_SetAnalyticBoundaryNode(boundaryConditions,numberOfDimensions,dependentVariable,componentNumber, &
-    & domainNodes,localNodenumber,boundaryNode,tangents,normal,analyticValue,gradientAnalyticValue,hessianAnalyticValue, &
+  SUBROUTINE BoundaryConditions_AnalyticNodeSet(boundaryConditions,numberOfDimensions,dependentVariable,componentNumber, &
+    & domainNode,update,tangents,normal,analyticValue,gradientAnalyticValue,hessianAnalyticValue, &
     & setVelocity,analyticVelocity,setAcceleration,analyticAcceleration,err,error,*)
 
     !Argument variables
@@ -2588,9 +2588,8 @@ MODULE BoundaryConditionsRoutines
     INTEGER(INTG), INTENT(IN) :: numberOfDimensions !<The number of dimensions for the problem.
     TYPE(FieldVariableType), POINTER :: dependentVariable !<The dependent field variable to set the boundary condition on.    
     INTEGER(INTG), INTENT(IN) :: componentNumber !<The component number to set the boundary condition at
-    TYPE(DomainNodesType), POINTER :: domainNodes !<A pointer to the domain nodes for the local node to set the boundary condition for
-    INTEGER(INTG), INTENT(IN) :: localNodeNumber !<The local node number to set the boundary condition for
-    LOGICAL, INTENT(IN) :: boundaryNode !<The boundary node flag for the node
+    TYPE(DomainNodeType), POINTER :: domainNode !<A pointer to the domain node to set the boundary condition for
+    LOGICAL, INTENT(IN) :: update !<.TRUE. if the boundary condition value is updated, .FALSE. if the boundary condition is set
     REAL(DP), INTENT(IN) :: tangents(:,:) !<tangents(componentIdx,tangentIdx). The tangent vectors for the node.
     REAL(DP), INTENT(IN) :: normal(:) !<normal(componentIdx). The normal vector at the node.
     REAL(DP), INTENT(IN) :: analyticValue !<The value of the analytic value at the node
@@ -2603,27 +2602,31 @@ MODULE BoundaryConditionsRoutines
     INTEGER(INTG), INTENT(OUT) :: err !<The error code
     TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
     !Local Variables
-    INTEGER(INTG) :: componentIdx1,componentIdx2,derivativeGlobalIndex,derivativeIdx,localDOFIdx,numberOfNodeDerivatives, &
-      & variableType
+    INTEGER(INTG) :: bcCondition,componentIdx1,componentIdx2,derivativeGlobalIndex,derivativeIdx,globalDOFIdx, &
+      & localDOFIdx,localNodeNumber,numberOfNodeDerivatives,numberOfVersions,variableType,versionIdx
     REAL(DP) :: dofValue
+    LOGICAL :: boundaryNode
+    TYPE(BoundaryConditionsVariableType), POINTER :: boundaryConditionsVariable
+    TYPE(DomainMappingType), POINTER :: domainMapping
     TYPE(VARYING_STRING) :: localError
 
-    ENTERS("BoundaryConditions_SetAnalyticBoundaryNode",err,error,*999)
+    ENTERS("BoundaryConditions_AnalyticNodeSet",err,error,*999)
 
 #ifdef WITH_PRECHECKS    
     IF(.NOT.ASSOCIATED(boundaryConditions)) CALL FlagError("Boundary conditions is not associated.",err,error,*999)
     CALL FieldVariable_AssertComponentNumberOK(dependentVariable,componentNumber,err,error,*999)
-    CALL DomainNodes_LocalNumberCheck(domainNodes,localNodeNumber,err,error,*999)
 #endif    
-    CALL FieldVariable_VariableTypeGet(dependentVariable,variableType,err,error,*999)
-
-    CALL DomainNodes_NodeNumberOfDerivativesGet(domainNodes,localNodeNumber,numberOfNodeDerivatives,err,error,*999)
+    CALL FieldVariable_VariableTypeGet(dependentVariable,variableType,err,error,*999)    
+    NULLIFY(domainMapping)
+    CALL FieldVariable_DomainMappingGet(dependentVariable,domainMapping,err,error,*999)
+    NULLIFY(boundaryConditionsVariable)
+    CALL BoundaryConditions_VariableGet(boundaryConditions,dependentVariable,boundaryConditionsVariable,err,error,*999)
+    CALL DomainNode_LocalNodeNumberGet(domainNode,localNodeNumber,err,error,*999)
+    CALL DomainNode_BoundaryNodeGet(domainNode,boundaryNode,err,error,*999)
     !Loop over the derivatives
+    CALL DomainNode_NumberOfDerivativesGet(domainNode,numberOfNodeDerivatives,err,error,*999)
     DO derivativeIdx=1,numberOfNodeDerivatives
-      CALL DomainNodes_DerivativeGlobalIndexGet(domainNodes,derivativeIdx,localNodeNumber,derivativeGlobalIndex,err,error,*999)
-      !Default to version 1 of each node derivative
-      CALL FieldVariable_LocalNodeDOFGet(dependentVariable,1,derivativeIdx,localNodeNumber,componentNumber,localDOFIdx, &
-        & err,error,*999)
+      CALL DomainNode_DerivativeGlobalDerivativeIndexGet(domainNode,derivativeIdx,derivativeGlobalIndex,err,error,*999)
       dofValue=0.0_DP
       SELECT CASE(variableType)
       CASE(FIELD_U_VARIABLE_TYPE) 
@@ -2735,55 +2738,53 @@ MODULE BoundaryConditionsRoutines
       CASE DEFAULT
         !Do nothing or error???
       END SELECT
-      IF(boundaryNode) THEN
+      CALL DomainNode_DerivativeNumberOfVersionsGet(domainNode,derivativeIdx,numberOfVersions,err,error,*999)
+      DO versionIdx=1,numberOfVersions
+        
+        CALL FieldVariable_LocalNodeDOFGet(dependentVariable,versionIdx,derivativeIdx,localNodeNumber,componentNumber, &
+          & localDOFIdx,err,error,*999)      
+        CALL DomainMapping_LocalToGlobalGet(domainMapping,localDOFIdx,globalDOFIdx,err,error,*999)
+        !Get boundary condition and dof type
+        CALL BoundaryConditionsVariable_ConditionTypeGet(boundaryConditionsVariable,globalDOFIdx,bcCondition,err,error,*999)
         SELECT CASE(variableType)
         CASE(FIELD_U_VARIABLE_TYPE) !Dirichlet
-          CALL BoundaryConditions_SetLocalDOF(boundaryConditions,dependentVariable,localDOFIdx,BOUNDARY_CONDITION_FIXED, &
-            & dofValue,err,error,*999)
-          CALL FieldVariable_ParameterSetUpdateLocalDOF(dependentVariable,FIELD_ANALYTIC_VALUES_SET_TYPE,localDOFIdx, &
-            & dofValue,err,error,*999)
-          IF(setVelocity) THEN
-            CALL FieldVariable_ParameterSetUpdateLocalDOF(dependentVariable,FIELD_VELOCITY_VALUES_SET_TYPE,localDOFIdx, &
-              & analyticVelocity,err,error,*999)
-            CALL FieldVariable_ParameterSetUpdateLocalDOF(dependentVariable,FIELD_ANALYTIC_VELOCITY_VALUES_SET_TYPE,localDOFIdx, &
-              & analyticVelocity,err,error,*999)
-            IF(setAcceleration) THEN
-              CALL FieldVariable_ParameterSetUpdateLocalDOF(dependentVariable,FIELD_ACCELERATION_VALUES_SET_TYPE, &
-                & localDOFIdx,analyticAcceleration,err,error,*999)
-              CALL FieldVariable_ParameterSetUpdateLocalDOF(dependentVariable,FIELD_ANALYTIC_ACCELERATION_VALUES_SET_TYPE, &
-                & localDOFIdx,analyticAcceleration,err,error,*999)
+          IF(boundaryNode.AND..NOT.update) THEN
+            CALL BoundaryConditions_SetLocalDOF(boundaryConditions,dependentVariable,localDOFIdx,BOUNDARY_CONDITION_FIXED, &
+              & dofValue,err,error,*999)
+          ENDIF
+          IF((update.AND.bcCondition/=BOUNDARY_CONDITION_NONE).OR..NOT.update) THEN
+            CALL FieldVariable_ParameterSetUpdateLocalDOF(dependentVariable,FIELD_ANALYTIC_VALUES_SET_TYPE,localDOFIdx, &
+              & dofValue,err,error,*999)
+            IF(setVelocity) THEN
+              CALL FieldVariable_ParameterSetUpdateLocalDOF(dependentVariable,FIELD_VELOCITY_VALUES_SET_TYPE,localDOFIdx, &
+                & analyticVelocity,err,error,*999)
+              CALL FieldVariable_ParameterSetUpdateLocalDOF(dependentVariable,FIELD_ANALYTIC_VELOCITY_VALUES_SET_TYPE, &
+                & localDOFIdx,analyticVelocity,err,error,*999)
+              IF(setAcceleration) THEN
+                CALL FieldVariable_ParameterSetUpdateLocalDOF(dependentVariable,FIELD_ACCELERATION_VALUES_SET_TYPE, &
+                  & localDOFIdx,analyticAcceleration,err,error,*999)
+                CALL FieldVariable_ParameterSetUpdateLocalDOF(dependentVariable,FIELD_ANALYTIC_ACCELERATION_VALUES_SET_TYPE, &
+                  & localDOFIdx,analyticAcceleration,err,error,*999)
+              ENDIF
             ENDIF
           ENDIF
         CASE(FIELD_DELUDELN_VARIABLE_TYPE) !Neummann
-          CALL FieldVariable_ParameterSetUpdateLocalDOF(dependentVariable,FIELD_ANALYTIC_VALUES_SET_TYPE,localDOFIdx, &
-            & dofValue,err,error,*999)
+          IF(boundaryNode) THEN
+            CALL FieldVariable_ParameterSetUpdateLocalDOF(dependentVariable,FIELD_ANALYTIC_VALUES_SET_TYPE,localDOFIdx, &
+              & dofValue,err,error,*999)
+          ENDIF
         CASE DEFAULT
           !Do nothing
         END SELECT
-      ELSE
-        CALL FieldVariable_ParameterSetUpdateLocalDOF(dependentVariable,FIELD_ANALYTIC_VALUES_SET_TYPE,localDOFIdx, &
-          & dofValue,err,error,*999)
-        IF(setVelocity) THEN
-          CALL FieldVariable_ParameterSetUpdateLocalDOF(dependentVariable,FIELD_VELOCITY_VALUES_SET_TYPE,localDOFIdx, &
-            & analyticVelocity,err,error,*999)
-          CALL FieldVariable_ParameterSetUpdateLocalDOF(dependentVariable,FIELD_ANALYTIC_VELOCITY_VALUES_SET_TYPE,localDOFIdx, &
-            & analyticVelocity,err,error,*999)
-          IF(setAcceleration) THEN
-            CALL FieldVariable_ParameterSetUpdateLocalDOF(dependentVariable,FIELD_ACCELERATION_VALUES_SET_TYPE, &
-              & localDOFIdx,analyticAcceleration,err,error,*999)
-            CALL FieldVariable_ParameterSetUpdateLocalDOF(dependentVariable,FIELD_ANALYTIC_ACCELERATION_VALUES_SET_TYPE, &
-              & localDOFIdx,analyticAcceleration,err,error,*999)
-          ENDIF
-        ENDIF
-      ENDIF
+      ENDDO !versionIdx
     ENDDO !derivativeIdx
     
-    EXITS("BoundaryConditions_SetAnalyticBoundaryNode")
+    EXITS("BoundaryConditions_AnalyticNodeSet")
     RETURN
-999 ERRORSEXITS("BoundaryConditions_SetAnalyticBoundaryNode",err,error)
+999 ERRORSEXITS("BoundaryConditions_AnalyticNodeSet",err,error)
     RETURN 1
     
-  END SUBROUTINE BoundaryConditions_SetAnalyticBoundaryNode
+  END SUBROUTINE BoundaryConditions_AnalyticNodeSet
 
   !
   !================================================================================================================================

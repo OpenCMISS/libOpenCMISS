@@ -98,6 +98,10 @@ MODULE EquationsSetRoutines
 
   !Interfaces
 
+  PUBLIC EquationsSet_AnalyticBoundaryConditionsSet
+
+  PUBLIC EquationsSet_AnalyticBoundaryConditionsUpdate 
+  
   PUBLIC EquationsSet_AnalyticCreateStart,EquationsSet_AnalyticCreateFinish
 
   PUBLIC EquationsSet_AnalyticDestroy
@@ -108,8 +112,6 @@ MODULE EquationsSetRoutines
   
   PUBLIC EquationsSet_Backsubstitute
   
-  PUBLIC EquationsSet_BoundaryConditionsAnalytic
-
   PUBLIC EquationsSet_CreateStart,EquationsSet_CreateFinish
 
   PUBLIC EquationsSet_Destroy
@@ -159,6 +161,112 @@ MODULE EquationsSetRoutines
   PUBLIC EquationsSet_TimesSet
 
 CONTAINS
+
+  !
+  !================================================================================================================================
+  !
+
+  !>Set boundary conditions for an equation set according to the analytic equations.
+  SUBROUTINE EquationsSet_AnalyticBoundaryConditionsSet(equationsSet,boundaryConditions,err,error,*)
+
+    !Argument variables
+    TYPE(EquationsSetType), POINTER :: equationsSet !<A pointer to the equations set to set the analytic boundary conditions for.
+    TYPE(BoundaryConditionsType), POINTER :: boundaryConditions !<A pointer to the boundary conditions to set.
+    INTEGER(INTG), INTENT(OUT) :: err !<The error code
+    TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
+    !Local Variables
+    TYPE(VARYING_STRING) :: localError
+
+    ENTERS("EquationsSet_AnalyticBoundaryConditionsSet",err,error,*999)
+
+    CALL EquationsSet_AssertDependentIsFinished(equationsSet,err,error,*999)
+    CALL EquationsSet_AssertAnalyticIsFinished(equationsSet,err,error,*999)
+    IF(.NOT.ALLOCATED(equationsSet%specification)) &
+      & CALL FlagError("Equations set specification is not allocated.",err,error,*999)
+    IF(SIZE(equationsSet%specification,1)<1) &
+      & CALL FlagError("Equations set specification must have at least one entry.",err,error,*999)
+    IF(.NOT.ASSOCIATED(boundaryConditions)) CALL FlagError("Boundary conditions is not associated.",err,error,*999)
+    
+    SELECT CASE(equationsSet%specification(1))
+    CASE(EQUATIONS_SET_ELASTICITY_CLASS)
+      CALL Elasticity_AnalyticBoundaryConditionsSet(equationsSet,boundaryConditions,err,error,*999)
+    CASE(EQUATIONS_SET_FLUID_MECHANICS_CLASS)
+      CALL FluidMechanics_AnalyticBoundaryConditionsSet(equationsSet,boundaryConditions,err,error,*999)
+    CASE(EQUATIONS_SET_ELECTROMAGNETICS_CLASS)
+      CALL FlagError("Not implemented.",err,error,*999)
+    CASE(EQUATIONS_SET_CLASSICAL_FIELD_CLASS)
+      CALL ClassicalField_AnalyticBoundaryConditionsSet(equationsSet,boundaryConditions,err,error,*999)
+    CASE(EQUATIONS_SET_BIOELECTRICS_CLASS)
+      CALL FlagError("Not implemented.",err,error,*999)
+    CASE(EQUATIONS_SET_MODAL_CLASS)
+      CALL FlagError("Not implemented.",err,error,*999)
+    CASE(EQUATIONS_SET_MULTI_PHYSICS_CLASS)
+      CALL FlagError("Not implemented.",err,error,*999)
+    CASE DEFAULT
+      localError="The first equations set specification of "//TRIM(NumberToVString(equationsSet%specification(1),"*", &
+        & err,error))//" is invalid."
+      CALL FlagError(localError,err,error,*999)
+    END SELECT
+
+    EXITS("EquationsSet_AnalyticBoundaryConditionsSet")
+    RETURN
+999 ERRORSEXITS("EquationsSet_AnalyticBoundaryConditionsSet",err,error)
+    RETURN 1
+    
+  END SUBROUTINE EquationsSet_AnalyticBoundaryConditionsSet
+
+  !
+  !================================================================================================================================
+  !
+
+  !>Update the boundary conditions for an equation set according to the analytic equations. 
+  SUBROUTINE EquationsSet_AnalyticBoundaryConditionsUpdate(equationsSet,boundaryConditions,err,error,*)
+
+    !Argument variables
+    TYPE(EquationsSetType), POINTER :: equationsSet !<A pointer to the equations set to update the analytic boundary conditions for.
+    TYPE(BoundaryConditionsType), POINTER :: boundaryConditions !<A pointer to the boundary conditions to update.
+    INTEGER(INTG), INTENT(OUT) :: err !<The error code
+    TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
+    !Local Variables
+    TYPE(VARYING_STRING) :: localError
+
+    ENTERS("EquationsSet_AnalyticBoundaryConditionsUpdate",err,error,*999)
+
+    CALL EquationsSet_AssertDependentIsFinished(equationsSet,err,error,*999)
+    CALL EquationsSet_AssertAnalyticIsFinished(equationsSet,err,error,*999)
+    IF(.NOT.ALLOCATED(equationsSet%specification)) &
+      & CALL FlagError("Equations set specification is not allocated.",err,error,*999)
+    IF(SIZE(equationsSet%specification,1)<1) &
+      & CALL FlagError("Equations set specification must have at least one entry.",err,error,*999)
+    IF(.NOT.ASSOCIATED(boundaryConditions)) CALL FlagError("Boundary conditions is not associated.",err,error,*999)
+    
+    SELECT CASE(equationsSet%specification(1))
+    CASE(EQUATIONS_SET_ELASTICITY_CLASS)
+      CALL Elasticity_AnalyticBoundaryConditionsUpdate(equationsSet,boundaryConditions,err,error,*999)
+    CASE(EQUATIONS_SET_FLUID_MECHANICS_CLASS)
+      CALL FluidMechanics_AnalyticBoundaryConditionsUpdate(equationsSet,boundaryConditions,err,error,*999)
+    CASE(EQUATIONS_SET_ELECTROMAGNETICS_CLASS)
+      CALL FlagError("Not implemented.",err,error,*999)
+    CASE(EQUATIONS_SET_CLASSICAL_FIELD_CLASS)
+      CALL ClassicalField_AnalyticBoundaryConditionsUpdate(equationsSet,boundaryConditions,err,error,*999)
+    CASE(EQUATIONS_SET_BIOELECTRICS_CLASS)
+      CALL FlagError("Not implemented.",err,error,*999)
+    CASE(EQUATIONS_SET_MODAL_CLASS)
+      CALL FlagError("Not implemented.",err,error,*999) 
+    CASE(EQUATIONS_SET_MULTI_PHYSICS_CLASS)
+      CALL FlagError("Not implemented.",err,error,*999)
+    CASE DEFAULT
+      localError="The first equations set specification of "//TRIM(NumberToVString(equationsSet%specification(1),"*", &
+        & err,error))//" is invalid."
+      CALL FlagError(localError,err,error,*999)
+    END SELECT
+
+    EXITS("EquationsSet_AnalyticBoundaryConditionsUpdate")
+    RETURN
+999 ERRORSEXITS("EquationsSet_AnalyticBoundaryConditionsUpdate",err,error)
+    RETURN 1
+    
+  END SUBROUTINE EquationsSet_AnalyticBoundaryConditionsUpdate
 
   !
   !================================================================================================================================
@@ -294,23 +402,26 @@ CONTAINS
     INTEGER(INTG), INTENT(OUT) :: err !<The error code
     TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
     !Local Variables
-    INTEGER(INTG) :: analyticFunctionType,componentInterpolationType,componentIdx,derivativeIdx,elementIdx,gaussPointIdx, &
-      & globalDerivativeIndex,nodeIdx,numberOfAnalyticComponents,numberOfComponents,numberOfDimensions,numberOfElements, &
-      & numberOfGauss,numberOfNodes,numberOfNodeDerivatives,numberOfVariables,numberOfVersions,variableIdx,variableType,versionIdx
+    INTEGER(INTG) :: analyticFunctionType,componentInterpolationType,componentIdx,elementIdx,gaussPointIdx, &
+      & nodeIdx,numberOfAnalyticComponents,numberOfComponents,numberOfDimensions,numberOfElements, &
+      & numberOfGauss,numberOfNodes,numberOfVariables,variableIdx,variableType
     REAL(DP) :: accelerationAnalyticValue,analyticTime,analyticValue,gradientAnalyticValue(3),hessianAnalyticValue(3,3), &
       & normal(3),position(3,MAXIMUM_GLOBAL_DERIV_NUMBER),tangents(3,2),velocityAnalyticValue
     REAL(DP) :: analyticDummyValues(1)=0.0_DP
-    LOGICAL :: haveAcceleration,haveVelocity
+    LOGICAL :: haveAcceleration,haveVelocity,setAcceleration,setVelocity
     LOGICAL :: reverseNormal=.FALSE.
     TYPE(BasisType), POINTER :: basis
     TYPE(DomainType), POINTER :: domain
+    TYPE(DomainElementType), POINTER :: domainElement
     TYPE(DomainElementsType), POINTER :: domainElements
+    TYPE(DomainNodeType), POINTER :: domainNode
     TYPE(DomainNodesType), POINTER :: domainNodes
     TYPE(DomainTopologyType), POINTER :: domainTopology
     TYPE(FieldType), POINTER :: analyticField,dependentField,geometricField
     TYPE(FieldInterpolationParametersType), POINTER :: analyticInterpParameters,geometricInterpParameters
     TYPE(FieldInterpolatedPointType), POINTER :: analyticInterpPoint,geometricInterpPoint
     TYPE(FieldInterpolatedPointMetricsType), POINTER :: geometricInterpPointMetrics
+    TYPE(FieldParameterSetType), POINTER :: accelerationParameterSet,velocityParameterSet
     TYPE(FieldPhysicalPointType), POINTER :: analyticPhysicalPoint
     TYPE(FieldVariableType), POINTER :: analyticVariable,dependentVariable,geometricVariable
     TYPE(QuadratureSchemeType), POINTER :: quadratureScheme
@@ -346,6 +457,23 @@ CONTAINS
     DO variableIdx=1,numberOfVariables
       NULLIFY(dependentVariable)
       CALL Field_VariableIndexGet(dependentField,variableIdx,dependentVariable,variableType,err,error,*999)
+      setVelocity=.FALSE.
+      NULLIFY(velocityParameterSet)
+      CALL FieldVariable_ParameterSetExists(dependentVariable,FIELD_VELOCITY_VALUES_SET_TYPE,velocityParameterSet, &
+        & err,error,*999)
+      IF(ASSOCIATED(velocityParameterSet)) THEN
+        CALL FieldVariable_ParameterSetEnsureCreated(dependentVariable,FIELD_ANALYTIC_VELOCITY_VALUES_SET_TYPE,err,error,*999)
+        setVelocity=.TRUE.
+      ENDIF
+      setAcceleration=.FALSE.
+      NULLIFY(accelerationParameterSet)
+      CALL FieldVariable_ParameterSetExists(dependentVariable,FIELD_ACCELERATION_VALUES_SET_TYPE,accelerationParameterSet, &
+        & err,error,*999)
+      IF(ASSOCIATED(accelerationParameterSet)) THEN
+        CALL FieldVariable_ParameterSetEnsureCreated(dependentVariable,FIELD_ANALYTIC_ACCELERATION_VALUES_SET_TYPE, &
+          & err,error,*999)
+        setAcceleration=.TRUE.
+      ENDIF
       CALL FieldVariable_NumberOfComponentsGet(dependentVariable,numberOfComponents,err,error,*999)
       DO componentIdx=1,numberOfComponents
         NULLIFY(domain)
@@ -362,8 +490,10 @@ CONTAINS
           !Loop over the local elements excluding the ghosts
           CALL DomainElements_NumberOfElementsGet(domainElements,numberOfElements,err,error,*999)
           DO elementIdx=1,numberOfElements
+            NULLIFY(domainElement)
+            CALL DomainElements_ElementGet(domainElements,elementIdx,domainElement,err,error,*999)
             NULLIFY(basis)
-            CALL DomainElements_ElementBasisGet(domainElements,elementIdx,basis,err,error,*999)
+            CALL DomainElement_BasisGet(domainElement,basis,err,error,*999)
             CALL Field_InterpolationParametersElementGet(FIELD_VALUES_SET_TYPE,elementIdx,geometricInterpParameters, &
               &err,error,*999)
             IF(ASSOCIATED(analyticField)) THEN
@@ -378,16 +508,18 @@ CONTAINS
               CALL Field_InterpolateXi(NO_PART_DERIV,[0.5_DP,0.5_DP,0.5_DP],analyticInterpPoint,err,error,*999)
               CALL EquationsSet_AnalyticFunctionsEvaluate(equationsSet,analyticFunctionType,componentIdx, &
                 & analyticTime,position(:,NO_PART_DERIV),analyticInterpPoint%values(:,NO_PART_DERIV),analyticValue, &
-                & gradientAnalyticValue,hessianAnalyticValue,haveVelocity,velocityAnalyticValue,haveAcceleration, &
-                & accelerationAnalyticValue,err,error,*999)
+                & gradientAnalyticValue,hessianAnalyticValue,haveVelocity,velocityAnalyticValue, &
+                & haveAcceleration,accelerationAnalyticValue,err,error,*999)
             ELSE
               CALL EquationsSet_AnalyticFunctionsEvaluate(equationsSet,analyticFunctionType,componentIdx, &
                 & analyticTime,position(:,NO_PART_DERIV),analyticDummyValues,analyticValue, &
                 & gradientAnalyticValue,hessianAnalyticValue,haveVelocity,velocityAnalyticValue,haveAcceleration, &
                 & accelerationAnalyticValue,err,error,*999)
             ENDIF
-            CALL FieldVariable_ParameterSetUpdateLocalElement(dependentVariable,FIELD_ANALYTIC_VALUES_SET_TYPE,elementIdx, &
-              & componentIdx,analyticValue,err,error,*999)
+            CALL FieldVariable_AnalyticValuesSetElement(dependentVariable,componentIdx,domainElement,.TRUE., &
+              & FIELD_ANALYTIC_VALUES_SET_TYPE,analyticValue,setVelocity.AND.haveVelocity, &
+              & FIELD_ANALYTIC_VELOCITY_VALUES_SET_TYPE,velocityAnalyticValue,setAcceleration.AND.haveAcceleration, &
+              & FIELD_ANALYTIC_ACCELERATION_VALUES_SET_TYPE,accelerationAnalyticValue,err,error,*999)
           ENDDO !elementIdx
         CASE(FIELD_NODE_BASED_INTERPOLATION)
           NULLIFY(domainNodes)
@@ -395,6 +527,8 @@ CONTAINS
           !Loop over the local nodes excluding the ghosts.
           CALL DomainNodes_NumberOfNodesGet(domainNodes,numberOfNodes,err,error,*999)
           DO nodeIdx=1,numberOfNodes
+            NULLIFY(domainNode)
+            CALL DomainNodes_NodeGet(domainNodes,nodeIdx,domainNode,err,error,*999)
             CALL Field_PositionNormalTangentsCalculateNode(dependentField,variableType,componentIdx,nodeIdx,position,normal, &
               & tangents,err,error,*999)
             IF(ASSOCIATED(analyticField)) THEN
@@ -410,17 +544,11 @@ CONTAINS
                 & gradientAnalyticValue,hessianAnalyticValue,haveVelocity,velocityAnalyticValue,haveAcceleration, &
                 & accelerationAnalyticValue,err,error,*999)
             ENDIF
-            !Loop over the derivatives
-            CALL DomainNodes_NodeNumberOfDerivativesGet(domainNodes,nodeIdx,numberOfNodeDerivatives,err,error,*999)
-            DO derivativeIdx=1,numberOfNodeDerivatives                                
-              CALL DomainNodes_DerivativeGlobalIndexGet(domainNodes,derivativeIdx,nodeIdx,globalDerivativeIndex,err,error,*999)
-              !Loop over the versions
-              CALL DomainNodes_DerivativeNumberOfVersionsGet(domainNodes,derivativeIdx,nodeIdx,numberOfVersions,err,error,*999)
-              DO versionIdx=1,numberOfVersions
-                CALL FieldVariable_ParameterSetUpdateLocalNode(dependentVariable,FIELD_ANALYTIC_VALUES_SET_TYPE,versionIdx, &
-                  & derivativeIdx,nodeIdx,componentIdx,analyticValue,err,error,*999)
-              ENDDO !versionIdx
-            ENDDO !derivativeIdx
+            CALL FieldVariable_AnalyticValuesSetNode(dependentVariable,componentIdx,numberOfDimensions,domainNode,normal, &
+              & tangents,.TRUE.,FIELD_ANALYTIC_VALUES_SET_TYPE,analyticValue,gradientAnalyticValue,hessianAnalyticValue, &
+              & setVelocity.AND.haveVelocity,FIELD_ANALYTIC_VELOCITY_VALUES_SET_TYPE,velocityAnalyticValue, &
+              & setAcceleration.AND.haveAcceleration,FIELD_ANALYTIC_ACCELERATION_VALUES_SET_TYPE,accelerationAnalyticValue, &
+              & err,error,*999)
           ENDDO !nodeIdx
         CASE(FIELD_GRID_POINT_BASED_INTERPOLATION)
           CALL FlagError("Not implemented.",err,error,*999)
@@ -430,8 +558,10 @@ CONTAINS
           !Loop over the local elements excluding the ghosts
           CALL DomainElements_NumberOfElementsGet(domainElements,numberOfElements,err,error,*999)
           DO elementIdx=1,numberOfElements
+            NULLIFY(domainElement)
+            CALL DomainElements_ElementGet(domainElements,elementIdx,domainElement,err,error,*999)
             NULLIFY(basis)
-            CALL DomainElements_ElementBasisGet(domainElements,elementIdx,basis,err,error,*999)
+            CALL DomainElement_BasisGet(domainElement,basis,err,error,*999)
             CALL Field_InterpolationParametersElementGet(FIELD_VALUES_SET_TYPE,elementIdx,geometricInterpParameters,err,error,*999)
             IF(ASSOCIATED(analyticField)) CALL Field_InterpolationParametersElementGet(FIELD_VALUES_SET_TYPE,elementIdx, &
               & analyticInterpParameters,err,error,*999)
@@ -458,8 +588,10 @@ CONTAINS
                   & gradientAnalyticValue,hessianAnalyticValue,haveVelocity,velocityAnalyticValue,haveAcceleration, &
                   & accelerationAnalyticValue,err,error,*999)
               ENDIF
-              CALL FieldVariable_ParameterSetUpdateLocalGaussPoint(dependentVariable,FIELD_ANALYTIC_VALUES_SET_TYPE, &
-                & gaussPointIdx,elementIdx,componentIdx,analyticValue,err,error,*999)
+              CALL FieldVariable_AnalyticValuesSetGaussPoint(dependentVariable,componentIdx,domainElement,gaussPointIdx,.TRUE., &
+                & FIELD_ANALYTIC_VALUES_SET_TYPE,analyticValue,setVelocity.AND.haveVelocity, &
+                & FIELD_ANALYTIC_VELOCITY_VALUES_SET_TYPE,velocityAnalyticValue,setAcceleration.AND.haveAcceleration, &
+                & FIELD_ANALYTIC_ACCELERATION_VALUES_SET_TYPE,accelerationAnalyticValue,err,error,*999)
             ENDDO !gaussPointIdx
           ENDDO !elementIdx
         CASE DEFAULT
@@ -470,7 +602,19 @@ CONTAINS
         END SELECT
       ENDDO !componentIdx
       CALL FieldVariable_ParameterSetUpdateStart(dependentVariable,FIELD_ANALYTIC_VALUES_SET_TYPE,err,error,*999)
+      IF(setVelocity) THEN
+        CALL FieldVariable_ParameterSetUpdateStart(dependentVariable,FIELD_ANALYTIC_VELOCITY_VALUES_SET_TYPE,err,error,*999)
+      ENDIF
+      IF(setAcceleration) THEN
+       CALL FieldVariable_ParameterSetUpdateStart(dependentVariable,FIELD_ANALYTIC_ACCELERATION_VALUES_SET_TYPE,err,error,*999)
+      ENDIF
       CALL FieldVariable_ParameterSetUpdateFinish(dependentVariable,FIELD_ANALYTIC_VALUES_SET_TYPE,err,error,*999)
+      IF(setVelocity) THEN
+        CALL FieldVariable_ParameterSetUpdateFinish(dependentVariable,FIELD_ANALYTIC_VELOCITY_VALUES_SET_TYPE,err,error,*999)
+      ENDIF
+      IF(setAcceleration) THEN
+        CALL FieldVariable_ParameterSetUpdateFinish(dependentVariable,FIELD_ANALYTIC_ACCELERATION_VALUES_SET_TYPE,err,error,*999)
+      ENDIF
     ENDDO !variableIdx
     IF(ASSOCIATED(analyticField)) THEN
       CALL Field_PhysicalPointFinalise(analyticPhysicalPoint,err,error,*999)
@@ -607,6 +751,7 @@ CONTAINS
     equationsSet%analytic%analyticFinished=.FALSE.
     equationsSet%analytic%analyticFieldAutoCreated=.FALSE.
     NULLIFY(equationsSet%analytic%analyticField)
+    equationsSet%analytic%isTemporalAnalytic=.FALSE.
     equationsSet%analytic%analyticTime=0.0_DP
        
     EXITS("EquationsSet_AnalyticInitialise")
@@ -1493,6 +1638,7 @@ CONTAINS
       
         NULLIFY(vectorMatrices)
         CALL EquationsVector_VectorMatricesGet(vectorEquations,vectorMatrices,err,error,*999)
+        NULLIFY(rhsVector)
         CALL EquationsMatricesVector_RHSVectorGet(vectorMatrices,rhsVector,err,error,*999)
         CALL EquationsMatricesRHS_VectorCoefficientGet(rhsVector,rhsAlpha,err,error,*999)
         IF(ABS(rhsAlpha)<=ZERO_TOLERANCE) CALL FlagError("The RHS coefficient is zero.",err,error,*999)
@@ -1688,59 +1834,6 @@ CONTAINS
    
   END SUBROUTINE EquationsSet_Backsubstitute
   
-  !
-  !================================================================================================================================
-  !
-
-  !>Set boundary conditions for an equation set according to the analytic equations. \see OpenCMISS::OC_EquationsSet_BoundaryConditionsAnalytic
-  SUBROUTINE EquationsSet_BoundaryConditionsAnalytic(equationsSet,boundaryConditions,err,error,*)
-
-    !Argument variables
-    TYPE(EquationsSetType), POINTER :: equationsSet !<A pointer to the equations set to set the analyticboundary conditions for.
-    TYPE(BoundaryConditionsType), POINTER :: boundaryConditions !<A pointer to the boundary conditions to set.
-    INTEGER(INTG), INTENT(OUT) :: err !<The error code
-    TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
-    !Local Variables
-    TYPE(VARYING_STRING) :: localError
-
-    ENTERS("EquationsSet_BoundaryConditionsAnalytic",err,error,*999)
-
-    CALL EquationsSet_AssertDependentIsFinished(equationsSet,err,error,*999)
-    CALL EquationsSet_AssertAnalyticIsFinished(equationsSet,err,error,*999)
-    IF(.NOT.ALLOCATED(equationsSet%specification)) &
-      & CALL FlagError("Equations set specification is not allocated.",err,error,*999)
-    IF(SIZE(equationsSet%specification,1)<1) &
-      & CALL FlagError("Equations set specification must have at least one entry.",err,error,*999)
-    IF(.NOT.ASSOCIATED(boundaryConditions)) CALL FlagError("Boundary conditions is not associated.",err,error,*999)
-    
-    SELECT CASE(equationsSet%specification(1))
-    CASE(EQUATIONS_SET_ELASTICITY_CLASS)
-      CALL Elasticity_BoundaryConditionsAnalyticCalculate(equationsSet,boundaryConditions,err,error,*999)
-    CASE(EQUATIONS_SET_FLUID_MECHANICS_CLASS)
-      CALL FluidMechanics_BoundaryConditionsAnalyticCalculate(equationsSet,boundaryConditions,err,error,*999)
-    CASE(EQUATIONS_SET_ELECTROMAGNETICS_CLASS)
-      CALL FlagError("Not implemented.",err,error,*999)
-    CASE(EQUATIONS_SET_CLASSICAL_FIELD_CLASS)
-      CALL ClassicalField_BoundaryConditionsAnalyticCalculate(equationsSet,boundaryConditions,err,error,*999)
-    CASE(EQUATIONS_SET_BIOELECTRICS_CLASS)
-      CALL FlagError("Not implemented.",err,error,*999)
-    CASE(EQUATIONS_SET_MODAL_CLASS)
-      CALL FlagError("Not implemented.",err,error,*999)
-    CASE(EQUATIONS_SET_MULTI_PHYSICS_CLASS)
-      CALL FlagError("Not implemented.",err,error,*999)
-    CASE DEFAULT
-      localError="The first equations set specification of "//TRIM(NumberToVString(equationsSet%specification(1),"*", &
-        & err,error))//" is invalid."
-      CALL FlagError(localError,err,error,*999)
-    END SELECT
-
-    EXITS("EquationsSet_BoundaryConditionsAnalytic")
-    RETURN
-999 ERRORSEXITS("EquationsSet_BoundaryConditionsAnalytic",err,error)
-    RETURN 1
-    
-  END SUBROUTINE EquationsSet_BoundaryConditionsAnalytic
-
   !
   !================================================================================================================================
   !

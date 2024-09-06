@@ -834,6 +834,8 @@ MODULE EquationsSetAccessRoutines
   
   PUBLIC EquationsSet_AnalyticFunctionTypeGet,EquationsSet_AnalyticFunctionTypeSet
 
+  PUBLIC EquationsSet_AnalyticIsTemporalGet,EquationsSet_AnalyticIsTemporalSet
+
   PUBLIC EquationsSet_AnalyticTimeGet,EquationsSet_AnalyticTimeSet
 
   PUBLIC EquationsSet_AssertIsFinished,EquationsSet_AssertNotFinished
@@ -1180,6 +1182,66 @@ CONTAINS
     RETURN 1
     
   END SUBROUTINE EquationsSet_AnalyticFunctionTypeSet
+
+  !
+  !================================================================================================================================
+  !
+
+  !>Returns whether or not an analytic solution is temporal i.e., depends on time or not
+  SUBROUTINE EquationsSet_AnalyticIsTemporalGet(equationsSet,isTemporal,err,error,*)
+
+    !Argument variables
+    TYPE(EquationsSetType), POINTER :: equationsSet !<A pointer to the equations set to get the is temporal status for.
+    LOGICAL, INTENT(OUT) :: isTemporal !<On return, .TRUE. if the analytic solution is temporal, .FALSE. if not.
+    INTEGER(INTG), INTENT(OUT) :: err !<The error code
+    TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
+    !Local Variables
+
+    ENTERS("EquationsSet_AnalyticIsTemporalGet",err,error,*999)
+
+#ifdef WITH_PRECHECKS    
+    IF(.NOT.ASSOCIATED(equationsSet)) CALL FlagError("Equations set is not associated.",err,error,*999)    
+    IF(.NOT.ASSOCIATED(equationsSet%analytic)) CALL FlagError("Equations set analytic is not associated.",err,error,*999)
+#endif    
+
+    isTemporal=equationsSet%analytic%isTemporalAnalytic
+      
+    EXITS("EquationsSet_AnalyticIsTemporalGet")
+    RETURN
+999 ERRORSEXITS("EquationsSet_AnalyticIsTemporalGet",err,error)
+    RETURN 1
+    
+  END SUBROUTINE EquationsSet_AnalyticIsTemporalGet
+
+  !
+  !================================================================================================================================
+  !
+
+  !>Sets/changes wether or not the analytic solution is temporal i.e., depends on time or not.
+  SUBROUTINE EquationsSet_AnalyticIsTemporalSet(equationsSet,isTemporal,err,error,*)
+
+    !Argument variables
+    TYPE(EquationsSetType), POINTER :: equationsSet !<A pointer to the equations set to set is temporal status for.
+    LOGICAL, INTENT(IN) :: isTemporal !<The is temporal logical to set.
+    INTEGER(INTG), INTENT(OUT) :: err !<The error code
+    TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
+    !Local Variables
+
+    ENTERS("EquationsSet_AnalyticIsTemporalSet",err,error,*999)
+
+#ifdef WITH_PRECHECKS    
+    IF(.NOT.ASSOCIATED(equationsSet)) CALL FlagError("Equations set is not associated.",err,error,*999)    
+    IF(.NOT.ASSOCIATED(equationsSet%analytic)) CALL FlagError("Equations set analytic is not associated.",err,error,*999)
+#endif    
+
+    equationsSet%analytic%isTemporalAnalytic=isTemporal
+      
+    EXITS("EquationsSet_AnalyticIsTemporalSet")
+    RETURN
+999 ERRORSEXITS("EquationsSet_AnalyticIsTemporalSet",err,error)
+    RETURN 1
+    
+  END SUBROUTINE EquationsSet_AnalyticIsTemporalSet
 
   !
   !================================================================================================================================

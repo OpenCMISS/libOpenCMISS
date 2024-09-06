@@ -5586,7 +5586,7 @@ CONTAINS
           IF(dynamicSolver%solverInitialised) THEN
             !Check if we have already processed this variable
             CALL FieldVariablesList_VariableInListCheck(processedVariablesList,dynamicVariable,variablePositionIdx,err,error,*999)
-            IF(variablePositionIdx/=0) THEN
+            IF(variablePositionIdx==0) THEN
               !CPB: THIS MESSES UP DYNANIC BC'S. HOWEVER, IT CLEARLY WAS ADDED FOR A REASON (I THINK TO DO
               !     WITH MONODOMAIN AND SPLITTING. COMMENT FOR NOW.
               !
@@ -5612,27 +5612,28 @@ CONTAINS
                 ENDIF
               CASE(SOLVER_DYNAMIC_SECOND_DEGREE)
                 !The mean predicted displacement comes from the previous displacement and the previous velocity
-                CALL FieldVariable_ParameterSetsAdd(dynamicVariable,[firstMeanPredictionFactor,secondMeanPredictionFactor], &
-                  & [FIELD_PREVIOUS_VALUES_SET_TYPE,FIELD_PREVIOUS_VELOCITY_SET_TYPE], &
+                CALL FieldVariable_ParameterSetsCombineUpdate(dynamicVariable,[firstMeanPredictionFactor, &
+                  & secondMeanPredictionFactor],[FIELD_PREVIOUS_VALUES_SET_TYPE,FIELD_PREVIOUS_VELOCITY_SET_TYPE], &
                   & FIELD_MEAN_PREDICTED_DISPLACEMENT_SET_TYPE,err,error,*999)
                 !The mean predicted velocity is the current velocity
                 CALL FieldVariable_ParameterSetsCopy(dynamicVariable,FIELD_PREVIOUS_VELOCITY_SET_TYPE, &
                   & FIELD_MEAN_PREDICTED_VELOCITY_SET_TYPE,1.0_DP,err,error,*999)
                 IF(dynamicSolver%linearity==SOLVER_DYNAMIC_NONLINEAR) THEN
                   !The predicted displacement comes from the previous displacement and the previous velocity
-                  CALL FieldVariable_ParameterSetsAdd(dynamicVariable,[firstPredictionFactor,secondPredictionFactor], &
+                  CALL FieldVariable_ParameterSetsCombineUpdate(dynamicVariable,[firstPredictionFactor,secondPredictionFactor], &
                     & [FIELD_PREVIOUS_VALUES_SET_TYPE,FIELD_PREVIOUS_VELOCITY_SET_TYPE], &
                     & FIELD_PREDICTED_DISPLACEMENT_SET_TYPE,err,error,*999)
                 ENDIF
               CASE(SOLVER_DYNAMIC_THIRD_DEGREE)
                 !The mean predicted displacement comes from the previous displacement and the previous
                 !velocity and acceleration
-                CALL FieldVariable_ParameterSetsAdd(dynamicVariable,[firstMeanPredictionFactor,secondMeanPredictionFactor, &
-                  & thirdMeanPredictionFactor],[FIELD_PREVIOUS_VALUES_SET_TYPE,FIELD_PREVIOUS_VELOCITY_SET_TYPE, &
-                  & FIELD_PREVIOUS_ACCELERATION_SET_TYPE],FIELD_MEAN_PREDICTED_DISPLACEMENT_SET_TYPE,err,error,*999)
+                CALL FieldVariable_ParameterSetsCombineUpdate(dynamicVariable,[firstMeanPredictionFactor, &
+                  & secondMeanPredictionFactor,thirdMeanPredictionFactor],[FIELD_PREVIOUS_VALUES_SET_TYPE, &
+                  & FIELD_PREVIOUS_VELOCITY_SET_TYPE,FIELD_PREVIOUS_ACCELERATION_SET_TYPE], &
+                  & FIELD_MEAN_PREDICTED_DISPLACEMENT_SET_TYPE,err,error,*999)
                 !The mean predicted velocity comes from the previous velocity and acceleration
-                CALL FieldVariable_ParameterSetsAdd(dynamicVariable,[firstMeanPredictionFactor,secondMeanPredictionFactor], &
-                  & [FIELD_PREVIOUS_VELOCITY_SET_TYPE,FIELD_PREVIOUS_ACCELERATION_SET_TYPE], &
+                CALL FieldVariable_ParameterSetsCombineUpdate(dynamicVariable,[firstMeanPredictionFactor, &
+                  & secondMeanPredictionFactor],[FIELD_PREVIOUS_VELOCITY_SET_TYPE,FIELD_PREVIOUS_ACCELERATION_SET_TYPE], &
                   & FIELD_MEAN_PREDICTED_VELOCITY_SET_TYPE,err,error,*999)
                 !The mean predicted acceleration is the current acceleration
                 CALL FieldVariable_ParameterSetsCopy(dynamicVariable,FIELD_PREVIOUS_ACCELERATION_SET_TYPE, &
@@ -5640,7 +5641,7 @@ CONTAINS
                 IF(dynamicSolver%linearity==SOLVER_DYNAMIC_NONLINEAR) THEN
                   !The predicted displacement comes from the previous displacement and the previous
                   !velocity and acceleration
-                  CALL FieldVariable_ParameterSetsAdd(dynamicVariable,[firstPredictionFactor,secondPredictionFactor, &
+                  CALL FieldVariable_ParameterSetsCombineUpdate(dynamicVariable,[firstPredictionFactor,secondPredictionFactor, &
                     & thirdPredictionFactor],[FIELD_PREVIOUS_VALUES_SET_TYPE,FIELD_PREVIOUS_VELOCITY_SET_TYPE, &
                     & FIELD_PREVIOUS_ACCELERATION_SET_TYPE],FIELD_PREDICTED_DISPLACEMENT_SET_TYPE,err,error,*999)
                 ENDIF
@@ -5703,7 +5704,7 @@ CONTAINS
                       ENDIF
                     CASE(SOLVER_DYNAMIC_SECOND_DEGREE)
                       !The mean predicted displacement comes from the previous displacement and the previous velocity
-                      CALL FieldVariable_ParameterSetsAdd(residualVariable,[firstMeanPredictionFactor, &
+                      CALL FieldVariable_ParameterSetsCombineUpdate(residualVariable,[firstMeanPredictionFactor, &
                         & secondMeanPredictionFactor],[FIELD_PREVIOUS_VALUES_SET_TYPE,FIELD_PREVIOUS_VELOCITY_SET_TYPE], &
                         & FIELD_MEAN_PREDICTED_DISPLACEMENT_SET_TYPE,err,error,*999)
                       !The mean predicted velocity is the current velocity
@@ -5711,20 +5712,20 @@ CONTAINS
                         & FIELD_MEAN_PREDICTED_VELOCITY_SET_TYPE,1.0_DP,err,error,*999)
                       IF(dynamicSolver%linearity==SOLVER_DYNAMIC_NONLINEAR) THEN
                         !The predicted displacement comes from the previous displacement and the previous velocity
-                        CALL FieldVariable_ParameterSetsAdd(residualVariable,[firstPredictionFactor,secondPredictionFactor], &
-                          & [FIELD_PREVIOUS_VALUES_SET_TYPE,FIELD_PREVIOUS_VELOCITY_SET_TYPE], &
+                        CALL FieldVariable_ParameterSetsCombineUpdate(residualVariable,[firstPredictionFactor, &
+                          & secondPredictionFactor],[FIELD_PREVIOUS_VALUES_SET_TYPE,FIELD_PREVIOUS_VELOCITY_SET_TYPE], &
                           & FIELD_PREDICTED_DISPLACEMENT_SET_TYPE,err,error,*999)
                       END IF
                     CASE(SOLVER_DYNAMIC_THIRD_DEGREE)
                       !The mean predicted displacement comes from the previous displacement and the previous
                       !velocity and acceleration
-                      CALL FieldVariable_ParameterSetsAdd(residualVariable,[firstMeanPredictionFactor,secondMeanPredictionFactor, &
-                        & thirdMeanPredictionFactor],[FIELD_PREVIOUS_VALUES_SET_TYPE, &
+                      CALL FieldVariable_ParameterSetsCombineUpdate(residualVariable,[firstMeanPredictionFactor, &
+                        & secondMeanPredictionFactor,thirdMeanPredictionFactor],[FIELD_PREVIOUS_VALUES_SET_TYPE, &
                         & FIELD_PREVIOUS_VELOCITY_SET_TYPE,FIELD_PREVIOUS_ACCELERATION_SET_TYPE], &
                         & FIELD_MEAN_PREDICTED_DISPLACEMENT_SET_TYPE,err,error,*999)
                       !The mean predicted velocity comes from the previous velocity and acceleration
-                      CALL FieldVariable_ParameterSetsAdd(residualVariable,[firstMeanPredictionFactor,secondMeanPredictionFactor], &
-                        & [FIELD_PREVIOUS_VELOCITY_SET_TYPE,FIELD_PREVIOUS_ACCELERATION_SET_TYPE], &
+                      CALL FieldVariable_ParameterSetsCombineUpdate(residualVariable,[firstMeanPredictionFactor, &
+                        & secondMeanPredictionFactor],[FIELD_PREVIOUS_VELOCITY_SET_TYPE,FIELD_PREVIOUS_ACCELERATION_SET_TYPE], &
                         & FIELD_MEAN_PREDICTED_VELOCITY_SET_TYPE,err,error,*999)
                       !The mean predicted acceleration is the current acceleration
                       CALL FieldVariable_ParameterSetsCopy(residualVariable,FIELD_PREVIOUS_ACCELERATION_SET_TYPE, &
@@ -5732,8 +5733,8 @@ CONTAINS
                       IF(dynamicSolver%LINEARITY==SOLVER_DYNAMIC_NONLINEAR) THEN
                         !The predicted displacement comes from the previous displacement and the previous
                         !velocity and acceleration
-                        CALL FieldVariable_ParameterSetsAdd(residualVariable,[firstPredictionFactor,secondPredictionFactor, &
-                          & thirdPredictionFactor],[FIELD_PREVIOUS_VALUES_SET_TYPE, &
+                        CALL FieldVariable_ParameterSetsCombineUpdate(residualVariable,[firstPredictionFactor, &
+                          & secondPredictionFactor,thirdPredictionFactor],[FIELD_PREVIOUS_VALUES_SET_TYPE, &
                           & FIELD_PREVIOUS_VELOCITY_SET_TYPE,FIELD_PREVIOUS_ACCELERATION_SET_TYPE], &
                           & FIELD_PREDICTED_DISPLACEMENT_SET_TYPE,err,error,*999)
                       END IF
@@ -5797,27 +5798,28 @@ CONTAINS
                     ENDIF
                   CASE(SOLVER_DYNAMIC_SECOND_DEGREE)
                     !The mean predicted displacement comes from the previous displacement and the previous velocity
-                    CALL FieldVariable_ParameterSetsAdd(linearVariable,[firstMeanPredictionFactor,secondMeanPredictionFactor], &
-                      & [FIELD_PREVIOUS_VALUES_SET_TYPE,FIELD_PREVIOUS_VELOCITY_SET_TYPE], &
+                    CALL FieldVariable_ParameterSetsCombineUpdate(linearVariable,[firstMeanPredictionFactor, &
+                      & secondMeanPredictionFactor],[FIELD_PREVIOUS_VALUES_SET_TYPE,FIELD_PREVIOUS_VELOCITY_SET_TYPE], &
                       & FIELD_MEAN_PREDICTED_DISPLACEMENT_SET_TYPE,err,error,*999)
                     !The mean predicted velocity is the current velocity
                     CALL FieldVariable_ParameterSetsCopy(linearVariable,FIELD_PREVIOUS_VELOCITY_SET_TYPE, &
                       & FIELD_MEAN_PREDICTED_VELOCITY_SET_TYPE,1.0_DP,err,error,*999)
                     IF(dynamicSolver%linearity==SOLVER_DYNAMIC_NONLINEAR) THEN
                       !The predicted displacement comes from the previous displacement and the previous velocity
-                      CALL FieldVariable_ParameterSetsAdd(linearVariable,[firstPredictionFactor,secondPredictionFactor], &
-                        & [FIELD_PREVIOUS_VALUES_SET_TYPE,FIELD_PREVIOUS_VELOCITY_SET_TYPE], &
+                      CALL FieldVariable_ParameterSetsCombineUpdate(linearVariable,[firstPredictionFactor, &
+                        & secondPredictionFactor],[FIELD_PREVIOUS_VALUES_SET_TYPE,FIELD_PREVIOUS_VELOCITY_SET_TYPE], &
                         & FIELD_PREDICTED_DISPLACEMENT_SET_TYPE,err,error,*999)
                     ENDIF
                   CASE(SOLVER_DYNAMIC_THIRD_DEGREE)
                     !The mean predicted displacement comes from the previous displacement and the previous
                     !velocity and acceleration
-                    CALL FieldVariable_ParameterSetsAdd(linearVariable,[firstMeanPredictionFactor,secondMeanPredictionFactor, &
-                      & thirdMeanPredictionFactor],[FIELD_PREVIOUS_VALUES_SET_TYPE,FIELD_PREVIOUS_VELOCITY_SET_TYPE, &
-                      & FIELD_PREVIOUS_ACCELERATION_SET_TYPE],FIELD_MEAN_PREDICTED_DISPLACEMENT_SET_TYPE,err,error,*999)
+                    CALL FieldVariable_ParameterSetsCombineUpdate(linearVariable,[firstMeanPredictionFactor, &
+                      & secondMeanPredictionFactor,thirdMeanPredictionFactor],[FIELD_PREVIOUS_VALUES_SET_TYPE, &
+                      & FIELD_PREVIOUS_VELOCITY_SET_TYPE,FIELD_PREVIOUS_ACCELERATION_SET_TYPE], &
+                      & FIELD_MEAN_PREDICTED_DISPLACEMENT_SET_TYPE,err,error,*999)
                     !The mean predicted velocity comes from the previous velocity and acceleration
-                    CALL FieldVariable_ParameterSetsAdd(linearVariable,[firstMeanPredictionFactor,secondMeanPredictionFactor], &
-                      & [FIELD_PREVIOUS_VELOCITY_SET_TYPE,FIELD_PREVIOUS_ACCELERATION_SET_TYPE], &
+                    CALL FieldVariable_ParameterSetsCombineUpdate(linearVariable,[firstMeanPredictionFactor, &
+                      & secondMeanPredictionFactor],[FIELD_PREVIOUS_VELOCITY_SET_TYPE,FIELD_PREVIOUS_ACCELERATION_SET_TYPE], &
                       & FIELD_MEAN_PREDICTED_VELOCITY_SET_TYPE,err,error,*999)
                     !The mean predicted acceleration is the current acceleration
                     CALL FieldVariable_ParameterSetsCopy(linearVariable,FIELD_PREVIOUS_ACCELERATION_SET_TYPE, &
@@ -5825,7 +5827,7 @@ CONTAINS
                     IF(dynamicSolver%LINEARITY==SOLVER_DYNAMIC_NONLINEAR) THEN
                       !The predicted displacement comes from the previous displacement and the previous
                       !velocity and acceleration
-                      CALL FieldVariable_ParameterSetsAdd(linearVariable,[firstPredictionFactor,secondPredictionFactor, &
+                      CALL FieldVariable_ParameterSetsCombineUpdate(linearVariable,[firstPredictionFactor,secondPredictionFactor, &
                         & thirdPredictionFactor],[FIELD_PREVIOUS_VALUES_SET_TYPE,FIELD_PREVIOUS_VELOCITY_SET_TYPE, &
                         & FIELD_PREVIOUS_ACCELERATION_SET_TYPE],FIELD_PREDICTED_DISPLACEMENT_SET_TYPE,err,error,*999)
                     ENDIF
@@ -10213,10 +10215,10 @@ CONTAINS
       CALL FlagError(localError,err,error,*999)
     ENDIF
 
-    NULLIFY(controlLoop)
-    CALL Solver_ControlLoopGet(solver,controlLoop,err,error,*999)
-    CALL ControlLoop_CurrentTimeInformationGet(controlLoop,currentTime,timeIncrement,startTime,stopTime, &
-      & currentIteration,outputIteration,inputIteration,err,error,*999)
+    !NULLIFY(controlLoop)
+    !CALL Solver_ControlLoopGet(solver,controlLoop,err,error,*999)
+    !CALL ControlLoop_CurrentTimeInformationGet(controlLoop,currentTime,timeIncrement,startTime,stopTime, &
+    !  & currentIteration,outputIteration,inputIteration,err,error,*999)
     
     deltaT=dynamicSolver%timeIncrement
     SELECT CASE(dynamicSolver%degree)
@@ -11776,46 +11778,7 @@ CONTAINS
       ENDIF
       
     ENDIF !Calculate solver residual
-    
-    IF(dynamicSolver%solverInitialised) THEN
-      !Set the first part of the next time step. Note that we do not have to add in the previous time value as it is
-      !already there from when we copied the values to the previous time step.
-      !Loop over the equations sets
-      IF(dynamicSolver%degree>SOLVER_DYNAMIC_FIRST_DEGREE) THEN
-        DO equationsSetIdx=1,numberOfEquationsSets
-          NULLIFY(equationsSet)
-          CALL SolverMapping_EquationsSetGet(solverMapping,equationsSetIdx,equationsSet,err,error,*999)
-          NULLIFY(equations)
-          CALL EquationsSet_EquationsGet(equationsSet,equations,err,error,*999)
-          NULLIFY(vectorEquations)
-          CALL Equations_VectorEquationsGet(equations,vectorEquations,err,error,*999)
-          NULLIFY(vectorMapping)
-          CALL EquationsVector_VectorMappingGet(vectorEquations,vectorMapping,err,error,*999)
-          NULLIFY(dynamicMapping)
-          CALL EquationsMappingVector_DynamicMappingExists(vectorMapping,dynamicMapping,err,error,*999)
-          IF(ASSOCIATED(dynamicMapping)) THEN
-            NULLIFY(dynamicVariable)
-            CALL EquationsMappingDynamic_DynamicVariableGet(dynamicMapping,dynamicVariable,err,error,*999)
-            SELECT CASE(dynamicSolver%degree)
-            CASE(SOLVER_DYNAMIC_FIRST_DEGREE)
-              !Do nothing. Increment will be added after the solve.
-            CASE(SOLVER_DYNAMIC_SECOND_DEGREE)
-              CALL FieldVariable_ParameterSetsAdd(dynamicVariable,firstUpdateFactor,FIELD_PREVIOUS_VELOCITY_SET_TYPE, &
-                & FIELD_VALUES_SET_TYPE,err,error,*999)
-            CASE(SOLVER_DYNAMIC_THIRD_DEGREE)
-              CALL FieldVariable_ParameterSetsAdd(dynamicVariable,[firstUpdateFactor,secondUpdateFactor], &
-                & [FIELD_PREVIOUS_VELOCITY_SET_TYPE,FIELD_PREVIOUS_VALUES_SET_TYPE],FIELD_VALUES_SET_TYPE,err,error,*999)
-              CALL FieldVariable_ParameterSetsAdd(dynamicVariable,firstUpdateFactor,FIELD_PREVIOUS_ACCELERATION_SET_TYPE, &
-                & FIELD_VELOCITY_VALUES_SET_TYPE,err,error,*999)
-            CASE DEFAULT
-              localError="The dynamic solver degree of "//TRIM(NumberToVString(dynamicSolver%degree,"*",err,error))//" is invalid."
-              CALL FlagError(localError,err,error,*999)
-            END SELECT
-          ENDIF
-        ENDDO !equationsSetIdx
-      ENDIF
-    ENDIF
-      
+          
     !If required output the solver matrices
     IF(solver%outputType>=SOLVER_MATRIX_OUTPUT) THEN
       CALL SolverMatrices_Output(GENERAL_OUTPUT_TYPE,selectionType,solverMatrices,err,error,*999)

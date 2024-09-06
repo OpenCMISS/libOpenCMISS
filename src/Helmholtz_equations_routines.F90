@@ -93,7 +93,7 @@ MODULE HelmholtzEquationsRoutines
 
 !!MERGE: move
 
-  PUBLIC Helmholtz_BoundaryConditionsAnalyticCalculate
+  PUBLIC Helmholtz_AnalyticBoundaryConditionsCalculate
   
   PUBLIC Helmholtz_EquationsSetSolutionMethodSet
   
@@ -115,11 +115,13 @@ CONTAINS
 
 
   !>Calculates the analytic solution and sets the boundary conditions for an analytic problem.
-  SUBROUTINE Helmholtz_BoundaryConditionsAnalyticCalculate(equationsSet,boundaryConditions,err,error,*)
+  SUBROUTINE Helmholtz_AnalyticBoundaryConditionsCalculate(equationsSet,boundaryConditions,boundaryOnly,update,err,error,*)
 
     !Argument variables
     TYPE(EquationsSetType), POINTER :: equationsSet
     TYPE(BoundaryConditionsType), POINTER :: boundaryConditions
+    LOGICAL, INTENT(IN) :: boundaryOnly !<Only calculate if DOFs are on the boundary
+    LOGICAL, INTENT(IN) :: update !<.TRUE. if the boundary condition values are updated, .FALSE. if the boundary conditions are set.
     INTEGER(INTG), INTENT(OUT) :: err !<The error code
     TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
     !Local Variables
@@ -130,6 +132,7 @@ CONTAINS
     REAL(DP), POINTER :: geometricParameters(:),materialsParameters(:)
     LOGICAL :: boundaryNode
     TYPE(DomainType), POINTER :: domain
+    TYPE(DomainNodeType), POINTER :: domainNode
     TYPE(DomainNodesType), POINTER :: domainNodes
     TYPE(DomainTopologyType), POINTER :: domainTopology
     TYPE(EquationsSetAnalyticType), POINTER :: equationsAnalytic
@@ -137,7 +140,7 @@ CONTAINS
     TYPE(FieldVariableType), POINTER :: dependentVariable,geometricVariable,materialsVariable
     TYPE(VARYING_STRING) :: localError    
     
-    ENTERS("Helmholtz_BoundaryConditionsAnalyticCalculate",err,error,*999)
+    ENTERS("Helmholtz_AnalyticBoundaryConditionsCalculate",err,error,*999)
 
     IF(.NOT.ASSOCIATED(boundaryConditions)) CALL FlagError("Boundary conditions is not associated.",err,error,*999)
     NULLIFY(equationsAnalytic)
@@ -179,69 +182,73 @@ CONTAINS
         !Loop over the local nodes excluding the ghosts.
         CALL DomainNodes_NumberOfNodesGet(domainNodes,numberOfNodes,err,error,*999)
         DO nodeIdx=1,numberOfNodes
+          NULLIFY(domainNode)
+          CALL DomainNodes_NodeGet(domainNodes,nodeIdx,domainNode,err,error,*999)
+          CALL DomainNode_BoundaryNodeGet(domainNode,boundaryNode,err,error,*999)
+          IF((.NOT.boundaryOnly).OR.(boundaryOnly.AND.boundaryNode)) THEN
 !!TODO \todo We should interpolate the geometric field here and the node position.
-          DO dimensionIdx=1,numberOfDimensions
-            CALL FieldVariable_LocalNodeDOFGet(geometricVariable,1,1,nodeIdx,dimensionIdx,localDOFIdx,err,error,*999)
-            x(dimensionIdx)=geometricParameters(localDOFIdx)
-          ENDDO !dimensionIdx
-          CALL DomainNodes_NodeBoundaryNodeGet(domainNodes,nodeIdx,boundaryNode,err,error,*999)
-          !Loop over the derivatives
-          CALL DomainNodes_NodeNumberOfDerivativesGet(domainNodes,nodeIdx,numberOfNodeDerivatives,err,error,*999)
-          DO derivativeIdx=1,numberOfNodeDerivatives
-            CALL DomainNodes_DerivativeGlobalIndexGet(domainNodes,derivativeIdx,nodeIdx,globalDerivativeIndex,err,error,*999)
-            SELECT CASE(analyticFunctionType)
-            CASE(EQUATIONS_SET_HELMHOLTZ_EQUATION_TWO_DIM_1)
-              !u=cos(k*x/sqrt(2))*sin(k*y/sqrt(2))
-              SELECT CASE(variableType)
-              CASE(FIELD_U_VARIABLE_TYPE)
-                SELECT CASE(globalDerivativeIndex)
-                CASE(NO_GLOBAL_DERIV)
-                  analyticValue=COS(mu*x(1))*SIN(mu*x(2))
-                CASE(GLOBAL_DERIV_S1)
-                  analyticValue=-mu*SIN(mu*x(1))*SIN(mu*x(2))
-                CASE(GLOBAL_DERIV_S2)
-                  analyticValue=mu*COS(mu*x(1))*COS(mu*x(2))
-                CASE(GLOBAL_DERIV_S1_S2)
-                  analyticValue=-mu*mu*SIN(mu*x(1))*COS(mu*x(2))
+            DO dimensionIdx=1,numberOfDimensions
+              CALL FieldVariable_LocalNodeDOFGet(geometricVariable,1,1,nodeIdx,dimensionIdx,localDOFIdx,err,error,*999)
+              x(dimensionIdx)=geometricParameters(localDOFIdx)
+            ENDDO !dimensionIdx
+            !Loop over the derivatives
+            CALL DomainNode_NumberOfDerivativesGet(domainNode,numberOfNodeDerivatives,err,error,*999)
+            DO derivativeIdx=1,numberOfNodeDerivatives
+              CALL DomainNode_DerivativeGlobalDerivativeIndexGet(domainNode,derivativeIdx,globalDerivativeIndex,err,error,*999)
+              SELECT CASE(analyticFunctionType)
+              CASE(EQUATIONS_SET_HELMHOLTZ_EQUATION_TWO_DIM_1)
+                !u=cos(k*x/sqrt(2))*sin(k*y/sqrt(2))
+                SELECT CASE(variableType)
+                CASE(FIELD_U_VARIABLE_TYPE)
+                  SELECT CASE(globalDerivativeIndex)
+                  CASE(NO_GLOBAL_DERIV)
+                    analyticValue=COS(mu*x(1))*SIN(mu*x(2))
+                  CASE(GLOBAL_DERIV_S1)
+                    analyticValue=-mu*SIN(mu*x(1))*SIN(mu*x(2))
+                  CASE(GLOBAL_DERIV_S2)
+                    analyticValue=mu*COS(mu*x(1))*COS(mu*x(2))
+                  CASE(GLOBAL_DERIV_S1_S2)
+                    analyticValue=-mu*mu*SIN(mu*x(1))*COS(mu*x(2))
+                  CASE DEFAULT
+                    localError="The global derivative index of "//TRIM(NumberToVString(globalDerivativeIndex,"*",err,error))// &
+                      & " is invalid."
+                    CALL FlagError(localError,err,error,*999)
+                  END SELECT
+                CASE(FIELD_DELUDELN_VARIABLE_TYPE)
+                  SELECT CASE(globalDerivativeIndex)
+                  CASE(NO_GLOBAL_DERIV)
+                    analyticValue=0.0_DP !!TODO
+                  CASE(GLOBAL_DERIV_S1)
+                    CALL FlagError("Not implemented.",err,error,*999)
+                  CASE(GLOBAL_DERIV_S2)
+                    CALL FlagError("Not implemented.",err,error,*999)
+                  CASE(GLOBAL_DERIV_S1_S2)
+                    CALL FlagError("Not implemented.",err,error,*999)
+                  CASE DEFAULT
+                    localError="The global derivative index of "//TRIM(NumberToVString(globalDerivativeIndex,"*",err,error))// &
+                      & " is invalid."
+                    CALL FlagError(localError,err,error,*999)
+                  END SELECT
                 CASE DEFAULT
-                  localError="The global derivative index of "//TRIM(NumberToVString(globalDerivativeIndex,"*",err,error))// &
-                    & " is invalid."
-                  CALL FlagError(localError,err,error,*999)
-                END SELECT
-              CASE(FIELD_DELUDELN_VARIABLE_TYPE)
-                SELECT CASE(globalDerivativeIndex)
-                CASE(NO_GLOBAL_DERIV)
-                  analyticValue=0.0_DP !!TODO
-                CASE(GLOBAL_DERIV_S1)
-                  CALL FlagError("Not implemented.",err,error,*999)
-                CASE(GLOBAL_DERIV_S2)
-                  CALL FlagError("Not implemented.",err,error,*999)
-                CASE(GLOBAL_DERIV_S1_S2)
-                  CALL FlagError("Not implemented.",err,error,*999)
-                CASE DEFAULT
-                  localError="The global derivative index of "//TRIM(NumberToVString(globalDerivativeIndex,"*",err,error))// &
-                    & " is invalid."
+                  localError="The variable type of "//TRIM(NumberToVString(variableType,"*",err,error))//" is invalid."
                   CALL FlagError(localError,err,error,*999)
                 END SELECT
               CASE DEFAULT
-                localError="The variable type of "//TRIM(NumberToVString(variableType,"*",err,error))//" is invalid."
+                localError="The analytic function type of "//TRIM(NumberToVString(analyticFunctionType,"*",err,error))// &
+                  & " is invalid."
                 CALL FlagError(localError,err,error,*999)
               END SELECT
-            CASE DEFAULT
-              localError="The analytic function type of "//TRIM(NumberToVString(analyticFunctionType,"*",err,error))// &
-                & " is invalid."
-              CALL FlagError(localError,err,error,*999)
-            END SELECT
-            CALL FieldVariable_ParameterSetUpdateLocalNode(dependentVariable,FIELD_ANALYTIC_VALUES_SET_TYPE,1,derivativeIdx, &
-              & nodeIdx,componentIdx,analyticValue,err,error,*999)
-            IF(variableType==FIELD_U_VARIABLE_TYPE) THEN
-              IF(boundaryNode) THEN
-                !If we are a boundary node then set the analytic value on the boundary
-                CALL BoundaryConditions_SetLocalDOF(boundaryConditions,dependentVariable,localDOFIdx, &
-                  & BOUNDARY_CONDITION_FIXED,analyticValue,err,error,*999)
+              CALL FieldVariable_ParameterSetUpdateLocalNode(dependentVariable,FIELD_ANALYTIC_VALUES_SET_TYPE,1,derivativeIdx, &
+                & nodeIdx,componentIdx,analyticValue,err,error,*999)
+              IF(variableType==FIELD_U_VARIABLE_TYPE) THEN
+                IF(boundaryNode) THEN
+                  !If we are a boundary node then set the analytic value on the boundary
+                  CALL BoundaryConditions_SetLocalDOF(boundaryConditions,dependentVariable,localDOFIdx, &
+                    & BOUNDARY_CONDITION_FIXED,analyticValue,err,error,*999)
+                ENDIF
               ENDIF
-            ENDIF
-          ENDDO !derivativeIdx
+            ENDDO !derivativeIdx
+          ENDIF
         ENDDO !nodeIdx
       ENDDO !componentIdx
       CALL FieldVariable_ParameterSetUpdateStart(dependentVariable,FIELD_ANALYTIC_VALUES_SET_TYPE,err,error,*999)
@@ -250,13 +257,13 @@ CONTAINS
     CALL FieldVariable_ParameterSetDataRestore(geometricVariable,FIELD_VALUES_SET_TYPE,geometricParameters,err,error,*999)
     CALL FieldVariable_ParameterSetDataRestore(materialsVariable,FIELD_VALUES_SET_TYPE,materialsParameters,err,error,*999)
     
-    EXITS("Helmholtz_BoundaryConditionsAnalyticCalculate")
+    EXITS("Helmholtz_AnalyticBoundaryConditionsCalculate")
     RETURN
-999 ERRORS("Helmholtz_BoundaryConditionsAnalyticCalculate",err,error)
-    EXITS("Helmholtz_BoundaryConditionsAnalyticCalculate")
+999 ERRORS("Helmholtz_AnalyticBoundaryConditionsCalculate",err,error)
+    EXITS("Helmholtz_AnalyticBoundaryConditionsCalculate")
     RETURN 1
     
-  END SUBROUTINE Helmholtz_BoundaryConditionsAnalyticCalculate
+  END SUBROUTINE Helmholtz_AnalyticBoundaryConditionsCalculate
   
   !
   !================================================================================================================================

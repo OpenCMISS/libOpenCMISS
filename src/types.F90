@@ -2660,6 +2660,7 @@ END TYPE GeneratedMeshEllipsoidType
     LOGICAL :: analyticFinished !<Is .TRUE. if the analytic setup for the problem has finished being created, .FALSE. if not.
     LOGICAL :: analyticFieldAutoCreated !<Is .TRUE. if the analytic field has been auto created, .FALSE. if not.
     TYPE(FieldType), POINTER :: analyticField !<A pointer to the analytic field for the equations set if one is defined. If no source is defined the pointer is NULL.
+    LOGICAL :: isTemporalAnalytic !<.TRUE. if the analytic function is dependent on time, .FALSE. if not
     REAL(DP) :: analyticTime !<The time value to use for analytic evaluations.
     REAL(DP) :: analyticUserParams(20)  !<A small array that can be used to hold various parameters often required in analytic problems. \todo should this be allocated?
   END TYPE EquationsSetAnalyticType
@@ -3832,7 +3833,7 @@ END TYPE GeneratedMeshEllipsoidType
     TYPE(EquationsMatricesToSolverMatrixMapPtrType), ALLOCATABLE :: equationsMatricesToSolverMatrixMaps(:) !<equationsMatricesToSolverMatrixMaps(solverMatrixIdx). The mappings from the equations matrices in this equation set to the solverMatrixIdx'th solver_matrix
     INTEGER(INTG) :: numberOfEquationsMatrices !<The number of equations matrices in this equations set mapped to the solver matrices
     TYPE(EquationsMatrixToSolverMatricesMapPtrType), ALLOCATABLE :: equationsMatrixToSolverMatricesMaps(:) !<equationsMatrixToSolverMatricesMaps(equationsMatrixIdx). The mappings from the equation_matrix_idx'th equations matrix in this equation set to the solver_matrices.
-    INTEGER(INTG) :: numberOfJacobianMatrices !<The number of Jacobian matrices in this equatons set mapped to the solver matrices
+    INTEGER(INTG) :: numberOfJacobianMatrices !<The number of Jacobian matrices in this equations set mapped to the solver matrices
     TYPE(JacobianMatrixToSolverMatrixMapPtrType), ALLOCATABLE :: jacobianMatrixToSolverMatrixMaps(:) !<jacobianMatrixToSolverMatrixMaps(jacobianMatrixIdx). The mappings from the jacobianMatrixIdx'th Jacobian matrix in this equation set to the solver matrices map.
     TYPE(MatrixRowColCouplingType), POINTER :: equationsRowToSolverRowsMap(:) !<equationsRowToSolverRowsMap(equationsRowIdx). The mappings from the equationsRowIdx'th equations row to the solver matrices rows.
   END TYPE EquationsSetToSolverMatricesMapType
@@ -4244,6 +4245,20 @@ END TYPE GeneratedMeshEllipsoidType
     INTEGER(INTG) :: inputNumber !<The frequency of input
   END TYPE ControlLoopLoadIncrementType
 
+  !>Contains information about an equation involved in a control loop solver.
+  TYPE ControlLoopEquationType
+    TYPE(EquationsSetType), POINTER :: equationsSet !<A pointer to the equation set
+    TYPE(BoundaryConditionsType), POINTER :: boundaryConditions !<A pointer to the boundary conditions
+    LOGICAL :: hasAnalytic !<.TRUE. if the equation set has an analytic solution
+    LOGICAL :: hasTemporalAnalytic !<.TRUE. if the equation set has a temporal analytic solution
+  END TYPE ControlLoopEquationType
+
+  !>Contains information on the list of equations involved in the control loop solvers.
+  TYPE ControlLoopEquationsType
+    INTEGER(INTG) :: numberOfEquations !<The number of field variables in the control loop
+    TYPE(ControlLoopEquationType), ALLOCATABLE :: equations(:) !<equations(equationIdx). The information for the equationIdx'th equation.
+  END TYPE ControlLoopEquationsType
+
   !>Contains information about a dependent field variable involved in a control loop solver.
   TYPE ControlLoopFieldVariableType
     TYPE(FieldVariableType), POINTER :: fieldVariable !<A pointer to the field variable
@@ -4283,12 +4298,15 @@ END TYPE GeneratedMeshEllipsoidType
     INTEGER(INTG) :: numberOfSubLoops !<The number of control loops below this loop
     TYPE(ControlLoopPtrType), ALLOCATABLE :: subLoops(:) !<A array of pointers to the loops below this loop.
 
+    TYPE(ControlLoopEquationsType), POINTER :: equations !<A pointer to the equations information for this control loop.
     TYPE(ControlLoopFieldVariablesType), POINTER :: fieldVariables !<A pointer to the field variables information for this control loop.
     TYPE(SolversType), POINTER :: solvers !<A pointer to the solvers for this control loop
     TYPE(HISTORY_TYPE), POINTER :: history !<A pointer to the history file for this control loop.
   END TYPE ControlLoopType
 
   PUBLIC ControlLoopSimpleType,ControlLoopFixedType,ControlLoopTimeType,ControlLoopWhileType,ControlLoopLoadIncrementType
+
+  PUBLIC ControlLoopEquationType,ControlLoopEquationsType
 
   PUBLIC ControlLoopFieldVariableType,ControlLoopFieldVariablesType
 

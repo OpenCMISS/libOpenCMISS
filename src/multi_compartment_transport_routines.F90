@@ -462,9 +462,10 @@ CONTAINS
     TYPE(BoundaryConditionsVariableType), POINTER :: boundaryConditionsVariable
     TYPE(ControlLoopType), POINTER :: controlLoop
     TYPE(DomainType), POINTER :: domain
+    TYPE(DomainNodeType), POINTER :: domainNode
     TYPE(DomainNodesType), POINTER :: domainNodes
     TYPE(DomainTopologyType), POINTER :: domainTopology
-   TYPE(EquationsSetType), POINTER :: equationsSet 
+    TYPE(EquationsSetType), POINTER :: equationsSet 
     TYPE(EquationsSetAnalyticType), POINTER :: equationsAnalytic
     TYPE(FieldType), POINTER :: analyticField,dependentField,geometricField,materialsField,sourceField
     TYPE(FieldVariableType), POINTER :: analyticVariable,dependentVariable,geometricVariable,materialsVariable,sourceVariable
@@ -563,14 +564,16 @@ CONTAINS
             !Loop over the local nodes excluding the ghosts.
             CALL DomainNodes_NumberOfNodesGet(domainNodes,numberOfNodes,err,error,*999)
             DO nodeIdx=1,numberOfNodes
-              CALL DomainNodes_NodeBoundaryNodeGet(domainNodes,nodeIdx,boundaryNode,err,error,*999)
+              NULLIFY(domainNode)
+              CALL DomainNodes_NodeGet(domainNodes,nodeIdx,domainNode,err,error,*999)
+              CALL DomainNode_BoundaryNodeGet(domainNode,boundaryNode,err,error,*999)
               CALL Field_PositionNormalTangentsCalculateNode(dependentField,FIELD_U_VARIABLE_TYPE,componentIdx,nodeIdx, &
                 & position,normal,tangents,err,error,*999)
               CALL Diffusion_AnalyticFunctionsEvaluate(equationsSet,analyticFunctionType,componentIdx,currentTime, &
                 & position(:,NO_PART_DERIV),analyticParameters,analyticValue,gradientAnalyticValue,hessianAnalyticValue, &
                 & velocityAnalyticValue,accelerationAnalyticValue,err,error,*999)
-              CALL BoundaryConditions_SetAnalyticBoundaryNode(boundaryConditions,numberOfDimensions,dependentVariable, &
-                & componentIdx,domainNodes,nodeIdx,boundaryNode,tangents,normal,analyticValue,gradientAnalyticValue, &
+              CALL BoundaryConditions_AnalyticNodeSet(boundaryConditions,numberOfDimensions,dependentVariable, &
+                & componentIdx,domainNode,.TRUE.,tangents,normal,analyticValue,gradientAnalyticValue, &
                 & hessianAnalyticValue,.TRUE.,velocityAnalyticValue,.TRUE.,accelerationAnalyticValue,err,error,*999)
             ENDDO !nodeIdx
           ENDDO !componentIdx

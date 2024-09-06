@@ -85,7 +85,9 @@ MODULE FluidMechanicsRoutines
 
   !Interfaces
 
-  PUBLIC FluidMechanics_BoundaryConditionsAnalyticCalculate
+  PUBLIC FluidMechanics_AnalyticBoundaryConditionsSet
+
+  PUBLIC FluidMechanics_AnalyticBoundaryConditionsUpdate
 
   PUBLIC FluidMechanics_PreLoop,FluidMechanics_PostLoop
   
@@ -110,6 +112,112 @@ MODULE FluidMechanicsRoutines
   PUBLIC FluidMechanics_ProblemSpecificationSet
  
 CONTAINS
+
+  !
+  !================================================================================================================================
+  !
+
+  !>Sets the analytic boundary conditions for a fluid mechanics equation set class.
+  SUBROUTINE FluidMechanics_AnalyticBoundaryConditionsSet(equationsSet,boundaryConditions,err,error,*)
+
+    !Argument variables
+    TYPE(EquationsSetType), POINTER :: equationsSet !<A pointer to the equations set to set the analytic boundary conditions for
+    TYPE(BoundaryConditionsType), POINTER :: boundaryConditions !<A pointer to the boundary conditionsn to set
+    INTEGER(INTG), INTENT(OUT) :: err !<The error code
+    TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
+    !Local Variables
+    TYPE(VARYING_STRING) :: localError
+
+    ENTERS("FluidMechanics_AnalyticBoundaryConditionsSet",err,error,*999)
+
+    IF(.NOT.ASSOCIATED(equationsSet)) CALL FlagError("Equations set is not associated",err,error,*999)
+    IF(.NOT.ALLOCATED(equationsSet%specification)) &
+      & CALL FlagError("Equations set specification is not allocated.",err,error,*999)
+    IF(SIZE(equationsSet%specification,1)<2) &
+      & CALL FlagError("Equations set specification must have at least two entries for a fluid mechanics class equations set.", &
+      & err,error,*999)
+      
+    SELECT CASE(equationsSet%specification(2))
+    CASE(EQUATIONS_SET_BURGERS_EQUATION_TYPE)
+      CALL Burgers_AnalyticBoundaryConditionsCalculate(equationsSet,boundaryConditions,.FALSE.,.FALSE.,err,error,*999)
+    CASE(EQUATIONS_SET_STOKES_EQUATION_TYPE)
+      CALL Stokes_BoundaryConditionsAnalyticCalculate(equationsSet,boundaryConditions,err,error,*999)
+    CASE(EQUATIONS_SET_NAVIER_STOKES_EQUATION_TYPE)
+      CALL NavierStokes_BoundaryConditionsAnalyticCalculate(equationsSet,boundaryConditions,err,error,*999)
+    CASE(EQUATIONS_SET_DARCY_EQUATION_TYPE)
+      CALL Darcy_BoundaryConditionsAnalyticCalculate(equationsSet,boundaryConditions,err,error,*999)
+    CASE(EQUATIONS_SET_DARCY_PRESSURE_EQUATION_TYPE)
+      CALL FlagError("Not implemented.",err,error,*999)
+    CASE(EQUATIONS_SET_POISEUILLE_EQUATION_TYPE)
+      CALL Poiseuille_BoundaryConditionsAnalyticCalculate(equationsSet,boundaryConditions,err,error,*999)
+    CASE(EQUATIONS_SET_CHARACTERISTIC_EQUATION_TYPE)
+      CALL FlagError("Not implemented.",err,error,*999)
+    CASE DEFAULT
+      localError="Equations set equation type of "//TRIM(NumberToVString(equationsSet%specification(2),"*",err,error))// &
+        & " is not valid for a fluid mechanics equations set class."
+      CALL FlagError(localError,err,error,*999)
+    END SELECT
+
+    EXITS("FluidMechanics_AnalyticBoundaryConditionsUpdate")
+    RETURN
+999 ERRORS("FluidMechanics_AnalyticBoundaryConditionsUpdate",err,error)
+    EXITS("FluidMechanics_AnalyticBoundaryConditionsUpdate")
+    RETURN 1
+    
+  END SUBROUTINE FluidMechanics_AnalyticBoundaryConditionsSet
+
+  !
+  !================================================================================================================================
+  !
+
+  !>Updates the analytic boundary conditions for a fluid mechanics equation set class.
+  SUBROUTINE FluidMechanics_AnalyticBoundaryConditionsUpdate(equationsSet,boundaryConditions,err,error,*)
+
+    !Argument variables
+    TYPE(EquationsSetType), POINTER :: equationsSet !<A pointer to the equations set to update the analytic boundary conditions for
+    TYPE(BoundaryConditionsType), POINTER :: boundaryConditions !<A pointer to the boundary conditionsn to update
+    INTEGER(INTG), INTENT(OUT) :: err !<The error code
+    TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
+    !Local Variables
+    TYPE(VARYING_STRING) :: localError
+
+    ENTERS("FluidMechanics_AnalyticBoundaryConditionsUpdate",err,error,*999)
+
+    IF(.NOT.ASSOCIATED(equationsSet)) CALL FlagError("Equations set is not associated",err,error,*999)
+    IF(.NOT.ALLOCATED(equationsSet%specification)) &
+      & CALL FlagError("Equations set specification is not allocated.",err,error,*999)
+    IF(SIZE(equationsSet%specification,1)<2) &
+      & CALL FlagError("Equations set specification must have at least two entries for a fluid mechanics class equations set.", &
+      & err,error,*999)
+      
+    SELECT CASE(equationsSet%specification(2))
+    CASE(EQUATIONS_SET_BURGERS_EQUATION_TYPE)
+      CALL Burgers_AnalyticBoundaryConditionsCalculate(equationsSet,boundaryConditions,.TRUE.,.TRUE.,err,error,*999)
+    CASE(EQUATIONS_SET_STOKES_EQUATION_TYPE)
+      CALL Stokes_BoundaryConditionsAnalyticCalculate(equationsSet,boundaryConditions,err,error,*999)
+    CASE(EQUATIONS_SET_NAVIER_STOKES_EQUATION_TYPE)
+      CALL NavierStokes_BoundaryConditionsAnalyticCalculate(equationsSet,boundaryConditions,err,error,*999)
+    CASE(EQUATIONS_SET_DARCY_EQUATION_TYPE)
+      CALL Darcy_BoundaryConditionsAnalyticCalculate(equationsSet,boundaryConditions,err,error,*999)
+    CASE(EQUATIONS_SET_DARCY_PRESSURE_EQUATION_TYPE)
+      CALL FlagError("Not implemented.",err,error,*999)
+    CASE(EQUATIONS_SET_POISEUILLE_EQUATION_TYPE)
+      CALL Poiseuille_BoundaryConditionsAnalyticCalculate(equationsSet,boundaryConditions,err,error,*999)
+    CASE(EQUATIONS_SET_CHARACTERISTIC_EQUATION_TYPE)
+      CALL FlagError("Not implemented.",err,error,*999)
+    CASE DEFAULT
+      localError="Equations set equation type of "//TRIM(NumberToVString(equationsSet%specification(2),"*",err,error))// &
+        & " is not valid for a fluid mechanics equations set class."
+      CALL FlagError(localError,err,error,*999)
+    END SELECT
+
+    EXITS("FluidMechanics_AnalyticBoundaryConditionsUpdate")
+    RETURN
+999 ERRORS("FluidMechanics_AnalyticBoundaryConditionsUpdate",err,error)
+    EXITS("FluidMechanics_AnalyticBoundaryConditionsUpdate")
+    RETURN 1
+    
+  END SUBROUTINE FluidMechanics_AnalyticBoundaryConditionsUpdate
 
   !
   !================================================================================================================================
@@ -535,59 +643,6 @@ CONTAINS
     RETURN 1
     
   END SUBROUTINE FluidMechanics_EquationsSetSolutionMethodSet
-
-  !
-  !================================================================================================================================
-  !
-
-  !>Sets the analytic boundary conditions for a fluid mechanics equation set class.
-  SUBROUTINE FluidMechanics_BoundaryConditionsAnalyticCalculate(equationsSet,boundaryConditions,err,error,*)
-
-    !Argument variables
-    TYPE(EquationsSetType), POINTER :: equationsSet !<A pointer to the equations set to set the solution method for
-    TYPE(BoundaryConditionsType), POINTER :: boundaryConditions !<A pointer to the boundary conditionsn to set
-    INTEGER(INTG), INTENT(OUT) :: err !<The error code
-    TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
-    !Local Variables
-    TYPE(VARYING_STRING) :: localError
-
-    ENTERS("FluidMechanics_BoundaryConditionsAnalyticCalculate",err,error,*999)
-
-    IF(.NOT.ASSOCIATED(equationsSet)) CALL FlagError("Equations set is not associated",err,error,*999)
-    IF(.NOT.ALLOCATED(equationsSet%specification)) &
-      & CALL FlagError("Equations set specification is not allocated.",err,error,*999)
-    IF(SIZE(equationsSet%specification,1)<2) &
-      & CALL FlagError("Equations set specification must have at least two entries for a fluid mechanics class equations set.", &
-      & err,error,*999)
-      
-    SELECT CASE(equationsSet%specification(2))
-    CASE(EQUATIONS_SET_BURGERS_EQUATION_TYPE)
-      CALL Burgers_BoundaryConditionsAnalyticCalculate(equationsSet,boundaryConditions,.TRUE.,err,error,*999)
-    CASE(EQUATIONS_SET_STOKES_EQUATION_TYPE)
-      CALL Stokes_BoundaryConditionsAnalyticCalculate(equationsSet,boundaryConditions,err,error,*999)
-    CASE(EQUATIONS_SET_NAVIER_STOKES_EQUATION_TYPE)
-      CALL NavierStokes_BoundaryConditionsAnalyticCalculate(equationsSet,boundaryConditions,err,error,*999)
-    CASE(EQUATIONS_SET_DARCY_EQUATION_TYPE)
-      CALL Darcy_BoundaryConditionsAnalyticCalculate(equationsSet,boundaryConditions,err,error,*999)
-    CASE(EQUATIONS_SET_DARCY_PRESSURE_EQUATION_TYPE)
-      CALL FlagError("Not implemented.",err,error,*999)
-    CASE(EQUATIONS_SET_POISEUILLE_EQUATION_TYPE)
-      CALL Poiseuille_BoundaryConditionsAnalyticCalculate(equationsSet,boundaryConditions,err,error,*999)
-    CASE(EQUATIONS_SET_CHARACTERISTIC_EQUATION_TYPE)
-      CALL FlagError("Not implemented.",err,error,*999)
-    CASE DEFAULT
-      localError="Equations set equation type of "//TRIM(NumberToVString(equationsSet%specification(2),"*",err,error))// &
-        & " is not valid for a fluid mechanics equations set class."
-      CALL FlagError(localError,err,error,*999)
-    END SELECT
-
-    EXITS("FluidMechanics_BoundaryConditionsAnalyticCalculate")
-    RETURN
-999 ERRORS("FluidMechanics_BoundaryConditionsAnalyticCalculate",err,error)
-    EXITS("FluidMechanics_BoundaryConditionsAnalyticCalculate")
-    RETURN 1
-    
-  END SUBROUTINE FluidMechanics_BoundaryConditionsAnalyticCalculate
 
   !
   !================================================================================================================================

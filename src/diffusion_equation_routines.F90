@@ -100,9 +100,9 @@ MODULE DiffusionEquationsRoutines
 
   !Interfaces
 
-  PUBLIC Diffusion_AnalyticFunctionsEvaluate
+  PUBLIC Diffusion_AnalyticBoundaryConditionsCalculate
 
-  PUBLIC Diffusion_BoundaryConditionAnalyticCalculate
+  PUBLIC Diffusion_AnalyticFunctionsEvaluate
 
   PUBLIC Diffusion_EquationsSetSetup
 
@@ -134,6 +134,141 @@ MODULE DiffusionEquationsRoutines
 
 
 CONTAINS
+
+  !
+  !================================================================================================================================
+  !
+
+  !>Calculates the analytic solution and sets the boundary conditions for an analytic problem.
+  SUBROUTINE Diffusion_AnalyticBoundaryConditionsCalculate(equationsSet,boundaryConditions,boundaryOnly,update,err,error,*)
+
+    !Argument variables
+    TYPE(EquationsSetType), POINTER :: equationsSet !<A pointer to the equations set to calculate the booundary conditions for
+    TYPE(BoundaryConditionsType), POINTER :: boundaryConditions !<A pointer to the boundary conditions to calculate
+    LOGICAL, INTENT(IN) :: boundaryOnly !<.TRUE. if only the boundary nodes are calaculated, .FALSE. if all nodes are calculated
+    LOGICAL, INTENT(IN) :: update !<.TRUE. if the boundary condition values are updated, .FALSE. if the boundary conditions are set.
+    INTEGER(INTG), INTENT(OUT) :: err !<The error code
+    TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
+    !Local Variables
+    INTEGER(INTG) :: analyticFunctionType,componentIdx,esSpecification(3),nodeIdx,numberOfComponents,numberOfDimensions, &
+      & numberOfNodes,numberOfVariables,variableIdx,variableType
+    REAL(DP) :: position(3,MAXIMUM_GLOBAL_DERIV_NUMBER),normal(3),tangents(3,3),time,analyticValue, &
+      & gradientAnalyticValue(3),hessianAnalyticValue(3,3),velocityAnalyticValue,accelerationAnalyticValue
+    REAL(DP), POINTER :: analyticParameters(:),geometricParameters(:)
+    LOGICAL :: boundaryNode,setAcceleration,setVelocity
+    TYPE(DomainType), POINTER :: domain
+    TYPE(DomainNodeType), POINTER :: domainNode
+    TYPE(DomainNodesType), POINTER :: domainNodes
+    TYPE(DomainTopologyType), POINTER :: domainTopology
+    TYPE(FieldType), POINTER :: analyticField,dependentField,geometricField
+    TYPE(FieldParameterSetType), POINTER :: accelerationParameterSet,velocityParameterSet
+    TYPE(FieldVariableType), POINTER :: dependentVariable,geometricVariable
+ 
+    ENTERS("Diffusion_AnalyticBoundaryConditionsCalculate",err,error,*999)
+    
+    IF(.NOT.ASSOCIATED(boundaryConditions)) CALL FlagError("Boundary conditions is not associated.",err,error,*999)
+    CALL EquationsSet_SpecificationGet(equationsSet,3,esSpecification,err,error,*999)
+    CALL EquationsSet_AssertAnalyticIsCreated(equationsSet,err,error,*999)
+    CALL EquationsSet_AnalyticFunctionTypeGet(equationsSet,analyticFunctionType,err,error,*999)
+    
+    NULLIFY(dependentField)
+    CALL EquationsSet_DependentFieldGet(equationsSet,dependentField,err,error,*999)
+    NULLIFY(geometricField)
+    CALL EquationsSet_GeometricFieldGet(equationsSet,geometricField,err,error,*999)
+    NULLIFY(geometricVariable)
+    CALL Field_VariableGet(geometricField,FIELD_U_VARIABLE_TYPE,geometricVariable,err,error,*999)
+    CALL Field_NumberOfComponentsGet(geometricField,FIELD_U_VARIABLE_TYPE,numberOfDimensions,err,error,*999)
+    NULLIFY(geometricParameters)
+    CALL FieldVariable_ParameterSetDataGet(geometricVariable,FIELD_VALUES_SET_TYPE,geometricParameters,err,error,*999)
+    NULLIFY(analyticField)
+    NULLIFY(analyticParameters)    
+    CALL EquationsSet_AnalyticFieldExists(equationsSet,analyticField,err,error,*999)
+    IF(ASSOCIATED(analyticField)) &
+      & CALL Field_ParameterSetDataGet(analyticField,FIELD_U_VARIABLE_TYPE,FIELD_VALUES_SET_TYPE,analyticParameters,err,error,*999)
+    CALL EquationsSet_AnalyticTimeGet(equationsSet,time,err,error,*999)
+    CALL Field_NumberOfVariablesGet(dependentField,numberOfVariables,err,error,*999)
+    DO variableIdx=1,numberOfVariables
+      NULLIFY(dependentVariable)
+      CALL Field_VariableIndexGet(dependentField,variableIdx,dependentVariable,variableType,err,error,*999)
+      CALL FieldVariable_ParameterSetEnsureCreated(dependentVariable,FIELD_ANALYTIC_VALUES_SET_TYPE,err,error,*999)
+      setVelocity=.FALSE.
+      NULLIFY(velocityParameterSet)
+      CALL FieldVariable_ParameterSetExists(dependentVariable,FIELD_VELOCITY_VALUES_SET_TYPE,velocityParameterSet, &
+        & err,error,*999)
+      IF(ASSOCIATED(velocityParameterSet)) THEN
+        CALL FieldVariable_ParameterSetEnsureCreated(dependentVariable,FIELD_ANALYTIC_VELOCITY_VALUES_SET_TYPE,err,error,*999)
+        setVelocity=.TRUE.
+      ENDIF
+      setAcceleration=.FALSE.
+      NULLIFY(accelerationParameterSet)
+      CALL FieldVariable_ParameterSetExists(dependentVariable,FIELD_ACCELERATION_VALUES_SET_TYPE,accelerationParameterSet, &
+        & err,error,*999)
+      IF(ASSOCIATED(accelerationParameterSet)) THEN
+        CALL FieldVariable_ParameterSetEnsureCreated(dependentVariable,FIELD_ANALYTIC_ACCELERATION_VALUES_SET_TYPE, &
+          & err,error,*999)
+        setAcceleration=.TRUE.
+      ENDIF
+      CALL FieldVariable_NumberOfComponentsGet(dependentVariable,numberOfComponents,err,error,*999)
+      DO componentIdx=1,numberOfComponents
+        CALL FieldVariable_ComponentInterpolationCheck(dependentVariable,componentIdx,FIELD_NODE_BASED_INTERPOLATION, &
+          & err,error,*999)
+        NULLIFY(domain)
+        CALL FieldVariable_DomainGet(dependentVariable,componentIdx,domain,err,error,*999)
+        NULLIFY(domainTopology)
+        CALL Domain_DomainTopologyGet(domain,domainTopology,err,error,*999)
+        NULLIFY(domainNodes)
+        CALL DomainTopology_DomainNodesGet(domainTopology,domainNodes,err,error,*999)
+        !Loop over the local nodes excluding the ghosts.
+        CALL DomainNodes_NumberOfNodesGet(domainNodes,numberOfNodes,err,error,*999)
+        DO nodeIdx=1,numberOfNodes
+          NULLIFY(domainNode)
+          CALL DomainNodes_NodeGet(domainNodes,nodeIdx,domainNode,err,error,*999)
+          CALL DomainNode_BoundaryNodeGet(domainNode,boundaryNode,err,error,*999)
+          IF((.NOT.boundaryOnly).OR.(boundaryOnly.AND.boundaryNode)) THEN
+            CALL Field_PositionNormalTangentsCalculateNode(dependentField,FIELD_U_VARIABLE_TYPE,componentIdx,nodeIdx, &
+              & position,normal,tangents,err,error,*999)
+            CALL Diffusion_AnalyticFunctionsEvaluate(equationsSet,analyticFunctionType,componentIdx,time, &
+              & position(:,NO_PART_DERIV),analyticParameters,analyticValue,gradientAnalyticValue,hessianAnalyticValue, &
+              & velocityAnalyticValue,accelerationAnalyticValue,err,error,*999)
+            CALL BoundaryConditions_AnalyticNodeSet(boundaryConditions,numberOfDimensions,dependentVariable,componentIdx, &
+              & domainNode,update,tangents,normal,analyticValue,gradientAnalyticValue,hessianAnalyticValue, &
+              & setVelocity,velocityAnalyticValue,setAcceleration,accelerationAnalyticValue,err,error,*999)
+          ENDIF
+        ENDDO !nodeIdx
+      ENDDO !component_idx
+      CALL FieldVariable_ParameterSetUpdateStart(dependentVariable,FIELD_ANALYTIC_VALUES_SET_TYPE,err,error,*999)
+      CALL FieldVariable_ParameterSetUpdateStart(dependentVariable,FIELD_VALUES_SET_TYPE,err,error,*999)
+      IF(setVelocity) THEN
+        CALL FieldVariable_ParameterSetUpdateStart(dependentVariable,FIELD_VELOCITY_VALUES_SET_TYPE,err,error,*999)
+        CALL FieldVariable_ParameterSetUpdateStart(dependentVariable,FIELD_ANALYTIC_VELOCITY_VALUES_SET_TYPE,err,error,*999)
+      ENDIF
+      IF(setAcceleration) THEN
+        CALL FieldVariable_ParameterSetUpdateStart(dependentVariable,FIELD_ACCELERATION_VALUES_SET_TYPE,err,error,*999)
+        CALL FieldVariable_ParameterSetUpdateStart(dependentVariable,FIELD_ANALYTIC_ACCELERATION_VALUES_SET_TYPE,err,error,*999)
+      ENDIF
+      CALL FieldVariable_ParameterSetUpdateFinish(dependentVariable,FIELD_ANALYTIC_VALUES_SET_TYPE,err,error,*999)
+      CALL FieldVariable_ParameterSetUpdateFinish(dependentVariable,FIELD_VALUES_SET_TYPE,err,error,*999)
+      IF(setVelocity) THEN
+        CALL FieldVariable_ParameterSetUpdateFinish(dependentVariable,FIELD_VELOCITY_VALUES_SET_TYPE,err,error,*999)
+        CALL FieldVariable_ParameterSetUpdateFinish(dependentVariable,FIELD_ANALYTIC_VELOCITY_VALUES_SET_TYPE,err,error,*999)
+      ENDIF
+      IF(setAcceleration) THEN
+        CALL FieldVariable_ParameterSetUpdateFinish(dependentVariable,FIELD_ACCELERATION_VALUES_SET_TYPE,err,error,*999)
+        CALL FieldVariable_ParameterSetUpdateFinish(dependentVariable,FIELD_ANALYTIC_ACCELERATION_VALUES_SET_TYPE,err,error,*999)
+      ENDIF
+    ENDDO !variableIdx
+    IF(ASSOCIATED(analyticField)) &
+      & CALL Field_ParameterSetDataRestore(analyticField,FIELD_U_VARIABLE_TYPE,FIELD_VALUES_SET_TYPE,analyticParameters, &
+      & err,error,*999)            
+    CALL FieldVariable_ParameterSetDataRestore(geometricVariable,FIELD_VALUES_SET_TYPE,geometricParameters,err,error,*999)
+
+    EXITS("Diffusion_AnalyticBoundaryConditionsCalculate")
+    RETURN
+999 ERRORS("Diffusion_AnalyticBoundaryConditionsCalculate",err,error)
+    EXITS("Diffusion_AnalyticBoundaryConditionsCalculate")
+    RETURN 1
+    
+  END SUBROUTINE Diffusion_AnalyticBoundaryConditionsCalculate
 
   !
   !================================================================================================================================
@@ -334,100 +469,6 @@ CONTAINS
     RETURN 1
     
   END SUBROUTINE Diffusion_AnalyticFunctionsEvaluate
-
-  !
-  !================================================================================================================================
-  !
-
-  !>Calculates the analytic solution and sets the boundary conditions for an analytic problem.
-  SUBROUTINE Diffusion_BoundaryConditionAnalyticCalculate(equationsSet,boundaryConditions,err,error,*)
-
-    !Argument variables
-    TYPE(EquationsSetType), POINTER :: equationsSet !<A pointer to the equations set to calculate the boundary conditions for
-    TYPE(BoundaryConditionsType), POINTER :: boundaryConditions !<A pointer to the boundary conditions to calculate
-    INTEGER(INTG), INTENT(OUT) :: err !<The error code
-    TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
-    !Local Variables
-    INTEGER(INTG) :: analyticFunctionType,componentIdx,esSpecification(3),nodeIdx,numberOfComponents,numberOfDimensions, &
-      & numberOfNodes,numberOfVariables,variableIdx,variableType
-    REAL(DP) :: position(3,MAXIMUM_GLOBAL_DERIV_NUMBER),normal(3),tangents(3,3),time,analyticValue, &
-      & gradientAnalyticValue(3),hessianAnalyticValue(3,3),velocityAnalyticValue,accelerationAnalyticValue
-    REAL(DP), POINTER :: analyticParameters(:),geometricParameters(:)
-    LOGICAL :: boundaryNode
-    TYPE(DomainType), POINTER :: domain
-    TYPE(DomainNodesType), POINTER :: domainNodes
-    TYPE(DomainTopologyType), POINTER :: domainTopology
-    TYPE(FieldType), POINTER :: analyticField,dependentField,geometricField
-    TYPE(FieldVariableType), POINTER :: dependentVariable,geometricVariable
- 
-    ENTERS("Diffusion_BoundaryConditionAnalyticCalculate",err,error,*999)
-    
-    IF(.NOT.ASSOCIATED(boundaryConditions)) CALL FlagError("Boundary conditions is not associated.",err,error,*999)
-    CALL EquationsSet_SpecificationGet(equationsSet,3,esSpecification,err,error,*999)
-    CALL EquationsSet_AssertAnalyticIsCreated(equationsSet,err,error,*999)
-    CALL EquationsSet_AnalyticFunctionTypeGet(equationsSet,analyticFunctionType,err,error,*999)
-    
-    NULLIFY(dependentField)
-    CALL EquationsSet_DependentFieldGet(equationsSet,dependentField,err,error,*999)
-    NULLIFY(geometricField)
-    CALL EquationsSet_GeometricFieldGet(equationsSet,geometricField,err,error,*999)
-    NULLIFY(geometricVariable)
-    CALL Field_VariableGet(geometricField,FIELD_U_VARIABLE_TYPE,geometricVariable,err,error,*999)
-    CALL Field_NumberOfComponentsGet(geometricField,FIELD_U_VARIABLE_TYPE,numberOfDimensions,err,error,*999)
-    NULLIFY(geometricParameters)
-    CALL FieldVariable_ParameterSetDataGet(geometricVariable,FIELD_VALUES_SET_TYPE,geometricParameters,err,error,*999)
-    NULLIFY(analyticField)
-    NULLIFY(analyticParameters)    
-    CALL EquationsSet_AnalyticFieldExists(equationsSet,analyticField,err,error,*999)
-    IF(ASSOCIATED(analyticField)) &
-      & CALL Field_ParameterSetDataGet(analyticField,FIELD_U_VARIABLE_TYPE,FIELD_VALUES_SET_TYPE,analyticParameters,err,error,*999)
-    CALL EquationsSet_AnalyticTimeGet(equationsSet,time,err,error,*999)
-    CALL Field_NumberOfVariablesGet(dependentField,numberOfVariables,err,error,*999)
-    DO variableIdx=1,numberOfVariables
-      NULLIFY(dependentVariable)
-      CALL Field_VariableIndexGet(dependentField,variableIdx,dependentVariable,variableType,err,error,*999)
-      CALL FieldVariable_ParameterSetEnsureCreated(dependentVariable,FIELD_ANALYTIC_VALUES_SET_TYPE,err,error,*999)
-      CALL FieldVariable_NumberOfComponentsGet(dependentVariable,numberOfComponents,err,error,*999)
-      DO componentIdx=1,numberOfComponents
-        CALL FieldVariable_ComponentInterpolationCheck(dependentVariable,componentIdx,FIELD_NODE_BASED_INTERPOLATION, &
-          & err,error,*999)
-        NULLIFY(domain)
-        CALL FieldVariable_DomainGet(dependentVariable,componentIdx,domain,err,error,*999)
-        NULLIFY(domainTopology)
-        CALL Domain_DomainTopologyGet(domain,domainTopology,err,error,*999)
-        NULLIFY(domainNodes)
-        CALL DomainTopology_DomainNodesGet(domainTopology,domainNodes,err,error,*999)
-        !Loop over the local nodes excluding the ghosts.
-        CALL DomainNodes_NumberOfNodesGet(domainNodes,numberOfNodes,err,error,*999)
-        DO nodeIdx=1,numberOfNodes
-          CALL DomainNodes_NodeBoundaryNodeGet(domainNodes,nodeIdx,boundaryNode,err,error,*999)
-          CALL Field_PositionNormalTangentsCalculateNode(dependentField,FIELD_U_VARIABLE_TYPE,componentIdx,nodeIdx, &
-            & position,normal,tangents,err,error,*999)
-          CALL Diffusion_AnalyticFunctionsEvaluate(equationsSet,analyticFunctionType,componentIdx,time, &
-            & position(:,NO_PART_DERIV),analyticParameters,analyticValue,gradientAnalyticValue,hessianAnalyticValue, &
-            & velocityAnalyticValue,accelerationAnalyticValue,err,error,*999)
-          CALL BoundaryConditions_SetAnalyticBoundaryNode(boundaryConditions,numberOfDimensions,dependentVariable,componentIdx, &
-            & domainNodes,nodeIdx,boundaryNode,tangents,normal,analyticValue,gradientAnalyticValue,hessianAnalyticValue, &
-            & .TRUE.,velocityAnalyticValue,.TRUE.,accelerationAnalyticValue,err,error,*999)
-        ENDDO !nodeIdx
-      ENDDO !component_idx
-      CALL FieldVariable_ParameterSetUpdateStart(dependentVariable,FIELD_ANALYTIC_VALUES_SET_TYPE,err,error,*999)
-      CALL FieldVariable_ParameterSetUpdateStart(dependentVariable,FIELD_VALUES_SET_TYPE,err,error,*999)
-      CALL FieldVariable_ParameterSetUpdateFinish(dependentVariable,FIELD_ANALYTIC_VALUES_SET_TYPE,err,error,*999)
-      CALL FieldVariable_ParameterSetUpdateFinish(dependentVariable,FIELD_VALUES_SET_TYPE,err,error,*999)
-    ENDDO !variableIdx
-    IF(ASSOCIATED(analyticField)) &
-      & CALL Field_ParameterSetDataRestore(analyticField,FIELD_U_VARIABLE_TYPE,FIELD_VALUES_SET_TYPE,analyticParameters, &
-      & err,error,*999)            
-    CALL FieldVariable_ParameterSetDataRestore(geometricVariable,FIELD_VALUES_SET_TYPE,geometricParameters,err,error,*999)            
-
-    EXITS("Diffusion_BoundaryConditionAnalyticCalculate")
-    RETURN
-999 ERRORS("Diffusion_BoundaryConditionAnalyticCalculate",err,error)
-    EXITS("Diffusion_BoundaryConditionAnalyticCalculate")
-    RETURN 1
-    
-  END SUBROUTINE Diffusion_BoundaryConditionAnalyticCalculate
 
   !
   !================================================================================================================================
@@ -1494,6 +1535,8 @@ CONTAINS
             & " is invalid for an analytical diffusion equation."
           CALL FlagError(localError,err,error,*999)
         END SELECT
+        !Set temporal nature
+        CALL EquationsSet_AnalyticIsTemporalSet(equationsSet,.TRUE.,err,error,*999)
         !Create analytic field if required
         IF(numberOfAnalyticComponents>=1) THEN
           IF(equationsAnalytic%analyticFieldAutoCreated) THEN
@@ -1734,7 +1777,7 @@ CONTAINS
             CALL Equations_SparsityTypeGet(equations,sparsityType,err,error,*999)
             SELECT CASE(sparsityType)
             CASE(EQUATIONS_MATRICES_FULL_MATRICES) 
-              CALL EquationsMatricesVector_LinearStorageTypeSet(vectorMatrices, &
+              CALL EquationsMatricesVector_DynamicStorageTypeSet(vectorMatrices, &
                 & [DISTRIBUTED_MATRIX_BLOCK_STORAGE_TYPE,DISTRIBUTED_MATRIX_BLOCK_STORAGE_TYPE],err,error,*999)
               IF(esSpecification(3)==EQUATIONS_SET_QUADRATIC_SOURCE_DIFFUSION_SUBTYPE.OR. &
                 & esSpecification(3)==EQUATIONS_SET_EXPONENTIAL_SOURCE_DIFFUSION_SUBTYPE) THEN

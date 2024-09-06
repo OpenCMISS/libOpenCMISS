@@ -96,12 +96,12 @@ MODULE AdvectionDiffusionEquationsRoutines
 
   !Interfaces
 
+  PUBLIC AdvectionDiffusion_AnalyticBoundaryConditionsCalculate
+
   PUBLIC AdvectionDiffusion_EquationsSetSetup
 
   PUBLIC AdvectionDiffusion_EquationsSetSolnMethodSet
   
-  PUBLIC AdvectionDiffusion_BoundaryConditionsAnalyticCalculate
-
   PUBLIC AdvectionDiffusion_EquationsSetSpecificationSet
   
   PUBLIC AdvectionDiffusion_FiniteElementCalculate
@@ -130,12 +130,15 @@ CONTAINS
   !>Calculates the analytic solution and sets the boundary conditions for an analytic problem.
   !>For the advection-diffusion analytic example it is required that the advective velocity
   !>and the source field are set to a particular analytic value, which is performed within this subroutine.
-  SUBROUTINE AdvectionDiffusion_BoundaryConditionsAnalyticCalculate(equationsSet,boundaryConditions,err,error,*)
+  SUBROUTINE AdvectionDiffusion_AnalyticBoundaryConditionsCalculate(equationsSet,boundaryConditions,boundaryOnly,update, &
+    & err,error,*)
 
     !Argument variables
     TYPE(EquationsSetType), POINTER :: equationsSet
     TYPE(BoundaryConditionsType), POINTER :: boundaryConditions
-    INTEGER(INTG), INTENT(OUT) :: err !<The error code
+    LOGICAL, INTENT(IN) :: boundaryOnly !<Only calculate if DOFs are on the boundary
+    LOGICAL, INTENT(IN) :: update !<.TRUE. if the boundary condition values are updated, .FALSE. if the boundary conditions are set.
+     INTEGER(INTG), INTENT(OUT) :: err !<The error code
     TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
     !Local Variables
     INTEGER(INTG) :: analyticFunctionType,componentIdx,derivativeIdx,dimensionIdx,globalDerivativeIndex,localDOFIdx, &
@@ -145,13 +148,14 @@ CONTAINS
     REAL(DP), POINTER :: geometricParameters(:)
     LOGICAL :: boundaryNode
     TYPE(DomainType), POINTER :: domain
+    TYPE(DomainNodeType), POINTER :: domainNode
     TYPE(DomainNodesType), POINTER :: domainNodes
     TYPE(DomainTopologyType), POINTER :: domainTopology
     TYPE(FieldType), POINTER :: dependentField,geometricField,independentField,materialsField,sourceField
     TYPE(FieldVariableType), POINTER :: dependentVariable,geometricVariable,independentVariable,materialsVariable,sourceVariable
     TYPE(VARYING_STRING) :: localError
 
-    ENTERS("AdvectionDiffusion_BoundaryConditionsAnalyticCalculate",err,error,*999)
+    ENTERS("AdvectionDiffusion_AnalyticBoundaryConditionsCalculate",err,error,*999)
 
 !!TODO: do this properly with analytic field values.    
     alpha = 1.0_DP
@@ -188,72 +192,76 @@ CONTAINS
         !Loop over the local nodes excluding the ghosts.
         CALL DomainNodes_NumberOfNodesGet(domainNodes,numberOfNodes,err,error,*999)
         DO nodeIdx=1,numberOfNodes
+          NULLIFY(domainNode)
+          CALL DomainNodes_NodeGet(domainNodes,nodeIdx,domainNode,err,error,*999)
+          CALL DomainNode_BoundaryNodeGet(domainNode,boundaryNode,err,error,*999)
+          IF((.NOT.boundaryOnly).OR.(boundaryOnly.AND.boundaryNode)) THEN
 !!TODO \todo We should interpolate the geometric field here and the node position.
-          DO dimensionIdx=1,numberOfDimensions
-            !Default to version 1 of each node derivative
-            CALL FieldVariable_LocalNodeDOFGet(geometricVariable,1,1,nodeIdx,dimensionIdx,localDOFIdx,err,error,*999)
-            x(dimensionIdx)=geometricParameters(localDOFIdx)
-          ENDDO !dimensionIdx
-          CALL DomainNodes_NodeBoundaryNodeGet(domainNodes,nodeIdx,boundaryNode,err,error,*999)
-          !Loop over the derivatives
-          CALL DomainNodes_NodeNumberOfDerivativesGet(domainNodes,nodeIdx,numberOfNodeDerivatives,err,error,*999)
-          DO derivativeIdx=1,numberOfNodeDerivatives
-            CALL DomainNodes_DerivativeGlobalIndexGet(domainNodes,derivativeIdx,nodeIdx,globalDerivativeIndex,err,error,*999)
-            SELECT CASE(analyticFunctionType)
-            CASE(EQUATIONS_SET_ADVECTION_DIFFUSION_EQUATION_TWO_DIM_1)
-              !This is a steady-state solution of advection-diffusion equation
-              !Velocity field takes form v(x,y)=(sin(6y),cos(6x))
-              !Solution is u(x,y)=tanh(1 - alpha.(x.tan(Phi) - y))
-              SELECT CASE(variableType)
-              CASE(FIELD_U_VARIABLE_TYPE)
-                SELECT CASE(globalDerivativeIndex)
-                CASE(NO_GLOBAL_DERIV)
-                  dependentValue=TANH(1.0-alpha*(x(1)*tanphi-x(2)))
-                CASE(GLOBAL_DERIV_S1)
-                  CALL FlagError("Not implemented.",err,error,*999)
-                CASE(GLOBAL_DERIV_S2)
-                  CALL FlagError("Not implemented.",err,error,*999)
-                CASE(GLOBAL_DERIV_S1_S2)
-                  CALL FlagError("Not implmented.",err,error,*999)
+            DO dimensionIdx=1,numberOfDimensions
+              !Default to version 1 of each node derivative
+              CALL FieldVariable_LocalNodeDOFGet(geometricVariable,1,1,nodeIdx,dimensionIdx,localDOFIdx,err,error,*999)
+              x(dimensionIdx)=geometricParameters(localDOFIdx)
+            ENDDO !dimensionIdx
+            !Loop over the derivatives
+            CALL DomainNode_NumberOfDerivativesGet(domainNode,numberOfNodeDerivatives,err,error,*999)
+            DO derivativeIdx=1,numberOfNodeDerivatives
+              CALL DomainNode_DerivativeGlobalDerivativeIndexGet(domainNode,derivativeIdx,globalDerivativeIndex,err,error,*999)
+              SELECT CASE(analyticFunctionType)
+              CASE(EQUATIONS_SET_ADVECTION_DIFFUSION_EQUATION_TWO_DIM_1)
+                !This is a steady-state solution of advection-diffusion equation
+                !Velocity field takes form v(x,y)=(sin(6y),cos(6x))
+                !Solution is u(x,y)=tanh(1 - alpha.(x.tan(Phi) - y))
+                SELECT CASE(variableType)
+                CASE(FIELD_U_VARIABLE_TYPE)
+                  SELECT CASE(globalDerivativeIndex)
+                  CASE(NO_GLOBAL_DERIV)
+                    dependentValue=TANH(1.0-alpha*(x(1)*tanphi-x(2)))
+                  CASE(GLOBAL_DERIV_S1)
+                    CALL FlagError("Not implemented.",err,error,*999)
+                  CASE(GLOBAL_DERIV_S2)
+                    CALL FlagError("Not implemented.",err,error,*999)
+                  CASE(GLOBAL_DERIV_S1_S2)
+                    CALL FlagError("Not implmented.",err,error,*999)
+                  CASE DEFAULT
+                    localError="The global derivative index of "//TRIM(NumberToVString(globalDerivativeIndex,"*",err,error))// &
+                      & " is invalid."
+                    CALL FlagError(localError,err,error,*999)
+                  END SELECT
+                CASE(FIELD_DELUDELN_VARIABLE_TYPE)
+                  SELECT CASE(globalDerivativeIndex)
+                  CASE(NO_GLOBAL_DERIV)
+                    dependentValue=0.0_DP
+                  CASE(GLOBAL_DERIV_S1)
+                    CALL FlagError("Not implemented.",err,error,*999)
+                  CASE(GLOBAL_DERIV_S2)
+                    CALL FlagError("Not implemented.",err,error,*999)
+                  CASE(GLOBAL_DERIV_S1_S2)
+                    CALL FlagError("Not implemented.",err,error,*999)
+                  CASE DEFAULT
+                    localError="The global derivative index of "//TRIM(NumberToVString(globalDerivativeIndex,"*",err,error))// &
+                      & " is invalid."
+                    CALL FlagError(localError,err,error,*999)
+                  END SELECT
                 CASE DEFAULT
-                  localError="The global derivative index of "//TRIM(NumberToVString(globalDerivativeIndex,"*",err,error))// &
-                    & " is invalid."
-                  CALL FlagError(localError,err,error,*999)
-                END SELECT
-              CASE(FIELD_DELUDELN_VARIABLE_TYPE)
-                SELECT CASE(globalDerivativeIndex)
-                CASE(NO_GLOBAL_DERIV)
-                  dependentValue=0.0_DP
-                CASE(GLOBAL_DERIV_S1)
-                  CALL FlagError("Not implemented.",err,error,*999)
-                CASE(GLOBAL_DERIV_S2)
-                  CALL FlagError("Not implemented.",err,error,*999)
-                CASE(GLOBAL_DERIV_S1_S2)
-                  CALL FlagError("Not implemented.",err,error,*999)
-                CASE DEFAULT
-                  localError="The global derivative index of "//TRIM(NumberToVString(globalDerivativeIndex,"*",err,error))// &
-                    & " is invalid."
+                  localError="The variable type of "//TRIM(NumberToVString(variableType,"*",err,error))//" is invalid."
                   CALL FlagError(localError,err,error,*999)
                 END SELECT
               CASE DEFAULT
-                localError="The variable type of "//TRIM(NumberToVString(variableType,"*",err,error))//" is invalid."
+                localError="The analytic function type of "//TRIM(NumberToVString(analyticFunctionType,"*",err,error))// &
+                  & " is invalid."
                 CALL FlagError(localError,err,error,*999)
               END SELECT
-            CASE DEFAULT
-              localError="The analytic function type of "//TRIM(NumberToVString(analyticFunctionType,"*",err,error))// &
-                & " is invalid."
-              CALL FlagError(localError,err,error,*999)
-            END SELECT
-            !Default to version 1 of each node derivative
-            CALL FieldVariable_LocalNodeDOFGet(dependentVariable,1,derivativeIdx,nodeIdx,componentIdx,localDOFIdx,err,error,*999)
-            CALL FieldVariable_ParameterSetUpdateLocalDOF(dependentVariable,FIELD_ANALYTIC_VALUES_SET_TYPE,localDOFIdx, &
-              & dependentValue,err,error,*999)
-            IF(variableType==FIELD_U_VARIABLE_TYPE.AND.boundaryNode) THEN
-                !If we are a boundary node then set the analytic value on the boundary
-              CALL BoundaryConditions_SetLocalDOF(boundaryConditions,dependentVariable,localDOFIdx,BOUNDARY_CONDITION_FIXED, &
+              !Default to version 1 of each node derivative
+              CALL FieldVariable_LocalNodeDOFGet(dependentVariable,1,derivativeIdx,nodeIdx,componentIdx,localDOFIdx,err,error,*999)
+              CALL FieldVariable_ParameterSetUpdateLocalDOF(dependentVariable,FIELD_ANALYTIC_VALUES_SET_TYPE,localDOFIdx, &
                 & dependentValue,err,error,*999)
-            ENDIF
-          ENDDO !derivativeIdx
+              IF(variableType==FIELD_U_VARIABLE_TYPE.AND.boundaryNode) THEN
+                !If we are a boundary node then set the analytic value on the boundary
+                CALL BoundaryConditions_SetLocalDOF(boundaryConditions,dependentVariable,localDOFIdx,BOUNDARY_CONDITION_FIXED, &
+                  & dependentValue,err,error,*999)
+              ENDIF
+            ENDDO !derivativeIdx
+          ENDIF
         ENDDO !nodeIdx
       ENDDO !componentIdx
       CALL FieldVariable_ParameterSetUpdateStart(dependentVariable,FIELD_ANALYTIC_VALUES_SET_TYPE,err,error,*999)
@@ -280,33 +288,39 @@ CONTAINS
         !Loop over the local nodes excluding the ghosts.
         CALL DomainNodes_NumberOfNodesGet(domainNodes,numberOfNodes,err,error,*999)
         DO nodeIdx=1,numberOfNodes
+          NULLIFY(domainNode)
+          CALL DomainNodes_NodeGet(domainNodes,nodeIdx,domainNode,err,error,*999)
+          CALL DomainNode_BoundaryNodeGet(domainNode,boundaryNode,err,error,*999)
+          IF((.NOT.boundaryOnly).OR.(boundaryOnly.AND.boundaryNode)) THEN
 !!TODO \todo We should interpolate the geometric field here and the node position.
-          DO dimensionIdx=1,numberOfDimensions
-            !Default to version 1 of each node derivative
-            CALL FieldVariable_LocalNodeDOFGet(geometricVariable,1,1,nodeIdx,dimensionIdx,localDOFIdx,err,error,*999)
-            x(dimensionIdx)=geometricParameters(localDOFIdx)
-          ENDDO !dimensionIdx
-          !Loop over the derivatives
-          CALL DomainNodes_NodeNumberOfDerivativesGet(domainNodes,nodeIdx,numberOfNodeDerivatives,err,error,*999)
-          DO derivativeIdx=1,numberOfNodeDerivatives
-            SELECT CASE(analyticFunctionType)
-            CASE(EQUATIONS_SET_ADVECTION_DIFFUSION_EQUATION_TWO_DIM_1)
-              !Velocity field takes form v(x,y)=(sin(6y),cos(6x))
-              IF(componentIdx==1) THEN
-                independentValue=SIN(6.0_DP*x(1))
-              ELSE
-                independentValue=COS(6.0_DP*x(2))           
-              ENDIF
-            CASE DEFAULT
-              localError="The analytic function type of "//TRIM(NumberToVString(analyticFunctionType,"*",err,error))// &
-                & " is invalid."
-              CALL FlagError(localError,err,error,*999)
-            END SELECT
-            !Default to version 1 of each node derivative
-            CALL FieldVariable_LocalNodeDOFGet(independentVariable,1,derivativeIdx,nodeIdx,componentIdx,localDOFIdx,err,error,*999)
-            CALL FieldVariable_ParameterSetUpdateLocalDOF(independentVariable,FIELD_VALUES_SET_TYPE,localDOFIdx, &
-              & independentValue,err,error,*999)
-          ENDDO !derivativeIdx
+            DO dimensionIdx=1,numberOfDimensions
+              !Default to version 1 of each node derivative
+              CALL FieldVariable_LocalNodeDOFGet(geometricVariable,1,1,nodeIdx,dimensionIdx,localDOFIdx,err,error,*999)
+              x(dimensionIdx)=geometricParameters(localDOFIdx)
+            ENDDO !dimensionIdx
+            !Loop over the derivatives
+            CALL DomainNode_NumberOfDerivativesGet(domainNode,numberOfNodeDerivatives,err,error,*999)
+            DO derivativeIdx=1,numberOfNodeDerivatives
+              SELECT CASE(analyticFunctionType)
+              CASE(EQUATIONS_SET_ADVECTION_DIFFUSION_EQUATION_TWO_DIM_1)
+                !Velocity field takes form v(x,y)=(sin(6y),cos(6x))
+                IF(componentIdx==1) THEN
+                  independentValue=SIN(6.0_DP*x(1))
+                ELSE
+                  independentValue=COS(6.0_DP*x(2))           
+                ENDIF
+              CASE DEFAULT
+                localError="The analytic function type of "//TRIM(NumberToVString(analyticFunctionType,"*",err,error))// &
+                  & " is invalid."
+                CALL FlagError(localError,err,error,*999)
+              END SELECT
+              !Default to version 1 of each node derivative
+              CALL FieldVariable_LocalNodeDOFGet(independentVariable,1,derivativeIdx,nodeIdx,componentIdx,localDOFIdx, &
+                & err,error,*999)
+              CALL FieldVariable_ParameterSetUpdateLocalDOF(independentVariable,FIELD_VALUES_SET_TYPE,localDOFIdx, &
+                & independentValue,err,error,*999)
+            ENDDO !derivativeIdx
+          ENDIF
         ENDDO !nodeIdx
       ENDDO !componentIdx
       CALL FieldVariable_ParameterSetUpdateStart(independentVariable,FIELD_VALUES_SET_TYPE,err,error,*999)
@@ -333,32 +347,38 @@ CONTAINS
         !Loop over the local nodes excluding the ghosts.
         CALL DomainNodes_NumberOfNodesGet(domainNodes,numberOfNodes,err,error,*999)
         DO nodeIdx=1,numberOfNodes
+          NULLIFY(domainNode)
+          CALL DomainNodes_NodeGet(domainNodes,nodeIdx,domainNode,err,error,*999)
+          CALL DomainNode_BoundaryNodeGet(domainNode,boundaryNode,err,error,*999)
+          IF((.NOT.boundaryOnly).OR.(boundaryOnly.AND.boundaryNode)) THEN
 !!TODO \todo We should interpolate the geometric field here and the node position.
-          DO dimensionIdx=1,numberOfDimensions
-            !Default to version 1 of each node derivative
-            CALL FieldVariable_LocalNodeDOFGet(geometricVariable,1,1,nodeIdx,dimensionIdx,localDOFIdx,err,error,*999)
-            x(dimensionIdx)=geometricParameters(localDOFIdx)
-          ENDDO !dimensionIdx
-          !Loop over the derivatives
-          CALL DomainNodes_NodeNumberOfDerivativesGet(domainNodes,nodeIdx,numberOfNodeDerivatives,err,error,*999)
-          DO derivativeIdx=1,numberOfNodeDerivatives
-            SELECT CASE(analyticFunctionType)
-            CASE(EQUATIONS_SET_ADVECTION_DIFFUSION_EQUATION_TWO_DIM_1)
-              sourceValue=(1.0_DP/Peclet)*(2.0_DP*TANH(-0.1E1_DP+alpha*(tanphi*x(1)-x(2)))*(1.0_DP-(TANH(-0.1E1_DP+ &
-                & alpha*(tanphi*x(1)-x(2)))**2))*alpha*alpha*tanphi*tanphi+2.0_DP*TANH(-0.1E1_DP+ &
-                & alpha*(tanphi*x(1)-x(2)))*(1.0_DP-(TANH(-0.1E1_DP+alpha*(tanphi*x(1)-x(2)))**2))*alpha*alpha- &
-                & Peclet*(-SIN(6.0_DP*x(2))*(1.0_DP-(TANH(-0.1E1_DP+alpha*(tanphi*x(1)-x(2)))**2))*alpha*tanphi+ &
-                & COS(6.0_DP*x(1))*(1.0_DP-(TANH(-0.1E1_DP+alpha*(tanphi*x(1)-x(2)))**2))*alpha))
-            CASE DEFAULT
-              localError="The analytic function type of "//TRIM(NumberToVString(analyticFunctionType,"*",err,error))// &
-                & " is invalid."
-              CALL FlagError(localError,err,error,*999)
-            END SELECT
-            !Default to version 1 of each node derivative
-            CALL FieldVariable_LocalNodeDOFGet(independentVariable,1,derivativeIdx,nodeIdx,componentIdx,localDOFIdx,err,error,*999)
-            CALL FieldVariable_ParameterSetUpdateLocalDOF(sourceVariable,FIELD_VALUES_SET_TYPE,localDOFIdx,sourceValue, &
-              & err,error,*999)
-          ENDDO !derivativeIdx
+            DO dimensionIdx=1,numberOfDimensions
+              !Default to version 1 of each node derivative
+              CALL FieldVariable_LocalNodeDOFGet(geometricVariable,1,1,nodeIdx,dimensionIdx,localDOFIdx,err,error,*999)
+              x(dimensionIdx)=geometricParameters(localDOFIdx)
+            ENDDO !dimensionIdx
+            !Loop over the derivatives
+            CALL DomainNode_NumberOfDerivativesGet(domainNode,numberOfNodeDerivatives,err,error,*999)
+            DO derivativeIdx=1,numberOfNodeDerivatives
+              SELECT CASE(analyticFunctionType)
+              CASE(EQUATIONS_SET_ADVECTION_DIFFUSION_EQUATION_TWO_DIM_1)
+                sourceValue=(1.0_DP/Peclet)*(2.0_DP*TANH(-0.1E1_DP+alpha*(tanphi*x(1)-x(2)))*(1.0_DP-(TANH(-0.1E1_DP+ &
+                  & alpha*(tanphi*x(1)-x(2)))**2))*alpha*alpha*tanphi*tanphi+2.0_DP*TANH(-0.1E1_DP+ &
+                  & alpha*(tanphi*x(1)-x(2)))*(1.0_DP-(TANH(-0.1E1_DP+alpha*(tanphi*x(1)-x(2)))**2))*alpha*alpha- &
+                  & Peclet*(-SIN(6.0_DP*x(2))*(1.0_DP-(TANH(-0.1E1_DP+alpha*(tanphi*x(1)-x(2)))**2))*alpha*tanphi+ &
+                  & COS(6.0_DP*x(1))*(1.0_DP-(TANH(-0.1E1_DP+alpha*(tanphi*x(1)-x(2)))**2))*alpha))
+              CASE DEFAULT
+                localError="The analytic function type of "//TRIM(NumberToVString(analyticFunctionType,"*",err,error))// &
+                  & " is invalid."
+                CALL FlagError(localError,err,error,*999)
+              END SELECT
+              !Default to version 1 of each node derivative
+              CALL FieldVariable_LocalNodeDOFGet(independentVariable,1,derivativeIdx,nodeIdx,componentIdx,localDOFIdx, &
+                &err,error,*999)
+              CALL FieldVariable_ParameterSetUpdateLocalDOF(sourceVariable,FIELD_VALUES_SET_TYPE,localDOFIdx,sourceValue, &
+                & err,error,*999)
+            ENDDO !derivativeIdx
+          ENDIF
         ENDDO !nodeIdx
       ENDDO !componentIdx
       CALL FieldVariable_ParameterSetUpdateStart(sourceVariable,FIELD_VALUES_SET_TYPE,err,error,*999)
@@ -390,13 +410,13 @@ CONTAINS
     ENDDO !variableIdx
     CALL FieldVariable_ParameterSetDataRestore(geometricVariable,FIELD_VALUES_SET_TYPE,geometricParameters,err,error,*999)
 
-    EXITS("AdvectionDiffusion_BoundaryConditionsAnalyticCalculate")
+    EXITS("AdvectionDiffusion_AnalyticBoundaryConditionsAnalyticCalculate")
     RETURN
-999 ERRORS("AdvectionDiffusion_BoundaryConditionsAnalyticCalculate",err,error)
-    EXITS("AdvectionDiffusion_BoundaryConditionsAnalyticCalculate")
+999 ERRORS("AdvectionDiffusion_AnalyticBoundaryConditionsAnalyticCalculate",err,error)
+    EXITS("AdvectionDiffusion_AnalyticBoundaryConditionsAnalyticCalculate")
     RETURN 1
     
-  END SUBROUTINE AdvectionDiffusion_BoundaryConditionsAnalyticCalculate
+  END SUBROUTINE AdvectionDiffusion_AnalyticBoundaryConditionsCalculate
 
 
   !

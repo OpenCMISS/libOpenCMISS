@@ -1600,6 +1600,8 @@ CONTAINS
         CASE DEFAULT
           !Do nothing
         END SELECT
+        !Set temporal nature
+        CALL EquationsSet_AnalyticIsTemporalSet(equationsSet,.FALSE.,err,error,*999)
         !Create analytic field if required
         IF(numberOfAnalyticComponents>1) THEN
           IF(equationsAnalytic%analyticFieldAutoCreated) THEN

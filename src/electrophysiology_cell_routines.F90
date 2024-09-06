@@ -452,7 +452,7 @@ CONTAINS
     INTEGER(INTG), INTENT(OUT) :: err !<The error code
     TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
     !Local Variables
-    INTEGER(INTG) :: cellIdx,componentIdx,localDOFIdx,numberOfCells
+    INTEGER(INTG) :: cellIdx,localDOFIdx,numberOfCells
     INTEGER, PARAMETER :: cellDimension = 19
     REAL(DP) :: dYdt(1:cellDimension)
     REAL(DP), POINTER :: y(:)

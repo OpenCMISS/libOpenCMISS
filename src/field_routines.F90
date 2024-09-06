@@ -140,10 +140,16 @@ MODULE FieldRoutines
   END INTERFACE Field_LabelSetAndLock
 
   !>Adds the alpha times the parameter set values from one parameter set type to another parameter set type.
-  INTERFACE Field_ParameterSetsAdd
-    MODULE PROCEDURE Field_ParameterSetsAddDP0
-    MODULE PROCEDURE Field_ParameterSetsAddDP1
-  END INTERFACE Field_ParameterSetsAdd
+  INTERFACE Field_ParameterSetsCombineAdd
+    MODULE PROCEDURE Field_ParameterSetsCombineAddDP0
+    MODULE PROCEDURE Field_ParameterSetsCombineAddDP1
+  END INTERFACE Field_ParameterSetsCombineAdd
+
+  !>Updates a parameter set to alpha times the parameter set values from one parameter set type.
+  INTERFACE Field_ParameterSetsCombineUpdate
+    MODULE PROCEDURE Field_ParameterSetsCombineUpdateDP0
+    MODULE PROCEDURE Field_ParameterSetsCombineUpdateDP1
+  END INTERFACE Field_ParameterSetsCombineUpdate
 
   !>Adds the given value to the given parameter set for the constant of the field variable component.
   INTERFACE Field_ParameterSetAddConstant
@@ -577,11 +583,17 @@ MODULE FieldRoutines
     MODULE PROCEDURE FieldVariable_ParameterSetInterpolateXiDP1
   END INTERFACE FieldVariable_ParameterSetInterpolateXi
 
-    !>Adds the alpha times the parameter set values from one parameter set type to another parameter set type.
-  INTERFACE FieldVariable_ParameterSetsAdd
-    MODULE PROCEDURE FieldVariable_ParameterSetsAddDP0
-    MODULE PROCEDURE FieldVariable_ParameterSetsAddDP1
-  END INTERFACE FieldVariable_ParameterSetsAdd
+  !>Adds the alpha times the parameter set values from one parameter set type to another parameter set type.
+  INTERFACE FieldVariable_ParameterSetsCombineAdd
+    MODULE PROCEDURE FieldVariable_ParameterSetsCombineAddDP0
+    MODULE PROCEDURE FieldVariable_ParameterSetsCombineAddDP1
+  END INTERFACE FieldVariable_ParameterSetsCombineAdd
+
+  !>Updates another parameter set to  alpha times the parameter set values from one parameter set type 
+  INTERFACE FieldVariable_ParameterSetsCombineUpdate
+    MODULE PROCEDURE FieldVariable_ParameterSetsCombineUpdateDP0
+    MODULE PROCEDURE FieldVariable_ParameterSetsCombineUpdateDP1
+  END INTERFACE FieldVariable_ParameterSetsCombineUpdate
 
   !>Updates the given parameter set with the given value for the constant of the field variable component.
   INTERFACE FieldVariable_ParameterSetUpdateConstant
@@ -749,7 +761,7 @@ MODULE FieldRoutines
 
   PUBLIC Field_NumberOfVariablesSet,Field_NumberOfVariablesSetAndLock
 
-  PUBLIC Field_ParameterSetsAdd
+  PUBLIC Field_ParameterSetsCombineAdd,Field_ParameterSetsCombineUpdate
 
   PUBLIC Field_ParameterSetsCopy
 
@@ -913,7 +925,7 @@ MODULE FieldRoutines
 
   PUBLIC FieldVariable_ParameterSetOutput
 
-  PUBLIC FieldVariable_ParameterSetsAdd
+  PUBLIC FieldVariable_ParameterSetsCombineAdd,FieldVariable_ParameterSetsCombineUpdate
 
   PUBLIC FieldVariable_ParameterSetsCopy
 
@@ -8814,7 +8826,7 @@ CONTAINS
   !
 
   !>Adds the alpha times the parameter set values from one parameter set type to another parameter set type \todo make this call distributed vector add???
-  SUBROUTINE Field_ParameterSetsAddDP0(field,variableType,alpha,fieldFromSetType,fieldToSetType,err,error,*)
+  SUBROUTINE Field_ParameterSetsCombineAddDP0(field,variableType,alpha,fieldFromSetType,fieldToSetType,err,error,*)
 
     !Argument variables
     TYPE(FieldType), POINTER :: field !<A pointer to the field to add the parameter sets for
@@ -8826,23 +8838,23 @@ CONTAINS
     TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
     !Local Variables
 
-    ENTERS("Field_ParameterSetsAddDP0",err,error,*999)
+    ENTERS("Field_ParameterSetsCombineAddDP0",err,error,*999)
 
-    CALL Field_ParameterSetsAddDP1(field,variableType,[alpha],[fieldFromSetType],fieldToSetType,err,error,*999)
+    CALL Field_ParameterSetsCombineAddDP1(field,variableType,[alpha],[fieldFromSetType],fieldToSetType,err,error,*999)
 
-    EXITS("Field_ParameterSetsAddDP0")
+    EXITS("Field_ParameterSetsCombineAddDP0")
     RETURN
-999 ERRORSEXITS("Field_ParameterSetsAddDP0",err,error)
+999 ERRORSEXITS("Field_ParameterSetsCombineAddDP0",err,error)
     RETURN 1
     
-  END SUBROUTINE Field_ParameterSetsAddDP0
+  END SUBROUTINE Field_ParameterSetsCombineAddDP0
 
   !
   !================================================================================================================================
   !
 
   !>Adds the alpha times the parameter set values from one parameter set type to another parameter set type \todo make this call distributed vector add??? 
-  SUBROUTINE Field_ParameterSetsAddDP1(field,variableType,alphas,fieldFromSetTypes,fieldToSetType,err,error,*)
+  SUBROUTINE Field_ParameterSetsCombineAddDP1(field,variableType,alphas,fieldFromSetTypes,fieldToSetType,err,error,*)
 
     !Argument variables
     TYPE(FieldType), POINTER :: field !<A pointer to the field to add the parameter sets for
@@ -8855,19 +8867,79 @@ CONTAINS
     !Local Variables
     TYPE(FieldVariableType), POINTER :: fieldVariable
  
-    ENTERS("Field_ParameterSetsAddDP1",err,error,*999)
+    ENTERS("Field_ParameterSetsCombineAddDP1",err,error,*999)
 
     CALL Field_AssertIsFinished(field,err,error,*999)
     NULLIFY(fieldVariable)
     CALL Field_VariableGet(field,variableType,fieldVariable,err,error,*999)
-    CALL FieldVariable_ParameterSetsAdd(fieldVariable,alphas,fieldFromSetTypes,fieldToSetType,err,error,*999)
+    CALL FieldVariable_ParameterSetsCombineAdd(fieldVariable,alphas,fieldFromSetTypes,fieldToSetType,err,error,*999)
     
-    EXITS("Field_ParameterSetsAddDP1")
+    EXITS("Field_ParameterSetsCombineAddDP1")
     RETURN
-999 ERRORSEXITS("Field_ParameterSetsAddDP1",err,error)
+999 ERRORSEXITS("Field_ParameterSetsCombineAddDP1",err,error)
     RETURN 1
 
-  END SUBROUTINE Field_ParameterSetsAddDP1
+  END SUBROUTINE Field_ParameterSetsCombineAddDP1
+
+  !
+  !================================================================================================================================
+  !
+
+  !>Sets a parameter set to be alpha times the parameter set values from one parameter set type \todo make this call distributed vector add???
+  SUBROUTINE Field_ParameterSetsCombineUpdateDP0(field,variableType,alpha,fieldFromSetType,fieldToSetType,err,error,*)
+
+    !Argument variables
+    TYPE(FieldType), POINTER :: field !<A pointer to the field to add the parameter sets for
+    INTEGER(INTG), INTENT(IN) :: variableType !<The field variable type to update \see FieldRoutines_VariableTypes,FIELD_ROUTINE
+    REAL(DP), INTENT(IN) :: alpha !<The multiplicative factor for the conbination.
+    INTEGER(INTG), INTENT(IN) :: fieldFromSetType !<The field parameter set identifier to update the parameters from \see FieldRoutines_ParameterSetTypes,FieldRoutines
+    INTEGER(INTG), INTENT(IN) :: fieldToSetType !<The field parameter set identifier to update the parameters to \see FieldRoutines_ParameterSetTypes,FieldRoutines
+    INTEGER(INTG), INTENT(OUT) :: err !<The error code
+    TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
+    !Local Variables
+
+    ENTERS("Field_ParameterSetsCombineUpdateDP0",err,error,*999)
+
+    CALL Field_ParameterSetsCombineUpdateDP1(field,variableType,[alpha],[fieldFromSetType],fieldToSetType,err,error,*999)
+
+    EXITS("Field_ParameterSetsCombineUpdateDP0")
+    RETURN
+999 ERRORSEXITS("Field_ParameterSetsCombineUpdateDP0",err,error)
+    RETURN 1
+    
+  END SUBROUTINE Field_ParameterSetsCombineUpdateDP0
+
+  !
+  !================================================================================================================================
+  !
+
+  !>Sets a paramter set to alpha times the parameter set values from one parameter set type \todo make this call distributed vector add??? 
+  SUBROUTINE Field_ParameterSetsCombineUpdateDP1(field,variableType,alphas,fieldFromSetTypes,fieldToSetType,err,error,*)
+
+    !Argument variables
+    TYPE(FieldType), POINTER :: field !<A pointer to the field to add the parameter sets for
+    INTEGER(INTG), INTENT(IN) :: variableType !<The field variable type to add \see \see FieldRoutines_VariableTypes,FieldRoutines
+    REAL(DP), INTENT(IN) :: alphas(:) !<The multiplicative factor for the combination.
+    INTEGER(INTG), INTENT(IN) :: fieldFromSetTypes(:) !<The field parameter set identifier to update the parameters from \see FieldRoutines_ParameterSetTypes,FieldRoutines
+    INTEGER(INTG), INTENT(IN) :: fieldToSetType !<The field parameter set identifier to update the parameters to \see FieldRoutines_ParameterSetTypes,FieldRoutines
+    INTEGER(INTG), INTENT(OUT) :: err !<The error code
+    TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
+    !Local Variables
+    TYPE(FieldVariableType), POINTER :: fieldVariable
+ 
+    ENTERS("Field_ParameterSetsCombineUpdateDP1",err,error,*999)
+
+    CALL Field_AssertIsFinished(field,err,error,*999)
+    NULLIFY(fieldVariable)
+    CALL Field_VariableGet(field,variableType,fieldVariable,err,error,*999)
+    CALL FieldVariable_ParameterSetsCombineUpdate(fieldVariable,alphas,fieldFromSetTypes,fieldToSetType,err,error,*999)
+    
+    EXITS("Field_ParameterSetsCombineUpdateDP1")
+    RETURN
+999 ERRORSEXITS("Field_ParameterSetsCombineUpdateDP1",err,error)
+    RETURN 1
+
+  END SUBROUTINE Field_ParameterSetsCombineUpdateDP1
 
   !
   !================================================================================================================================
@@ -19587,7 +19659,7 @@ CONTAINS
   !
 
   !>Adds the alpha times the parameter set values from one parameter set type to another parameter set type \todo make this call distributed vector add???
-  SUBROUTINE FieldVariable_ParameterSetsAddDP0(fieldVariable,alpha,fieldFromSetType,fieldToSetType,err,error,*)
+  SUBROUTINE FieldVariable_ParameterSetsCombineAddDP0(fieldVariable,alpha,fieldFromSetType,fieldToSetType,err,error,*)
 
     !Argument variables
     TYPE(FieldVariableType), POINTER :: fieldVariable !<A pointer to the field variable to add the parameter sets for
@@ -19598,23 +19670,23 @@ CONTAINS
     TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
     !Local Variables
 
-    ENTERS("FieldVariable_ParameterSetsAddDP0",err,error,*999)
+    ENTERS("FieldVariable_ParameterSetsCombineAddDP0",err,error,*999)
 
-    CALL FieldVariable_ParameterSetsAddDP1(fieldVariable,[alpha],[fieldFromSetType],fieldToSetType,err,error,*999)
+    CALL FieldVariable_ParameterSetsCombineAddDP1(fieldVariable,[alpha],[fieldFromSetType],fieldToSetType,err,error,*999)
 
-    EXITS("FieldVariable_ParameterSetsAddDP0")
+    EXITS("FieldVariable_ParameterSetsCombineAddDP0")
     RETURN
-999 ERRORSEXITS("FieldVariable_ParameterSetsAddDP0",err,error)
+999 ERRORSEXITS("FieldVariable_ParameterSetsCombineAddDP0",err,error)
     RETURN 1
     
-  END SUBROUTINE FieldVariable_ParameterSetsAddDP0
+  END SUBROUTINE FieldVariable_ParameterSetsCombineAddDP0
 
   !
   !================================================================================================================================
   !
 
   !>Adds the alpha times the parameter set values from one parameter set type to another parameter set type \todo make this call distributed vector add??? 
-  SUBROUTINE FieldVariable_ParameterSetsAddDP1(fieldVariable,alphas,fieldFromSetTypes,fieldToSetType,err,error,*)
+  SUBROUTINE FieldVariable_ParameterSetsCombineAddDP1(fieldVariable,alphas,fieldFromSetTypes,fieldToSetType,err,error,*)
 
     !Argument variables
     TYPE(FieldVariableType), POINTER :: fieldVariable !<A pointer to the field variable to add the parameter sets for
@@ -19631,7 +19703,7 @@ CONTAINS
     TYPE(FieldParameterSetPtrType) :: fieldFromParameterSets(SIZE(fieldFromSetTypes,1))
     TYPE(VARYING_STRING) :: localError
 
-    ENTERS("FieldVariable_ParameterSetsAddDP1",err,error,*999)
+    ENTERS("FieldVariable_ParameterSetsCombineAddDP1",err,error,*999)
 
     IF(.NOT.ASSOCIATED(fieldVariable)) CALL FlagError("Field variable is not associated.",err,error,*999)
     
@@ -19668,13 +19740,107 @@ CONTAINS
         & fieldFromParameters(parameterSetIdx)%ptr,err,error,*999)
     ENDDO !parameterSetIdx
 
-    EXITS("FieldVariable_ParameterSetsAddDP1")
+    EXITS("FieldVariable_ParameterSetsCombineAddDP1")
 
     RETURN
-999 ERRORSEXITS("FieldVariable_ParameterSetsAddDP1",err,error)
+999 ERRORSEXITS("FieldVariable_ParameterSetsCombineAddDP1",err,error)
     RETURN 1
 
-  END SUBROUTINE FieldVariable_ParameterSetsAddDP1
+  END SUBROUTINE FieldVariable_ParameterSetsCombineAddDP1
+
+  !
+  !================================================================================================================================
+  !
+
+  !>Updates a parameter set to alpha times the parameter set values from one parameter set type \todo make this call distributed vector add???
+  SUBROUTINE FieldVariable_ParameterSetsCombineUpdateDP0(fieldVariable,alpha,fieldFromSetType,fieldToSetType,err,error,*)
+
+    !Argument variables
+    TYPE(FieldVariableType), POINTER :: fieldVariable !<A pointer to the field variable to combine the parameter sets for
+    REAL(DP), INTENT(IN) :: alpha !<The multiplicative factor for the combine.
+    INTEGER(INTG), INTENT(IN) :: fieldFromSetType !<The field parameter set identifier to update the parameters from \see FieldRoutines_ParameterSetTypes,FieldRoutines
+    INTEGER(INTG), INTENT(IN) :: fieldToSetType !<The field parameter set identifier to update the parameters to \see FieldRoutines_ParameterSetTypes,FieldRoutines
+    INTEGER(INTG), INTENT(OUT) :: err !<The error code
+    TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
+    !Local Variables
+
+    ENTERS("FieldVariable_ParameterSetsCombineUpdateDP0",err,error,*999)
+
+    CALL FieldVariable_ParameterSetsCombineUpdateDP1(fieldVariable,[alpha],[fieldFromSetType],fieldToSetType,err,error,*999)
+
+    EXITS("FieldVariable_ParameterSetsCombineUpdateDP0")
+    RETURN
+999 ERRORSEXITS("FieldVariable_ParameterSetsCombineUpdateDP0",err,error)
+    RETURN 1
+    
+  END SUBROUTINE FieldVariable_ParameterSetsCombineUpdateDP0
+
+  !
+  !================================================================================================================================
+  !
+
+  !>Updates a parameter set to alpha times the parameter set values from one parameter set type \todo make this call distributed vector add??? 
+  SUBROUTINE FieldVariable_ParameterSetsCombineUpdateDP1(fieldVariable,alphas,fieldFromSetTypes,fieldToSetType,err,error,*)
+
+    !Argument variables
+    TYPE(FieldVariableType), POINTER :: fieldVariable !<A pointer to the field variable to combine the parameter sets for
+    REAL(DP), INTENT(IN) :: alphas(:) !<The multiplicative factor for the combination.
+    INTEGER(INTG), INTENT(IN) :: fieldFromSetTypes(:) !<The field parameter set identifier to update the parameters from \see FieldRoutines_ParameterSetTypes,FieldRoutines
+    INTEGER(INTG), INTENT(IN) :: fieldToSetType !<The field parameter set identifier to update the parameters to \see FieldRoutines_ParameterSetTypes,FieldRoutines
+    INTEGER(INTG), INTENT(OUT) :: err !<The error code
+    TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
+    !Local Variables
+    INTEGER(INTG) :: dofIdx,parameterSetIdx
+    REAL(DP) :: toValue
+    TYPE(RealDPPtrType) :: fieldFromParameters(SIZE(fieldFromSetTypes,1))
+    TYPE(FieldParameterSetType), POINTER :: fieldToParameterSet
+    TYPE(FieldParameterSetPtrType) :: fieldFromParameterSets(SIZE(fieldFromSetTypes,1))
+    TYPE(VARYING_STRING) :: localError
+
+    ENTERS("FieldVariable_ParameterSetsCombineUpdateDP1",err,error,*999)
+
+    IF(.NOT.ASSOCIATED(fieldVariable)) CALL FlagError("Field variable is not associated.",err,error,*999)
+    
+    IF(SIZE(alphas,1)/=SIZE(fieldFromSetTypes,1)) THEN
+      localError="The size of the alpha array of "//TRIM(NumberToVString(SIZE(alphas,1),"*",err,error))// &
+        & " does not match the size of the from set type array of "// &
+        & TRIM(NumberToVString(SIZE(fieldFromSetTypes,1),"*",err,error))//"."
+      CALL FlagError(localError,err,error,*999)
+    ENDIF
+    !Get the to parameter set
+    NULLIFY(fieldToParameterSet)
+    CALL FieldVariable_ParameterSetGet(fieldVariable,fieldToSetType,fieldToParameterSet,err,error,*999)
+    !Get the from parameter sets and their data
+    DO parameterSetIdx=1,SIZE(fieldFromSetTypes,1)
+      NULLIFY(fieldFromParameterSets(parameterSetIdx)%ptr)
+      CALL FieldVariable_ParameterSetGet(fieldVariable,fieldFromSetTypes(parameterSetIdx), &
+        & fieldFromParameterSets(parameterSetIdx)%ptr,err,error,*999)
+      NULLIFY(fieldFromParameters(parameterSetIdx)%ptr)
+      CALL DistributedVector_DataGet(fieldFromParameterSets(parameterSetIdx)%ptr%parameters, &
+        & fieldFromParameters(parameterSetIdx)%ptr,err,error,*999)
+    ENDDO !parameterSetIdx
+    !Do not need to do an update here as each rank already has the values.
+    !Add the field dofs
+    DO dofIdx=1,fieldVariable%totalNumberOfDofs
+      toValue=0.0_DP
+      DO parameterSetIdx=1,SIZE(fieldFromSetTypes,1)
+        toValue=toValue+alphas(parameterSetIdx)*fieldFromParameters(parameterSetIdx)%ptr(dofIdx)
+      ENDDO !parameterSetIdx
+      CALL DistributedVector_ValuesSet(fieldToParameterSet%parameters,dofIdx,toValue,err,error,*999)
+    ENDDO !dofIdx
+    !Restore the from parameter set transfer
+    DO parameterSetIdx=1,SIZE(fieldFromSetTypes,1)
+      CALL DistributedVector_DataRestore(fieldFromParameterSets(parameterSetIdx)%ptr%parameters, &
+        & fieldFromParameters(parameterSetIdx)%ptr,err,error,*999)
+    ENDDO !parameterSetIdx
+
+    EXITS("FieldVariable_ParameterSetsCombineUpdateDP1")
+
+    RETURN
+999 ERRORSEXITS("FieldVariable_ParameterSetsCombineUpdateDP1",err,error)
+    RETURN 1
+
+  END SUBROUTINE FieldVariable_ParameterSetsCombineUpdateDP1
 
   !
   !================================================================================================================================

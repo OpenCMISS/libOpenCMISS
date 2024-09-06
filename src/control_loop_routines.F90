@@ -48,6 +48,7 @@ MODULE ControlLoopRoutines
   USE BaseRoutines
   USE Constants
   USE ControlLoopAccessRoutines
+  USE EquationsSetAccessRoutines
   USE FieldRoutines
   USE FieldAccessRoutines
   USE InputOutput
@@ -88,6 +89,8 @@ MODULE ControlLoopRoutines
   PUBLIC ControlLoop_CurrentTimeSetup
 
   PUBLIC ControlLoop_Destroy
+
+  PUBLIC ControlLoop_EquationsCalculate
 
   PUBLIC ControlLoop_FieldVariablesCalculate
 
@@ -270,6 +273,328 @@ CONTAINS
     RETURN 1
     
   END SUBROUTINE ControlLoop_Destroy
+
+  !
+  !================================================================================================================================
+  !
+
+  !>Finalises a ControlLoopEquationType and deallocates all memory
+  SUBROUTINE ControlLoop_EquationFinalise(controlLoopEquation,err,error,*)
+
+    !Argument variables
+    TYPE(ControlLoopEquationType), INTENT(INOUT) :: controlLoopEquation !<The control loop equation to finalise
+    INTEGER(INTG), INTENT(OUT) :: err !<The error code
+    TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
+    !Local Variables
+   
+    ENTERS("ControlLoop_EquationFinalise",err,error,*999)
+
+    NULLIFY(controlLoopEquation%equationsSet)
+    NULLIFY(controlLoopEquation%boundaryConditions)
+    controlLoopEquation%hasAnalytic=.FALSE.
+    controlLoopEquation%hasTemporalAnalytic=.FALSE.
+      
+    EXITS("ControlLoop_EquationFinalise")
+    RETURN
+999 ERRORSEXITS("ControlLoop_EquationFinalise",err,error)
+    RETURN 1
+    
+  END SUBROUTINE ControlLoop_EquationFinalise
+
+  !
+  !================================================================================================================================
+  !
+
+  !>Initialise a ControlLoopEquationType
+  SUBROUTINE ControlLoop_EquationInitialise(controlLoopEquation,err,error,*)
+
+    !Argument variables
+    TYPE(ControlLoopEquationType), INTENT(INOUT) :: controlLoopEquation !<The control loop equation to initialise
+    INTEGER(INTG), INTENT(OUT) :: err !<The error code
+    TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
+    !Local Variables
+   
+    ENTERS("ControlLoop_EquationInitialise",err,error,*999)
+
+    NULLIFY(controlLoopEquation%equationsSet)
+    NULLIFY(controlLoopEquation%boundaryConditions)
+    controlLoopEquation%hasAnalytic=.FALSE.
+    controlLoopEquation%hasTemporalAnalytic=.FALSE.
+      
+    EXITS("ControlLoop_EquationInitialise")
+    RETURN
+999 ERRORSEXITS("ControlLoop_EquationInitialise",err,error)
+    RETURN 1
+    
+  END SUBROUTINE ControlLoop_EquationInitialise
+
+  !
+  !================================================================================================================================
+  !
+
+  !>Adds equations to the list of control loop equations
+  SUBROUTINE ControlLoop_EquationsAdd(controlLoopEquations,equationsSet,boundaryConditions,err,error,*)
+
+    !Argument variables
+    TYPE(ControlLoopEquationsType), POINTER :: controlLoopEquations !<The control loop equations to add the equations to
+    TYPE(EquationsSetType), POINTER :: equationsSet !<A pointer to the equations set to add.
+    TYPE(BoundaryConditionsType), POINTER :: boundaryConditions !<A pointer to the boundary conditions to add
+    INTEGER(INTG), INTENT(OUT) :: err !<The error code
+    TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
+    !Local Variables
+    INTEGER(INTG) :: equationIdx
+    LOGICAL :: found,hasAnalytic,hasTemporalAnalytic
+    TYPE(ControlLoopEquationType), ALLOCATABLE :: newEquations(:)
+    TYPE(EquationsSetType), POINTER :: controlLoopEquationsSet
+    TYPE(EquationsSetAnalyticType), POINTER :: equationsSetAnalytic
+   
+    ENTERS("ControlLoop_EquationsAdd",err,error,*999)
+
+    IF(.NOT.ASSOCIATED(controlLoopEquations)) CALL FlagError("Control loop equations is not associated.",err,error,*999)
+    IF(.NOT.ASSOCIATED(equationsSet)) CALL FlagError("Equations set is not associated.",err,error,*999)
+    
+    !See if we already have this equations set in the list for the control loop
+    found=.FALSE.
+    DO equationIdx=1,controlLoopEquations%numberOfEquations
+      controlLoopEquationsSet=>controlLoopEquations%equations(equationIdx)%equationsSet
+      IF(ASSOCIATED(equationsSet,controlLoopEquationsSet)) THEN
+        found=.TRUE.
+        EXIT
+      ENDIF
+    ENDDO !equationIdx
+    IF(.NOT.found) THEN
+      !We have not found the equations set in the control loop list so add it to the list.
+      !Reallocate the list to take the new variable
+      ALLOCATE(newEquations(controlLoopEquations%numberOfEquations+1),STAT=err)
+      IF(err/=0) CALL FlagError("Could not allocate new equations.",err,error,*999)
+      DO equationIdx=1,controlLoopEquations%numberOfEquations
+        newEquations(equationIdx)%equationsSet=>controlLoopEquations%equations(equationIdx)%equationsSet
+        newEquations(equationIdx)%boundaryConditions=>controlLoopEquations%equations(equationIdx)%boundaryConditions
+        newEquations(equationIdx)%hasAnalytic=controlLoopEquations%equations(equationIdx)%hasAnalytic
+        newEquations(equationIdx)%hasTemporalAnalytic=controlLoopEquations%equations(equationIdx)%hasTemporalAnalytic
+      ENDDO !equationIdx
+      !Add in the equations set and it's information
+      CALL EquationsSet_AnalyticExists(equationsSet,equationsSetAnalytic,err,error,*999)
+      IF(ASSOCIATED(equationsSetAnalytic)) THEN
+        hasAnalytic=.TRUE.
+        CALL EquationsSet_AnalyticIsTemporalGet(equationsSet,hasTemporalAnalytic,err,error,*999)
+      ELSE
+        hasTemporalAnalytic=.FALSE.
+      ENDIF
+      CALL ControlLoop_EquationInitialise(newEquations(controlLoopEquations%numberOfEquations+1),err,error,*999)
+      newEquations(controlLoopEquations%numberOfEquations+1)%equationsSet=>equationsSet
+      newEquations(controlLoopEquations%numberOfEquations+1)%boundaryConditions=>boundaryConditions
+      newEquations(controlLoopEquations%numberOfEquations+1)%hasAnalytic=hasAnalytic
+      newEquations(controlLoopEquations%numberOfEquations+1)%hasTemporalAnalytic=hasTemporalAnalytic
+      !Move alloc the new list
+      CALL MOVE_ALLOC(newEquations,controlLoopEquations%equations)
+      controlLoopEquations%numberOfEquations=controlLoopEquations%numberOfEquations+1
+    ENDIF
+     
+    EXITS("ControlLoop_EquationsAdd")
+    RETURN
+999 IF(ALLOCATED(newEquations)) DEALLOCATE(newEquations)
+    ERRORSEXITS("ControlLoop_EquationsAdd",err,error)
+    RETURN 1
+    
+  END SUBROUTINE ControlLoop_EquationsAdd
+
+  !
+  !================================================================================================================================
+  !
+
+  !>Calculate the equations involved in a control loop
+  RECURSIVE SUBROUTINE ControlLoop_EquationsCalculate(controlLoop,err,error,*)
+
+    !Argument variables
+    TYPE(ControlLoopType), POINTER, INTENT(INOUT) :: controlLoop !<A pointer to the control loop to calculate the equations for.
+    INTEGER(INTG), INTENT(OUT) :: err !<The error code
+    TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
+    !Local Variables
+    INTEGER(INTG) :: equationIdx,equationsSetIdx,loopIdx,numberOfEquationsSets,numberOfSolvers,solverIdx
+    TYPE(BoundaryConditionsType), POINTER :: boundaryConditions
+    TYPE(ControlLoopType), POINTER :: controlLoop2
+    TYPE(EquationsSetType), POINTER :: equationsSet
+    TYPE(RegionType), POINTER :: region
+    TYPE(SolverType), POINTER :: solver
+    TYPE(SolverEquationsType), POINTER :: solverEquations
+    TYPE(SolverMappingType), POINTER :: solverMapping
+    TYPE(SolversType), POINTER :: solvers
+    TYPE(VARYING_STRING) :: localError
+   
+    ENTERS("ControlLoop_EquationsCalculate",err,error,*999)
+
+    IF(.NOT.ASSOCIATED(controlLoop)) CALL FlagError("Control loop is not associated.",err,error,*999)
+
+    IF(controlLoop%numberOfSubLoops>0) THEN
+      !We have sub loops so recursively calculate the equations for the underlying control loops
+      DO loopIdx=1,controlLoop%numberOfSubLoops
+        controlLoop2=>controlLoop%subLoops(loopIdx)%ptr
+        CALL ControlLoop_EquationsCalculate(controlLoop2,err,error,*999)
+      ENDDO !loopIdx
+      !Add all the equations set from the sub-loops to this loop
+      !Initialise this control loop field variables
+      CALL ControlLoop_EquationsInitialise(controlLoop,err,error,*999)
+      DO loopIdx=1,controlLoop%numberOfSubLoops
+        controlLoop2=>controlLoop%subLoops(loopIdx)%ptr
+        IF(.NOT.ASSOCIATED(controlLoop2%equations)) THEN
+          localError="Equations is not associated for sub loop index "// &
+            & TRIM(NumberToVString(loopIdx,"*",err,error))//"."
+          CALL FlagError(localError,err,error,*999)
+        ENDIF
+        DO equationIdx=1,controlLoop2%equations%numberOfEquations
+          equationsSet=>controlLoop2%equations%equations(equationIdx)%equationsSet
+          boundaryConditions=>controlLoop2%equations%equations(equationIdx)%boundaryConditions 
+          CALL ControlLoop_EquationsAdd(controlLoop%equations,equationsSet,boundaryConditions,err,error,*999)
+        ENDDO !equationIdx
+      ENDDO !loopIdx
+    ELSE
+      !There are no sub loops so process the solvers for this loop to calculate the equations
+      !Initialise this control loop equations
+      CALL ControlLoop_EquationsInitialise(controlLoop,err,error,*999)
+      NULLIFY(solvers)
+      CALL ControlLoop_SolversGet(controlLoop,solvers,err,error,*999)
+      !Loop over the solvers
+      CALL Solvers_NumberOfSolversGet(solvers,numberOfSolvers,err,error,*999)
+      DO solverIdx=1,numberOfSolvers
+        !Get the solver
+        NULLIFY(solver)
+        CALL Solvers_SolverGet(solvers,solverIdx,solver,err,error,*999)
+        NULLIFY(solverEquations)
+        CALL Solver_SolverEquationsExists(solver,solverEquations,err,error,*999)
+!!TODO: Need to think about solvers that do not have solver equations.
+        IF(ASSOCIATED(solverEquations)) THEN
+          !If we have solver equations then find the equations sets.
+          !Get the solver mapping
+          NULLIFY(solverMapping)
+          CALL SolverEquations_SolverMappingGet(solverEquations,solverMapping,err,error,*999)
+          NULLIFY(boundaryConditions)
+          CALL SolverEquations_BoundaryConditionsGet(solverEquations,boundaryConditions,err,error,*999)         
+          !Loop over the equations sets
+          CALL SolverMapping_NumberOfEquationsSetsGet(solverMapping,numberOfEquationsSets,err,error,*999)
+          DO equationsSetIdx=1,numberOfEquationsSets
+            NULLIFY(equationsSet)
+            CALL SolverMapping_EquationsSetGet(solverMapping,equationsSetIdx,equationsSet,err,error,*999)
+            CALL ControlLoop_EquationsAdd(controlLoop%equations,equationsSet,boundaryConditions,err,error,*999)            
+          ENDDO !equationsSetIdx
+        ENDIF
+      ENDDO !solverIdx
+    ENDIF
+
+    IF(diagnostics1) THEN
+      CALL WriteString(DIAGNOSTIC_OUTPUT_TYPE,"",err,error,*999)
+      CALL WriteString(DIAGNOSTIC_OUTPUT_TYPE,"Control loop equations:",err,error,*999)
+      CALL WriteStringValue(DIAGNOSTIC_OUTPUT_TYPE,"  Loop level = ",controlLoop%controlLoopLevel,err,error,*999)
+      CALL WriteStringValue(DIAGNOSTIC_OUTPUT_TYPE,"  Sub loop index = ",controlLoop%subLoopIndex,err,error,*999)
+      CALL WriteStringValue(DIAGNOSTIC_OUTPUT_TYPE,"  Label = ",controlLoop%label,err,error,*999)
+      CALL WriteStringValue(DIAGNOSTIC_OUTPUT_TYPE,"  Loop type = ",controlLoop%loopType,err,error,*999)
+      CALL WriteString(DIAGNOSTIC_OUTPUT_TYPE,"  Equations:",err,error,*999)
+      IF(ASSOCIATED(controlLoop%equations)) THEN
+        CALL WriteStringValue(DIAGNOSTIC_OUTPUT_TYPE,"    Number of equations = ",controlLoop%equations%numberOfEquations, &
+          & err,error,*999)
+        IF(ALLOCATED(controlLoop%equations%equations)) THEN
+          DO equationIdx=1,controlLoop%equations%numberOfEquations          
+            equationsSet=>controlLoop%equations%equations(equationIdx)%equationsSet
+            IF(ASSOCIATED(equationsSet)) THEN
+              region=>equationsSet%region
+              IF(ASSOCIATED(region)) THEN
+                CALL WriteStringValue(DIAGNOSTIC_OUTPUT_TYPE,"    Equation index : ",equationIdx,err,error,*999)
+                CALL WriteStringValue(DIAGNOSTIC_OUTPUT_TYPE,"      Equations set user number = ",equationsSet%userNumber, &
+                  & err,error,*999)
+                CALL WriteStringValue(DIAGNOSTIC_OUTPUT_TYPE,"      Equations set region user number = ",region%userNumber, &
+                  & err,error,*999)
+                CALL WriteStringValue(DIAGNOSTIC_OUTPUT_TYPE,"      Has analytic = ",controlLoop%equations% &
+                  & equations(equationIdx)%hasAnalytic,err,error,*999)
+                CALL WriteStringValue(DIAGNOSTIC_OUTPUT_TYPE,"      Has temporal analytic = ",controlLoop%equations% &
+                  & equations(equationIdx)%hasTemporalAnalytic,err,error,*999)
+              ELSE
+                localError="Equations set region is not associated for equation index "// &
+                  & TRIM(NumberToVString(equationIdx,"*",err,error))//"."
+                CALL FlagError(localError,err,error,*999)
+              ENDIF
+            ELSE
+              localError="Equation set is not associated for equation index "// &
+                & TRIM(NumberToVString(equationIdx,"*",err,error))//"."
+              CALL FlagError(localError,err,error,*999)              
+            ENDIF
+          ENDDO !equationIdx
+        ELSE
+          CALL FlagError("Control loop equations is not allocated.",err,error,*999)
+        ENDIF
+      ELSE
+        CALL WriteStringValue(DIAGNOSTIC_OUTPUT_TYPE,"    Number of equations = ",0,err,error,*999)
+      ENDIF      
+    ENDIF
+    
+    EXITS("ControlLoop_EquationsCalculate")
+    RETURN
+999 ERRORSEXITS("ControlLoop_EquationsCalculate",err,error)
+    RETURN 1
+    
+  END SUBROUTINE ControlLoop_EquationsCalculate
+
+  !
+  !================================================================================================================================
+  !
+
+  !>Finalises a ControlLoopEquationsType and deallocates all memory
+  SUBROUTINE ControlLoop_EquationsFinalise(controlLoopEquations,err,error,*)
+
+    !Argument variables
+    TYPE(ControlLoopEquationsType), POINTER :: controlLoopEquations !<The control loop equations to finalise
+    INTEGER(INTG), INTENT(OUT) :: err !<The error code
+    TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
+    !Local Variables
+    INTEGER(INTG) :: equationsIdx
+   
+    ENTERS("ControlLoop_EquationsFinalise",err,error,*999)
+
+    IF(ASSOCIATED(controlLoopEquations)) THEN
+      DO equationsIdx=1,SIZE(controlLoopEquations%equations,1)
+        CALL ControlLoop_EquationFinalise(controlLoopEquations%equations(equationsIdx),err,error,*998)
+      ENDDO !equationsIdx
+998   DEALLOCATE(controlLoopEquations%equations)
+      controlLoopEquations%numberOfEquations=0
+    ENDIF
+      
+    EXITS("ControlLoop_EquationsFinalise")
+    RETURN
+999 ERRORSEXITS("ControlLoop_EquationsFinalise",err,error)
+    RETURN 1
+    
+  END SUBROUTINE ControlLoop_EquationsFinalise
+
+  !
+  !================================================================================================================================
+  !
+
+  !>Initialise a ControlLoopEquationsType for a controlLoop
+  SUBROUTINE ControlLoop_EquationsInitialise(controlLoop,err,error,*)
+
+    !Argument variables
+    TYPE(ControlLoopType), POINTER :: controlLoop !<The control loop to initialsie the equations for.
+    INTEGER(INTG), INTENT(OUT) :: err !<The error code
+    TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
+    !Local Variables
+    INTEGER(INTG) :: dummyErr
+    TYPE(VARYING_STRING) :: dummyError
+   
+    ENTERS("ControlLoop_EquationsInitialise",err,error,*998)
+
+    IF(.NOT.ASSOCIATED(controlLoop)) CALL FlagError("Control loop is not associated.",err,error,*998)
+    
+    IF(ASSOCIATED(controlLoop%equations)) CALL ControlLoop_EquationsFinalise(controlLoop%equations,err,error,*999)
+    ALLOCATE(controlLoop%equations,STAT=err)
+    IF(err/=0) CALL FlagError("Could not allocate control loop equations.",err,error,*999)
+    controlLoop%equations%numberOfEquations=0
+      
+    EXITS("ControlLoop_EquationsInitialise")
+    RETURN
+999 CALL ControlLoop_EquationsFinalise(controlLoop%equations,dummyErr,dummyError,*998)
+998 ERRORSEXITS("ControlLoop_EquationsInitialise",err,error)
+    RETURN 1
+    
+  END SUBROUTINE ControlLoop_EquationsInitialise
 
   !
   !================================================================================================================================
@@ -696,6 +1021,7 @@ CONTAINS
       CALL ControlLoop_LoadIncrementFinalise(controlLoop%loadIncrementLoop,err,error,*999)
       CALL ControlLoop_TimeFinalise(controlLoop%timeLoop,err,error,*999)
       CALL ControlLoop_WhileFinalise(controlLoop%whileLoop,err,error,*999)
+      CALL ControlLoop_EquationsFinalise(controlLoop%equations,err,error,*999)
       CALL ControlLoop_FieldVariablesFinalise(controlLoop%fieldVariables,err,error,*999)
       DEALLOCATE(controlLoop)
     ENDIF
@@ -741,6 +1067,7 @@ CONTAINS
     NULLIFY(controlLoop%whileLoop)
     NULLIFY(controlLoop%loadIncrementLoop)
     controlLoop%numberOfSubLoops=0
+    NULLIFY(controlLoop%equations)
     NULLIFY(controlLoop%fieldVariables)
     NULLIFY(controlLoop%solvers)
     controlLoop%loopType=CONTROL_SIMPLE_TYPE

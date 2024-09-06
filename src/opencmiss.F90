@@ -800,8 +800,10 @@ MODULE OpenCMISS
 
   !>Sets/changes the interpolation type in each Xi directions for a basis.
   INTERFACE OC_Basis_InterpolationXiSet
-    MODULE PROCEDURE OC_Basis_InterpolationXiSetNumber
-    MODULE PROCEDURE OC_Basis_InterpolationXiSetObj
+    MODULE PROCEDURE OC_Basis_InterpolationXiSetNumber0
+    MODULE PROCEDURE OC_Basis_InterpolationXiSetNumber1
+    MODULE PROCEDURE OC_Basis_InterpolationXiSetObj0
+    MODULE PROCEDURE OC_Basis_InterpolationXiSetObj1
   END INTERFACE OC_Basis_InterpolationXiSet
 
   !>Returns the number of local nodes in a basis.
@@ -830,8 +832,10 @@ MODULE OpenCMISS
 
   !>Sets/changes the number of Gauss points in each Xi direction on a basis quadrature.
   INTERFACE OC_Basis_QuadratureNumberOfGaussXiSet
-    MODULE PROCEDURE OC_Basis_QuadratureNumberOfGaussXiSetNumber
-    MODULE PROCEDURE OC_Basis_QuadratureNumberOfGaussXiSetObj
+    MODULE PROCEDURE OC_Basis_QuadratureNumberOfGaussXiSetNumber0
+    MODULE PROCEDURE OC_Basis_QuadratureNumberOfGaussXiSetNumber1
+    MODULE PROCEDURE OC_Basis_QuadratureNumberOfGaussXiSetObj0
+    MODULE PROCEDURE OC_Basis_QuadratureNumberOfGaussXiSetObj1
   END INTERFACE OC_Basis_QuadratureNumberOfGaussXiSet
 
   !>Returns the xi positions of Gauss points on a basis quadrature.
@@ -5121,8 +5125,10 @@ MODULE OpenCMISS
 
   !>Sets/changes the extent of a generated mesh.
   INTERFACE OC_GeneratedMesh_ExtentSet
-    MODULE PROCEDURE OC_GeneratedMesh_ExtentSetNumber
-    MODULE PROCEDURE OC_GeneratedMesh_ExtentSetObj
+    MODULE PROCEDURE OC_GeneratedMesh_ExtentSetNumber0
+    MODULE PROCEDURE OC_GeneratedMesh_ExtentSetNumber1
+    MODULE PROCEDURE OC_GeneratedMesh_ExtentSetObj0
+    MODULE PROCEDURE OC_GeneratedMesh_ExtentSetObj1
   END INTERFACE OC_GeneratedMesh_ExtentSet
 
   !>Returns the number of elements in a generated mesh.
@@ -5133,8 +5139,10 @@ MODULE OpenCMISS
 
   !>Sets/changes the number of elements in a generated mesh.
   INTERFACE OC_GeneratedMesh_NumberOfElementsSet
-    MODULE PROCEDURE OC_GeneratedMesh_NumberOfElementsSetNumber
-    MODULE PROCEDURE OC_GeneratedMesh_NumberOfElementsSetObj
+    MODULE PROCEDURE OC_GeneratedMesh_NumberOfElementsSetNumber0
+    MODULE PROCEDURE OC_GeneratedMesh_NumberOfElementsSetNumber1
+    MODULE PROCEDURE OC_GeneratedMesh_NumberOfElementsSetObj0
+    MODULE PROCEDURE OC_GeneratedMesh_NumberOfElementsSetObj1
   END INTERFACE OC_GeneratedMesh_NumberOfElementsSet
 
   !>Returns the origin of a generated mesh.
@@ -12526,8 +12534,35 @@ CONTAINS
   !
 
   !>Sets/changes the interpolation type in each xi directions for a basis identified by a user number.
-  SUBROUTINE OC_Basis_InterpolationXiSetNumber(contextUserNumber,basisUserNumber,interpolationXi,err)
-    !DLLEXPORT(OC_Basis_InterpolationXiSetNumber)
+  SUBROUTINE OC_Basis_InterpolationXiSetNumber0(contextUserNumber,basisUserNumber,interpolationXi,err)
+    !DLLEXPORT(OC_Basis_InterpolationXiSetNumber0)
+
+    !Argument variables
+    INTEGER(INTG), INTENT(IN) :: contextUserNumber !<The user number of the context with the basis function.
+    INTEGER(INTG), INTENT(IN) :: basisUserNumber !<The user number of the basis to get the interpolation xi for.
+    INTEGER(INTG), INTENT(IN) :: interpolationXi !<The interpolation xi parameters for each Xi direction \see OpenCMISS_BasisInterpolationSpecifications.
+    INTEGER(INTG), INTENT(OUT) :: err !<The error code.
+    !Local variables
+ 
+    ENTERS("OC_Basis_InterpolationXiSetNumber0",err,error,*999)
+
+    CALL OC_Basis_InterpolationXiSetNumber1(contextUserNumber,basisUserNumber,[interpolationXi],err)
+
+    EXITS("OC_Basis_InterpolationXiSetNumber0")
+    RETURN
+999 ERRORSEXITS("OC_Basis_InterpolationXiSetNumber0",err,error)
+    CALL OC_HandleError(err,error)
+    RETURN
+
+  END SUBROUTINE OC_Basis_InterpolationXiSetNumber0
+
+  !
+  !================================================================================================================================
+  !
+
+  !>Sets/changes the interpolation type in each xi directions for a basis identified by a user number.
+  SUBROUTINE OC_Basis_InterpolationXiSetNumber1(contextUserNumber,basisUserNumber,interpolationXi,err)
+    !DLLEXPORT(OC_Basis_InterpolationXiSetNumber1)
 
     !Argument variables
     INTEGER(INTG), INTENT(IN) :: contextUserNumber !<The user number of the context with the basis function.
@@ -12539,7 +12574,7 @@ CONTAINS
     TYPE(BasisType), POINTER :: basis
     TYPE(BasisFunctionsType), POINTER :: basisFunctions
 
-    ENTERS("OC_Basis_InterpolationXiSetNumber",err,error,*999)
+    ENTERS("OC_Basis_InterpolationXiSetNumber1",err,error,*999)
 
     NULLIFY(context)
     NULLIFY(basisFunctions)
@@ -12549,21 +12584,47 @@ CONTAINS
     CALL Basis_Get(basisFunctions,basisUserNumber,basis,err,error,*999)
     CALL Basis_InterpolationXiSet(basis,interpolationXi,err,error,*999)
 
-    EXITS("OC_Basis_InterpolationXiSetNumber")
+    EXITS("OC_Basis_InterpolationXiSetNumber1")
     RETURN
-999 ERRORSEXITS("OC_Basis_InterpolationXiSetNumber",err,error)
+999 ERRORSEXITS("OC_Basis_InterpolationXiSetNumber1",err,error)
     CALL OC_HandleError(err,error)
     RETURN
 
-  END SUBROUTINE OC_Basis_InterpolationXiSetNumber
+  END SUBROUTINE OC_Basis_InterpolationXiSetNumber1
 
   !
   !================================================================================================================================
   !
 
   !>Sets/changes the interpolation type in each xi directions for a basis indentified by an object.
-  SUBROUTINE OC_Basis_InterpolationXiSetObj(basis,interpolationXi,err)
-    !DLLEXPORT(OC_Basis_InterpolationXiSetObj)
+  SUBROUTINE OC_Basis_InterpolationXiSetObj0(basis,interpolationXi,err)
+    !DLLEXPORT(OC_Basis_InterpolationXiSetObj0)
+
+    !Argument variables
+    TYPE(OC_BasisType), INTENT(IN) :: basis !<The basis to get the interpolation xi for.
+    INTEGER(INTG), INTENT(IN) :: interpolationXi !<The interpolation xi parameters for each Xi direction \see OpenCMISS_BasisInterpolationSpecifications.
+    INTEGER(INTG), INTENT(OUT) :: err !<The error code.
+    !Local variables
+
+    ENTERS("OC_Basis_InterpolationXiSetObj0",err,error,*999)
+
+    CALL Basis_InterpolationXiSet(basis%basis,[interpolationXi],err,error,*999)
+
+    EXITS("OC_Basis_InterpolationXiSetObj0")
+    RETURN
+999 ERRORSEXITS("OC_Basis_InterpolationXiSetObj0",err,error)
+    CALL OC_HandleError(err,error)
+    RETURN
+
+  END SUBROUTINE OC_Basis_InterpolationXiSetObj0
+
+  !
+  !================================================================================================================================
+  !
+
+  !>Sets/changes the interpolation type in each xi directions for a basis indentified by an object.
+  SUBROUTINE OC_Basis_InterpolationXiSetObj1(basis,interpolationXi,err)
+    !DLLEXPORT(OC_Basis_InterpolationXiSetObj1)
 
     !Argument variables
     TYPE(OC_BasisType), INTENT(IN) :: basis !<The basis to get the interpolation xi for.
@@ -12571,17 +12632,17 @@ CONTAINS
     INTEGER(INTG), INTENT(OUT) :: err !<The error code.
     !Local variables
 
-    ENTERS("OC_Basis_InterpolationXiSetObj",err,error,*999)
+    ENTERS("OC_Basis_InterpolationXiSetObj1",err,error,*999)
 
     CALL Basis_InterpolationXiSet(basis%basis,interpolationXi,err,error,*999)
 
-    EXITS("OC_Basis_InterpolationXiSetObj")
+    EXITS("OC_Basis_InterpolationXiSetObj1")
     RETURN
-999 ERRORSEXITS("OC_Basis_InterpolationXiSetObj",err,error)
+999 ERRORSEXITS("OC_Basis_InterpolationXiSetObj1",err,error)
     CALL OC_HandleError(err,error)
     RETURN
 
-  END SUBROUTINE OC_Basis_InterpolationXiSetObj
+  END SUBROUTINE OC_Basis_InterpolationXiSetObj1
 
   !
   !================================================================================================================================
@@ -12837,8 +12898,37 @@ CONTAINS
   !
 
   !>Sets/changes the number of Gauss points in each Xi directions for a basis quadrature identified by a user number.
-  SUBROUTINE OC_Basis_QuadratureNumberOfGaussXiSetNumber(contextUserNumber,basisUserNumber,numberOfGaussXi,err)
-    !DLLEXPORT(OC_Basis_QuadratureNumberOfGaussXiSetNumber)
+  SUBROUTINE OC_Basis_QuadratureNumberOfGaussXiSetNumber0(contextUserNumber,basisUserNumber,numberOfGaussXi,err)
+    !DLLEXPORT(OC_Basis_QuadratureNumberOfGaussXiSetNumber0)
+
+    !Argument variables
+    INTEGER(INTG), INTENT(IN) :: contextUserNumber !<The user number of the context with the basis function.
+    INTEGER(INTG), INTENT(IN) :: basisUserNumber !<The user number of the basis to set the number of Gauss Xi for.
+    INTEGER(INTG), INTENT(IN) :: numberOfGaussXi !<The number of Gauss points in each Xi directions in the specified basis to set.
+    INTEGER(INTG), INTENT(OUT) :: err !<The error code.
+    !Local variables
+
+    ENTERS("OC_Basis_QuadratureNumberOfGaussXiSetNumber0",err,error,*999)
+
+    CALL OC_Basis_QuadratureNumberOfGaussXiSetNumber1(contextUserNumber,basisUserNumber,[numberofGaussXi],err)
+
+
+    EXITS("OC_Basis_QuadratureNumberOfGaussXiSetNumber0")
+    RETURN
+999 ERRORS("OC_Basis_QuadratureNumberOfGaussXiSetNumber0",err,error)
+    EXITS("OC_Basis_QuadratureNumberOfGaussXiSetNumber0")
+    CALL OC_HandleError(err,error)
+    RETURN
+
+  END SUBROUTINE OC_Basis_QuadratureNumberOfGaussXiSetNumber0
+
+  !
+  !================================================================================================================================
+  !
+
+  !>Sets/changes the number of Gauss points in each Xi directions for a basis quadrature identified by a user number.
+  SUBROUTINE OC_Basis_QuadratureNumberOfGaussXiSetNumber1(contextUserNumber,basisUserNumber,numberOfGaussXi,err)
+    !DLLEXPORT(OC_Basis_QuadratureNumberOfGaussXiSetNumber1)
 
     !Argument variables
     INTEGER(INTG), INTENT(IN) :: contextUserNumber !<The user number of the context with the basis function.
@@ -12850,7 +12940,7 @@ CONTAINS
     TYPE(BasisType), POINTER :: basis
     TYPE(BasisFunctionsType), POINTER :: basisFunctions
 
-    ENTERS("OC_Basis_QuadratureNumberOfGaussXiSetNumber",err,error,*999)
+    ENTERS("OC_Basis_QuadratureNumberOfGaussXiSetNumber1",err,error,*999)
 
     NULLIFY(context)
     NULLIFY(basisFunctions)
@@ -12860,22 +12950,48 @@ CONTAINS
     CALL Basis_Get(basisFunctions,basisUserNumber,basis,err,error,*999)
     CALL Basis_QuadratureNumberOfGaussXiSet(basis,numberOfGaussXi,err,error,*999)
 
-    EXITS("OC_Basis_QuadratureNumberOfGaussXiSetNumber")
+    EXITS("OC_Basis_QuadratureNumberOfGaussXiSetNumber1")
     RETURN
-999 ERRORS("OC_Basis_QuadratureNumberOfGaussXiSetNumber",err,error)
-    EXITS("OC_Basis_QuadratureNumberOfGaussXiSetNumber")
+999 ERRORS("OC_Basis_QuadratureNumberOfGaussXiSetNumber1",err,error)
+    EXITS("OC_Basis_QuadratureNumberOfGaussXiSetNumber1")
     CALL OC_HandleError(err,error)
     RETURN
 
-  END SUBROUTINE OC_Basis_QuadratureNumberOfGaussXiSetNumber
+  END SUBROUTINE OC_Basis_QuadratureNumberOfGaussXiSetNumber1
 
   !
   !================================================================================================================================
   !
 
   !>Sets the number Gauss points in each Xi directions for a basis quadrature identified by an object.
-  SUBROUTINE OC_Basis_QuadratureNumberOfGaussXiSetObj(basis,numberOfGaussXi,err)
-    !DLLEXPORT(OC_Basis_QuadratureNumberOfGaussXiSetObj)
+  SUBROUTINE OC_Basis_QuadratureNumberOfGaussXiSetObj0(basis,numberOfGaussXi,err)
+    !DLLEXPORT(OC_Basis_QuadratureNumberOfGaussXiSetObj0)
+
+    !Argument variables
+    TYPE(OC_BasisType), INTENT(INOUT) :: basis !<The basis to get the number of Gauss Xi for.
+    INTEGER(INTG), INTENT(IN) :: numberOfGaussXi !<The number of Gauss points in each Xi directions in the specified basis to set.
+    INTEGER(INTG), INTENT(OUT) :: err !<The error code.
+    !Local variables
+
+    ENTERS("OC_Basis_QuadratureNumberOfGaussXiSetObj0",err,error,*999)
+
+    CALL Basis_QuadratureNumberOfGaussXiSet(basis%basis,[numberOfGaussXi],err,error,*999)
+
+    EXITS("OC_Basis_QuadratureNumberOfGaussXiSetObj0")
+    RETURN
+999 ERRORSEXITS("OC_Basis_QuadratureNumberOfGaussXiSetObj0",err,error)
+    CALL OC_HandleError(err,error)
+    RETURN
+
+  END SUBROUTINE OC_Basis_QuadratureNumberOfGaussXiSetObj0
+
+  !
+  !================================================================================================================================
+  !
+
+  !>Sets the number Gauss points in each Xi directions for a basis quadrature identified by an object.
+  SUBROUTINE OC_Basis_QuadratureNumberOfGaussXiSetObj1(basis,numberOfGaussXi,err)
+    !DLLEXPORT(OC_Basis_QuadratureNumberOfGaussXiSetObj1)
 
     !Argument variables
     TYPE(OC_BasisType), INTENT(INOUT) :: basis !<The basis to get the number of Gauss Xi for.
@@ -12883,21 +12999,22 @@ CONTAINS
     INTEGER(INTG), INTENT(OUT) :: err !<The error code.
     !Local variables
 
-    ENTERS("OC_Basis_QuadratureNumberOfGaussXiSetObj",err,error,*999)
+    ENTERS("OC_Basis_QuadratureNumberOfGaussXiSetObj1",err,error,*999)
 
     CALL Basis_QuadratureNumberOfGaussXiSet(basis%basis,numberOfGaussXi,err,error,*999)
 
-    EXITS("OC_Basis_QuadratureNumberOfGaussXiSetObj")
+    EXITS("OC_Basis_QuadratureNumberOfGaussXiSetObj1")
     RETURN
-999 ERRORSEXITS("OC_Basis_QuadratureNumberOfGaussXiSetObj",err,error)
+999 ERRORSEXITS("OC_Basis_QuadratureNumberOfGaussXiSetObj1",err,error)
     CALL OC_HandleError(err,error)
     RETURN
 
-  END SUBROUTINE OC_Basis_QuadratureNumberOfGaussXiSetObj
+  END SUBROUTINE OC_Basis_QuadratureNumberOfGaussXiSetObj1
 
   !
   !================================================================================================================================
   !
+  
   !>Returns the xi position of a Gauss point on a basis quadrature identified by a user number.
   SUBROUTINE OC_Basis_QuadratureGaussXiGetNumber0(contextUserNumber,basisUserNumber,quadratureScheme,gaussPoint,gaussXi,err)
     !DLLEXPORT(OC_Basis_QuadratureGaussXiGetNumber0)
@@ -46356,8 +46473,36 @@ CONTAINS
   !
 
   !>Sets/changes the extent for a generated mesh on a region identified by a user number.
-  SUBROUTINE OC_GeneratedMesh_ExtentSetNumber(contextUserNumber,regionUserNumber,generatedMeshUserNumber,extent,err)
-    !DLLEXPORT(OC_GeneratedMesh_ExtentSetNumber)
+  SUBROUTINE OC_GeneratedMesh_ExtentSetNumber0(contextUserNumber,regionUserNumber,generatedMeshUserNumber,extent,err)
+    !DLLEXPORT(OC_GeneratedMesh_ExtentSetNumber0)
+
+    !Argument variables
+    INTEGER(INTG), INTENT(IN) :: contextUserNumber !<The user number of the context for the region.
+    INTEGER(INTG), INTENT(IN) :: regionUserNumber !<The user number of the region containing the generated mesh to set the extent for.
+    INTEGER(INTG), INTENT(IN) :: generatedMeshUserNumber !<The user number of the generated mesh to set the extent for.
+    REAL(DP), INTENT(IN) :: extent !<The extent for the i'th dimension of the generated mesh to set.
+    INTEGER(INTG), INTENT(OUT) :: err !<The error code.
+    !Local variables
+ 
+    ENTERS("OC_GeneratedMesh_ExtentSetNumber0",err,error,*999)
+
+    CALL OC_GeneratedMesh_ExtentSetNumber1(contextUserNumber,regionUserNumber,generatedMeshUserNumber,[extent],err)
+
+    EXITS("OC_GeneratedMesh_ExtentSetNumber0")
+    RETURN
+999 ERRORSEXITS("OC_GeneratedMesh_ExtentSetNumber0",err,error)
+    CALL OC_HandleError(err,error)
+    RETURN
+
+  END SUBROUTINE OC_GeneratedMesh_ExtentSetNumber0
+
+  !
+  !================================================================================================================================
+  !
+
+  !>Sets/changes the extent for a generated mesh on a region identified by a user number.
+  SUBROUTINE OC_GeneratedMesh_ExtentSetNumber1(contextUserNumber,regionUserNumber,generatedMeshUserNumber,extent,err)
+    !DLLEXPORT(OC_GeneratedMesh_ExtentSetNumber1)
 
     !Argument variables
     INTEGER(INTG), INTENT(IN) :: contextUserNumber !<The user number of the context for the region.
@@ -46371,7 +46516,7 @@ CONTAINS
     TYPE(RegionType), POINTER :: region
     TYPE(RegionsType), POINTER :: regions
 
-    ENTERS("OC_GeneratedMesh_ExtentSetNumber",err,error,*999)
+    ENTERS("OC_GeneratedMesh_ExtentSetNumber1",err,error,*999)
 
     NULLIFY(context)
     NULLIFY(regions)
@@ -46383,21 +46528,47 @@ CONTAINS
     CALL Region_GeneratedMeshGet(region,generatedMeshUserNumber,generatedMesh,err,error,*999)
     CALL GeneratedMesh_ExtentSet(generatedMesh,extent,err,error,*999)
 
-    EXITS("OC_GeneratedMesh_ExtentSetNumber")
+    EXITS("OC_GeneratedMesh_ExtentSetNumber1")
     RETURN
-999 ERRORSEXITS("OC_GeneratedMesh_ExtentSetNumber",err,error)
+999 ERRORSEXITS("OC_GeneratedMesh_ExtentSetNumber1",err,error)
     CALL OC_HandleError(err,error)
     RETURN
 
-  END SUBROUTINE OC_GeneratedMesh_ExtentSetNumber
+  END SUBROUTINE OC_GeneratedMesh_ExtentSetNumber1
 
   !
   !================================================================================================================================
   !
 
   !>Sets/changes the extent for a generated mesh identified by an object.
-  SUBROUTINE OC_GeneratedMesh_ExtentSetObj(generatedMesh,extent,err)
-    !DLLEXPORT(OC_GeneratedMesh_ExtentSetObj)
+  SUBROUTINE OC_GeneratedMesh_ExtentSetObj0(generatedMesh,extent,err)
+    !DLLEXPORT(OC_GeneratedMesh_ExtentSetObj0)
+
+    !Argument variables
+    TYPE(OC_GeneratedMeshType), INTENT(IN) :: generatedMesh !<The generated mesh to set the extent for.
+    REAL(DP), INTENT(IN) :: extent !<The extent for the i'th dimension of the generated mesh to set.
+    INTEGER(INTG), INTENT(OUT) :: err !<The error code.
+    !Local variables
+
+    ENTERS("OC_GeneratedMesh_ExtentSetObj0",err,error,*999)
+
+    CALL GeneratedMesh_ExtentSet(generatedMesh%generatedMesh,[extent],err,error,*999)
+
+    EXITS("OC_GeneratedMesh_ExtentSetObj0")
+    RETURN
+999 ERRORSEXITS("OC_GeneratedMesh_ExtentSetObj0",err,error)
+    CALL OC_HandleError(err,error)
+    RETURN
+
+  END SUBROUTINE OC_GeneratedMesh_ExtentSetObj0
+
+  !
+  !================================================================================================================================
+  !
+
+  !>Sets/changes the extent for a generated mesh identified by an object.
+  SUBROUTINE OC_GeneratedMesh_ExtentSetObj1(generatedMesh,extent,err)
+    !DLLEXPORT(OC_GeneratedMesh_ExtentSetObj1)
 
     !Argument variables
     TYPE(OC_GeneratedMeshType), INTENT(IN) :: generatedMesh !<The generated mesh to set the extent for.
@@ -46405,17 +46576,17 @@ CONTAINS
     INTEGER(INTG), INTENT(OUT) :: err !<The error code.
     !Local variables
 
-    ENTERS("OC_GeneratedMesh_ExtentSetObj",err,error,*999)
+    ENTERS("OC_GeneratedMesh_ExtentSetObj1",err,error,*999)
 
     CALL GeneratedMesh_ExtentSet(generatedMesh%generatedMesh,extent,err,error,*999)
 
-    EXITS("OC_GeneratedMesh_ExtentSetObj")
+    EXITS("OC_GeneratedMesh_ExtentSetObj1")
     RETURN
-999 ERRORSEXITS("OC_GeneratedMesh_ExtentSetObj",err,error)
+999 ERRORSEXITS("OC_GeneratedMesh_ExtentSetObj1",err,error)
     CALL OC_HandleError(err,error)
     RETURN
 
-  END SUBROUTINE OC_GeneratedMesh_ExtentSetObj
+  END SUBROUTINE OC_GeneratedMesh_ExtentSetObj1
 
   !
   !================================================================================================================================
@@ -46490,9 +46661,40 @@ CONTAINS
   !
 
   !>Sets/changes the number of elements for a generated mesh on a region identified by a user number.
-  SUBROUTINE OC_GeneratedMesh_NumberOfElementsSetNumber(contextUserNumber,regionUserNumber,generatedMeshUserNumber, &
+  SUBROUTINE OC_GeneratedMesh_NumberOfElementsSetNumber0(contextUserNumber,regionUserNumber,generatedMeshUserNumber, &
     & numberOfElements,err)
-    !DLLEXPORT(OC_GeneratedMesh_NumberOfElementsSetNumber)
+    !DLLEXPORT(OC_GeneratedMesh_NumberOfElementsSetNumber0)
+
+    !Argument variables
+    INTEGER(INTG), INTENT(IN) :: contextUserNumber !<The user number of the context for the region.
+    INTEGER(INTG), INTENT(IN) :: regionUserNumber !<The user number of the region containing the generated mesh to set the number of elements for.
+    INTEGER(INTG), INTENT(IN) :: generatedMeshUserNumber !<The user number of the generated mesh to set the number of elements for.
+    INTEGER(INTG), INTENT(IN) :: numberOfElements !<The number of elements in the i'th dimension of the generated mesh to set.
+    INTEGER(INTG), INTENT(OUT) :: err !<The error code.
+    !Local variables
+
+    ENTERS("OC_GeneratedMesh_NumberOfElementsSetNumber0",err,error,*999)
+
+    CALL OC_GeneratedMesh_NumberOfElementsSetNumber1(contextUserNumber,regionUserNumber,generatedMeshUserNumber, &
+      & [numberOfElements],err)
+
+    EXITS("OC_GeneratedMesh_NumberOfElementsSetNumber0")
+    RETURN
+999 ERRORS("OC_GeneratedMesh_NumberOfElementsSetNumber0",err,error)
+    EXITS("OC_GeneratedMesh_NumberOfElementsSetNumber0")
+    CALL OC_HandleError(err,error)
+    RETURN
+
+  END SUBROUTINE OC_GeneratedMesh_NumberOfElementsSetNumber0
+
+  !
+  !================================================================================================================================
+  !
+
+  !>Sets/changes the number of elements for a generated mesh on a region identified by a user number.
+  SUBROUTINE OC_GeneratedMesh_NumberOfElementsSetNumber1(contextUserNumber,regionUserNumber,generatedMeshUserNumber, &
+    & numberOfElements,err)
+    !DLLEXPORT(OC_GeneratedMesh_NumberOfElementsSetNumber1)
 
     !Argument variables
     INTEGER(INTG), INTENT(IN) :: contextUserNumber !<The user number of the context for the region.
@@ -46506,7 +46708,7 @@ CONTAINS
     TYPE(RegionType), POINTER :: region
     TYPE(RegionsType), POINTER :: regions
 
-    ENTERS("OC_GeneratedMesh_NumberOfElementsSetNumber",err,error,*999)
+    ENTERS("OC_GeneratedMesh_NumberOfElementsSetNumber1",err,error,*999)
 
     NULLIFY(context)
     NULLIFY(regions)
@@ -46518,22 +46720,48 @@ CONTAINS
     CALL Region_GeneratedMeshGet(region,generatedMeshUserNumber,generatedMesh,err,error,*999)
     CALL GeneratedMesh_NumberOfElementsSet(generatedMesh,numberOfElements,err,error,*999)
 
-    EXITS("OC_GeneratedMesh_NumberOfElementsSetNumber")
+    EXITS("OC_GeneratedMesh_NumberOfElementsSetNumber1")
     RETURN
-999 ERRORS("OC_GeneratedMesh_NumberOfElementsSetNumber",err,error)
-    EXITS("OC_GeneratedMesh_NumberOfElementsSetNumber")
+999 ERRORS("OC_GeneratedMesh_NumberOfElementsSetNumber1",err,error)
+    EXITS("OC_GeneratedMesh_NumberOfElementsSetNumber1")
     CALL OC_HandleError(err,error)
     RETURN
 
-  END SUBROUTINE OC_GeneratedMesh_NumberOfElementsSetNumber
+  END SUBROUTINE OC_GeneratedMesh_NumberOfElementsSetNumber1
 
   !
   !================================================================================================================================
   !
 
   !>Sets/changes the number of elements for a generated mesh identified by an object.
-  SUBROUTINE OC_GeneratedMesh_NumberOfElementsSetObj(generatedMesh,numberOfElements,err)
-    !DLLEXPORT(OC_GeneratedMesh_NumberOfElementsSetObj)
+  SUBROUTINE OC_GeneratedMesh_NumberOfElementsSetObj0(generatedMesh,numberOfElements,err)
+    !DLLEXPORT(OC_GeneratedMesh_NumberOfElementsSetObj0)
+
+    !Argument variables
+    TYPE(OC_GeneratedMeshType), INTENT(IN) :: generatedMesh !<The generated mesh to set the number of elements for.
+    INTEGER(INTG), INTENT(IN) :: numberOfElementS !<The number of elements in the i'th dimension of the generated mesh to set.
+    INTEGER(INTG), INTENT(OUT) :: err !<The error code.
+    !Local variables
+
+    ENTERS("OC_GeneratedMesh_NumberOfElementsSetObj0",err,error,*999)
+
+    CALL GeneratedMesh_NumberOfElementsSet(generatedMesh%generatedMesh,[numberOfElements],err,error,*999)
+
+    EXITS("OC_GeneratedMesh_NumberOfElementsSetObj0")
+    RETURN
+999 ERRORSEXITS("OC_GeneratedMesh_NumberOfElementsSetObj0",err,error)
+    CALL OC_HandleError(err,error)
+    RETURN
+
+  END SUBROUTINE OC_GeneratedMesh_NumberOfElementsSetObj0
+
+  !
+  !================================================================================================================================
+  !
+
+  !>Sets/changes the number of elements for a generated mesh identified by an object.
+  SUBROUTINE OC_GeneratedMesh_NumberOfElementsSetObj1(generatedMesh,numberOfElements,err)
+    !DLLEXPORT(OC_GeneratedMesh_NumberOfElementsSetObj1)
 
     !Argument variables
     TYPE(OC_GeneratedMeshType), INTENT(IN) :: generatedMesh !<The generated mesh to set the number of elements for.
@@ -46541,17 +46769,17 @@ CONTAINS
     INTEGER(INTG), INTENT(OUT) :: err !<The error code.
     !Local variables
 
-    ENTERS("OC_GeneratedMesh_NumberOfElementsSetObj",err,error,*999)
+    ENTERS("OC_GeneratedMesh_NumberOfElementsSetObj1",err,error,*999)
 
     CALL GeneratedMesh_NumberOfElementsSet(generatedMesh%generatedMesh,numberOfElements,err,error,*999)
 
-    EXITS("OC_GeneratedMesh_NumberOfElementsSetObj")
+    EXITS("OC_GeneratedMesh_NumberOfElementsSetObj1")
     RETURN
-999 ERRORSEXITS("OC_GeneratedMesh_NumberOfElementsSetObj",err,error)
+999 ERRORSEXITS("OC_GeneratedMesh_NumberOfElementsSetObj1",err,error)
     CALL OC_HandleError(err,error)
     RETURN
 
-  END SUBROUTINE OC_GeneratedMesh_NumberOfElementsSetObj
+  END SUBROUTINE OC_GeneratedMesh_NumberOfElementsSetObj1
 
   !
   !================================================================================================================================

@@ -346,6 +346,9 @@ CONTAINS
     CALL ControlLoop_AssertIsFinished(rootControlLoop,err,error,*999)
     CALL ControlLoop_AssertIsRootLoop(rootControlLoop,err,error,*999)
 
+    !Setup any equations involved in the control loop (and any subloops)   
+    CALL ControlLoop_EquationsCalculate(rootControlLoop,err,error,*999)
+    
     !Setup any variables involved in the control loop (and any subloops)   
     CALL ControlLoop_FieldVariablesCalculate(rootControlLoop,err,error,*999)
     
@@ -361,6 +364,59 @@ CONTAINS
     RETURN 1
     
   END SUBROUTINE Problem_RootControlLoopSetup
+
+  !
+  !================================================================================================================================
+  !
+
+  !>Update any analytic boundary conditions for a control loop.
+  SUBROUTINE ControlLoop_AnalyticBoundaryConditionsUpdate(controlLoop,err,error,*)
+
+    !Argument variables
+    TYPE(ControlLoopType), POINTER, INTENT(IN) :: controlLoop !<A pointer to the control loop to update the analytic boundary conditions for
+    INTEGER(INTG), INTENT(OUT) :: err !<The error code
+    TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
+    !Local Variables
+    INTEGER(INTG) :: equationsIdx
+    REAL(DP) :: currentTime,timeIncrement
+    TYPE(BoundaryConditionsType), POINTER :: boundaryConditions
+    TYPE(EquationsSetType), POINTER :: equationsSet
+    TYPE(VARYING_STRING) :: localError
+
+    ENTERS("ControlLoop_AnalyticBoundaryConditionsUpdate",err,error,*999)
+
+    IF(.NOT.ASSOCIATED(controlLoop)) CALL FlagError("Control loop is not associated.",err,error,*999)
+
+    IF(controlLoop%loopType==CONTROL_TIME_LOOP_TYPE) THEN
+      IF(ASSOCIATED(controlLoop%equations)) THEN
+        CALL ControlLoop_CurrentTimesGet(controlLoop,currentTime,timeIncrement,err,error,*999)
+        DO equationsIdx=1,controlLoop%equations%numberOfEquations
+          IF(controlLoop%equations%equations(equationsIdx)%hasTemporalAnalytic) THEN
+            equationsSet=>controlLoop%equations%equations(equationsIdx)%equationsSet
+            IF(.NOT.ASSOCIATED(equationsSet)) THEN
+              localError="The equations set is not associated for equations index "// &
+                & TRIM(NumberToVString(equationsIdx,"*",err,error))//"."
+              CALL FlagError(localError,err,error,*999)
+            ENDIF
+            boundaryConditions=>controlLoop%equations%equations(equationsIdx)%boundaryConditions
+            IF(.NOT.ASSOCIATED(boundaryConditions)) THEN
+              localError="The boundary conditions is not associated for equations index "// &
+                & TRIM(NumberToVString(equationsIdx,"*",err,error))//"."
+              CALL FlagError(localError,err,error,*999)
+            ENDIF
+            CALL EquationsSet_AnalyticTimeSet(equationsSet,currentTime,err,error,*999)
+            CALL EquationsSet_AnalyticBoundaryConditionsUpdate(equationsSet,boundaryConditions,err,error,*999)
+          ENDIF
+        ENDDO !equationsIdx
+      ENDIF
+    ENDIF
+    
+    EXITS("ControlLoop_AnalyticBoundaryConditionsUpdate")
+    RETURN
+999 ERRORSEXITS("ControlLoop_AnalyticBoundaryConditionsUpdate",err,error)
+    RETURN 1
+    
+  END SUBROUTINE ControlLoop_AnalyticBoundaryConditionsUpdate
 
   !
   !================================================================================================================================
@@ -1886,6 +1942,8 @@ CONTAINS
     CALL ControlLoop_ProblemGet(controlLoop,problem,err,error,*999)
     !For all time loops, update the previous values from the current values
     IF(controlLoop%loopType==CONTROL_TIME_LOOP_TYPE) CALL ControlLoop_PreviousValuesUpdate(controlLoop,err,error,*999)
+    !Update any analytic values
+    CALL ControlLoop_AnalyticBoundaryConditionsUpdate(controlLoop,err,error,*999)
     IF(.NOT.ALLOCATED(problem%specification)) CALL FlagError("Problem specification is not allocated.",err,error,*999)
     IF(SIZE(problem%specification,1)<1) CALL FlagError("Problem specification must have at least one entry.",err,error,*999)
     SELECT CASE(problem%specification(1))
@@ -2663,27 +2721,24 @@ CONTAINS
           & ((solverOrder==SOLVER_DYNAMIC_FIRST_ORDER.AND.solverDegree>SOLVER_DYNAMIC_FIRST_DEGREE).OR. &
           & (solverOrder==SOLVER_DYNAMIC_SECOND_ORDER.AND.solverDegree>SOLVER_DYNAMIC_SECOND_DEGREE)))
         nonlinear=(solverEquationsLinearity==SOLVER_EQUATIONS_NONLINEAR)
-        setup=(initSolver.OR.nonlinear)
-        IF(setup) THEN
-          !Need to setup solvers as we have a residual to evaluate at the start time or the dynamic solver needs initialisation
-          !Find the start time
-          NULLIFY(controlLoop)
-          CALL Solver_ControlLoopGet(solver,controlLoop,err,error,*999)
-          CALL ControlLoop_CurrentTimeInformationGet(controlLoop,currentTime,startTime,stopTime,timeIncrement,iterationNumber, &
-            & outputIterationNumber,inputIterationNumber,err,error,*999)
-          CALL Solver_DynamicTimesSet(solver,startTime,timeIncrement,err,error,*999)
-          !Get solver matrices
-          NULLIFY(solverMatrices)
-          CALL SolverEquations_SolverMatricesGet(solverEquations,solverMatrices,err,error,*999)
-          NULLIFY(solverMatrix)
-          CALL SolverMatrices_SolverMatrixGet(solverMatrices,1,solverMatrix,err,error,*999)
-          NULLIFY(solverVector)
-          CALL SolverMatrix_SolverDistributedVectorGet(solverMatrix,solverVector,err,error,*999)
-          !Nullify the solver vector so that alpha is zero.
-          CALL DistributedVector_AllValuesSet(solverVector,0.0_DP,err,error,*999)
-          !Solve the solver equations
-          CALL Problem_SolverEquationsSolve(solverEquations,err,error,*999)
-        ENDIF !setup  
+        !Need to setup solvers as we have a residual to evaluate at the start time or the dynamic solver needs initialisation
+        !Find the start time
+        NULLIFY(controlLoop)
+        CALL Solver_ControlLoopGet(solver,controlLoop,err,error,*999)
+        CALL ControlLoop_CurrentTimeInformationGet(controlLoop,currentTime,startTime,stopTime,timeIncrement,iterationNumber, &
+          & outputIterationNumber,inputIterationNumber,err,error,*999)
+        CALL Solver_DynamicTimesSet(solver,startTime,timeIncrement,err,error,*999)
+        !Get solver matrices
+        NULLIFY(solverMatrices)
+        CALL SolverEquations_SolverMatricesGet(solverEquations,solverMatrices,err,error,*999)
+        NULLIFY(solverMatrix)
+        CALL SolverMatrices_SolverMatrixGet(solverMatrices,1,solverMatrix,err,error,*999)
+        NULLIFY(solverVector)
+        CALL SolverMatrix_SolverDistributedVectorGet(solverMatrix,solverVector,err,error,*999)
+        !Nullify the solver vector so that alpha is zero.
+        CALL DistributedVector_AllValuesSet(solverVector,0.0_DP,err,error,*999)
+        !Solve the solver equations
+        CALL Problem_SolverEquationsSolve(solverEquations,err,error,*999)
       CASE(SOLVER_DAE_TYPE)
         !Do nothing
       CASE(SOLVER_EIGENPROBLEM_TYPE)
@@ -2820,7 +2875,7 @@ CONTAINS
     DO equationsSetIdx=1,solverMapping%numberOfEquationsSets
       NULLIFY(equationsSet)
       CALL SolverMapping_EquationsSetGet(solverMapping,equationsSetIdx,equationsSet,err,error,*999)
-      CALL EquationsSet_BoundaryConditionsAnalytic(equationsSet,boundaryConditions,err,error,*999)
+      CALL EquationsSet_AnalyticBoundaryConditionsSet(equationsSet,boundaryConditions,err,error,*999)
     ENDDO !equationsSetIdx
 
     EXITS("Problem_SolverEquationsBoundaryConditionsAnalytic")

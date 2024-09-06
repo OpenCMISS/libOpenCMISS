@@ -72,6 +72,10 @@ MODULE ElasticityRoutines
 
   !Interfaces
 
+  PUBLIC Elasticity_AnalyticBoundaryConditionsSet
+  
+  PUBLIC Elasticity_AnalyticBoundaryConditionsUpdate
+
   PUBLIC Elasticity_EquationsSetSpecificationSet
 
   PUBLIC Elasticity_FiniteElementCalculate
@@ -90,8 +94,6 @@ MODULE ElasticityRoutines
 
   PUBLIC Elasticity_TensorInterpolateXi
 
-  PUBLIC Elasticity_BoundaryConditionsAnalyticCalculate
-  
   PUBLIC Elasticity_ProblemSpecificationSet
 
   PUBLIC Elasticity_ProblemSetup
@@ -103,6 +105,84 @@ MODULE ElasticityRoutines
   PUBLIC Elasticity_LoadIncrementApply
 
 CONTAINS
+
+  !
+  !================================================================================================================================
+  !
+
+  !>Sets the analytic boundary conditions for an elasticity equation set class.
+  SUBROUTINE Elasticity_AnalyticBoundaryConditionsSet(equationsSet,boundaryConditions,err,error,*)
+
+    !Argument variables
+    TYPE(EquationsSetType), POINTER :: equationsSet !<A pointer to the equations set to set the solution method for
+    TYPE(BoundaryConditionsType), POINTER :: boundaryConditions !<A pointer to the boundary conditionsn to set
+    INTEGER(INTG), INTENT(OUT) :: err !<The error code
+    TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
+    !Local Variables
+    INTEGER(INTG) :: esSpecification(2)
+    TYPE(VARYING_STRING) :: localError
+
+    ENTERS("Elasticity_AnalyticBoundaryConditionsSet",err,error,*999)
+
+    CALL EquationsSet_SpecificationGet(equationsSet,2,esSpecification,err,error,*999)
+     
+    SELECT CASE(esSpecification(2))
+    CASE(EQUATIONS_SET_LINEAR_ELASTICITY_TYPE)
+      CALL LinearElasticity_BoundaryConditionsAnalyticCalculate(equationsSet,boundaryConditions,err,error,*999)
+    CASE(EQUATIONS_SET_FINITE_ELASTICITY_TYPE)
+      CALL FiniteElasticity_BoundaryConditionsAnalyticCalculate(equationsSet,boundaryConditions,err,error,*999)
+    CASE DEFAULT
+      localError="Equations set equation type of "//TRIM(NumberToVString(esSpecification(2),"*",err,error))// &
+        & " is not valid for an elasticity equations set class."
+      CALL FlagError(localError,err,error,*999)
+    END SELECT
+
+    EXITS("Elasticity_AnalyticBoundaryConditionsSet")
+    RETURN
+999 ERRORS("Elasticity_AnalyticBoundaryConditionsSet",err,error)
+    EXITS("Elasticity_BoundaryConditionsAnalyticCalculate")
+    RETURN 1
+    
+  END SUBROUTINE Elasticity_AnalyticBoundaryConditionsSet
+
+  !
+  !================================================================================================================================
+  !
+
+  !>Updates the analytic boundary conditions for an elasticity equation set class.
+  SUBROUTINE Elasticity_AnalyticBoundaryConditionsUpdate(equationsSet,boundaryConditions,err,error,*)
+
+    !Argument variables
+    TYPE(EquationsSetType), POINTER :: equationsSet !<A pointer to the equations set to update the analytic boundary conditions for
+    TYPE(BoundaryConditionsType), POINTER :: boundaryConditions !<A pointer to the boundary conditions to update
+    INTEGER(INTG), INTENT(OUT) :: err !<The error code
+    TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
+    !Local Variables
+    INTEGER(INTG) :: esSpecification(2)
+    TYPE(VARYING_STRING) :: localError
+
+    ENTERS("Elasticity_AnalyticBoundaryConditionsUpdate",err,error,*999)
+
+    CALL EquationsSet_SpecificationGet(equationsSet,2,esSpecification,err,error,*999)
+     
+    SELECT CASE(esSpecification(2))
+    CASE(EQUATIONS_SET_LINEAR_ELASTICITY_TYPE)
+      CALL LinearElasticity_BoundaryConditionsAnalyticCalculate(equationsSet,boundaryConditions,err,error,*999)
+    CASE(EQUATIONS_SET_FINITE_ELASTICITY_TYPE)
+      CALL FiniteElasticity_BoundaryConditionsAnalyticCalculate(equationsSet,boundaryConditions,err,error,*999)
+    CASE DEFAULT
+      localError="Equations set equation type of "//TRIM(NumberToVString(esSpecification(2),"*",err,error))// &
+        & " is not valid for an elasticity equations set class."
+      CALL FlagError(localError,err,error,*999)
+    END SELECT
+
+    EXITS("Elasticity_AnalyticBoundaryConditionsUpdate")
+    RETURN
+999 ERRORS("Elasticity_AnalyticBoundaryConditionsUpdate",err,error)
+    EXITS("Elasticity_AnalyticBoundaryConditionsUpdate")
+    RETURN 1
+    
+  END SUBROUTINE Elasticity_AnalyticBoundaryConditionsUpdate
 
   !
   !================================================================================================================================
@@ -535,45 +615,6 @@ CONTAINS
     RETURN 1
     
   END SUBROUTINE Elasticity_TensorInterpolateXi
-
-  !
-  !================================================================================================================================
-  !
-
-  !>Sets the analytic boundary conditions for an elasticity equation set class.
-  SUBROUTINE Elasticity_BoundaryConditionsAnalyticCalculate(equationsSet,boundaryConditions,err,error,*)
-
-    !Argument variables
-    TYPE(EquationsSetType), POINTER :: equationsSet !<A pointer to the equations set to set the solution method for
-    TYPE(BoundaryConditionsType), POINTER :: boundaryConditions !<A pointer to the boundary conditionsn to set
-    INTEGER(INTG), INTENT(OUT) :: err !<The error code
-    TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
-    !Local Variables
-    INTEGER(INTG) :: esSpecification(2)
-    TYPE(VARYING_STRING) :: localError
-
-    ENTERS("Elasticity_BoundaryConditionsAnalyticCalculate",err,error,*999)
-
-    CALL EquationsSet_SpecificationGet(equationsSet,2,esSpecification,err,error,*999)
-     
-    SELECT CASE(esSpecification(2))
-    CASE(EQUATIONS_SET_LINEAR_ELASTICITY_TYPE)
-      CALL LinearElasticity_BoundaryConditionsAnalyticCalculate(equationsSet,boundaryConditions,err,error,*999)
-    CASE(EQUATIONS_SET_FINITE_ELASTICITY_TYPE)
-      CALL FiniteElasticity_BoundaryConditionsAnalyticCalculate(equationsSet,boundaryConditions,err,error,*999)
-    CASE DEFAULT
-      localError="Equations set equation type of "//TRIM(NumberToVString(esSpecification(2),"*",err,error))// &
-        & " is not valid for an elasticity equations set class."
-      CALL FlagError(localError,err,error,*999)
-    END SELECT
-
-    EXITS("Elasticity_BoundaryConditionsAnalyticCalculate")
-    RETURN
-999 ERRORS("Elasticity_BoundaryConditionsAnalyticCalculate",err,error)
-    EXITS("Elasticity_BoundaryConditionsAnalyticCalculate")
-    RETURN 1
-    
-  END SUBROUTINE Elasticity_BoundaryConditionsAnalyticCalculate
 
   !
   !================================================================================================================================

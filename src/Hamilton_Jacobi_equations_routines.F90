@@ -92,7 +92,7 @@ MODULE HamiltonJacobiRoutines
 
 !!MERGE: move
 
-  PUBLIC HamiltonJacobi_BoundaryConditionsAnalyticCalculate
+  PUBLIC HamiltonJacobi_AnalyticBoundaryConditionsCalculate
   
   PUBLIC HamiltonJacobi_EquationsSetSolutionMethodSet
   
@@ -120,11 +120,13 @@ CONTAINS
 
 
   !>Calculates the analytic solution and sets the boundary conditions for an analytic problem.
-  SUBROUTINE HamiltonJacobi_BoundaryConditionsAnalyticCalculate(equationsSet,boundaryConditions,err,error,*)
+  SUBROUTINE HamiltonJacobi_AnalyticBoundaryConditionsCalculate(equationsSet,boundaryConditions,boundaryOnly,update,err,error,*)
 
     !Argument variables
     TYPE(EquationsSetType), POINTER :: equationsSet
     TYPE(BoundaryConditionsType), POINTER :: boundaryConditions
+    LOGICAL, INTENT(IN) :: boundaryOnly !<Only calculate if DOFs are on the boundary
+    LOGICAL, INTENT(IN) :: update !<.TRUE. if the boundary condition values are updated, .FALSE. if the boundary conditions are set.
     INTEGER(INTG), INTENT(OUT) :: err !<The error code
     TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
     !Local Variables
@@ -142,7 +144,7 @@ CONTAINS
     TYPE(FieldVariableType), POINTER :: dependentVariable,geometricVariable
     TYPE(VARYING_STRING) :: localError    
     
-    ENTERS("HamiltonJacobi_BoundaryConditionsAnalyticCalculate",err,error,*999)
+    ENTERS("HamiltonJacobi_AnalyticBoundaryConditionsCalculate",err,error,*999)
 
     IF(.NOT.ASSOCIATED(boundaryConditions)) CALL FlagError("Boundary conditions is not associated.",err,error,*999)
 
@@ -396,13 +398,13 @@ CONTAINS
     ENDDO !variableIdx
     CALL FieldVariable_ParameterSetDataRestore(geometricVariable,FIELD_VALUES_SET_TYPE,geometricParameters,err,error,*999)
     
-    EXITS("HamiltonJacobi_BoundaryConditionsAnalyticCalculate")
+    EXITS("HamiltonJacobi_AnalyticBoundaryConditionsCalculate")
     RETURN
-999 ERRORS("HamiltonJacobi_BoundaryConditionsAnalyticCalculate",err,error)
-    EXITS("HamiltonJacobi_BoundaryConditionsAnalyticCalculate")
+999 ERRORS("HamiltonJacobi_AnalyticBoundaryConditionsCalculate",err,error)
+    EXITS("HamiltonJacobi_AnalyticBoundaryConditionsCalculate")
     RETURN 1
     
-  END SUBROUTINE HamiltonJacobi_BoundaryConditionsAnalyticCalculate
+  END SUBROUTINE HamiltonJacobi_AnalyticBoundaryConditionsCalculate
   
   !
   !================================================================================================================================

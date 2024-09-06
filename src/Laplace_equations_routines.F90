@@ -92,9 +92,9 @@ MODULE LaplaceEquationsRoutines
 
   !Interfaces
 
-  PUBLIC Laplace_AnalyticFunctionsEvaluate
+  PUBLIC Laplace_AnalyticBoundaryConditionsCalculate
 
-  PUBLIC Laplace_BoundaryConditionsAnalyticCalculate
+  PUBLIC Laplace_AnalyticFunctionsEvaluate
 
   PUBLIC Laplace_EquationsSetSetup
   
@@ -111,6 +111,105 @@ MODULE LaplaceEquationsRoutines
 
 CONTAINS
 
+  !
+  !================================================================================================================================
+  !
+
+  !>Calculates the analytic solution and sets the boundary conditions for a Laplace analytic problem.
+  SUBROUTINE Laplace_AnalyticBoundaryConditionsCalculate(equationsSet,boundaryConditions,boundaryOnly,update,err,error,*)
+
+    !Argument variables
+    TYPE(EquationsSetType), POINTER :: equationsSet !<A pointer to the equations set to calculate the analytic for
+    TYPE(BoundaryConditionsType), POINTER :: boundaryConditions !<A pointer for the boundary conditions to calculate
+    LOGICAL, INTENT(IN) :: boundaryOnly !<Only calculate if DOFs are on the boundary
+    LOGICAL, INTENT(IN) :: update !<.TRUE. if the boundary condition values are updated, .FALSE. if the boundary conditions are set.
+    INTEGER(INTG), INTENT(OUT) :: err !<The error code
+    TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
+    !Local Variables
+    INTEGER(INTG) :: analyticFunctionType,componentIdx,esSpecification(3),nodeIdx,numberOfComponents, &
+      & numberOfDimensions,numberOfNodes,numberOfVariables,variableIdx,variableType
+    REAL(DP) :: analyticValue,gradientAnalyticValue(3),hessianAnalyticValue(3,3),normal(3), &
+      & position(3,MAXIMUM_GLOBAL_DERIV_NUMBER),tangents(3,2),time
+    REAL(DP), POINTER :: analyticParameters(:),geometricParameters(:)
+    LOGICAL :: boundaryNode
+    TYPE(DomainType), POINTER :: domain
+    TYPE(DomainNodeType), POINTER :: domainNode
+    TYPE(DomainNodesType), POINTER :: domainNodes
+    TYPE(DomainTopologyType), POINTER :: domainTopology
+    TYPE(FieldType), POINTER :: analyticField,dependentField,geometricField
+    TYPE(FieldVariableType), POINTER :: analyticVariable,dependentVariable,geometricVariable
+   
+    ENTERS("Laplace_AnalyticBoundaryConditionsCalculate",err,error,*999)
+
+    IF(.NOT.ASSOCIATED(boundaryConditions)) CALL FlagError("Boundary conditions is not associated.",err,error,*999)
+    CALL EquationsSet_SpecificationGet(equationsSet,3,esSpecification,err,error,*999)
+    CALL EquationsSet_AssertAnalyticIsCreated(equationsSet,err,error,*999)
+    CALL EquationsSet_AnalyticFunctionTypeGet(equationsSet,analyticFunctionType,err,error,*999)
+    CALL EquationsSet_AnalyticTimeGet(equationsSet,time,err,error,*999)
+    
+    NULLIFY(geometricField)
+    CALL EquationsSet_GeometricFieldGet(equationsSet,geometricField,err,error,*999)
+    NULLIFY(geometricVariable)
+    CALL Field_VariableGet(geometricField,FIELD_U_VARIABLE_TYPE,geometricVariable,err,error,*999)
+    CALL FieldVariable_NumberOfComponentsGet(geometricVariable,numberOfDimensions,err,error,*999)
+    NULLIFY(geometricParameters)
+    CALL FieldVariable_ParameterSetDataGet(geometricVariable,FIELD_VALUES_SET_TYPE,geometricParameters,err,error,*999)
+    NULLIFY(dependentField)
+    CALL EquationsSet_DependentFieldGet(equationsSet,dependentField,err,error,*999)
+    CALL Field_NumberOfVariablesGet(dependentField,numberOfVariables,err,error,*999)
+    NULLIFY(analyticField)
+    CALL EquationsSet_AnalyticFieldExists(equationsSet,analyticField,err,error,*999)
+    NULLIFY(analyticVariable)
+    NULLIFY(analyticParameters)
+    IF(ASSOCIATED(analyticField)) THEN
+      CALL Field_VariableGet(analyticField,FIELD_U_VARIABLE_TYPE,analyticVariable,err,error,*999)
+      CALL FieldVariable_ParameterSetDataGet(analyticVariable,FIELD_VALUES_SET_TYPE,analyticParameters,err,error,*999)
+    ENDIF
+    DO variableIdx=1,numberOfVariables !U and deludeln
+      NULLIFY(dependentVariable)
+      CALL Field_VariableIndexGet(dependentField,variableIdx,dependentVariable,variableType,err,error,*999)
+      CALL FieldVariable_ParameterSetEnsureCreated(dependentVariable,FIELD_ANALYTIC_VALUES_SET_TYPE,err,error,*999)
+      CALL FieldVariable_NumberOfComponentsGet(dependentVariable,numberOfComponents,err,error,*999)
+      DO componentIdx=1,numberOfComponents !u
+        CALL FieldVariable_ComponentInterpolationCheck(dependentVariable,componentIdx,FIELD_NODE_BASED_INTERPOLATION, &
+          & err,error,*999)
+        NULLIFY(domain)
+        CALL FieldVariable_ComponentDomainGet(dependentVariable,componentIdx,domain,err,error,*999)
+        NULLIFY(domainTopology)
+        CALL Domain_DomainTopologyGet(domain,domainTopology,err,error,*999)
+        NULLIFY(domainNodes)
+        CALL DomainTopology_DomainNodesGet(domainTopology,domainNodes,err,error,*999)
+        CALL DomainNodes_NumberOfNodesGet(domainNodes,numberOfNodes,err,error,*999)
+        !Loop over the local nodes excluding the ghosts.
+        DO nodeIdx=1,numberOfNodes
+          NULLIFY(domainNode)
+          CALL DomainNodes_NodeGet(domainNodes,nodeIdx,domainNode,err,error,*999)
+          CALL DomainNode_BoundaryNodeGet(domainNode,boundaryNode,err,error,*999)
+          IF((.NOT.boundaryOnly).OR.(boundaryOnly.AND.boundaryNode)) THEN
+            CALL Field_PositionNormalTangentsCalculateNode(dependentField,FIELD_U_VARIABLE_TYPE,componentIdx,nodeIdx, &
+              & position,normal,tangents,err,error,*999)
+            CALL Laplace_AnalyticFunctionsEvaluate(equationsSet,analyticFunctionType,componentIdx,position(:,NO_PART_DERIV), &
+              & analyticParameters,analyticValue,gradientAnalyticValue,hessianAnalyticValue,err,error,*999)
+            CALL BoundaryConditions_AnalyticNodeSet(boundaryConditions,numberOfDimensions,dependentVariable,componentIdx, &
+              & domainNode,update,tangents,normal,analyticValue,gradientAnalyticValue,hessianAnalyticValue, &
+              & .FALSE.,0.0_DP,.FALSE.,0.0_DP,err,error,*999)
+          ENDIF !boundary only test
+        ENDDO !nodeIdx
+      ENDDO !componentIdx
+      CALL FieldVariable_ParameterSetUpdateStart(dependentVariable,FIELD_ANALYTIC_VALUES_SET_TYPE,err,error,*999)
+      CALL FieldVariable_ParameterSetUpdateFinish(dependentVariable,FIELD_ANALYTIC_VALUES_SET_TYPE,err,error,*999)
+
+    ENDDO !variableIdx
+
+    CALL FieldVariable_ParameterSetDataRestore(geometricVariable,FIELD_VALUES_SET_TYPE,geometricParameters,err,error,*999)
+   
+    EXITS("Laplace_AnalyticBoundaryConditionsCalculate")
+    RETURN
+999 ERRORSEXITS("Laplace_AnalyticBoundaryConditionsCalculate",err,error)
+    RETURN 1
+    
+  END SUBROUTINE Laplace_AnalyticBoundaryConditionsCalculate
+  
   !
   !================================================================================================================================
   !
@@ -246,101 +345,6 @@ CONTAINS
     
   END SUBROUTINE Laplace_AnalyticFunctionsEvaluate
 
-  !
-  !================================================================================================================================
-  !
-
-  !>Calculates the analytic solution and sets the boundary conditions for a Laplace analytic problem.
-  SUBROUTINE Laplace_BoundaryConditionsAnalyticCalculate(equationsSet,boundaryConditions,boundaryOnly,err,error,*)
-
-    !Argument variables
-    TYPE(EquationsSetType), POINTER :: equationsSet !<A pointer to the equations set to calculate the analytic for
-    TYPE(BoundaryConditionsType), POINTER :: boundaryConditions !<A pointer for the boundary conditions to calculate
-    LOGICAL, INTENT(IN) :: boundaryOnly !<Only calculate if DOFs are on the boundary
-    INTEGER(INTG), INTENT(OUT) :: err !<The error code
-    TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
-    !Local Variables
-    INTEGER(INTG) :: analyticFunctionType,componentIdx,esSpecification(3),nodeIdx,numberOfComponents, &
-      & numberOfDimensions,numberOfNodes,numberOfVariables,variableIdx,variableType
-    REAL(DP) :: analyticValue,gradientAnalyticValue(3),hessianAnalyticValue(3,3),normal(3), &
-      & position(3,MAXIMUM_GLOBAL_DERIV_NUMBER),tangents(3,2),time
-    REAL(DP), POINTER :: analyticParameters(:),geometricParameters(:)
-    LOGICAL :: boundaryNode
-    TYPE(DomainType), POINTER :: domain
-    TYPE(DomainNodesType), POINTER :: domainNodes
-    TYPE(DomainTopologyType), POINTER :: domainTopology
-    TYPE(FieldType), POINTER :: analyticField,dependentField,geometricField
-    TYPE(FieldVariableType), POINTER :: analyticVariable,dependentVariable,geometricVariable
-   
-    ENTERS("Laplace_BoundaryConditionsAnalyticCalculate",err,error,*999)
-
-    IF(.NOT.ASSOCIATED(boundaryConditions)) CALL FlagError("Boundary conditions is not associated.",err,error,*999)
-    CALL EquationsSet_SpecificationGet(equationsSet,3,esSpecification,err,error,*999)
-    CALL EquationsSet_AssertAnalyticIsCreated(equationsSet,err,error,*999)
-    CALL EquationsSet_AnalyticFunctionTypeGet(equationsSet,analyticFunctionType,err,error,*999)
-    CALL EquationsSet_AnalyticTimeGet(equationsSet,time,err,error,*999)
-    
-    NULLIFY(geometricField)
-    CALL EquationsSet_GeometricFieldGet(equationsSet,geometricField,err,error,*999)
-    NULLIFY(geometricVariable)
-    CALL Field_VariableGet(geometricField,FIELD_U_VARIABLE_TYPE,geometricVariable,err,error,*999)
-    CALL FieldVariable_NumberOfComponentsGet(geometricVariable,numberOfDimensions,err,error,*999)
-    NULLIFY(geometricParameters)
-    CALL FieldVariable_ParameterSetDataGet(geometricVariable,FIELD_VALUES_SET_TYPE,geometricParameters,err,error,*999)
-    NULLIFY(dependentField)
-    CALL EquationsSet_DependentFieldGet(equationsSet,dependentField,err,error,*999)
-    CALL Field_NumberOfVariablesGet(dependentField,numberOfVariables,err,error,*999)
-    NULLIFY(analyticField)
-    CALL EquationsSet_AnalyticFieldExists(equationsSet,analyticField,err,error,*999)
-    NULLIFY(analyticVariable)
-    NULLIFY(analyticParameters)
-    IF(ASSOCIATED(analyticField)) THEN
-      CALL Field_VariableGet(analyticField,FIELD_U_VARIABLE_TYPE,analyticVariable,err,error,*999)
-      CALL FieldVariable_ParameterSetDataGet(analyticVariable,FIELD_VALUES_SET_TYPE,analyticParameters,err,error,*999)
-    ENDIF
-    DO variableIdx=1,numberOfVariables !U and deludeln
-      NULLIFY(dependentVariable)
-      CALL Field_VariableIndexGet(dependentField,variableIdx,dependentVariable,variableType,err,error,*999)
-      CALL FieldVariable_ParameterSetEnsureCreated(dependentVariable,FIELD_ANALYTIC_VALUES_SET_TYPE,err,error,*999)
-      CALL FieldVariable_NumberOfComponentsGet(dependentVariable,numberOfComponents,err,error,*999)
-      DO componentIdx=1,numberOfComponents !u
-        CALL FieldVariable_ComponentInterpolationCheck(dependentVariable,componentIdx,FIELD_NODE_BASED_INTERPOLATION, &
-          & err,error,*999)
-        NULLIFY(domain)
-        CALL FieldVariable_ComponentDomainGet(dependentVariable,componentIdx,domain,err,error,*999)
-        NULLIFY(domainTopology)
-        CALL Domain_DomainTopologyGet(domain,domainTopology,err,error,*999)
-        NULLIFY(domainNodes)
-        CALL DomainTopology_DomainNodesGet(domainTopology,domainNodes,err,error,*999)
-        CALL DomainNodes_NumberOfNodesGet(domainNodes,numberOfNodes,err,error,*999)
-        !Loop over the local nodes excluding the ghosts.
-        DO nodeIdx=1,numberOfNodes
-          CALL DomainNodes_NodeBoundaryNodeGet(domainNodes,nodeIdx,boundaryNode,err,error,*999)
-          !IF((.NOT.boundaryOnly).OR.(boundaryOnly.AND.boundaryNode)) THEN
-          CALL Field_PositionNormalTangentsCalculateNode(dependentField,FIELD_U_VARIABLE_TYPE,componentIdx,nodeIdx, &
-            & position,normal,tangents,err,error,*999)
-          CALL Laplace_AnalyticFunctionsEvaluate(equationsSet,analyticFunctionType,componentIdx,position(:,NO_PART_DERIV), &
-            & analyticParameters,analyticValue,gradientAnalyticValue,hessianAnalyticValue,err,error,*999)
-          CALL BoundaryConditions_SetAnalyticBoundaryNode(boundaryConditions,numberOfDimensions,dependentVariable,componentIdx, &
-            & domainNodes,nodeIdx,boundaryNode,tangents,normal,analyticValue,gradientAnalyticValue,hessianAnalyticValue, &
-            & .FALSE.,0.0_DP,.FALSE.,0.0_DP,err,error,*999)
-          !ENDIF !boundary only test
-        ENDDO !nodeIdx
-      ENDDO !componentIdx
-      CALL FieldVariable_ParameterSetUpdateStart(dependentVariable,FIELD_ANALYTIC_VALUES_SET_TYPE,err,error,*999)
-      CALL FieldVariable_ParameterSetUpdateFinish(dependentVariable,FIELD_ANALYTIC_VALUES_SET_TYPE,err,error,*999)
-
-    ENDDO !variableIdx
-
-    CALL FieldVariable_ParameterSetDataRestore(geometricVariable,FIELD_VALUES_SET_TYPE,geometricParameters,err,error,*999)
-   
-    EXITS("Laplace_BoundaryConditionsAnalyticCalculate")
-    RETURN
-999 ERRORSEXITS("Laplace_BoundaryConditionsAnalyticCalculate",err,error)
-    RETURN 1
-    
-  END SUBROUTINE Laplace_BoundaryConditionsAnalyticCalculate
-  
   !
   !================================================================================================================================
   !
@@ -1301,6 +1305,8 @@ CONTAINS
             & " is not valid for a Laplace type of a classical field equations set."
           CALL FlagError(localError,err,error,*999)
         END SELECT
+        !Set temporal nature
+        CALL EquationsSet_AnalyticIsTemporalSet(equationsSet,.FALSE.,err,error,*999)
         !Create analytic field if required
         IF(numberOfAnalyticComponents>=1) THEN
           IF(equationsAnalytic%analyticFieldAutoCreated) THEN

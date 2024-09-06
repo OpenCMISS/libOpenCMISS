@@ -3994,7 +3994,7 @@ CONTAINS
       & outputType
     REAL(DP) :: currentTime,timeIncrement,alpha
     REAL(DP), POINTER :: meshDisplacementValues(:)
-    TYPE(ControlLoopType), POINTER :: controlLoop,controlTimeLoop
+    TYPE(ControlLoopType), POINTER :: controlLoop
     TYPE(EquationsSetType), POINTER :: equationsSet !<A pointer to the equations set
     TYPE(FieldType), POINTER :: geometricField
     TYPE(ProblemType), POINTER :: problem

@@ -5079,7 +5079,7 @@ CONTAINS
       & independentInterpParameters,prevDependentInterpParameters,uMaterialsInterpParameters,vMaterialsInterpParameters
     TYPE(FieldVariableType), POINTER :: geometricVariable,residualVariable,rowsVariable,uDependentVariable, &
       & u1EquationsVariable,uIndependentVariable,uMaterialsVariable,vEquationsVariable,vMaterialsVariable
-    TYPE(QuadratureSchemeType), POINTER :: dependentQuadratureScheme,quadratureScheme
+    TYPE(QuadratureSchemeType), POINTER :: dependentQuadratureScheme
     TYPE(QuadratureSchemePtrType) :: columnQuadratureScheme(4),rowQuadratureScheme(4)
     TYPE(RegionType), POINTER :: region
     TYPE(VARYING_STRING) :: localError
@@ -12016,9 +12016,7 @@ CONTAINS
     LOGICAL :: boundaryFace,boundaryLine,calculateFaces,calculateLines,integratedBoundary
     TYPE(BasisType), POINTER :: basis1,basis2,dependentBasis1,dependentBasis2
     TYPE(DecompositionType), POINTER :: decomposition
-    TYPE(DecompositionElementType), POINTER :: decompositionElement
     TYPE(DecompositionElementsType), POINTER :: decompositionElements
-    TYPE(DecompositionFaceType), POINTER :: face
     TYPE(DecompositionFacesType), POINTER :: decompositionFaces
     TYPE(DecompositionLinesType), POINTER :: decompositionLines
     TYPE(DecompositionTopologyType), POINTER :: decompositionTopology
@@ -12524,8 +12522,8 @@ CONTAINS
     LOGICAL, ALLOCATABLE :: globalConverged(:)
     TYPE(BasisType), POINTER :: dependentBasis,dependentBasis2,faceBasis
     TYPE(DecompositionType), POINTER :: decomposition3D
+    TYPE(DecompositionElementType), POINTER :: decompositionElement
     TYPE(DecompositionElementsType), POINTER :: decompositionElements3D
-    TYPE(DecompositionFaceType), POINTER :: face
     TYPE(DecompositionFacesType), POINTER :: decompositionFaces3D
     TYPE(DecompositionTopologyType), POINTER :: decompositionTopology3D
     TYPE(DomainType), POINTER :: domain,domain3D
@@ -14504,7 +14502,7 @@ CONTAINS
       & numberOfEquationsSets,numberOfEquationsSets2,numberOfSolvers,numberOfSolvers2,numberOfSubLoops,numberOfSubLoops2, &
       & numberOfSubLoops3,numberOfSubLoops4,pSpecification(3),solverIdx,solverIdx2,solveType,subloopIdx,subloopIdx2,subloopIdx3
     REAL(DP) :: absolute3D0DTolerance,relative3D0DTolerance
-    LOGICAL :: continueLoop,convergedFlag
+    LOGICAL :: calculateFaces,continueLoop,convergedFlag
     CHARACTER(70) :: label
     TYPE(ControlLoopType), POINTER :: subloop,subloop2,subloop3,iterativeWhileLoop2,iterativeWhileLoop3,parentLoop
     TYPE(DecompositionType), POINTER :: decomposition
@@ -15213,7 +15211,6 @@ CONTAINS
     TYPE(DecompositionType), POINTER :: decomposition3D
     TYPE(DecompositionElementType), POINTER :: decompositionElement
     TYPE(DecompositionElementsType), POINTER :: decompositionElements3D
-    TYPE(DecompositionFaceType), POINTER :: face
     TYPE(DecompositionFacesType), POINTER :: decompositionFaces3D
     TYPE(DecompositionTopologyType), POINTER :: decompositionTopology3D
     TYPE(DomainType), POINTER :: domain,domain3D
