@@ -2940,6 +2940,7 @@ CONTAINS
           IF(vFibres) CALL Field_InterpolateGauss(FIRST_PART_DERIV,BASIS_DEFAULT_QUADRATURE_SCHEME,gaussPointIdx, &
             & vFibreInterpPoint,err,error,*999)
         ENDIF
+        sourceParam=0.0_DP
         IF(uSource) THEN
           CALL Field_InterpolateGauss(FIRST_PART_DERIV,BASIS_DEFAULT_QUADRATURE_SCHEME,gaussPointIdx,sourceInterpPoint, &
             & err,error,*999)
@@ -2984,14 +2985,14 @@ CONTAINS
             CALL FlagError(localError,err,error,*999)
           ENDIF
           !Calculate (intracellular) conductivity tensor
-          CALL CoordinateSystem_MaterialTransformTensor([TENSOR_CONTRAVARIANT_INDEX,TENSOR_COVARIANT_INDEX], &
+          CALL CoordinateSystem_MaterialNuToXTransformTensor([TENSOR_CONTRAVARIANT_INDEX,TENSOR_COVARIANT_INDEX], &
             & geometricInterpPointMetrics,uFibreInterpPoint, &
-            & materialsInterpPoint%values(3:3+NUMBER_OF_VOIGT(numberOfDimensions),NO_PART_DERIV),intraConductivity, &
+            & materialsInterpPoint%values(3:2+NUMBER_OF_VOIGT(numberOfDimensions),NO_PART_DERIV),intraConductivity, &
             & err,error,*999)
           intraConductivity(1:numberOfXi,1:numberOfXi)=intraConductivity(1:numberOfXi,1:numberOfXi)/(am*cm)
           IF(extracellular) THEN
             !Calculate extracellular conductivity tensor
-            CALL CoordinateSystem_MaterialTransformTensor([TENSOR_CONTRAVARIANT_INDEX,TENSOR_COVARIANT_INDEX], &
+            CALL CoordinateSystem_MaterialNuToXTransformTensor([TENSOR_CONTRAVARIANT_INDEX,TENSOR_COVARIANT_INDEX], &
               & geometricInterpPointMetrics,vFibreInterpPoint, &
               & materialsInterpPoint%values(3+NUMBER_OF_VOIGT(numberOfDimensions):2+2*NUMBER_OF_VOIGT(numberOfDimensions), &
               & NO_PART_DERIV),extraConductivity,err,error,*999)

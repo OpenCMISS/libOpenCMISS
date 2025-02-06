@@ -916,7 +916,7 @@ CONTAINS
     !Argument variables
     TYPE(CellMLEvaluatorSolverType), POINTER :: cellMLEvaluatorSolver !<A pointer the CellML evaluator equation solver to evaluate
     REAL(DP), INTENT(IN) :: time !<The time for the CellML evaluate.
-    TYPE(CellMLType), POINTER :: cellML !<A pointer to the CellML environment to integrate the equations for.
+    TYPE(CellMLType), POINTER :: cellML !<A pointer to the CellML environment to evaluate the equations for.
     INTEGER(INTG), INTENT(IN) :: N !<The number of degrees-of-freedom
     INTEGER(INTG), INTENT(IN) :: onlyOneModelIndex !<If only one model is used in the models data the index of that model. 0 otherwise.
     INTEGER(INTG), POINTER :: modelsData(:) !<modelsData(dofIdx). The models data for the dofIdx'th dof.
@@ -1903,6 +1903,7 @@ CONTAINS
     NULLIFY(modelsField)
     CALL CellMLModelsField_ModelsFieldGet(cellMLModelsField,modelsField,err,error,*999)
     CALL Field_DOFOrderTypeGet(modelsField,FIELD_U_VARIABLE_TYPE,dofOrderType,err,error,*999)
+    time=startTime
     IF(dofOrderType==FIELD_SEPARATED_COMPONENT_DOF_ORDER) THEN
       !Dof components are separated. Will need to copy data to temporary arrays.
       IF(onlyOneModelIndex==CELLML_MODELS_FIELD_NOT_CONSTANT) THEN
@@ -1963,7 +1964,6 @@ CONTAINS
         CALL CellMLModel_NumberOfIntermediateGet(cellMLModel,numberOfIntermediates,err,error,*999)
         CALL CellMLModel_NumberOfParametersGet(cellMLModel,numberOfParameters,err,error,*999)
         CALL CellMLModel_NumberOfStateGet(cellMLModel,numberOfStates,err,error,*999)
-        time=startTime
         DO WHILE(time<=endTime)
           DO dofIdx=1,N
             modelIdx=modelsData(dofIdx)
@@ -2013,7 +2013,6 @@ CONTAINS
       !Dof components are continguous. Can pass data directly.
       IF(onlyOneModelIndex==CELLML_MODELS_FIELD_NOT_CONSTANT) THEN
         !Mulitple models
-        time=startTime
         DO WHILE(time<=endTime)
           DO dofIdx=1,N
             modelIdx=modelsData(dofIdx)
@@ -2168,7 +2167,6 @@ CONTAINS
           IF(numberOfIntermediates>0) THEN
             IF(numberOfParameters>0) THEN
               !We have states, intermediate and parameters for the model                      
-              time=startTime
               DO WHILE(time<=endTime)
                 DO dofIdx=1,N
                   modelIdx=modelsData(dofIdx)
@@ -2210,7 +2208,6 @@ CONTAINS
               ENDDO !time
             ELSE
               !We do not have parameters in the model
-              time=startTime
               DO WHILE(time<=endTime)
                 DO dofIdx=1,N
                   modelIdx=modelsData(dofIdx)
@@ -2252,7 +2249,6 @@ CONTAINS
           ELSE
             IF(numberOfParameters>0) THEN
               !We do not have intermediates in the model                      
-              time=startTime
               DO WHILE(time<=endTime)
                 DO dofIdx=1,N
                   modelIdx=modelsData(dofIdx)
@@ -2292,7 +2288,6 @@ CONTAINS
               ENDDO !time
             ELSE
               !We do not have intermediates or parameters in the model
-              time=startTime
               DO WHILE(time<=endTime)
                 DO dofIdx=1,N
                   modelIdx=modelsData(dofIdx)
@@ -4983,9 +4978,12 @@ CONTAINS
       
         !Check if there are any linear mappings
         NULLIFY(linearMapping)
+        NULLIFY(linearMatrices)
+        NULLIFY(linearMatrix)
+        NULLIFY(linearVariable)
+        NULLIFY(solverVariable)
         CALL EquationsMappingVector_LinearMappingExists(vectorMapping,linearMapping,err,error,*999)
         IF(ASSOCIATED(linearMapping)) THEN
-          NULLIFY(linearMatrices)
           CALL EquationsMatricesVector_LinearMatricesGet(vectorMatrices,linearMatrices,err,error,*999)
           CALL EquationsMatricesLinear_NumberOfLinearMatricesGet(linearMatrices,numberOfLinearMatrices,err,error,*999)
           DO linearMatrixIdx=1,numberOfLinearMatrices
@@ -5035,6 +5033,8 @@ CONTAINS
         ENDIF
 
         NULLIFY(sourcesMapping)
+        NULLIFY(sourceVectors)
+        NULLIFY(sourceVector)
         CALL EquationsMappingVector_SourcesMappingExists(vectorMapping,sourcesMapping,err,error,*999)
         IF(ASSOCIATED(sourcesMapping)) THEN
           CALL EquationsMatricesVector_SourceVectorsGet(vectorMatrices,sourceVectors,err,error,*999)
@@ -5065,13 +5065,13 @@ CONTAINS
         ENDIF
         
         NULLIFY(rhsMapping)
+        NULLIFY(rhsVariable)
+        NULLIFY(rhsVector)
         CALL EquationsMappingVector_RHSMappingExists(vectorMapping,rhsMapping,err,error,*999)
         IF(ASSOCIATED(rhsMapping)) THEN
-          NULLIFY(rhsVariable)
           CALL EquationsMappingRHS_RHSVariableGet(rhsMapping,rhsVariable,err,error,*999)
           CALL FieldVariable_VariableTypeGet(rhsVariable,rhsVariableType,err,error,*999)
-          NULLIFY(rhsVector)
-          CALL EquationsMatricesVector_RHSVectorGet(vectorMatrices,rhsVector,err,error,*999)
+         CALL EquationsMatricesVector_RHSVectorGet(vectorMatrices,rhsVector,err,error,*999)
           CALL EquationsMatricesRHS_DistributedVectorEnsureCreated(rhsVector,EQUATIONS_MATRICES_CURRENT_VECTOR, &
             & err,error,*999)
           CALL EquationsMatricesRHS_DistributedVectorEnsureCreated(rhsVector,EQUATIONS_MATRICES_PREVIOUS_VECTOR, &
@@ -5516,6 +5516,12 @@ CONTAINS
     CALL Solver_AssertIsDynamic(solver,err,error,*999)
     NULLIFY(dynamicSolver)
     CALL Solver_DynamicSolverGet(solver,dynamicSolver,err,error,*999)
+    firstMeanPredictionFactor=1.0_DP
+    firstPredictionFactor=1.0_DP
+    secondMeanPredictionFactor=1.0_DP
+    secondPredictionFactor=1.0_DP
+    thirdMeanPredictionFactor=1.0_DP
+    thirdPredictionFactor=1.0_DP
     IF(dynamicSolver%solverInitialised) THEN
       deltaT=dynamicSolver%timeIncrement
       SELECT CASE(dynamicSolver%degree)
@@ -6927,7 +6933,7 @@ CONTAINS
     TYPE(VARYING_STRING) :: localError
 
     ENTERS("SolverEquations_BoundaryConditionsCreateFinish",err,error,*999)
-
+   
     CALL SolverEquations_AssertIsFinished(solverEquations,err,error,*999)
     NULLIFY(solver)
     CALL SolverEquations_SolverGet(solverEquations,solver,err,error,*999)
@@ -6935,6 +6941,7 @@ CONTAINS
       & CALL FlagError("Can not finish solver equations creation for a solver that has been linked.",err,error,*999)
     NULLIFY(boundaryConditions)
     CALL SolverEquations_BoundaryConditionsGet(solverEquations,boundaryConditions,err,error,*999)
+
     CALL BoundaryConditions_CreateFinish(boundaryConditions,err,error,*999)        
     !Finish of the solver mapping
     CALL SolverMapping_CreateFinish(solverEquations%solverMapping,err,error,*999)
@@ -10094,28 +10101,26 @@ CONTAINS
     INTEGER(INTG), INTENT(OUT) :: err !<The error code
     TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
     !Local Variables
-    INTEGER(INTG) :: currentIteration,dampingMatrixNumber,dirichletIdx,dynamicVariableType, &
+    INTEGER(INTG) :: dampingMatrixNumber,dirichletIdx,dynamicVariableType, &
       & equationsColumnNumber,equationsMatrixIdx,equationsMatrixNumber,equationsRowNumber, &
-      & equationsSetIdx,inputIteration,interfaceColumnNumber,interfaceConditionIdx,interfaceConditionMethod,interfaceMatrixIdx, &
+      & equationsSetIdx,interfaceColumnNumber,interfaceConditionIdx,interfaceConditionMethod,interfaceMatrixIdx, &
       & jacobianMatrixIdx,lhsBoundaryCondition,lhsBoundaryFinish,lhsGlobalDOF,lhsVariableDOF, &
       & linearMatrixIdx,linearVariableIdx,massMatrixNumber,numberOfDirichletConditions, &
       & numberOfDynamicMatrices,numberOfEquationsMatrices,numberOfEquationsSets,numberOfInterfaceConditions, &
       & numberOfInterfaceMatrices,numberOfJacobianMatrices,numberOfLinearMatrices,numberOfLinearVariables, &
-      & numberOfResiduals,numberOfResidualVariables,numberOfRows,numberOfSolverMatrices,numberOfSources,outputIteration, &
-      & residualIdx,residualVariableIdx,rhsVariableDOF, &
-      & rowCondition,solverMatrixIdx,sourceIdx,stiffnessMatrixNumber, &
-      & timeDependenceType,totalNumberOfRows,transposeTimeDependenceType,variableDOF, &
-      & variableIdx
+      & numberOfResiduals,numberOfResidualVariables,numberOfRows,numberOfSolverMatrices,numberOfSources, &
+      & residualIdx,residualVariableIdx,rhsVariableDOF,rowCondition,solverMatrixIdx,sourceIdx,stiffnessMatrixNumber, &
+      & timeDependenceType,totalNumberOfRows,transposeTimeDependenceType,variableIdx
     INTEGER(INTG), POINTER :: equationsRowToLHSDOFMap(:),equationsRowToRHSDOFMap(:), &
       & variableDOFToRowMap(:)
     REAL(SP) :: systemElapsed,systemTime1(1),systemTime2(1),userElapsed,userTime1(1),userTime2(1)
-    REAL(DP) :: alphaValue,currentFunctionFactor,currentRHSValue,currentTime,dampingMatrixCoefficient,deltaT,dofValue, &
+    REAL(DP) :: alphaValue,currentFunctionFactor,currentRHSValue,dampingMatrixCoefficient,deltaT,dofValue, &
       & dynamicAccelerationFactor,dynamicDisplacementFactor,dynamicValue,dynamicVelocityFactor,equationsDampingCoefficient, &
       & equationsMassCoefficient,equationsStiffnessCoefficient,firstUpdateFactor,jacobianMatrixCoefficient,linearCoefficient, &
       & linearValue,massMatrixCoefficient,matrixCoefficient,matrixCoefficients(2)=[0.0_DP,0.0_DP],nonlinearValue, &
       & previousFunctionFactor,previous2FunctionFactor,previous3FunctionFactor,previousRHSValue,previous2RHSValue, &
       & previous3RHSValue,residualCoefficient,rhsCoefficient,rhsValue,secondUpdateFactor, &
-      & solverRHSValue,sourceValue,stiffnessMatrixCoefficient,sourceCoefficient,startTime,stopTime,timeIncrement, &
+      & solverRHSValue,sourceValue,stiffnessMatrixCoefficient,sourceCoefficient, &
       & transposeMatrixCoefficient,vectorCoefficient
     REAL(DP), POINTER :: matrixCheckData(:),currentValuesVector(:),previousValuesVector(:),previousVelocityVector(:), &
       & previousAccelerationVector(:),rhsIntegratedParameters(:),rhsParameters(:),solverRHSCheckData(:),solverResidualCheckData(:)
@@ -10126,7 +10131,6 @@ CONTAINS
     TYPE(BoundaryConditionsNeumannType), POINTER :: neumannBoundaryConditions
     TYPE(BoundaryConditionsVariableType), POINTER :: lhsBoundaryConditionsVariable,rhsBoundaryConditionsVariable
     TYPE(BoundaryConditionsRowVariableType), POINTER :: lhsBoundaryConditionsRowVariable
-    TYPE(ControlLoopType), POINTER :: controlLoop
     TYPE(DistributedMatrixType), POINTER :: dampingDistributedMatrix,equationsDistributedMatrix,interfaceDistributedMatrix, &
       & jacobianDistributedMatrix,linearDistributedMatrix,massDistributedMatrix,previousSolverDistributedMatrix, &
       & solverDistributedMatrix,stiffnessDistributedMatrix,transposeDistributedMatrix,transposeInterfaceDistributedMatrix
@@ -10221,6 +10225,20 @@ CONTAINS
     !  & currentIteration,outputIteration,inputIteration,err,error,*999)
     
     deltaT=dynamicSolver%timeIncrement
+    stiffnessMatrixCoefficient=1.0_DP
+    dampingMatrixCoefficient=1.0_DP
+    massMatrixCoefficient=1.0_DP
+    jacobianMatrixCoefficient=1.0_DP
+    sourceCoefficient=1.0_DP
+    firstUpdateFactor=1.0_DP
+    secondUpdateFactor=1.0_DP
+    dynamicDisplacementFactor=1.0_DP
+    dynamicVelocityFactor=1.0_DP
+    dynamicAccelerationFactor=1.0_DP
+    currentFunctionFactor=1.0_DP
+    previousFunctionFactor=1.0_DP
+    previous2FunctionFactor=1.0_DP
+    previous3FunctionFactor=1.0_DP
     SELECT CASE(dynamicSolver%degree)
     CASE(SOLVER_DYNAMIC_FIRST_DEGREE)
       stiffnessMatrixCoefficient=1.0_DP*dynamicSolver%theta(1)*deltaT
@@ -10777,6 +10795,7 @@ CONTAINS
           ENDIF !dynamic mapping
 
           NULLIFY(nonlinearMapping)
+          NULLIFY(nonlinearTempVector)
           CALL EquationsMappingVector_NonlinearMappingExists(vectorMapping,nonlinearMapping,err,error,*999)
           IF(ASSOCIATED(nonlinearMapping)) THEN
             NULLIFY(nonlinearMatrices)
@@ -10958,13 +10977,29 @@ CONTAINS
             ENDDO !sourceIdx
           ENDIF !source mapping
 
-          NULLIFY(rhsVariable)
-          NULLIFY(rhsMapping)
           NULLIFY(rhsVector)
           NULLIFY(currentRHSVector)
           NULLIFY(previousRHSVector)
           NULLIFY(previous2RHSVector)
           NULLIFY(previous3RHSVector)
+          CALL EquationsMatricesVector_RHSVectorGet(vectorMatrices,rhsVector,err,error,*999)
+          CALL EquationsMatricesRHS_VectorCoefficientGet(rhsVector,rhsCoefficient,err,error,*999)
+          CALL EquationsMatricesRHS_DistributedVectorGet(rhsVector,EQUATIONS_MATRICES_CURRENT_VECTOR,currentRHSVector, &
+            & err,error,*999)
+          CALL EquationsMatricesRHS_DistributedVectorGet(rhsVector,EQUATIONS_MATRICES_PREVIOUS_VECTOR,previousRHSVector, &
+            & err,error,*999)
+          IF(dynamicSolver%degree>=SOLVER_DYNAMIC_SECOND_DEGREE) THEN
+            CALL EquationsMatricesRHS_DistributedVectorGet(rhsVector,EQUATIONS_MATRICES_PREVIOUS2_VECTOR,previous2RHSVector, &
+              & err,error,*999)
+            IF(dynamicSolver%degree>=SOLVER_DYNAMIC_THIRD_DEGREE) THEN
+              CALL EquationsMatricesRHS_DistributedVectorGet(rhsVector,EQUATIONS_MATRICES_PREVIOUS3_VECTOR,previous3RHSVector, &
+                & err,error,*999)
+            ENDIF
+          ENDIF
+
+          NULLIFY(rhsMapping)
+          NULLIFY(rhsVariable)
+          NULLIFY(rhsParameters)
           NULLIFY(rhsBoundaryConditionsVariable)
           NULLIFY(rhsIntegratedParameters)
           CALL EquationsMappingVector_RHSMappingExists(vectorMapping,rhsMapping,err,error,*999)
@@ -10972,20 +11007,6 @@ CONTAINS
             CALL EquationsMappingRHS_RHSVariableGet(rhsMapping,rhsVariable,err,error,*999)
             CALL FieldVariable_ParameterSetCreated(rhsVariable,FIELD_INTEGRATED_NEUMANN_SET_TYPE,hasIntegratedValues, &
               & err,error,*999)
-            CALL EquationsMatricesVector_RHSVectorGet(vectorMatrices,rhsVector,err,error,*999)
-            CALL EquationsMatricesRHS_VectorCoefficientGet(rhsVector,rhsCoefficient,err,error,*999)
-            CALL EquationsMatricesRHS_DistributedVectorGet(rhsVector,EQUATIONS_MATRICES_CURRENT_VECTOR,currentRHSVector, &
-              & err,error,*999)
-            CALL EquationsMatricesRHS_DistributedVectorGet(rhsVector,EQUATIONS_MATRICES_PREVIOUS_VECTOR,previousRHSVector, &
-              & err,error,*999)
-            IF(dynamicSolver%degree>=SOLVER_DYNAMIC_SECOND_DEGREE) THEN
-              CALL EquationsMatricesRHS_DistributedVectorGet(rhsVector,EQUATIONS_MATRICES_PREVIOUS2_VECTOR,previous2RHSVector, &
-                & err,error,*999)
-              IF(dynamicSolver%degree>=SOLVER_DYNAMIC_THIRD_DEGREE) THEN
-                CALL EquationsMatricesRHS_DistributedVectorGet(rhsVector,EQUATIONS_MATRICES_PREVIOUS3_VECTOR,previous3RHSVector, &
-                  & err,error,*999)
-              ENDIF
-            ENDIF
             CALL FieldVariable_ParameterSetDataGet(rhsVariable,FIELD_VALUES_SET_TYPE,rhsParameters,err,error,*999) 
             IF(hasIntegratedValues) THEN
               !Update RHS field by integrating any point Neumann conditions
@@ -11055,22 +11076,21 @@ CONTAINS
                 CALL DistributedVector_ValuesSet(currentRHSVector,equationsRowNumber,rhsParameters(rhsVariableDOF), &
                   & err,error,*999)
               ENDIF
-              CALL DistributedVector_ValuesGet(currentRHSVector,equationsRowNumber,currentRHSValue,err,error,*999)
-              rhsValue=currentRHSValue*currentFunctionFactor
-              CALL DistributedVector_ValuesGet(previousRHSVector,equationsRowNumber,previousRHSValue,err,error,*999)
-              rhsValue=rhsValue+previousRHSValue*previousFunctionFactor
-              IF(dynamicSolver%degree>=SOLVER_DYNAMIC_SECOND_DEGREE) THEN
-                CALL DistributedVector_ValuesGet(previous2RHSVector,equationsRowNumber,previous2RHSValue,err,error,*999)
-                rhsValue=rhsValue+previous2RHSValue*previous2FunctionFactor
-                IF(dynamicSolver%degree>=SOLVER_DYNAMIC_THIRD_DEGREE) THEN
-                  CALL DistributedVector_ValuesGet(previous3RHSVector,equationsRowNumber,previous3RHSValue,err,error,*999)
-                  rhsValue=rhsValue+previous3RHSValue*previous3FunctionFactor
-                ENDIF
-              ENDIF
-              rhsValue=rhsValue*rhsCoefficient
-            ELSE
-              rhsValue=0.0_DP
             ENDIF
+            
+            CALL DistributedVector_ValuesGet(currentRHSVector,equationsRowNumber,currentRHSValue,err,error,*999)
+            rhsValue=currentRHSValue*currentFunctionFactor
+            CALL DistributedVector_ValuesGet(previousRHSVector,equationsRowNumber,previousRHSValue,err,error,*999)
+            rhsValue=rhsValue+previousRHSValue*previousFunctionFactor
+            IF(dynamicSolver%degree>=SOLVER_DYNAMIC_SECOND_DEGREE) THEN
+              CALL DistributedVector_ValuesGet(previous2RHSVector,equationsRowNumber,previous2RHSValue,err,error,*999)
+              rhsValue=rhsValue+previous2RHSValue*previous2FunctionFactor
+              IF(dynamicSolver%degree>=SOLVER_DYNAMIC_THIRD_DEGREE) THEN
+                CALL DistributedVector_ValuesGet(previous3RHSVector,equationsRowNumber,previous3RHSValue,err,error,*999)
+                rhsValue=rhsValue+previous3RHSValue*previous3FunctionFactor
+              ENDIF
+            ENDIF
+            rhsValue=rhsValue*rhsCoefficient
 
 !! TODO: CHECK THIS. THE DOF TYPE IS THE TYPE OF VALUE SET ON THE DOF. IT IS THE LHS VARIABLE ROW CONDITION TYPE THAT IS THE BC.
             
@@ -11140,6 +11160,7 @@ CONTAINS
                           & equationsMatrixIdx,equationsMatrixNumber,err,error,*999)
                         CALL EquationsMappingVectorVToEMSMap_EquationsMatrixColumnNumberGet(dynamicVarToEquationsMatricesMap, &
                           & equationsMatrixIdx,lhsVariableDOF,equationsColumnNumber,err,error,*999)
+                        dofValue=0.0_DP
                         IF(equationsMatrixNumber==stiffnessMatrixNumber) &
                           & dofValue=alphaValue*stiffnessMatrixCoefficient*equationsStiffnessCoefficient
                         IF(equationsMatrixNumber==dynamicMapping%dampingMatrixNumber) &
@@ -11235,6 +11256,7 @@ CONTAINS
                               & err,error,*999)
                             CALL InterfaceMatrix_TransposeTimeDependenceTypeGet(interfaceMatrix,transposeTimeDependenceType, &
                               & err,error,*999)
+                            dofValue=0.0_DP
                             SELECT CASE(transposeTimeDependenceType)
                             CASE(INTERFACE_MATRIX_STATIC)
                               dofValue=transposeMatrixCoefficient*stiffnessMatrixCoefficient*alphaValue
@@ -11248,7 +11270,7 @@ CONTAINS
                             NULLIFY(variableDOFToRowMap)
                             CALL InterfaceMappingIMToVMap_VariableDOFToRowMapGet(interfaceMatrixToVarMap, &
                               & variableDOFToRowMap,err,error,*999)
-                            interfaceColumnNumber=variableDOFToRowMap(variableDof)
+                            interfaceColumnNumber=variableDOFToRowMap(lhsVariableDOF)
                             CALL DistributedMatrix_MatrixColumnAdd(interfaceMatrix%matrix,.TRUE.,interfaceColumnNumber, &
                               & interfaceColToSolverRowsMap,-1.0_DP*dofValue,solverRHSVector,err,error,*999)
                           ENDIF
@@ -12230,10 +12252,15 @@ CONTAINS
             ENDDO !sourceIdx
           ENDIF !source mapping
           
-          NULLIFY(rhsVariable)
-          NULLIFY(rhsMapping)
           NULLIFY(rhsVector)
           NULLIFY(currentRHSVector)
+          CALL EquationsMatricesVector_RHSVectorGet(vectorMatrices,rhsVector,err,error,*999)
+          CALL EquationsMatricesRHS_VectorCoefficientGet(rhsVector,rhsCoefficient,err,error,*999)
+          CALL EquationsMatricesRHS_DistributedVectorGet(rhsVector,EQUATIONS_MATRICES_CURRENT_VECTOR,currentRHSVector, &
+            & err,error,*999)
+          
+          NULLIFY(rhsVariable)
+          NULLIFY(rhsMapping)
           NULLIFY(rhsBoundaryConditionsVariable)
           NULLIFY(rhsIntegratedParameters)
           CALL EquationsMappingVector_RHSMappingExists(vectorMapping,rhsMapping,err,error,*999)
@@ -12241,10 +12268,7 @@ CONTAINS
             CALL EquationsMappingRHS_RHSVariableGet(rhsMapping,rhsVariable,err,error,*999)
             CALL FieldVariable_ParameterSetCreated(rhsVariable,FIELD_INTEGRATED_NEUMANN_SET_TYPE,hasIntegratedValues, &
               & err,error,*999)
-            CALL EquationsMatricesVector_RHSVectorGet(vectorMatrices,rhsVector,err,error,*999)
-            CALL EquationsMatricesRHS_VectorCoefficientGet(rhsVector,rhsCoefficient,err,error,*999)
-            CALL EquationsMatricesRHS_DistributedVectorGet(rhsVector,EQUATIONS_MATRICES_CURRENT_VECTOR,currentRHSVector, &
-              & err,error,*999)
+            NULLIFY(rhsParameters)
             CALL FieldVariable_ParameterSetDataGet(rhsVariable,FIELD_VALUES_SET_TYPE,rhsParameters,err,error,*999) 
             IF(hasIntegratedValues) THEN
               !Update RHS field by integrating any point Neumann conditions
@@ -12252,6 +12276,7 @@ CONTAINS
 !!TODO: NEED TO FIX INTEGRATED FLUX MATRIX CALCULATION. THE MATRIX CURRENTLY USES THE RHS FOR THE ROWS BUT IT SHOULD USE THE
 !!      LHS. IT SHOULD BE POSSIBLE TO USE A DIFFERENT BASIS FOR THE FLUX INTERPOLATION THAN FOR THE DEPENDENT INTERPOLATION.
               CALL BoundaryConditionsVariable_NeumannIntegrate(rhsBoundaryConditionsVariable,err,error,*999)
+              NULLIFY(rhsIntegratedParameters)
               CALL FieldVariable_ParameterSetDataGet(rhsVariable,FIELD_INTEGRATED_NEUMANN_SET_TYPE,rhsIntegratedParameters, &
                 & err,error,*999) 
             ENDIF
@@ -12308,12 +12333,11 @@ CONTAINS
                 CALL DistributedVector_ValuesSet(currentRHSVector,equationsRowNumber,rhsParameters(rhsVariableDOF), &
                   & err,error,*999)
               ENDIF
-              CALL DistributedVector_ValuesGet(currentRHSVector,equationsRowNumber,rhsValue,err,error,*999)
-              rhsValue=rhsValue*rhsCoefficient
-            ELSE
-              rhsValue=0.0_DP
             ENDIF
-
+            
+            CALL DistributedVector_ValuesGet(currentRHSVector,equationsRowNumber,rhsValue,err,error,*999)
+            rhsValue=rhsValue*rhsCoefficient
+            
 !! TODO: CHECK THIS. THE DOF TYPE IS THE TYPE OF VALUE SET ON THE DOF. IT IS THE LHS VARIABLE ROW CONDITION TYPE THAT IS THE BC.
             
             !Get the dynamic contribution to the the RHS values
@@ -17577,7 +17601,7 @@ CONTAINS
               & couplingCoefficient,additiveConstant,err,error,*999)
             IF(solverDOFIdx/=0) THEN
               dofValue=variableData(variableDOFIdx)*couplingCoefficient+additiveConstant
-              CALL DomainMapping_LocalNumberFromGlobalGet(domainMapping,solverDOFIdx,1,localDOFIdx,err,error,*999)
+              CALL DomainMapping_LocalNumberFromGlobalGet(columnDOFsMapping,solverDOFIdx,1,localDOFIdx,err,error,*999)
               CALL DistributedVector_ValuesSet(solverVector,localDOFIdx,dofValue,err,error,*999)
             ENDIF
           ENDDO !variableDOFIdx
@@ -17608,7 +17632,7 @@ CONTAINS
             & couplingCoefficient,additiveConstant,err,error,*999)
           IF(solverDOFIdx/=0) THEN
             dofValue=variableData(variableDOFIdx)*couplingCoefficient+additiveConstant
-            CALL DomainMapping_LocalNumberFromGlobalGet(domainMapping,solverDOFIdx,1,localDOFIdx,err,error,*999)
+            CALL DomainMapping_LocalNumberFromGlobalGet(columnDOFsMapping,solverDOFIdx,1,localDOFIdx,err,error,*999)
             CALL DistributedVector_ValuesSet(solverVector,localDOFIdx,dofValue,err,error,*999)
           ENDIF
         ENDDO !variableDOFIdx

@@ -529,7 +529,7 @@ CONTAINS
           DO rowXiIdx=1,numberOfXi
             dXidX(rowXiIdx,columnComponentIdx)=geometricInterpPointMetrics%dXidX(rowXiIdx,columnComponentIdx)
           ENDDO !rowXiIdx
-        ENDDO !columnXiIdx
+        ENDDO !columnComponentIdx
        
         !Loop over field components
         rowElementDOFIdx=0          
@@ -556,7 +556,7 @@ CONTAINS
                   & PARTIAL_DERIVATIVE_FIRST_DERIVATIVE_MAP(rowXiIdx),gaussPointIdx,rowdPhidXi(rowXiIdx), &
                   & err,error,*999)
                 DO componentIdx=1,numberOfDimensions
-                  rowdPhidX(componentIdx)=rowdPhidX(componentIdx)+rowdPhidXi(columnXiIdx)*dXidX(rowXiIdx,componentIdx)
+                  rowdPhidX(componentIdx)=rowdPhidX(componentIdx)+rowdPhidXi(rowXiIdx)*dXidX(rowXiIdx,componentIdx)
                 ENDDO !componentIdx
               ENDDO !columnXiiIdx
               columnElementDOFIdx=0

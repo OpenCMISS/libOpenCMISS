@@ -1240,11 +1240,8 @@ CONTAINS
     NULLIFY(rhsMapping)
     CALL EquationsMappingVector_RHSMappingExists(vectorMapping,rhsMapping,err,error,*999)
     NULLIFY(rhsVector)
-    updateRHS=.FALSE.
-    IF(ASSOCIATED(rhsMapping)) THEN
-      CALL EquationsMatricesVector_RHSVectorGet(vectorMatrices,rhsVector,err,error,*999)
-      CALL EquationsMatricesRHS_UpdateVectorGet(rhsVector,updateRHS,err,error,*999)
-    ENDIF
+    CALL EquationsMatricesVector_RHSVectorGet(vectorMatrices,rhsVector,err,error,*999)
+    CALL EquationsMatricesRHS_UpdateVectorGet(rhsVector,updateRHS,err,error,*999)
     NULLIFY(sourcesMapping)
     CALL EquationsMappingVector_SourcesMappingExists(vectorMapping,sourcesMapping,err,error,*999)
     NULLIFY(sourceVectors)
@@ -1494,6 +1491,8 @@ CONTAINS
                         linearMatrix%elementMatrix%matrix(rowElementDOFIdx,columnElementDOFIdx)= &
                           & linearMatrix%elementMatrix%matrix(rowElementDOFIdx,columnElementDOFIdx)+sum
                       ENDDO !columnElementParameterIdx
+                    ELSE
+                      columnElementDOFIdx=columnElementDOFIdx+numberOfColumnElementParameters(columnComponentIdx)
                     ENDIF !column = row
                   ENDDO !columnComponentIdx
                 ENDIF !updateMatrix
@@ -1529,7 +1528,14 @@ CONTAINS
                 CALL Field_InterpolateGauss(NO_PART_DERIV,BASIS_DEFAULT_QUADRATURE_SCHEME,gaussPointIdx, &
                   & materialsInterpPoint,err,error,*999)
                 tau1=materialsInterpPoint%values(1,NO_PART_DERIV)
+                tau2=0.0_DP
+                tau3=0.0_DP
                 kappa11=materialsInterpPoint%values(2,NO_PART_DERIV)
+                kappa12=0.0_DP
+                kappa22=0.0_DP
+                kappa13=0.0_DP
+                kappa23=0.0_DP
+                kappa33=0.0_DP
                 IF(numberOfXi>1) THEN
                   tau2=materialsInterpPoint%values(3,NO_PART_DERIV)
                   kappa22=materialsInterpPoint%values(4,NO_PART_DERIV)
@@ -1855,6 +1861,8 @@ CONTAINS
                         linearMatrix%elementMatrix%matrix(rowElementDOFIdx,columnElementDOFIdx)= &
                           linearMatrix%elementMatrix%matrix(rowElementDOFIdx,columnElementDOFIdx)+sum
                       ENDDO !columnElementParameterIdx
+                    ELSE
+                      columnElementDOFIdx=columnElementDOFIdx+numberOfColumnElementParameters(columnComponentIdx)
                     ENDIF
                   ENDDO !columnComponentIdx
                 ENDIF
@@ -2020,7 +2028,16 @@ CONTAINS
                 dXidX(xiIdx,componentIdx)=geometricInterpPointMetrics%dXidX(xiIdx,componentIdx)
               ENDDO !xiIdx
             ENDDO !componentIdx
-            
+
+            tau1=0.0_DP
+            tau2=0.0_DP
+            tau3=0.0_DP
+            kappa11=0.0_DP
+            kappa12=0.0_DP
+            kappa22=0.0_DP
+            kappa13=0.0_DP
+            kappa23=0.0_DP
+            kappa33=0.0_DP
             IF(smoothingType==EQUATIONS_SET_FITTING_SOBOLEV_VALUE_SMOOTHING.OR. &
               & smoothingType==EQUATIONS_SET_FITTING_SOBOLEV_DIFFERENCE_SMOOTHING) THEN
               CALL Field_InterpolateGauss(NO_PART_DERIV,BASIS_DEFAULT_QUADRATURE_SCHEME,gaussPointIdx, &
@@ -2358,13 +2375,13 @@ CONTAINS
     CALL EquationsMatricesNonlinear_ResidualVectorGet(nonlinearMatrices,1,residualVector,err,error,*999)
     CALL EquationsMatricesResidual_UpdateVectorGet(residualVector,updateResidual,err,error,*999)
     NULLIFY(rhsVector)
-    updateRHS=.FALSE.
-    IF(ASSOCIATED(rhsMapping)) THEN
-      CALL EquationsMatricesVector_RHSVectorGet(vectorMatrices,rhsVector,err,error,*999)
-      CALL EquationsMatricesRHS_UpdateVectorGet(rhsVector,updateRHS,err,error,*999)
-    ENDIF
+    CALL EquationsMatricesVector_RHSVectorGet(vectorMatrices,rhsVector,err,error,*999)
+    CALL EquationsMatricesRHS_UpdateVectorGet(rhsVector,updateRHS,err,error,*999)
 
     update=(updateResidual.OR.updateRHS)
+
+    !What is update matrix here???
+    updateMatrix=.TRUE.
 
     IF(update) THEN
       
@@ -2467,7 +2484,8 @@ CONTAINS
           NULLIFY(columnDomainElements)
           CALL DomainTopology_DomainElementsGet(columnDomainTopology,columnDomainElements,err,error,*999)
           NULLIFY(columnBasis(columnComponentIdx)%ptr)
-          CALL DomainElements_ElementBasisGet(columnDomainElements,elementNumber,columnBasis(columnComponentIdx)%ptr,err,error,*999)
+          CALL DomainElements_ElementBasisGet(columnDomainElements,elementNumber,columnBasis(columnComponentIdx)%ptr, &
+            & err,error,*999)
           CALL Basis_NumberOfElementParametersGet(columnBasis(columnComponentIdx)%ptr, &
             & numberOfColumnElementParameters(columnComponentIdx),err,error,*999)
           NULLIFY(columnQuadratureScheme(columnComponentIdx)%ptr)
@@ -2573,6 +2591,7 @@ CONTAINS
                   & elementXi(1:numberOfXi),rowPhi,err,error,*999)
                 IF(updateResidual) THEN
                   columnElementDOFIdx=0
+                  sum=0.0_DP
                   !Loop over element columns
                   DO columnComponentIdx=1,numberOfColsComponents
                     sum = 0.0_DP
@@ -2585,6 +2604,8 @@ CONTAINS
                         !sum = rowPhi*columnPhi*dataPointWeight(columnComponentIdx)* &
                         !  & dependentInterpPoint%values(rowComponentIdx,NO_PART_DERIV)
                       ENDDO !columnElementParameterIdx
+                    ELSE
+                      columnElementDOFIdx=columnElementDOFIdx+numberOfColumnElementParameters(columnComponentIdx)
                     ENDIF
                   ENDDO !columnComponentIdx
                   residualVector%elementResidual%vector(rowElementParameterIdx) = &

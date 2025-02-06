@@ -2192,7 +2192,7 @@ END TYPE GeneratedMeshEllipsoidType
     TYPE(VarToJacobianMatrixMapPtrType), ALLOCATABLE :: varToJacobianMatrixMaps(:) !<varToJacobianMap(variableIdx). varToJacobianMap(variableIdx)%ptr is a pointer to the mapping from the residual variable to the Jacobain matrix for the variableIdx'th residual variable.
     TYPE(JacobianMatrixToVarMapPtrType), ALLOCATABLE :: jacobianMatrixToVarMaps(:) !<jacobianMatrixToVarMaps(jacobianIdx). <jacobianMatrixToVarMaps(jacobianIdx)%ptr is a pointer to the mapping from the Jacobian matrix to the residual variables for the jacobianIdx'th Jacobian.
     REAL(DP) :: residualCoefficient !<The multiplicative coefficient applied to the residual vector
-    INTEGER(INTG), POINTER :: equationsRowToResidualDOFMap(:) !<equationsRowToResidualDOFMap(rowIdx). The mapping from the rowIdx'th row of the equations to the residual variable DOFs.
+    !INTEGER(INTG), POINTER :: equationsRowToResidualDOFMap(:) !<equationsRowToResidualDOFMap(rowIdx). The mapping from the rowIdx'th row of the equations to the residual variable DOFs.
   END TYPE EquationsMappingResidualType
 
   !>A buffer type for pointers to a EquationsMappingResidualType \see Types::EquationsMappingResidualType
@@ -4189,6 +4189,93 @@ END TYPE GeneratedMeshEllipsoidType
   END TYPE HISTORY_TYPE
 
   PUBLIC HISTORY_TYPE
+  
+  !
+  !================================================================================================================================
+  !
+  ! Exports types
+  !
+
+  !>Contains information about an export variable type i.e., the field variable information to export
+  TYPE ExportVariableType
+    TYPE(ExportType), POINTER :: export !<A pointer back to the export type
+    INTEGER(INTG) :: exportIndex !<The index in the list of export variables
+    TYPE(FieldVariableType), POINTER :: fieldVariable !<A pointer to the field variable to export
+    INTEGER(INTG) :: parameterSetType !<The parameter set type to export
+    TYPE(FieldParameterSetType), POINTER :: parameterSet !<A pointer to the parameter set to export
+    INTEGER(INTG) :: startComponent !<The start component of the field variable to export
+    INTEGER(INTG) :: endComponent !<The end component of the field variable to export
+    TYPE(VARYING_STRING) :: exportName !<The name of the export variable to use in the export.
+  END TYPE ExportVariableType
+
+  !>A buffer type to allow for arrays of pointers to an export variable type
+  TYPE ExportVariablePtrType
+    TYPE(ExportVariableType), POINTER :: ptr !<A pointer to the export variable type
+  END TYPE ExportVariablePtrType
+
+  !>Contains information on Exfile (cmgui) exports
+  TYPE ExfileExportType
+    TYPE(ExportType), POINTER :: export
+  END TYPE ExfileExportType
+
+  !>Contains information on a VTK export data array
+  TYPE VTKExportDataArrayType
+    INTEGER(INTG) :: vtkDataArrayType !<The type of the data array \see VTK_DataArrayTypes
+    INTEGER(INTG) :: vtkDataArrayKind !<The kind of the data array \see VTK_DataArrayKind
+    INTEGER(INTG) :: numberOfComponents !<The number of components in the data array
+    TYPE(VARYING_STRING) :: dataArrayName !<The name of the data array
+    TYPE(ExportVariableType), POINTER :: exportVariable !<A pointer to the OpenCMISS export variable corresponding to this data array
+  END TYPE VTKExportDataArrayType
+  
+  !>Contains information on VTK file exports
+  TYPE VTKExportType
+    TYPE(ExportType), POINTER :: export !<A pointer back to the export
+    INTEGER(INTG) :: vtkFormat !<The format of the VTK file \see VTK_FileFormatTypes
+    INTEGER(INTG) :: vtkDataFormat !<The data format (e.g., binary/ascii) for the VTK export \see VTK_DataFormatTypes
+    TYPE(DomainType), POINTER :: domain !<A pointer to the domain involved in the export.
+    INTEGER(INTG) :: numberOfPoints !<The number of points/nodes in the VTK export
+    INTEGER(INTG) :: totalPointDataSize !<The size of the point data array
+    INTEGER(INTG) :: numberOfCells !<The number of cells/elements in the VTK export
+    INTEGER(INTG) :: totalCellDataSize !<The size of the cell data array
+    INTEGER(INTG) :: numberOfDataArrays !<The number of different data arrays in the VTK export
+    TYPE(VTKExportDataArrayType), ALLOCATABLE :: dataArrays !<dataArrays(dataArrayIdx). Information on the dataArrayIdx'th data array.
+  END TYPE VTKExportType
+  
+  !>Contains information about an export type i.e., the information to be exported \see OpenCMISS::OC_ExportType
+  TYPE ExportType
+    INTEGER(INTG) :: userNumber !<The user number of the export
+    INTEGER(INTG) :: globalNumber !<The export global number (index in the exports array).
+    LOGICAL :: exportFinished !<Is .TRUE. if the exports has finished being created, .FALSE. if not.
+    TYPE(ExportsType), POINTER :: exports !<A pointer back to the exports
+    INTEGER(INTG) :: exportFormat !<The format of the export \see ExportRoutines_ExportFormatTypes,ExportRoutines
+    TYPE(ExfileExportType), POINTER :: exfileExport !<A pointer to the exfile export information
+    TYPE(VTKExportType), POINTER :: vtkExport !<A pointer to the VTK export information
+    TYPE(ControlLoopType), POINTER :: controlLoop !<A pointer to the control loop for the history file
+    TYPE(VARYING_STRING) :: baseFilename !<The base file name of the exports file
+    INTEGER(INTG) :: numberOfExportVariables !<The number of export variables in the export variables list.
+    TYPE(ExportVariablePtrType), ALLOCATABLE :: exportVariables(:) !<The list of export variables
+  END TYPE ExportType
+ 
+  !>A buffer type to allow for arrays of pointers to an export type
+  TYPE ExportPtrType
+    TYPE(ExportType), POINTER :: ptr !<A pointer to the export type
+  END TYPE ExportPtrType
+
+  !>Contains information on exports i.e., lists of export types \see OpenCMISS::OC_ExportsType
+  TYPE ExportsType
+    INTEGER(INTG) :: numberOfExports !<The number of exports in the exports list
+    TYPE(ExportPtrType), ALLOCATABLE :: exports(:) !<The list of exports
+  END TYPE ExportsType
+
+  PUBLIC ExportVariableType,ExportVariablePtrType
+  
+  PUBLIC ExfileExportType
+
+  PUBLIC VTKExportType
+  
+  PUBLIC ExportType,ExportPtrType
+
+  PUBLIC ExportsType
   
   !
   !================================================================================================================================

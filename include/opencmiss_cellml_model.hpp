@@ -216,7 +216,7 @@ public:
 				     double* known
 				     )
   {
-    ratesRoutine(voi, states, rates, variables);
+    ratesRoutine(voi, states, rates, known);
   }
   
   inline void callModelVariablesFunction(

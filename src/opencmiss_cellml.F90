@@ -3723,7 +3723,8 @@ CONTAINS
     !   state=1; known=2; wanted=3.
     !   independent=4 - but untested and maybe not working yet.
     ENTERS("CellML_MapCellMLVariableToFieldType",err,error,*999)
-    
+
+    CellML_MapCellMLVariableToFieldType=0
     SELECT CASE(cellMLVariableType)
     CASE(1)
       CellML_MapCellMLVariableToFieldType=CELLML_STATE_FIELD
@@ -3767,6 +3768,8 @@ CONTAINS
     !   state=1; known=2; wanted=3.
     !   independent=4 - but untested and maybe not working yet.
     ENTERS("CellML_MapCellMLFieldTypeToVariableType",err,error,*999)
+
+    CellML_MapCellMLFieldTypeToVariableType=0
     SELECT CASE(cellMLFieldType)
     CASE(CELLML_STATE_FIELD)
       CellML_MapCellMLFieldTypeToVariableType=1

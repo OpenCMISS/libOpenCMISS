@@ -180,17 +180,18 @@ CONTAINS
   !================================================================================================================================
   !   
     
-  SUBROUTINE ANALYTIC_LINEAR_ELASTICITY_GENERIC(NumberGlobalXElements,NumberGlobalYElements,NumberGlobalZElements, &
+  SUBROUTINE ANALYTIC_LINEAR_ELASTICITY_GENERIC(NumGlobalXElements,NumGlobalYElements,NumGlobalZElements, &
     & InterpolationSpecifications,DependentField)
     !Argument variables 
-    INTEGER(OC_Intg), INTENT(IN) :: NumberGlobalXElements !<number of elements on x axis
-    INTEGER(OC_Intg), INTENT(IN) :: NumberGlobalYElements !<number of elements on y axis
-    INTEGER(OC_Intg), INTENT(IN) :: NumberGlobalZElements !<number of elements on z axis
+    INTEGER(OC_Intg), INTENT(IN) :: NumGlobalXElements !<number of elements on x axis
+    INTEGER(OC_Intg), INTENT(IN) :: NumGlobalYElements !<number of elements on y axis
+    INTEGER(OC_Intg), INTENT(IN) :: NumGlobalZElements !<number of elements on z axis
     INTEGER(OC_Intg), INTENT(IN) :: InterpolationSpecifications !<the interpolation specifications
     TYPE(OC_FieldType) :: DependentField
 
     !Program variables
     REAL(OC_RP) :: MeshDimensions(3),MaterialParameters(6)
+    INTEGER(OC_Intg) :: NumberGlobalXElements,NumberGlobalYElements,NumberGlobalZElements
     INTEGER(OC_Intg) :: AnalyticFunction,Interpolation(3),NumberOfGaussPoints(3),EquationSetSubtype
     INTEGER(OC_Intg) :: FieldGeometryNumberOfComponents,FieldDependentNumberOfComponents,NumberOfElements(3)
     INTEGER(OC_Intg) :: MPI_IERROR
@@ -239,7 +240,7 @@ CONTAINS
       MaterialParameters = [10.0E3_OC_RP,10.0E3_OC_RP,10.0E3_OC_RP,0.45_OC_RP,0.45_OC_RP,0.45_OC_RP]
 !    ENDIF
     Interpolation = [InterpolationSpecifications,InterpolationSpecifications,InterpolationSpecifications]
-    NumberOfElements = [NumberGlobalXElements,NumberGlobalYElements,NumberGlobalZElements]
+    NumberOfElements = [NumGlobalXElements,NumGlobalYElements,NumGlobalZElements]
     MeshDimensions = [LENGTH,WIDTH,HEIGHT]
     NumberOfGaussPoints = [4,4,4]
     FieldGeometryNumberOfComponents=NumberOfXi
@@ -255,6 +256,9 @@ CONTAINS
     CALL OC_WorkGroup_GroupNodeNumberGet(worldWorkGroup,computationNodeNumber,err)
 
     !Broadcast the number of elements in the X,Y and Z directions and the number of partitions to the other computation nodes
+    NumberGlobalXElements=NumGlobalXElements
+    NumberGlobalYElements=NumGlobalYElements
+    NumberGlobalZElements=NumGlobalZElements
     CALL MPI_BCAST(NumberGlobalXElements,1,MPI_INTEGER,0,MPI_COMM_WORLD,MPI_IERROR)
     CALL MPI_BCAST(NumberGlobalYElements,1,MPI_INTEGER,0,MPI_COMM_WORLD,MPI_IERROR)
     CALL MPI_BCAST(NumberGlobalZElements,1,MPI_INTEGER,0,MPI_COMM_WORLD,MPI_IERROR)

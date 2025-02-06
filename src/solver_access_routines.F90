@@ -1554,19 +1554,18 @@ CONTAINS
     TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
     !Local Variables
  
-    ENTERS("Solver_DAESolverExists",err,error,*998)
+    ENTERS("Solver_DAESolverExists",err,error,*999)
 
 #ifdef WITH_PRECHECKS    
-    IF(ASSOCIATED(daeSolver)) CALL FlagError("DAE solver is already associated.",err,error,*998)
-    IF(.NOT.ASSOCIATED(solver)) CALL FlagError("Solver is not associated.",err,error,*998)
+    IF(ASSOCIATED(daeSolver)) CALL FlagError("DAE solver is already associated.",err,error,*999)
+    IF(.NOT.ASSOCIATED(solver)) CALL FlagError("Solver is not associated.",err,error,*999)
 #endif    
 
     daeSolver=>solver%DAESolver
     
     EXITS("Solver_DAESolverExists")
     RETURN
-999 NULLIFY(daeSolver)
-998 ERRORSEXITS("Solver_DAESolverExists",err,error)
+999 ERRORSEXITS("Solver_DAESolverExists",err,error)
     RETURN 1
     
   END SUBROUTINE Solver_DAESolverExists
@@ -2812,7 +2811,9 @@ CONTAINS
     INTEGER(INTG), INTENT(OUT) :: err !<The error code
     TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
     !Local Variables
+#ifdef WITH_PRECHECKS    
     TYPE(DynamicSolverType), POINTER :: dynamicSolver
+#endif    
  
     ENTERS("Solver_DynamicLinkedLinearSolverGet",err,error,*998)
 
@@ -2851,7 +2852,9 @@ CONTAINS
     INTEGER(INTG), INTENT(OUT) :: err !<The error code
     TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
     !Local Variables
+#ifdef WITH_PRECHECKS    
     TYPE(DynamicSolverType), POINTER :: dynamicSolver
+#endif    
  
     ENTERS("Solver_DynamicLinkedNonlinearSolverGet",err,error,*998)
 
@@ -3135,11 +3138,13 @@ CONTAINS
     INTEGER(INTG), INTENT(OUT) :: err !<The error code
     TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
     !Local Variables
+#ifdef WITH_PRECHECKS    
     TYPE(DynamicSolverType), POINTER :: dynamicSolver
     TYPE(NonlinearSolverType), POINTER :: nonlinearSolver
     TYPE(NewtonSolverType), POINTER :: newtonSolver
     TYPE(SolverType), POINTER :: linkedNonlinearSolver
-
+#endif
+    
     ENTERS("Solver_QuasiNewtonLinkedCellMLSolverGet",err,error,*998)
 
 #ifdef WITH_PRECHECKS    
@@ -3194,8 +3199,10 @@ CONTAINS
     INTEGER(INTG), INTENT(OUT) :: err !<The error code
     TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
     !Local Variables
+#ifdef WITH_PRECHECKS    
     TYPE(NewtonSolverType), POINTER :: newtonSolver
     TYPE(NonlinearSolverType), POINTER :: nonlinearSolver
+#endif    
 
     ENTERS("Solver_NewtonLinkedLinearSolverGet",err,error,*998)
 
@@ -3398,11 +3405,13 @@ CONTAINS
     INTEGER(INTG), INTENT(OUT) :: err !<The error code
     TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
     !Local Variables
+#ifdef WITH_PRECHECKS    
     TYPE(DynamicSolverType), POINTER :: dynamicSolver
     TYPE(NonlinearSolverType), POINTER :: nonlinearSolver
     TYPE(QuasiNewtonSolverType), POINTER :: quasiNewtonSolver
     TYPE(SolverType), POINTER :: linkedNonlinearSolver
-
+#endif
+    
     ENTERS("Solver_QuasiNewtonLinkedCellMLSolverGet",err,error,*998)
 
 #ifdef WITH_PRECHECKS    
@@ -3457,8 +3466,10 @@ CONTAINS
     INTEGER(INTG), INTENT(OUT) :: err !<The error code
     TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
     !Local Variables
+#ifdef WITH_PRECHECKS    
     TYPE(QuasiNewtonSolverType), POINTER :: quasiNewtonSolver
     TYPE(NonlinearSolverType), POINTER :: nonlinearSolver
+#endif    
 
     ENTERS("Solver_QuasiNewtonLinkedLinearSolverGet",err,error,*998)
 
@@ -3795,18 +3806,22 @@ CONTAINS
 #ifdef WITH_PRECHECKS    
     IF(ASSOCIATED(workGroup)) CALL FlagError("Work group is already associated.",err,error,*998)
     IF(.NOT.ASSOCIATED(solver)) CALL FlagError("Solver is not associated.",err,error,*999)
+#endif
 
+    !Use the full method as we may have linking solvers
     NULLIFY(solvers)
     CALL Solver_SolversGet(solver,solvers,err,error,*999)
+
+#ifdef WITH_PRECHECKS    
     IF(.NOT.ASSOCIATED(solvers)) CALL FlagError("Solver solvers is not associated.",err,error,*999)
     IF(.NOT.ASSOCIATED(solvers%controlLoop)) &
       & CALL FlagError("Solver solvers control loop is not associated.",err,error,*999)
     IF(.NOT.ASSOCIATED(solvers%controlLoop%problem)) &
       & CALL FlagError("Solver solvers control loop problem is not associated.",err,error,*999)
-#endif    
+#endif
 
     workGroup=>solvers%controlLoop%problem%workGroup
-
+ 
 #ifdef WITH_POSTCHECKS    
     IF(.NOT.ASSOCIATED(workGroup)) CALL FlagError("The solver work group is not associated.",err,error,*999)
 #endif    
@@ -3953,7 +3968,9 @@ CONTAINS
     INTEGER(INTG), INTENT(OUT) :: err !<The error code
     TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
     !Local Variables
+#ifdef WITH_PRECHECKS    
     TYPE(VARYING_STRING) :: localError
+#endif    
  
     ENTERS("Solvers_SolverGet",err,error,*998)
 
@@ -5996,8 +6013,10 @@ CONTAINS
     INTEGER(INTG), INTENT(OUT) :: err !<The error code
     TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
     !Local Variables
+#ifdef WITH_PRECHECKS    
     TYPE(NewtonLinesearchSolverType), POINTER :: linesearchSolver
     TYPE(NewtonTrustregionSolverType), POINTER :: trustregionSolver
+#endif    
     TYPE(VARYING_STRING) :: localError
  
     ENTERS("SolverNonlinearNewton_LibraryTypeGet",err,error,*999)

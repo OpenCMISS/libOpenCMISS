@@ -311,13 +311,31 @@ MODULE Maths
     MODULE PROCEDURE NormaliseCrossProductDP
   END INTERFACE NormaliseCrossProduct
 
+  !>Calculates a basis of orthogonalied vectors
+  INTERFACE Orthogonalise
+    MODULE PROCEDURE OrthogonaliseSP
+    MODULE PROCEDURE OrthogonaliseDP
+  END INTERFACE Orthogonalise
+
+  !>Calculates the polar decomposition of a matrix i.e., A = R.U
+  INTERFACE PolarDecomposition
+    !MODULE PROCEDURE PolarDecompositionSP
+    MODULE PROCEDURE PolarDecompositionDP
+  END INTERFACE PolarDecomposition
+
   !>Returns hyperbolic secant of an argument
   INTERFACE Sech
     MODULE PROCEDURE SechSP
     MODULE PROCEDURE SechDP
   END INTERFACE Sech
 
-  !>Solves a small linear system Ax=b.
+  !>Computes the Singular Value Decomposition (SVD) of a matrix i.e. A = U.sigma.VT
+  INTERFACE SingularValueDecomposition
+    !MODULE PROCEDURE SingularValueDecompositionSP
+    MODULE PROCEDURE SingularValueDecompositionDP
+  END INTERFACE SingularValueDecomposition
+
+  !>Solves an eigenproblem Ax = lambda.x and returns eigenvalues and eigenvectors
   INTERFACE SolveEigenproblem
     MODULE PROCEDURE SolveEigenproblemSP
     MODULE PROCEDURE SolveEigenproblemDP
@@ -454,7 +472,13 @@ MODULE Maths
 
   PUBLIC NormaliseCrossProduct
 
+  PUBLIC Orthogonalise
+
+  PUBLIC PolarDecomposition
+
   PUBLIC Sech
+
+  PUBLIC SingularValueDecomposition
 
   PUBLIC SolveEigenproblem
 
@@ -4314,6 +4338,706 @@ CONTAINS
   !
   !================================================================================================================================
   !
+
+  !>Calculates an orthogonal set of vectors in for single precision vectors
+  SUBROUTINE OrthogonaliseSP(a,b,orthogonalVectors,err,error,*)
+  
+    !Argument variables
+    REAL(SP), INTENT(IN) :: a(:) !<a(coordinateIdx). The first vector to create the orthogonal system from
+    REAL(SP), INTENT(IN) :: b(:) !<b(coordinateIdx). The second vector to create the orthogonal system from. Not used for 1 or 2 D bvectors
+    REAL(SP), INTENT(OUT) :: orthogonalVectors(:,:) !<orthogonalVectors(coordinateIdx,vectorIdx). On exit, the normalised system of othogonal vectors
+    INTEGER(INTG), INTENT(OUT) :: err !<The error code
+    TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
+    !Local variables
+    INTEGER(INTG) :: numberOfDimensions
+    TYPE(VARYING_STRING) :: localError
+    
+    ENTERS("OrthogonaliseDP",err,error,*999)
+
+#ifdef WITH_PRECHECKS
+    IF(SIZE(orthogonalVectors,1)/=SIZE(a,1)) THEN
+      localError="The size of the first index of the orthogonal vectors array of "// &
+        & TRIM(NumberToVString(SIZE(orthogonalVectors,1),"*",err,error))//" does not match the size of the a vector of "// &
+        & TRIM(NumberToVString(SIZE(a,1),"*",err,error))//". The sizes must match."
+      CALL FlagError(localError,err,error,*999)
+    ENDIF
+    IF(SIZE(orthogonalVectors,2)/=SIZE(a,1)) THEN
+      localError="The size of the second index of the orthogonal vectors array of "// &
+        & TRIM(NumberToVString(SIZE(orthogonalVectors,2),"*",err,error))//" does not match the size of the a vector of "// &
+        & TRIM(NumberToVString(SIZE(a,1),"*",err,error))//". The sizes must match."
+      CALL FlagError(localError,err,error,*999)
+    ENDIF
+    IF(SIZE(a,1)>2) THEN
+      IF(SIZE(b,1)/=SIZE(a,1)) THEN
+        localError="The size of the b vector of "//TRIM(NumberToVString(SIZE(b,1),"*",err,error))// &
+          & " does not match the size of the a vector of "//TRIM(NumberToVString(SIZE(a,1),"*",err,error))// &
+          & ". The sizes must match."
+        CALL FlagError(localError,err,error,*999)
+      ENDIF
+    ENDIF
+#endif
+    
+    numberOfDimensions=SIZE(a,1)
+    
+    SELECT CASE(numberOfDimensions)
+    CASE(1)
+      orthogonalVectors(1,1)=1.0_SP
+    CASE(2)
+      !Normalise a to find the first orthogonal vector
+      CALL Normalise(a(1:numberOfDimensions),orthogonalVectors(1:numberOfDimensions,1),err,error,*999)
+      !Rotate a through 90 degress to find the second orthogonal vector
+      orthogonalVectors(1,2)=-orthogonalVectors(2,1)
+      orthogonalVectors(2,2)=orthogonalVectors(1,1)
+    CASE(3)
+      !Normalise a to find the first orthogonal vector
+      CALL Normalise(a(1:numberOfDimensions),orthogonalVectors(1:numberOfDimensions,1),err,error,*999)
+      !Compute the normalised cross product of a and b to find the direction of the third vector
+      CALL NormaliseCrossProduct(a(1:numberOfDimensions),b(1:numberOfDimensions), &
+        & orthogonalVectors(1:numberOfDimensions,3),err,error,*999)
+      !Now take the normalised cross product of the third and first orthogonal vectors to find the second orthogonal vector
+      CALL NormaliseCrossProduct(orthogonalVectors(1:numberOfDimensions,3),orthogonalVectors(1:numberOfDimensions,1), &
+        & orthogonalVectors(1:numberOfDimensions,2),err,error,*999)      
+    CASE DEFAULT
+      localError="The size of the a vector/number of dimensions of "//TRIM(NumberToVString(SIZE(a,1),"*",err,error))// &
+        & " is invalid. The size must be >= 1 and <= 3."
+      CALL FlagError(localError,err,error,*999)
+    END SELECT
+    
+    EXITS("OrthogonaliseDP")
+    RETURN
+999 ERRORSEXITS("OrhtogonaliseP",err,error)
+    RETURN 1
+    
+  END SUBROUTINE OrthogonaliseSP
+  
+  !
+  !================================================================================================================================
+  !
+
+  !>Calculates an orthogonal set of vectors in for double precision vectors
+  SUBROUTINE OrthogonaliseDP(a,b,orthogonalVectors,err,error,*)
+  
+    !Argument variables
+    REAL(DP), INTENT(IN) :: a(:) !<a(coordinateIdx). The first vector to create the orthogonal system from
+    REAL(DP), INTENT(IN) :: b(:) !<b(coordinateIdx). The second vector to create the orthogonal system from. Not used for 1 or 2 D bvectors
+    REAL(DP), INTENT(OUT) :: orthogonalVectors(:,:) !<orthogonalVectors(coordinateIdx,vectorIdx). On exit, the normalised system of othogonal vectors
+    INTEGER(INTG), INTENT(OUT) :: err !<The error code
+    TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
+    !Local variables
+    INTEGER(INTG) :: numberOfDimensions
+    TYPE(VARYING_STRING) :: localError
+    
+    ENTERS("OrthogonaliseDP",err,error,*999)
+
+#ifdef WITH_PRECHECKS
+    IF(SIZE(orthogonalVectors,1)/=SIZE(a,1)) THEN
+      localError="The size of the first index of the orthogonal vectors array of "// &
+        & TRIM(NumberToVString(SIZE(orthogonalVectors,1),"*",err,error))//" does not match the size of the a vector of "// &
+        & TRIM(NumberToVString(SIZE(a,1),"*",err,error))//". The sizes must match."
+      CALL FlagError(localError,err,error,*999)
+    ENDIF
+    IF(SIZE(orthogonalVectors,2)/=SIZE(a,1)) THEN
+      localError="The size of the second index of the orthogonal vectors array of "// &
+        & TRIM(NumberToVString(SIZE(orthogonalVectors,2),"*",err,error))//" does not match the size of the a vector of "// &
+        & TRIM(NumberToVString(SIZE(a,1),"*",err,error))//". The sizes must match."
+      CALL FlagError(localError,err,error,*999)
+    ENDIF
+    IF(SIZE(a,1)>2) THEN
+      IF(SIZE(b,1)/=SIZE(a,1)) THEN
+        localError="The size of the b vector of "//TRIM(NumberToVString(SIZE(b,1),"*",err,error))// &
+          & " does not match the size of the a vector of "//TRIM(NumberToVString(SIZE(a,1),"*",err,error))// &
+          & ". The sizes must match."
+        CALL FlagError(localError,err,error,*999)
+      ENDIF
+    ENDIF
+#endif
+    
+    numberOfDimensions=SIZE(a,1)
+    
+    SELECT CASE(numberOfDimensions)
+    CASE(1)
+      orthogonalVectors(1,1)=1.0_DP
+    CASE(2)
+      !Normalise a to find the first orthogonal vector
+      CALL Normalise(a(1:numberOfDimensions),orthogonalVectors(1:numberOfDimensions,1),err,error,*999)
+      !Rotate a through 90 degress to find the second orthogonal vector
+      orthogonalVectors(1,2)=-orthogonalVectors(2,1)
+      orthogonalVectors(2,2)=orthogonalVectors(1,1)
+    CASE(3)
+      !Normalise a to find the first orthogonal vector
+      CALL Normalise(a(1:numberOfDimensions),orthogonalVectors(1:numberOfDimensions,1),err,error,*999)
+      !Compute the normalised cross product of a and b to find the direction of the third vector
+      CALL NormaliseCrossProduct(a(1:numberOfDimensions),b(1:numberOfDimensions), &
+        & orthogonalVectors(1:numberOfDimensions,3),err,error,*999)
+      !Now take the normalised cross product of the third and first orthogonal vectors to find the second orthogonal vector
+      CALL NormaliseCrossProduct(orthogonalVectors(1:numberOfDimensions,3),orthogonalVectors(1:numberOfDimensions,1), &
+        & orthogonalVectors(1:numberOfDimensions,2),err,error,*999)      
+    CASE DEFAULT
+      localError="The size of the a vector/number of dimensions of "//TRIM(NumberToVString(SIZE(a,1),"*",err,error))// &
+        & " is invalid. The size must be >= 1 and <= 3."
+      CALL FlagError(localError,err,error,*999)
+    END SELECT
+    
+    EXITS("OrthogonaliseDP")
+    RETURN
+999 ERRORSEXITS("OrhtogonaliseP",err,error)
+    RETURN 1
+    
+  END SUBROUTINE OrthogonaliseDP
+  
+  !
+  !================================================================================================================================
+  !
+
+  !>Calculates the polar decomposition of a double precision matrix i.e. A = R.U
+  SUBROUTINE PolarDecompositionDP(F,R,U,err,error,*)
+  
+    !Argument variables
+    REAL(DP), INTENT(IN) :: F(:,:) !<F(iIdx,jIdx). The matrix to calculate the polar decomposition of
+    REAL(DP), INTENT(OUT) :: R(:,:) !<R(iIdx,jIdx). On return, the rotation matrix.
+    REAL(DP), INTENT(OUT) :: U(:,:) !<U(iIdx,jIdx). On return, the stretch matrix.
+    INTEGER(INTG), INTENT(OUT) :: err !<The error code
+    TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
+    !Local variables
+    INTEGER(INTG) :: numberOfDimensions
+    TYPE(VARYING_STRING) :: localError
+    
+    ENTERS("PolarDecompositionDP",err,error,*999)
+
+    R=0.0_DP
+    U=0.0_DP
+
+#ifdef WITH_PRECHECKS
+    IF(SIZE(F,1)/=SIZE(F,2)) THEN
+      localError="The first dimension of the specified F matrix of "//TRIM(NumberTOVString(SIZE(F,1),"*",err,error))// &
+        & " does not match the second dimension of the specified F matrix of "//TRIM(NumberTOVString(SIZE(F,2),"*",err,error))// &
+        & ". The F matrix must be square."
+      CALL FlagError(localError,err,error,*999)
+    ENDIF
+    IF(SIZE(R,1)/=SIZE(F,1)) THEN
+      localError="The first dimension of the specified R matrix of "//TRIM(NumberToVString(SIZE(R,1),"*",err,error))// &
+        & " does not match the first dimension of the specified F matrix of "//TRIM(NumberToVString(SIZE(F,1),"*",err,error))//"."
+      CALL FlagError(localError,err,error,*999)
+    ENDIF
+    IF(SIZE(R,2)/=SIZE(F,2)) THEN
+      localError="The second dimension of the specified R matrix of "//TRIM(NumberToVString(SIZE(R,2),"*",err,error))// &
+        & " does not match the second dimension of the specified F matrix of "//TRIM(NumberToVString(SIZE(F,2),"*",err,error))//"."
+      CALL FlagError(localError,err,error,*999)
+    ENDIF
+    IF(SIZE(U,1)/=SIZE(F,2)) THEN
+      localError="The first dimension of the specified U matrix of "//TRIM(NumberToVString(SIZE(U,1),"*",err,error))// &
+        & " does not match the second dimension of the specified F matrix of "//TRIM(NumberToVString(SIZE(F,2),"*",err,error))//"."
+      CALL FlagError(localError,err,error,*999)
+    ENDIF
+    IF(SIZE(U,2)/=SIZE(F,2)) THEN
+      localError="The second dimension of the specified U matrix of "//TRIM(NumberToVString(SIZE(U,2),"*",err,error))// &
+        & " does not match the second dimension of the specified F matrix of "//TRIM(NumberToVString(SIZE(F,2),"*",err,error))//"."
+      CALL FlagError(localError,err,error,*999)
+    ENDIF
+#endif
+
+
+!! HAVE A LOOK AT   https://theorangeduck.com/page/closed-form-matrix-decompositions
+
+
+    
+    
+     numberOfDimensions=SIZE(F,1)
+    
+     SELECT CASE(numberOfDimensions)
+     CASE(1)
+       CALL FlagError("Not implemented.",err,error,*999)
+     CASE(2)
+       CALL FlagError("Not implemented.",err,error,*999)
+     CASE(3)
+      
+!       !Compute norm of the F matrix
+!       normF = SQRT(F(1,1)*F(1,1)+F(1,2)*F(1,2)+F(1,3)*F(1,3) &
+!         & + F(2,1)*F(2,1)+F(3,1)*F(3,1)+F(2,2)*F(2,2) &
+!         & + F(3,2)*F(3,2)+F(2,3)*F(2,3)+F(3,3)*F(3,3))
+!       !Scale A to a norm of 1.
+!       A = F/normF
+      
+!       subspa = .FALSE.
+
+!       m1 = (A(2,2)*A(3,3)-A(2,3)*A(3,2))
+!       bvalue = m1*m1
+!       m1 = (A(2,1)*A(3,3)-A(2,3)*A(3,1))
+!       bvalue = bvalue+m1*m1
+!       m1 = (A(2,1)*A(3,2)-A(2,2)*A(3,1))
+!       bvalue = bvalue+m1*m1
+!       m1 = (A(1,1)*A(3,2)-A(1,2)*A(3,1))
+!       bvalue = bvalue+m1*m1
+!       m1 = (A(1,1)*A(3,3)-A(1,3)*A(3,1))
+!       bvalue = bvalue+m1*m1
+!       m1 = (A(1,2)*A(3,3)-A(1,3)*A(3,2))
+!       bvalue = bvalue+m1*m1
+!       m1 = (A(1,2)*A(2,3)-A(1,3)*A(2,2))
+!       bvalue = bvalue+m1*m1
+!       m1 = (A(1,1)*A(2,3)-A(1,3)*A(2,1))
+!       bvalue = bvalue+m1*m1
+!       m1 = (A(1,1)*A(2,2)-A(1,2)*A(2,1))
+!       bvalue = bvalue+m1*m1
+
+!       bvalue = 4.0_DP*bvalue+1.0_DP;
+!       quick = .TRUE.
+      
+!       IF(ABS(bvalue-1.0_DP)>1.0E-4_DP) THEN
+        
+!         quick = .FALSE.
+        
+!         !LU (full).
+!         row = 1
+!         column = 1
+!         AA = A
+!         dd = 1.0_DP
+        
+!         IF(ABS(A(2,1))>ABS(A(1,1))) row = 2 
+!         IF(ABS(A(3,1))>ABS(A(row,column)))  row = 3;   
+!         IF(ABS(A(1,2))>ABS(A(row,column))) THEN
+!           row = 1
+!           column = 2
+!         ENDIF
+!         IF(ABS(A(2,2))>ABS(A(row,column))) THEN
+!           row = 2
+!           column = 2
+!         ENDIF
+!         IF(ABS(A(3,2))>ABS(A(row,column))) THEN
+!           row = 3
+!           column = 2
+!         ENDIF
+!         IF(ABS(A(1,3))>ABS(A(row,column))) THEN
+!           row = 1
+!           column = 3
+!         ENDIF
+!         IF(ABS(A(2,3))>ABS(A(row,column))) THEN
+!           row = 2
+!           column = 3
+!         ENDIF
+!         IF(ABS(A(3,3))>ABS(A(row,column))) THEN
+!           row = 3
+!           column = 3
+!         ENDIF
+        
+!         IF(row>1) THEN
+!           temp(:) = AA(1,:)
+!           AA(1,:) = AA(row,:)
+!           AA(row,:) = temp(:)
+!           dd = -1.0_DP
+!         ENDIF
+!         IF(column>1) THEN
+!           temp(:) = AA(:,1)
+!           AA(:,1) = AA(:,column)
+!           AA(:,column) = temp(:)
+!           dd = -dd
+!         ENDIF
+!         U = 0.0_DP
+!         U(1) = AA(1,1)
+!         m1 = AA(1,2)/AA(1,1)
+!         m2 = AA(1,3)/AA(1,1)
+!         AA2 = RESHAPE([AA(2,2)-AA(2,1)*m1,AA(3,2)-AA(3,1)*m1,AA(2,3)-AA(2,1)*m2,AA(3,3)-AA(3,1)*m2],[2,2])
+
+!         row = 1
+!         column = 2
+!         IF(ABS(AA2(2,1))>ABS(AA2(1,1))) row = 2        
+!         IF(ABS(AA2(1,2))>ABS(AA2(row,column))) THEN
+!           row = 1
+!           column = 2
+!         ENDIF
+!         IF(ABS(AA2(2,2))>ABS(AA2(row,column))) THEN
+!           row = 2
+!           column = 2
+!         ENDIF
+!         IF(row == 2) dd = -dd   
+!         IF(column>1) dd = -dd    
+!         U(2) = AA2(row,column)
+!         IF(ABS(U(2))<ZERO_TOLERANCE) THEN
+!           U(3) = 0.0_DP
+!         ELSE
+!           U(3) = AA2(3-row,3-column)-AA2(row,3-column)*AA2(3-row,column)/U(2)
+!         ENDIF
+    
+!         d = dd
+!         dd = dd*U(1)*U(2)*U(3)
+    
+!         IF(U(1)<0.0_DP) d = -d      
+!         IF(U(2)<0.0_DP) d = -d
+!         IF(U(3)<0.0_DP) d = -d
+    
+!         AU = ABS(U(2))
+!         IF(AU>6.607E-8_DP) THEN
+!           rnit = 16.8_DP+2.0_DP*LOG10(AU);
+!           nit = CEILING(15.0_DP/rnit);
+!         ELSE
+!           subspa = 1
+!         ENDIF
+!       ELSE
+!         !LU (partial).
+!         IF(ABS(A(2,1))>ABS(A(3,1))) THEN
+!           IF(ABS(A(1,1))>abs(A(2,1))) THEN
+!             AA = A
+!             dd = 1.0_DP
+!           ELSE
+!             AA(1,:) = A(2,:)
+!             AA(2,:) = A(1,:)
+!             AA(3,:) = A(3,:)            
+!             dd = -1.0_DP
+!           ENDIF
+!         ELSE
+!           IF(ABS(A(1,1))>abs(A(3,1))) THEN
+!             AA = A
+!             dd = 1.0_DP
+!           ELSE
+!             AA(1,:) = A(3,:)
+!             AA(2,:) = A(2,:)
+!             AA(3,:) = A(1,:)
+!             dd = -1.0_DP
+!           ENDIF
+!         ENDIF
+!         d = dd
+!         U = 0.0_DP
+!         U(1) = AA(1,1)
+!         IF(ABS(U(1))<ZERO_TOLERANCE) d = -d        
+!         m1 = AA(1,2)/AA(1,1)
+!         m2 = AA(1,3)/AA(1,1)
+!         AA2 = RESHAPE([AA(2,2)-AA(2,1)*m1,AA(3,2)-AA(3,1)*m1,AA(2,3)-AA(2,1)*m2,AA(3,3)-AA(3,1)*m2],[2,2])
+
+!         IF(ABS(AA2(1,1))<ZERO_TOLERANCE) THEN
+!           U(2) = 0.0_DP
+!           U(3) = 0.0_DP
+!         ELSE
+!           IF(ABS(AA2(1,1))<ABS(AA2(2,1))) THEN
+!             U(2) = AA2(2,1)
+!             U(3) = AA2(1,2) - AA2(1,1)*AA2(2,2)/AA2(2,1)
+!             dd = -dd
+!             d = -d
+!           ELSE
+!             U(2) = AA2(1,1)
+!             U(3) = AA2(2,2) - AA2(2,1)*AA2(1,2)/AA2(1,1)
+!         END IF
+!         IF(U(2)<0.0_DP) d = -d
+!         IF(U(3)<0.0_DP) d = -d
+!       ENDIF
+      
+!       dd = dd*U(1)*U(2)*U(3)
+!     ENDIF
+
+!     IF(ABS(d)<ZERO_TOLERANCE) d = 1.0_DP
+
+!     dd = 8.0_DP*d*dd;
+!     t = A(1,1) + A(2,2) + A(3,3)
+!     B = RESHAPE([t,0.0_DP,0.0_DP,0.0_DP, &
+!       & A(2,3)-A(3,2),2.0_DP*A(1,1)-t,0.0_DP,0.0_DP, &
+!       & A(3,1)-A(1,3),A(1,2)+A(2,1),2.0_DP*A(2,2)-t, &
+!       & 0.0_DP,A(1,2)-A(2,1),A(1,3)+A(3,1),A(2,3)+A(3,2),2.0_DP*A(3,3)-t],[4,4])
+    
+    
+!     B = d*B
+!     B(2,1) = B(1,2)
+!     B(3,1) = B(1,3)
+!     B(4,1) = B(1,4)
+!     B(3,2) = B(2,3)
+!     B(4,2) = B(2,4)
+!     B(4,3) = B(3,4)
+
+!     IF(bvalue >= -0.3332_DP) THEN
+!       !Find largest eigenvalue by analytic formula       
+!       Delta0  =  1.0_DP + 3.0_DP*bvalue;
+!       Delta1  =  -1.0_DP + (27.0_DP/16.0_DP)*dd*dd + 9.0_DP*bvalue
+!       phi = Delta1/Delta0
+!       phi = phi/SQRT(Delta0);
+!       SS  =  (4.0_DP/3.0_DP)*(1.0_DP + COS(ACOS(phi)/3.0_DP)*SQRT(Delta0));
+!       S = SQRT(SS)/2.0_DP;
+!       x = S+0.5_DP*SQRT(MAX(0.0_DP,-SS+4.0_DP+dd/S));
+!     ELSE
+!       !When analytic approach is ill conditioned use Newton.
+!       x = SQRT(3.0_DP);
+!       xold = 3.0_DP;
+!       DO WHILE((xold-x)>1.0E-12_DP);
+!         xold = x;
+!         px = x*(x*(x*x - 2.0_DP)-dd)+bvalue;
+!         dpx = x*(4.0_DP*x*x-4.0_DP)-dd;
+!         x = x-px/dpx;
+!       ENDDO
+!     ENDIF
+
+!     !LDL
+!     BB = -B
+!     BB(1,1) = x(1)+BB(1,1)
+!     BB(2,2) = x(1)+BB(2,2)
+!     BB(3,3) = x(1)+BB(3,3)
+!     BB(4,4) = x(1)+BB(4,4)
+    
+!     p(1) = 1
+!     p(2) = 2
+!     p(3) = 3
+!     p(4) = 4
+!     L = RESHAPE([1.0_DP,0.0_DP,0.0_DP,0.0_DP, &
+!       & 0.0_DP,1.0_DP,0.0_DP,0.0_DP, &
+!       & 0.0_DP,0.0_DP,1.0_DP,0.0_DP, &
+!       & 0.0_DP,0.0_DP,0.0_DP,1.0_DP],[4,4])
+!     D = 0.0_DP
+    
+!     IF(quick) THEN
+      
+!       !IS quick
+      
+!       !First step
+    
+!       row = 4
+!       IF(BB(4,4)<BB(3,3)) row = 3
+!       IF(BB(row,row)<BB(2,2)) row = 2
+!       IF(BB(row,row)>BB(1,1)) THEN
+!         p(1) = row
+!         p(row) = 1
+!         BBp1 = BB(p(1),p(1))
+!         BBp2 = BB(p(2),p(2))
+!         BBp3 = BB(p(3),p(3))
+!         BBp4 = BB(p(4),p(4))
+!         BB(1,1) = BBp1
+!         BB(2,2) = BBp2
+!         BB(3,3) = BBp3
+!         BB(4,4) = BBp4
+!       ENDIF
+!       D(1) = BB(1,1)
+!       L(2,1) = BB(2,1)/D(1)
+!       L(3,1) = BB(3,1)/D(1)
+!       L(4,1) = BB(4,1)/D(1)
+!       BB(2,2) = BB(2,2)-L(2,1)*BB(1,2)
+!       BB(3,2) = BB(3,2)-L(2,1)*BB(1,3)
+!       BB(2,3) = BB(3,2)
+!       BB(4,2) = BB(4,2)-L(2,1)*BB(1,4)
+!       BB(2,4) = BB(4,2)
+!       BB(3,3) = BB(3,3)-L(3,1)*BB(1,3)
+!       BB(4,3) = BB(4,3)-L(3,1)*BB(1,4)
+!       BB(3,4) = BB(4,3)
+!       BB(4,4) = BB(4,4)-L(4,1)*BB(1,4)
+      
+!       !Second step
+    
+!       row = 4
+!       IF(BB(4,4)<BB(3,3)) row = 3      
+!       IF(BB(row,row)>BB(2,2)) THEN
+!         itemp = p(2)
+!         p(2) = p(row)
+!         p(row) = itemp
+!         temp4 = BB(2,:)
+!         BB(2,:) = BB(row,:)
+!         BB(row,:) = temp4
+!         temp4 = BB(:,2)
+!         BB(:,2) = BB(:,row)
+!         BB(:,row) = temp4
+!         temp4 = L(2,:)
+!         L(2,:) = L(row,:)
+!         L(row,:) = temp4
+!         temp4 = L(:.2)
+!         L(:,2) = L(:,row)
+!         L(:,row) = temp4
+!       ENDIF
+    
+!       D(2) = BB(2,2)
+!       L(3,2) = BB(3,2)/D(2)
+!       L(4,2) = BB(4,2)/D(2)
+!       BB(3,3) = BB(3,3)-L(3,2)*BB(2,3)
+!       BB(4,3) = BB(4,3)-L(3,2)*BB(2,4)
+!       BB(3,4) = BB(4,3)
+!       BB(4,4) = BB(4,4)-L(4,2)*BB(2,4)
+    
+!       !Third step
+    
+!       IF(BB(3,3)<BB(4,4)) THEN
+!         D(3) = BB(4,4)
+!         temp4 = BB(3,:)
+!         BB(3,:) = BB(4,:)
+!         BB(4,:) = temp4
+!         temp4 = BB(:,3)
+!         BB(:,3) = BB(:,4)
+!         BB(:,4) = temp4
+!         temp4 = L(3,:)
+!         L(3,:) = L(4,:)
+!         L(4,:) = temp4
+!         temp4 = L(:,3)
+!         L(:,3) = L(:,4)
+!         L(:,4) = temp4
+!         itemp = p(3)
+!         p(3)  = p(4)
+!         p(4) = itemp
+!       ELSE
+!         D(3) = BB(3,3)
+!       ENDIF
+!       L(4,3) = BB(4,3)/D(3);
+!       v(1) = L(2,1)*L(4,2)+L(3,1)*L(4,3)-L(2,1)*L(4,3)*L(3,2)-L(4,1)
+!       v(2) = L(4,3)*L(3,2)-L(4,2)
+!       v(3) = -L(4,3)
+!       v(4) = 1.0_DP
+!       normv = SQRT(v(1)*v(1)+v(2)*v(2)+v(3)*v(3)+v(4)*v(4))
+!       v = v/normv
+!       v1 = v(1)
+!       v2 = v(2)
+!       v3 = v(3)
+!       v4 = v(4)
+!       v(p(1)) = v1
+!       v(p(2)) = v2
+!       v(p(3)) = v3)
+!       v(p(4)) = v4
+!     ELSE
+!       !NOT quick
+          
+!       !First step
+    
+!       row = 4
+!       IF(BB(4,4)<BB(3,3)) row = 3
+!       IF(BB(row,row)<BB(2,2)) row = 2
+!       IF(BB(row,row)>BB(1,1)) THEN
+!         p(1) = row
+!         p(row) = 1
+!         BBp1 = BB(p(1),p(1))
+!         BBp2 = BB(p(2),p(2))
+!         BBp3 = BB(p(3),p(3))
+!         BBp4 = BB(p(4),p(4))
+!         BB(1,1) = BBp1
+!         BB(2,2) = BBp2
+!         BB(3,3) = BBp3
+!         BB(4,4) = BBp4
+!       ENDIF
+!       D(1) = BB(1,1)
+!       L(2,1) = BB(2,1)/D(1)
+!       L(3,1) = BB(3,1)/D(1)
+!       L(4,1) = BB(4,1)/D(1)
+!       BB(2,2) = BB(2,2)-L(2,1)*BB(1,2)
+!       BB(3,2) = BB(3,2)-L(2,1)*BB(1,3)
+!       BB(2,3) = BB(3,2)
+!       BB(4,2) = BB(4,2)-L(2,1)*BB(1,4)
+!       BB(2,4) = BB(4,2)
+!       BB(3,3) = BB(3,3)-L(3,1)*BB(1,3)
+!       BB(4,3) = BB(4,3)-L(3,1)*BB(1,4)
+!       BB(3,4) = BB(4,3)
+!       BB(4,4) = BB(4,4)-L(4,1)*BB(1,4)
+    
+!       !Second step
+    
+!       row = 3
+!       IF(BB(3,3)<BB(2,2)) row = 2
+!       IF(BB(row,row)>BB(1,1)) THEN
+!         itemp = p(2)
+!         p(2) = p(row)
+!         p(row) = itemp
+!         temp4 = BB(2,:)
+!         BB(2,:) = BB(row,:)
+!         BB(row,:) = temp4
+!         temp4 = BB(:,2)
+!         BB(:,2) = BB(:,row)
+!         BB(:,row) = temp4
+!         temp4 = L(2,:)
+!         L(2,:) = L(row,:)
+!         L(row,:) = temp4
+!         temp4 = L(:.2)
+!         L(:,2) = L(:,row)
+!         L(:,row) = temp4
+!       ENDIF
+    
+!       D(2,2) = BB(2,2)
+!       L(3,2) = BB(3,2)/D(2,2)
+!       L(4,2) = BB(4,2)/D(2,2)
+!       D(3,3) = BB(3,3)-L(3,2)*BB(2,3)
+!       D(4,3) = BB(4,3)-L(3,2)*BB(2,4)
+!       D(3,4) = D(4,3)
+!       D(4,4) = BB(4,4)-L(4,2)*BB(2,4)
+    
+!       DD = D(3,3)*D(4,4)-D(3,4)*D(3,4)
+!       IF(ABS(DD)<ZERO_TOLERANCE) THEN
+!         !treat specially
+!         IF(MAXVAL(ABS(D(3:4,3:4)))<ZERO_TOLERANCE) THEN
+!           v(1)=L(2,1)*L(4,2)-L(4,1)
+!           v(2)=-L(4,2)
+!           v(3)=0.0_DP
+!           v(4)=1.0_DP
+!         ELSE
+!           !v = L'\[0;0;null(D(3:4,3:4))]
+            
+!         ENDIF
+!         normv = SQRT(v(1)*v(1)+v(2)*v(2)+v(3)*v(3)+v(4)*v(4))
+!         v = v/normv
+!       ELSE
+!         ID = RESHAPE([D(4,4),-D(3,4),-D(3,4),D(3,3)],[2,2])
+    
+!         IF(subspa) THEN
+!           v = [L(2,1)*L(3,2)-L(3,1) L(2,1)*L(4,2)-L(4,1);-L(3,2) -L(4,2);1 0;0 1];
+!           IL = [1 0 0 0;-L(2,1) 1 0 0;v'];        
+!           [v ~] = qr(v,0);%->cost in flops if implemented by hand: 37 M+24 A+4 O
+!           v = IL*v;%it looks faster to multiply than to solve lin syst (even though should be same flops)
+!           v(1,:) = v(1,:)/D(1,1);
+!           v(2,:) = v(2,:)/D(2,2);
+!           v(3:4,:) = ID*v(3:4,:)/DD(1);
+!           v = v'*IL;v = v';
+!           v = IL*v;
+!           v(1,:) = v(1,:)/D(1,1);
+!           v(2,:) = v(2,:)/D(2,2);
+!           v(3:4,:) = ID*v(3:4,:)/DD(1);
+!           v = v'*IL;v = v';
+!           [v ~] = qr(v,0);
+!           H = v'*L;H = -H*D*H';%Cheaper
+!           if abs(H(1,2))<1e-15
+!           if H(1,1)>H(1,2)
+!           v = v(:,1);
+!         else
+!           v = v(:,2);
+!         end
+!       else
+!         r = (H(1,1)-H(2,2))/(2*H(1,2));
+!         v = v*[r+sign(H(1,2))*sqrt(1+r(1)*r(1));1];
+!         v = v/norm(v);
+!       end
+      
+!     else
+!       v = [L(2,1)*L(4,2)+L(3,1)*L(4,3)-L(2,1)*L(4,3)*L(3,2)-L(4,1);
+!       L(4,3)*L(3,2)-L(4,2); -L(4,3) ;1];
+!       IL = [1 0 0 0; -L(2,1) 1 0 0; L(2,1)*L(3,2)-L(3,1) -L(3,2) 1 0; v'];
+!       nv = realsqrt(v(1)*v(1)+v(2)*v(2)+v(3)*v(3)+v(4)*v(4));
+!       v = v/nv(1);
+      
+!       for it = 1:nit
+!       v = IL*v;
+!       v(1) = v(1)/D(1,1);v(2) = v(2)/D(2,2);v(3:4) = ID*v(3:4)/DD(1);
+!       v = v'*IL;v = v';
+!       nv = realsqrt(v(1)*v(1)+v(2)*v(2)+v(3)*v(3)+v(4)*v(4));
+!       v = v/nv(1);
+!     END IF
+!   END IF
+! END IF
+! v(p) = v;
+! end
+
+! % Polar factor (up to sign).
+
+! v22 = 2*v(2)*v(2);v33 = 2*v(3)*v(3);v44 = 2*v(4)*v(4);v23 = 2*v(2)*v(3);
+! v14 = 2*v(1)*v(4);v24 = 2*v(2)*v(4);v13 = 2*v(1)*v(3);v12 = 2*v(1)*v(2);
+! v34 = 2*v(3)*v(4);
+! Q = [1-v33(1)-v44(1) v23(1)+v14(1) v24(1)-v13(1);
+!     v23(1)-v14(1) 1-v22(1)-v44(1) v12(1)+v34(1); 
+!     v13(1)+v24(1) v34(1)-v12(1) 1-v22(1)-v33(1)]; 
+
+! if d(1) == -1,Q = -Q;end
+! H = Q'*A;
+! H = n(1)*H;
+! %H = (H+H')/2; %->optional; adds some flop cost&
+ 
+    CASE DEFAULT
+      localError="The size of the A matrix/number of dimensions of "//TRIM(NumberToVString(SIZE(F,1),"*",err,error))// &
+        & " is invalid. The size must be >= 1 and <= 3."
+      CALL FlagError(localError,err,error,*999)
+    END SELECT
+    
+    EXITS("PolarDecompositionDP")
+    RETURN
+999 ERRORSEXITS("PolarDecompositionDP",err,error)
+    RETURN 1
+    
+  END SUBROUTINE PolarDecompositionDP
+  
+  !
+  !================================================================================================================================
+  !
   
   !>Calculates single precision hyperbolic secant function
   PURE FUNCTION SechSP(a)
@@ -4346,6 +5070,145 @@ CONTAINS
     RETURN
     
   END FUNCTION SechDP
+
+  !
+  !================================================================================================================================
+  !
+
+  !>Finds the Singular Value Decomposition (SVD) of a real double precision matrix A i.e., A = U.sigma.VT
+  SUBROUTINE SingularValueDecompositionDP(A,U,sigma,VT,err,error,*)
+  
+    !Argument variables
+    REAL(DP), INTENT(IN) :: A(:,:) !<A(iIdx,jIdx). The A matrix to compute the SVD for
+    REAL(DP), INTENT(OUT) :: U(:,:) !<U(idIdx,iIdx). On exit, the matrix of left singular vectors of A
+    REAL(DP), INTENT(OUT) :: sigma(:,:) !sigma(iIdx,jIdx). On exit, the matrix with the singular values on the diagonal
+    REAL(DP), INTENT(OUT) :: VT(:,:) !<VT(jIdx,jIdx). On exit, the transpose of matrix of the right singular vectors of A
+    INTEGER(INTG), INTENT(OUT) :: err !<The error code
+    TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
+    !Local variables
+    INTEGER(INTG) :: lWork,m,n
+    INTEGER(INTG), PARAMETER :: lWMax=1000
+    REAL(DP) :: B(SIZE(A,1),SIZE(A,2)),delta,work(lWMax)
+    LOGICAL :: useLapack
+#ifdef WITH_PRECHECKS   
+    TYPE(VARYING_STRING) :: localError
+#endif    
+    
+    ENTERS("SingularValueDecompositionDP",err,error,*999)
+
+#ifdef WITH_PRECHECKS    
+    IF(SIZE(U,1)/=SIZE(A,1)) THEN
+      localError="The size of the first dimension of the specified U matrix of "// &
+        & TRIM(NumberToVString(SIZE(U,1),"*",err,error))// &
+        & " does not match the size of the first dimension of the specified A matrix of "// &
+        & TRIM(NumberToVString(SIZE(A,1),"*",err,error))//". The sizes should match."
+      CALL FlagError(localError,err,error,*999)
+    ENDIF
+    IF(SIZE(U,2)/=SIZE(A,1)) THEN
+      localError="The size of the second dimension of the specified U matrix of "// &
+        & TRIM(NumberToVString(SIZE(U,2),"*",err,error))// &
+        & " does not match the size of the first dimension of the specified A matrix of "// &
+        & TRIM(NumberToVString(SIZE(A,1),"*",err,error))//". The sizes should match."
+      CALL FlagError(localError,err,error,*999)
+    ENDIF
+    IF(SIZE(sigma,1)/=SIZE(A,1)) THEN
+      localError="The size of the first dimension of the specified sigma matrix of "// &
+        & TRIM(NumberToVString(SIZE(sigma,1),"*",err,error))// &
+        & " does not match the size of the first dimension of the specified A matrix of "// &
+        & TRIM(NumberToVString(SIZE(A,1),"*",err,error))//". The sizes should match."
+      CALL FlagError(localError,err,error,*999)
+    ENDIF
+    IF(SIZE(sigma,2)/=SIZE(A,2)) THEN
+      localError="The size of the second dimension of the specified sigma matrix of "// &
+        & TRIM(NumberToVString(SIZE(sigma,2),"*",err,error))// &
+        & " does not match the size of the second dimension of the specified A matrix of "// &
+        & TRIM(NumberToVString(SIZE(A,2),"*",err,error))//". The sizes should match."
+      CALL FlagError(localError,err,error,*999)
+    ENDIF
+    IF(SIZE(VT,1)/=SIZE(A,2)) THEN
+      localError="The size of the first dimension of the specified VT matrix of "// &
+        & TRIM(NumberToVString(SIZE(VT,1),"*",err,error))// &
+        & " does not match the size of the second dimension of the specified A matrix of "// &
+        & TRIM(NumberToVString(SIZE(A,2),"*",err,error))//". The sizes should match."
+      CALL FlagError(localError,err,error,*999)
+    ENDIF
+    IF(SIZE(VT,2)/=SIZE(A,2)) THEN
+      localError="The size of the second dimension of the specified VT matrix of "// &
+        & TRIM(NumberToVString(SIZE(VT,1),"*",err,error))// &
+        & " does not match the size of the second dimension of the specified A matrix of "// &
+        & TRIM(NumberToVString(SIZE(A,2),"*",err,error))//". The sizes should match."
+      CALL FlagError(localError,err,error,*999)
+    ENDIF
+#endif    
+
+    m=SIZE(A,1)
+    n=SIZE(A,1)
+    useLapack=.FALSE.
+    SELECT CASE(m)
+    CASE(1)
+      sigma(1,1)=A(1,1)
+      U(1,1)=1.0_DP
+      VT(1,1)=1.0_DP
+    CASE(2)
+      IF(m==n) THEN
+        !This formula only works for 2x2 real Hermitian matrices
+        IF(ABS(A(1,2))<ZERO_TOLERANCE) THEN
+          !Diagonal matrix
+          sigma(1,1)=A(1,1)
+          sigma(2,1)=0.0_DP
+          sigma(1,2)=0.0_DP
+          sigma(2,2)=A(2,2)
+          U(1,1)=1.0_DP
+          U(2,1)=0.0_DP
+          U(1,2)=0.0_DP
+          U(2,2)=1.0_DP
+          VT(1,1)=1.0_DP
+          VT(2,1)=0.0_DP
+          VT(1,2)=0.0_DP
+          VT(2,2)=1.0_DP
+        ELSE          
+          delta=SQRT(4.0_DP*(ABS(A(1,2))*ABS(A(1,2)))+(A(1,1)-A(2,2))*(A(1,1)-A(2,2)))
+          sigma(1,1)=(A(1,1)+A(2,2)-delta)/2.0_DP
+          sigma(2,1)=0.0_DP
+          sigma(1,2)=0.0_DP
+          sigma(2,2)=(A(1,1)+A(2,2)+delta)/2.0_DP
+          U(1,1)=(sigma(2,2)-A(2,2))/A(1,2)
+          U(2,1)=1.0_DP
+          U(1,2)=(sigma(1,1)-A(2,2))/A(1,2)
+          U(2,2)=1.0_DP
+          VT(1,1)=(sigma(2,2)-A(2,2))/A(1,2)
+          VT(1,2)=(sigma(1,1)-A(2,2))/A(1,2)
+          VT(2,1)=1.0_DP
+          VT(2,2)=1.0_DP
+        ENDIF
+      ELSE
+        useLapack=.TRUE.
+      ENDIF
+    CASE(3)
+      IF(m==n) THEN
+      ELSE
+        useLapack=.TRUE.
+      ENDIF
+    CASE DEFAULT
+      useLapack=.TRUE.
+    END SELECT
+
+    IF(useLapack) THEN
+      !Use LAPACK
+      B(1:m,1:n)=A(1:m,1:n)
+      CALL DGESVD('A','A',m,n,B,m,sigma,U,m,VT,n,work,lwork,err)
+      IF(err/=0) CALL FlagError("Error in LaPACK computation DGESVD.",err,error,*999)
+    ENDIF
+
+    IF(diagnostics1) THEN
+    ENDIF
+
+    EXITS("SingularValueDecompositionDP")
+    RETURN
+999 ERRORSEXITS("SingularValueDecompositionDP",err,error)
+    RETURN 1
+    
+  END SUBROUTINE SingularValueDecompositionDP
 
   !
   !================================================================================================================================
@@ -6378,8 +7241,8 @@ CONTAINS
                           ENDDO !dIdx
                         ENDDO !cIdx
                       ENDDO !bIdx
-                   ENDDO !aIdx
-                   B(rIdx,sIdx,tIdx,uIdx)=sum
+                    ENDDO !aIdx
+                    B(rIdx,sIdx,tIdx,uIdx)=sum
                   ENDDO !uIdx
                 ENDDO !tIdx
               ENDDO !sIdx
@@ -6405,7 +7268,7 @@ CONTAINS
                       ENDDO !bIdx
                     ENDDO !aIdx
                     B(rIdx,sIdx,tIdx,uIdx)=sum
-                 ENDDO !uIdx
+                  ENDDO !uIdx
                 ENDDO !tIdx
               ENDDO !sIdx
             ENDDO !rIdx
@@ -6435,11 +7298,11 @@ CONTAINS
                         ENDDO !cIdx
                       ENDDO !bIdx
                     ENDDO !aIdx
-                  ENDDO !uIdx
+                    B(rIdx,sIdx,tIdx,uIdx)=sum
+                 ENDDO !uIdx
                 ENDDO !tIdx
               ENDDO !sIdx
             ENDDO !rIdx
-            B(rIdx,sIdx,tIdx,uIdx)=sum
           CASE(TENSOR_COVARIANT_INDEX)
             !(Covariant,Covariant,Covariant,Covariant) tensor
             DO rIdx=1,n

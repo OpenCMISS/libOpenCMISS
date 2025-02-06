@@ -1019,9 +1019,8 @@ CONTAINS
         ENDDO
         totalNumberOfNodes=MAXVAL(basisNumberOfNodes)
         !Compute the element factor i.e., the number of sub elements each grid element will be split into.
-        IF(basis%type==BASIS_LAGRANGE_HERMITE_TP_TYPE) THEN
-          elementFactor=1
-        ELSE
+        elementFactor=1
+        IF(basis%TYPE/=BASIS_LAGRANGE_HERMITE_TP_TYPE) THEN
           SELECT CASE(regularMesh%meshDimension)
           CASE(1)
             elementFactor=1
@@ -3806,7 +3805,8 @@ CONTAINS
     GeneratedMesh_ComponentNodeToUserNumber=0
     position=0
     position2=0
-
+    NULLIFY(numberOfElementsXi)
+    
     SELECT CASE(generatedMesh%generatedType)
     CASE(GENERATED_MESH_REGULAR_MESH_TYPE)
       NULLIFY(regularMesh)
@@ -4082,6 +4082,7 @@ CONTAINS
     !Calculate current element indices and number
     reminderTemp=0;
     elementIndex=1;
+    elementNumber=0;
     SELECT CASE(numberOfDimensions)
     CASE(1)
       !Calculate xi1 element index
@@ -4515,6 +4516,8 @@ CONTAINS
     reminderTemp=0;
     elementIndex=1;
     nodeIdx=1;
+    elementNumber=0
+    localNodeNumber=0
     SELECT CASE(numberOfDimensions)
     CASE(1)
       !Calculate xi1 element index
@@ -4627,7 +4630,9 @@ CONTAINS
     LOGICAL :: finishedCount,offEdge
     TYPE(BasisType), POINTER :: basis,basis2
     TYPE(GeneratedMeshCylinderType), POINTER :: cylinderMesh
-     TYPE(VARYING_STRING) :: localError
+    TYPE(VARYING_STRING) :: localError
+
+    GeneratedMesh_UserNumberToComponentNode=0
 
     ENTERS("GeneratedMesh_UserNumberToComponentNode",err,error,*999)
 
@@ -4641,7 +4646,8 @@ CONTAINS
     
     !Only cylinder mesh type uses this now, although it was previously used by regular
     !meshes so some things relate to that.
-    SELECT CASE(generatedMesh%generatedType)
+    NULLIFY(numberOfElementsXi)
+    SELECT CASE(generatedMesh%generatedType)      
     CASE(GENERATED_MESH_REGULAR_MESH_TYPE)
       CALL FlagError("Not implemented.",err,error,*999)
     CASE(GENERATED_MESH_POLAR_MESH_TYPE)
@@ -4653,7 +4659,7 @@ CONTAINS
       CALL GeneratedMesh_CylinderMeshGet(generatedMesh,cylinderMesh,err,error,*999)
       numberOfBases=SIZE(cylinderMesh%bases)
       numberOfDimensions=cylinderMesh%meshDimension
-      numberOfElementsXi=cylinderMesh%numberOfElementsXi
+      numberOfElementsXi=>cylinderMesh%numberOfElementsXi
     CASE(GENERATED_MESH_ELLIPSOID_MESH_TYPE)
       CALL FlagError("Not implemented.",err,error,*999)
     CASE DEFAULT

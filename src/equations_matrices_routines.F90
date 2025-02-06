@@ -3707,19 +3707,21 @@ MODULE EquationsMatricesRoutines
     CALL EquationsMappingVector_RHSMappingExists(vectorMapping,rhsMapping,err,error,*998)
     IF(ASSOCIATED(rhsMapping)) THEN
       CALL EquationsMappingRHS_VectorCoefficientGet(rhsMapping,rhsCoefficient,err,error,*999)
-      ALLOCATE(vectorMatrices%rhsVector,STAT=err)
-      IF(err/=0) CALL FlagError("Could not allocate equations matrices RHS vector.",err,error,*999)
-      vectorMatrices%rhsVector%vectorMatrices=>vectorMatrices
-      vectorMatrices%rhsVector%rhsCoefficient=rhsCoefficient
-      vectorMatrices%rhsVector%updateVector=.TRUE.
-      vectorMatrices%rhsVector%firstAssembly=.TRUE.
-      NULLIFY(vectorMatrices%rhsVector%vector)
-      NULLIFY(vectorMatrices%rhsVector%previousRHSVector)
-      NULLIFY(vectorMatrices%rhsVector%previous2RHSVector)
-      NULLIFY(vectorMatrices%rhsVector%previous3RHSVector)
-      CALL EquationsMatrices_ElementVectorInitialise(vectorMatrices%rhsVector%elementVector,err,error,*999)
-      CALL EquationsMatrices_NodalVectorInitialise(vectorMatrices%rhsVector%nodalVector,err,error,*999)
+    ELSE
+      rhsCoefficient=-1.0_DP
     ENDIF
+    ALLOCATE(vectorMatrices%rhsVector,STAT=err)
+    IF(err/=0) CALL FlagError("Could not allocate equations matrices RHS vector.",err,error,*999)
+    vectorMatrices%rhsVector%vectorMatrices=>vectorMatrices
+    vectorMatrices%rhsVector%rhsCoefficient=rhsCoefficient
+    vectorMatrices%rhsVector%updateVector=.TRUE.
+    vectorMatrices%rhsVector%firstAssembly=.TRUE.
+    NULLIFY(vectorMatrices%rhsVector%vector)
+    NULLIFY(vectorMatrices%rhsVector%previousRHSVector)
+    NULLIFY(vectorMatrices%rhsVector%previous2RHSVector)
+    NULLIFY(vectorMatrices%rhsVector%previous3RHSVector)
+    CALL EquationsMatrices_ElementVectorInitialise(vectorMatrices%rhsVector%elementVector,err,error,*999)
+    CALL EquationsMatrices_NodalVectorInitialise(vectorMatrices%rhsVector%nodalVector,err,error,*999)
     
     EXITS("EquationsMatricesVector_RHSInitialise")
     RETURN
@@ -4982,6 +4984,9 @@ MODULE EquationsMatricesRoutines
     sourceVectors%sources(sourceIdx)%ptr%updateVector=.TRUE.
     sourceVectors%sources(sourceIdx)%ptr%firstAssembly=.TRUE.
     NULLIFY(sourceVectors%sources(sourceIdx)%ptr%vector)
+    NULLIFY(sourceVectors%sources(sourceIdx)%ptr%previousSourceVector)
+    NULLIFY(sourceVectors%sources(sourceIdx)%ptr%previous2SourceVector)
+    NULLIFY(sourceVectors%sources(sourceIdx)%ptr%previous3SourceVector)
     CALL EquationsMatrices_ElementVectorInitialise(sourceVectors%sources(sourceIdx)%ptr%elementVector,err,error,*999)
     CALL EquationsMatrices_NodalVectorInitialise(sourceVectors%sources(sourceIdx)%ptr%nodalVector,err,error,*999)
        

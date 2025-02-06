@@ -447,6 +447,8 @@ CONTAINS
     CASE(EQUATIONS_SET_EXPONENTIAL_SOURCE_ALE_DIFFUSION_SUBTYPE)
       CALL FlagError("Not implemented.",err,error,*999)
     CASE(EQUATIONS_SET_MULTI_COMP_TRANSPORT_DIFFUSION_SUBTYPE)
+      !A1=???
+      A1=1.0_DP
       SELECT CASE(analyticFunctionType)
       CASE(EQUATIONS_SET_MULTI_COMP_DIFFUSION_TWO_COMP_TWO_DIM)
         analyticValue=A1*EXP(-1.0_DP*time)*(x(1)*x(1)+x(2)*x(2))
@@ -1628,6 +1630,10 @@ CONTAINS
                 CALL Field_ComponentValuesInitialise(equationsAnalytic%analyticField,FIELD_U_VARIABLE_TYPE, &
                   & FIELD_VALUES_SET_TYPE,4,1.0_DP,err,error,*999)                      
                 !Set sigma
+                NULLIFY(equationsMaterials)
+                CALL EquationsSet_MaterialsGet(equationsSet,equationsMaterials,err,error,*999)
+                NULLIFY(materialsField)
+                CALL EquationsSet_MaterialsFieldGet(equationsSet,materialsField,err,error,*999)
                 CALL Field_ParameterSetGetConstant(materialsField,FIELD_U_VARIABLE_TYPE,FIELD_VALUES_SET_TYPE,2, &
                   & sigmaParam,err,error,*999)               
                 CALL Field_ComponentValuesInitialise(equationsAnalytic%analyticField,FIELD_U_VARIABLE_TYPE, &
@@ -1986,6 +1992,8 @@ CONTAINS
       CALL EquationsMatricesRHS_UpdateVectorGet(rhsVector,updateRHS,err,error,*999)
     ENDIF
     updateCoupling=.FALSE.
+    myCompartment=0
+    numberOfCompartments=0
     IF(esSpecification(3)==EQUATIONS_SET_MULTI_COMP_TRANSPORT_DIFFUSION_SUBTYPE) THEN
       NULLIFY(equationsSetField)
       NULLIFY(equationsSetFieldData)
@@ -2180,7 +2188,8 @@ CONTAINS
           NULLIFY(columnDomainElements)
           CALL DomainTopology_DomainElementsGet(columnDomainTopology,columnDomainElements,err,error,*999)
           NULLIFY(columnBasis(columnComponentIdx)%ptr)
-          CALL DomainElements_ElementBasisGet(columnDomainElements,elementNumber,columnBasis(columnComponentIdx)%ptr,err,error,*999)
+          CALL DomainElements_ElementBasisGet(columnDomainElements,elementNumber,columnBasis(columnComponentIdx)%ptr, &
+            & err,error,*999)
           CALL Basis_NumberOfElementParametersGet(columnBasis(columnComponentIdx)%ptr, &
             & numberOfColumnElementParameters(columnComponentIdx),err,error,*999)
           NULLIFY(columnQuadratureScheme(columnComponentIdx)%ptr)
@@ -2198,11 +2207,13 @@ CONTAINS
           & fibreInterpPoint,err,error,*999)
         CALL Field_InterpolateGauss(NO_PART_DERIV,BASIS_DEFAULT_QUADRATURE_SCHEME,gaussPointIdx,uMaterialsInterpPoint, &
           & err,error,*999)
+        couplingParam=0.0_DP
         IF(esSpecification(3)==EQUATIONS_SET_MULTI_COMP_TRANSPORT_DIFFUSION_SUBTYPE) THEN
           CALL Field_InterpolateGauss(NO_PART_DERIV,BASIS_DEFAULT_QUADRATURE_SCHEME,gaussPointIdx,vMaterialsInterpPoint, &
             & err,error,*999)
           couplingParam=vMaterialsInterpPoint%values(myCompartment,NO_PART_DERIV)
         ENDIF
+        sourceParam=0.0_DP
         IF(ASSOCIATED(sourceField)) THEN
           CALL Field_InterpolateGauss(NO_PART_DERIV,BASIS_DEFAULT_QUADRATURE_SCHEME,gaussPointIdx,sourceInterpPoint, &
             & err,error,*999)
@@ -2210,21 +2221,23 @@ CONTAINS
         ENDIF
         
         aParam=uMaterialsInterpPoint%values(1,NO_PART_DERIV)
+        bParam=0.0_DP
         SELECT CASE(esSpecification(3))
         CASE(EQUATIONS_SET_LINEAR_SOURCE_DIFFUSION_SUBTYPE, &
           & EQUATIONS_SET_LINEAR_SOURCE_ALE_DIFFUSION_SUBTYPE)
           bParam=uMaterialsInterpPoint%values(2,NO_PART_DERIV)
           !Calculate conductivity tensor
-          CALL CoordinateSystem_MaterialTransformTensor([TENSOR_CONTRAVARIANT_INDEX,TENSOR_COVARIANT_INDEX], &
+          CALL CoordinateSystem_MaterialNuToXTransformTensor([TENSOR_CONTRAVARIANT_INDEX,TENSOR_COVARIANT_INDEX], &
             & geometricInterpPointMetrics,fibreInterpPoint, &
-            & uMaterialsInterpPoint%values(3:3+NUMBER_OF_VOIGT(numberOfDimensions),NO_PART_DERIV),conductivity,err,error,*999)
+            & uMaterialsInterpPoint%values(3:2+NUMBER_OF_VOIGT(numberOfDimensions),NO_PART_DERIV),conductivity,err,error,*999)
         CASE DEFAULT
           !Calculate conductivity tensor
-          CALL CoordinateSystem_MaterialTransformTensor([TENSOR_CONTRAVARIANT_INDEX,TENSOR_COVARIANT_INDEX], &
+          CALL CoordinateSystem_MaterialNuToXTransformTensor([TENSOR_CONTRAVARIANT_INDEX,TENSOR_COVARIANT_INDEX], &
             & geometricInterpPointMetrics,fibreInterpPoint, &
-            & uMaterialsInterpPoint%values(2:2+NUMBER_OF_VOIGT(numberOfDimensions),NO_PART_DERIV),conductivity,err,error,*999)  
+            & uMaterialsInterpPoint%values(2:1+NUMBER_OF_VOIGT(numberOfDimensions),NO_PART_DERIV),conductivity,err,error,*999)  
         END SELECT
 
+        cParam=0.0_DP
         IF(esSpecification(3)==EQUATIONS_SET_COUPLED_SOURCE_DIFFUSION_ADVEC_DIFF_SUBTYPE) THEN
           CALL Field_InterpolateGauss(NO_PART_DERIV,BASIS_DEFAULT_QUADRATURE_SCHEME,gaussPointIdx, &
             & advecDiffDependentCurrentInterpPoint,err,error,*999)
@@ -2696,6 +2709,7 @@ CONTAINS
         
         uValue=dependentInterpPoint%values(1,NO_PART_DERIV)
         bParam=materialsInterpPoint%values(2,NO_PART_DERIV)
+        cParam=0.0_DP
         IF(esSpecification(3)==EQUATIONS_SET_EXPONENTIAL_SOURCE_DIFFUSION_SUBTYPE) &
           & cParam=materialsInterpPoint%values(3,NO_PART_DERIV)
 
@@ -2718,6 +2732,7 @@ CONTAINS
                 columnElementDOFIdx=columnElementDOFIdx+1
                 CALL BasisQuadratureScheme_GaussBasisFunctionGet(columnQuadratureScheme(columnComponentIdx)%ptr, &
                   & columnElementParameterIdx,NO_PART_DERIV,gaussPointIdx,columnPhi,err,error,*999)
+                sum=0.0_DP
                 SELECT CASE(esSpecification(3))
                 CASE(EQUATIONS_SET_QUADRATIC_SOURCE_DIFFUSION_SUBTYPE)
                   sum=-2.0_DP*bParam*rowPhi*columnPhi*uValue
@@ -3080,6 +3095,7 @@ CONTAINS
           & err,error,*999)
         CALL Field_InterpolateGauss(NO_PART_DERIV,BASIS_DEFAULT_QUADRATURE_SCHEME,gaussPointIdx,materialsInterpPoint, &
           & err,error,*999)
+        sourceValue=0.0_DP
         IF(ASSOCIATED(sourceField)) THEN
           CALL Field_InterpolateGauss(NO_PART_DERIV,BASIS_DEFAULT_QUADRATURE_SCHEME,gaussPointIdx,sourceInterpPoint, &
             & err,error,*999)
@@ -3091,9 +3107,9 @@ CONTAINS
         bParam=materialsInterpPoint%values(2,NO_PART_DERIV)
         cParam=materialsInterpPoint%values(3,NO_PART_DERIV)
         
-        CALL CoordinateSystem_MaterialTransformTensor([TENSOR_CONTRAVARIANT_INDEX,TENSOR_COVARIANT_INDEX], &
+        CALL CoordinateSystem_MaterialNuToXTransformTensor([TENSOR_CONTRAVARIANT_INDEX,TENSOR_COVARIANT_INDEX], &
           & geometricInterpPointMetrics,fibreInterpPoint, &
-          & materialsInterpPoint%values(4:4+NUMBER_OF_VOIGT(numberOfDimensions),NO_PART_DERIV),conductivity,err,error,*999)
+          & materialsInterpPoint%values(4:3+NUMBER_OF_VOIGT(numberOfDimensions),NO_PART_DERIV),conductivity,err,error,*999)
         
         !Calculate jacobianGaussWeight.
 !!TODO: Think about symmetric problems. 

@@ -925,7 +925,7 @@ CONTAINS
         ENDDO !jacobianIdx
         DEALLOCATE(residualMapping%jacobianMatrixToVarMaps)
       ENDIF
-      IF(ASSOCIATED(residualMapping%equationsRowToResidualDOFMap)) DEALLOCATE(residualMapping%equationsRowToResidualDOFMap)
+      !IF(ASSOCIATED(residualMapping%equationsRowToResidualDOFMap)) DEALLOCATE(residualMapping%equationsRowToResidualDOFMap)
       DEALLOCATE(residualMapping)
     ENDIF
        
@@ -976,7 +976,7 @@ CONTAINS
     nonlinearMapping%residuals(residualIdx)%ptr%numberOfVariables=0
     nonlinearMapping%residuals(residualIdx)%ptr%numberOfJacobianMatrices=0
     nonlinearMapping%residuals(residualIdx)%ptr%residualCoefficient=1.0_DP
-    NULLIFY(nonlinearMapping%residuals(residualIdx)%ptr%equationsRowToResidualDOFMap)
+    !NULLIFY(nonlinearMapping%residuals(residualIdx)%ptr%equationsRowToResidualDOFMap)
         
     EXITS("EquationsMappingNonlinear_ResidualMappingInitialise")
     RETURN
@@ -1461,7 +1461,7 @@ CONTAINS
       & rowIdx,residualIdx,sourceIdx,totalNumberOfDependentDOFs,totalNumberOfLHSDOFs,totalNumberOfRows,variableIdx, &
       & variableType
     INTEGER(INTG), ALLOCATABLE :: variableTypes(:)
-    INTEGER(INTG), POINTER :: equationsRowToLHSDOFMap(:),equationsRowToResidualDOFMap(:),lhsDOFToEquationsRowMap(:)
+    INTEGER(INTG), POINTER :: equationsRowToLHSDOFMap(:),lhsDOFToEquationsRowMap(:)
     REAL(DP) :: dynamicMatrixCoefficient,residualCoefficient
     TYPE(DomainMappingType), POINTER :: columnDomainMapping,rowDomainMapping
     TYPE(EquationsType), POINTER :: equations
@@ -2100,12 +2100,12 @@ CONTAINS
           CALL EquationsMappingNonlinear_ResidualMappingGet(nonlinearMapping,residualIdx,residualMapping,err,error,*999)
           CALL WriteStringValue(DIAGNOSTIC_OUTPUT_TYPE,"      Residual coefficient = ",residualMapping%residualCoefficient, &
             & err,error,*999)
-          NULLIFY(equationsRowToResidualDOFMap)
-          CALL EquationsMappingResidual_EquationsRowToResidualDOFMapGet(residualMapping,equationsRowToResidualDOFMap, &
-            & err,error,*999)
-          CALL WriteString(DIAGNOSTIC_OUTPUT_TYPE,"      Residual row mappings:",err,error,*999)
-          CALL WriteStringVector(DIAGNOSTIC_OUTPUT_TYPE,1,1,lhsMapping%totalNumberOfRows,5,5, &
-            & equationsRowToResidualDOFMap,'("      Row to DOF mappings :",5(X,I13))','(27X,5(X,I13))',err,error,*999) 
+          !NULLIFY(equationsRowToResidualDOFMap)
+          !CALL EquationsMappingResidual_EquationsRowToResidualDOFMapGet(residualMapping,equationsRowToResidualDOFMap, &
+          !  & err,error,*999)
+          !CALL WriteString(DIAGNOSTIC_OUTPUT_TYPE,"      Residual row mappings:",err,error,*999)
+          !CALL WriteStringVector(DIAGNOSTIC_OUTPUT_TYPE,1,1,lhsMapping%totalNumberOfRows,5,5, &
+          !  & equationsRowToResidualDOFMap,'("      Row to DOF mappings :",5(X,I13))','(27X,5(X,I13))',err,error,*999) 
           CALL WriteStringValue(DIAGNOSTIC_OUTPUT_TYPE,"      Number of variables = ",residualMapping%numberOfVariables, &
             & err,error,*999)
           DO variableIdx=1,residualMapping%numberOfVariables
@@ -2273,8 +2273,8 @@ CONTAINS
       CALL FlagError(localError,err,error,*999)
     ENDIF
     SELECT CASE(equations%timeDependence)
-      !Static equations
     CASE(EQUATIONS_STATIC,EQUATIONS_QUASISTATIC)
+      !Static equations
       SELECT CASE(equations%linearity)
       CASE(EQUATIONS_LINEAR,EQUATIONS_NONLINEAR_BCS)
         !Static, linear equations
@@ -2292,14 +2292,14 @@ CONTAINS
         !Static, nonlinear equations
         IF(dependentField%numberOfVariables==1) THEN
           !Only one variable so map it to a residual and have no RHS.
-          vectorMapping%createValuesCache%numberOfResidualVariables=1
-        ELSE         
+          !Do nothing for now
+        ELSE
           !Map first variable to a residual and the second variable to the RHS.
-          vectorMapping%createValuesCache%numberOfResidualVariables=1
           NULLIFY(fluxVariable)
           CALL Field_VariableIndexGet(dependentField,2,fluxVariable,fluxVariableType,err,error,*999)
           vectorMapping%createValuesCache%rhsVariableType=fluxVariableType
         ENDIF
+        vectorMapping%createValuesCache%numberOfResiduals=1
       CASE DEFAULT
         localError="The equations linearity type of "//TRIM(NumberToVString(equations%linearity,"*",err,error))//" is invalid."
         CALL FlagError(localError,err,error,*999)

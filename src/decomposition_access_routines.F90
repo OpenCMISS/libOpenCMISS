@@ -206,6 +206,8 @@ MODULE DecompositionAccessRoutines
 
   PUBLIC DecompositionElements_ElementCheckExists
 
+  PUBLIC DecompositionElements_ElementDoesExist
+
   PUBLIC DecompositionElements_ElementFaceNumberGet
 
   PUBLIC DecompositionElements_ElementGet
@@ -301,6 +303,10 @@ MODULE DecompositionAccessRoutines
   PUBLIC DomainElements_ElementGet
 
   PUBLIC DomainElements_ElementBasisGet
+
+  PUBLIC DomainElements_ElementCheckExists
+
+  PUBLIC DomainElements_ElementDoesExist
 
   PUBLIC DomainElements_ElementDerivativeGet
 
@@ -439,6 +445,8 @@ MODULE DecompositionAccessRoutines
   PUBLIC DomainNodes_NodeBoundaryNodeGet
 
   PUBLIC DomainNodes_NodeCheckExists
+
+  PUBLIC DomainNodes_NodeDoesExist
 
   PUBLIC DomainNodes_NodeFaceNumberGet
 
@@ -809,7 +817,9 @@ CONTAINS
     INTEGER(INTG), INTENT(OUT) :: err !<The error code
     TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
     !Local Variables
+#ifdef WITH_CHECKS    
     TYPE(VARYING_STRING) :: localError
+#endif    
 
     ENTERS("DecomposerGraph_RootNodeGet",err,error,*998)
 
@@ -883,7 +893,9 @@ CONTAINS
     INTEGER(INTG), INTENT(OUT) :: err !<The error code
     TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
     !Local Variables
+#ifdef WITH_POSTCHECKS    
     TYPE(VARYING_STRING) :: localError
+#endif    
 
     ENTERS("DecomposerGraphLink_DecompositionGet",err,error,*998)
 
@@ -923,7 +935,9 @@ CONTAINS
     INTEGER(INTG), INTENT(OUT) :: err !<The error code
     TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
     !Local Variables
+#ifdef WITH_POSTCHECKS
     TYPE(VARYING_STRING) :: localError
+#endif    
 
     ENTERS("DecomposerGraphLink_LinkedNodeGet",err,error,*998)
 
@@ -3100,6 +3114,54 @@ CONTAINS
   !================================================================================================================================
   !
 
+  !>Determines that a user element number exists in a decomposition and gives an error if not. 
+  SUBROUTINE DecompositionElements_ElementDoesExist(decompositionElements,userElementNumber,localElementNumber,err,error,*)
+
+    !Argument variables
+    TYPE(DecompositionElementsType), POINTER :: decompositionElements !<A pointer to the decomposition elements to see the element exists on
+    INTEGER(INTG), INTENT(IN) :: userElementNumber !<The user element number to see if it exists
+    INTEGER(INTG), INTENT(OUT) :: localElementNumber !<On exit, if the element exists the local number corresponding to the user element number. If the element does not exist then local number will be 0.
+    INTEGER(INTG), INTENT(OUT) :: err !<The error code
+    TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
+    !Local Variables
+    LOGICAL :: elementExists,ghostElement
+    TYPE(DecompositionType), POINTER :: decomposition
+    TYPE(DecompositionTopologyType), POINTER :: decompositionTopology
+    TYPE(VARYING_STRING) :: localError
+
+    ENTERS("DecompositionElements_ElementDoesExist",err,error,*999)
+
+    CALL DecompositionElements_ElementCheckExists(decompositionElements,userElementNumber,elementExists,localElementNumber, &
+      & ghostElement,err,error,*999)
+    IF(.NOT.elementExists) THEN
+      localError="The user element number "//TRIM(NumberToVString(userElementNumber,"*",err,error))//" does not exist"
+      decompositionTopology=>decompositionElements%decompositionTopology
+      IF(ASSOCIATED(decompositionTopology)) THEN
+        decomposition=>decompositionTopology%decomposition
+        IF(ASSOCIATED(decomposition)) THEN
+          localError=localError//" in decomposition number "//TRIM(NumberToVString(decomposition%userNumber,"*",err,error))
+          IF(ASSOCIATED(decomposition%region)) THEN
+            localError=localError//" in region number "//TRIM(NumberToVString(decomposition%region%userNumber,"*",err,error))
+          ELSE IF(ASSOCIATED(decomposition%INTERFACE)) THEN
+            localError=localError//" in interface number "//TRIM(NumberToVString(decomposition%INTERFACE%userNumber,"*",err,error))
+          ENDIF
+        ENDIF
+      ENDIF
+      localError=localError//"."
+      CALL FlagError(localError,err,error,*999)
+    ENDIF
+    
+    EXITS("DecompositionElements_ElementDoesExist")
+    RETURN
+999 ERRORSEXITS("DecompositionElements_ElementDoesExist",err,error)
+    RETURN 1
+
+  END SUBROUTINE DecompositionElements_ElementDoesExist
+
+  !
+  !================================================================================================================================
+  !
+
   !>Gets an element for a local element number in decomposition elements 
   SUBROUTINE DecompositionElements_ElementGet(decompositionElements,localElementNumber,decompositionElement,err,error,*)
 
@@ -4735,6 +4797,107 @@ CONTAINS
     RETURN 1
     
   END SUBROUTINE DomainElements_ElementBasisGet
+
+  !
+  !================================================================================================================================
+  !
+
+  !>Checks that a user element number exists in a domain elements. 
+  SUBROUTINE DomainElements_ElementCheckExists(domainElements,userElementNumber,elementExists,localElementNumber,ghostElement, &
+    & err,error,*)
+
+    !Argument variables
+    TYPE(DomainElementsType), POINTER :: domainElements !<A pointer to the domain elements to check the element exists on
+    INTEGER(INTG), INTENT(IN) :: userElementNumber !<The user element number to check if it exists
+    LOGICAL, INTENT(OUT) :: elementExists !<On exit, is .TRUE. if the element user number exists in the decomposition topology, .FALSE. if not
+    INTEGER(INTG), INTENT(OUT) :: localElementNumber !<On exit, if the element exists the local number corresponding to the user element number. If the element does not exist then local number will be 0.
+    LOGICAL, INTENT(OUT) :: ghostElement !<On exit, is .TRUE. if the local element (if it exists) is a ghost element, .FALSE. if not.
+    INTEGER(INTG), INTENT(OUT) :: err !<The error code
+    TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
+    !Local Variables
+    TYPE(DecompositionType), POINTER :: decomposition
+    TYPE(DecompositionElementsType), POINTER :: decompositionElements
+    TYPE(DecompositionTopologyType), POINTER :: decompositionTopology
+
+    ENTERS("DomainElements_ElementCheckExists",err,error,*999)
+
+#ifdef PRECHECKS
+    IF(.NOT.ASSOCIATED(domainElements)) CALL FlagError("Domain elements is not associated.",err,error,*999)
+    IF(.NOT.ASSOCIATED(domainElements%domainTopology))  &
+      & CALL FlagError("Domain elements domain topology is not associated.",err,error,*999)
+    IF(.NOT.ASSOCIATED(domainElements%domainTopology%domain))  &
+      & CALL FlagError("Domain elements domain topology domain is not associated.",err,error,*999)
+#endif
+
+    NULLIFY(decomposition)
+    CALL Domain_DecompositionGet(domainElements%domainTopology%domain,decomposition,err,error,*999)
+    NULLIFY(decompositionTopology)
+    CALL Decomposition_DecompositionTopologyGet(decomposition,decompositionTopology,err,error,*999)
+    NULLIFY(decompositionElements)
+    CALL DecompositionTopology_DecompositionElementsGet(decompositionTopology,decompositionElements,err,error,*999)
+    CALL DecompositionElements_ElementCheckExists(decompositionElements,userElementNumber,elementExists,localElementNumber, &
+      & ghostElement,err,error,*999)
+    
+    EXITS("DomsinElements_ElementCheckExists")
+    RETURN
+999 ERRORSEXITS("DomainElements_ElementCheckExists",err,error)
+    RETURN 1
+
+  END SUBROUTINE DomainElements_ElementCheckExists
+
+  !
+  !================================================================================================================================
+  !
+
+  !>Determines that a user element number exists in a domain and gives an error if not. 
+  SUBROUTINE DomainElements_ElementDoesExist(domainElements,userElementNumber,localElementNumber,err,error,*)
+
+    !Argument variables
+    TYPE(domainElementsType), POINTER :: domainElements !<A pointer to the domain elements to see the element exists on
+    INTEGER(INTG), INTENT(IN) :: userElementNumber !<The user element number to see if it exists
+    INTEGER(INTG), INTENT(OUT) :: localElementNumber !<On exit, if the element exists the local number corresponding to the user element number. If the element does not exist then local number will be 0.
+    INTEGER(INTG), INTENT(OUT) :: err !<The error code
+    TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
+    !Local Variables
+    LOGICAL :: elementExists,ghostElement
+    TYPE(DecompositionType), POINTER :: decomposition
+    TYPE(DomainType), POINTER :: domain
+    TYPE(DomainTopologyType), POINTER :: domainTopology
+    TYPE(VARYING_STRING) :: localError
+    
+    ENTERS("DomainElements_ElementDoesExist",err,error,*999)
+
+    CALL DomainElements_ElementCheckExists(domainElements,userElementNumber,elementExists,localElementNumber, &
+      & ghostElement,err,error,*999)
+    IF(.NOT.elementExists) THEN
+      localError="The user element number "//TRIM(NumberToVString(userElementNumber,"*",err,error))//" does not exist"
+      domainTopology=>domainElements%domainTopology
+      IF(ASSOCIATED(domainTopology)) THEN        
+        domain=>domainTopology%domain 
+        IF(ASSOCIATED(domain)) THEN
+          localError=localError//" in mesh component number "//TRIM(NumberToVString(domain%meshComponentNumber,"*",err,error))// &
+            & " of the domain"
+          decomposition=>domain%decomposition
+          IF(ASSOCIATED(decomposition)) THEN
+            localError=localError//" in decomposition number "//TRIM(NumberToVString(decomposition%userNumber,"*",err,error))
+            IF(ASSOCIATED(decomposition%region)) THEN
+              localError=localError//" in region number "//TRIM(NumberToVString(decomposition%region%userNumber,"*",err,error))
+            ELSE IF(ASSOCIATED(decomposition%INTERFACE)) THEN
+              localError=localError//" in interface number "//TRIM(NumberToVString(decomposition%INTERFACE%userNumber,"*",err,error))
+            ENDIF
+          ENDIF
+        ENDIF
+      ENDIF
+      localError=localError//"."
+      CALL FlagError(localError,err,error,*999)
+    ENDIF
+    
+    EXITS("DomainElements_ElementDoesExist")
+    RETURN
+999 ERRORSEXITS("DomainElements_ElementDoesExist",err,error)
+    RETURN 1
+
+  END SUBROUTINE DomainElements_ElementDoesExist
 
   !  
   !================================================================================================================================
@@ -7891,6 +8054,59 @@ CONTAINS
     RETURN 1
     
   END SUBROUTINE DomainNodes_NodeCheckExists
+  
+  !
+  !================================================================================================================================
+  !
+
+  !>Asserts that a user node number exists in domain nodes. 
+  SUBROUTINE DomainNodes_NodeDoesExist(domainNodes,userNodeNumber,localNodeNumber,err,error,*)
+
+    !Argument variables
+    TYPE(DomainNodesType), POINTER :: domainNodes !<A pointer to the domain nodes to see the node exists on
+    INTEGER(INTG), INTENT(IN) :: userNodeNumber !<The user node number to see if it exists
+     INTEGER(INTG), INTENT(OUT) :: localNodeNumber !<On exit, if the node exists the local number corresponding to the user node number. If the node does not exist then global number will be 0.
+    INTEGER(INTG), INTENT(OUT) :: err !<The error code
+    TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
+    !Local Variables
+    LOGICAL :: ghostNode,nodeExists
+    TYPE(DecompositionType), POINTER :: decomposition
+    TYPE(DomainType), POINTER :: domain
+    TYPE(DomainTopologyType), POINTER :: domainTopology
+    TYPE(VARYING_STRING) :: localError
+    
+    ENTERS("DomainNodes_NodeDoesExist",err,error,*999)
+
+    CALL DomainNodes_NodeCheckExists(domainNodes,userNodeNumber,nodeExists,localNodeNumber,ghostNode,err,error,*999)
+    IF(.NOT.nodeExists) THEN
+      localError="The user node number "//TRIM(NumberToVString(userNodeNumber,"*",err,error))//" does not exist"
+      domainTopology=>domainNodes%domainTopology
+      IF(ASSOCIATED(domainTopology)) THEN
+        domain=>domainTopology%domain
+        IF(ASSOCIATED(domain)) THEN
+          localError=localError//" in mesh component number "//TRIM(NumberToVString(domain%meshComponentNumber,"*",err,error))// &
+            & " of the domain"
+          decomposition=>domain%decomposition
+          IF(ASSOCIATED(decomposition)) THEN
+            localError=localError//" in decomposition number "//TRIM(NumberToVString(decomposition%userNumber,"*",err,error))
+            IF(ASSOCIATED(decomposition%region)) THEN
+              localError=localError//" in region number "//TRIM(NumberToVString(decomposition%region%userNumber,"*",err,error))
+            ELSE IF(ASSOCIATED(decomposition%INTERFACE)) THEN
+              localError=localError//" in interface number "//TRIM(NumberToVString(decomposition%INTERFACE%userNumber,"*",err,error))
+            ENDIF
+          ENDIF
+        ENDIF
+      ENDIF
+      localError=localError//"."
+      CALL FlagError(localError,err,error,*999)
+    ENDIF
+    
+    EXITS("DomainNodes_NodeDoesExist")
+    RETURN
+999 ERRORSEXITS("DomainNodes_NodeDoesExist",err,error)
+    RETURN 1
+    
+  END SUBROUTINE DomainNodes_NodeDoesExist
   
   !
   !================================================================================================================================

@@ -789,12 +789,17 @@ CONTAINS
 
     ENTERS("InterfaceMatrices_CreateFinish",err,error,*998)
 
-    CALL InterfaceMatrices_AssertNotFinished(interfaceMatrices,err,error,*999)
+    NULLIFY(rowIndices)
+    NULLIFY(columnIndices)
+    NULLIFY(transposeRowIndices)
+    NULLIFY(transposeColumnIndices)
+    
+    CALL InterfaceMatrices_AssertNotFinished(interfaceMatrices,err,error,*998)
 
     NULLIFY(interfaceMapping)
-    CALL InterfaceMatrices_InterfaceMappingGet(interfaceMatrices,interfaceMapping,err,error,*999)
+    CALL InterfaceMatrices_InterfaceMappingGet(interfaceMatrices,interfaceMapping,err,error,*998)
     NULLIFY(columnDomainMapping)
-    CALL InterfaceMapping_ColumnDOFsMappingGet(interfaceMapping,columnDomainMapping,err,error,*999)
+    CALL InterfaceMapping_ColumnDOFsMappingGet(interfaceMapping,columnDomainMapping,err,error,*998)
     !Now create the individual interface matrices
     DO matrixIdx=1,interfaceMatrices%numberOfInterfaceMatrices
       NULLIFY(interfaceMatrix)

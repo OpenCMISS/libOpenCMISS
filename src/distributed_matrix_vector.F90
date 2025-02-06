@@ -2372,8 +2372,8 @@ CONTAINS
                 CALL DomainMapping_LocalToGlobalGet(columnMapping,localColumn,globalColumn,err,error,*999)
                 sum=sum+matrix%dataDP(localRowNumber+(globalColumn-1)*matrix%m)*cmissVector%dataDP(localColumn)
               ENDDO !localColumn
+              productValue=productValue+alpha*sum
             ENDIF
-            productValue=productValue+alpha*sum
           CASE(MATRIX_DIAGONAL_STORAGE_TYPE)
             productValue=productValue+alpha*matrix%dataDP(localRowNumber)*cmissVector%dataDP(localRowNumber)
           CASE(MATRIX_COLUMN_MAJOR_STORAGE_TYPE)

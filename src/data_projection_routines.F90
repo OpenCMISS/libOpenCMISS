@@ -1269,7 +1269,9 @@ CONTAINS
     INTEGER(INTG) :: coordinateIdx,elementNumber,numberOfComponents
     TYPE(FieldInterpolatedPointType), POINTER :: interpolatedPoint
     TYPE(FieldInterpolationParametersType), POINTER :: interpolationParameters
+#ifdef WITH_PRECHECKS    
     TYPE(VARYING_STRING) :: localError
+#endif
     
     ENTERS("DataProjection_DataPointFieldVariableEvaluate",err,error,*999)
 
@@ -1386,7 +1388,8 @@ CONTAINS
     CALL FieldVariable_InterpolationParameterInitialise(dataProjection%projectionVariable,interpolationParameters, &
       & err,error,*998,FIELD_GEOMETRIC_COMPONENTS_TYPE)
     NULLIFY(interpolatedPoint)
-    CALL Field_InterpolatedPointInitialise(interpolationParameters,interpolatedPoint,err,error,*998,FIELD_GEOMETRIC_COMPONENTS_TYPE)
+    CALL Field_InterpolatedPointInitialise(interpolationParameters,interpolatedPoint,err,error,*998, &
+      & FIELD_GEOMETRIC_COMPONENTS_TYPE)
     NULLIFY(decomposition)
     CALL DataProjection_DecompositionGet(dataProjection,decomposition,err,error,*999)
     CALL Decomposition_NumberOfDimensionsGet(decomposition,numberOfDimensions,err,error,*999)
@@ -5065,7 +5068,9 @@ CONTAINS
     TYPE(DomainType), POINTER :: domain
     TYPE(DomainElementsType), POINTER :: domainElements
     TYPE(DomainTopologyType), POINTER :: domainTopology
+#ifdef WITH_PRECHECKS    
     TYPE(VARYING_STRING) :: localError
+#endif    
     
     ENTERS("DataProjection_ResultProjectionXiSet",err,error,*999)
 

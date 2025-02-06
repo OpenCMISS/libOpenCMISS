@@ -977,8 +977,8 @@ MODULE BoundaryConditionsRoutines
     TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
     !Local Variables
     INTEGER(INTG) :: boundaryConditionsVarType,colIdx,count,currentRowCondition,dirichletDOF,dirichletIdx,dofIdx,domainNumber, &
-      & dummy,equationsMatrixIdx,equationsSetIdx,last,lhsVariableType,localDOFIdx, &
-      & myGroupComputationNodeNumber,neumannIdx,numberOfBoundaryConditionsVariables,numberOfBoundaryConditionsRowVariables, &
+      & dummy,equationsMatrixIdx,equationsSetIdx,initialListSize,last,lhsVariableType,localDOFIdx, &
+      & myGroupComputationNodeNumber,neumannIdx,numberOfBoundaryConditionsVariables, &
       & numberOfDynamicMatrices,numberOfEquationsSets,numberOfGlobal,numberOfGroupComputationNodes,numberOfLinearMatrices, &
       & numberOfNonZeros,numberOfRows,parameterSetIdx,pressureIdx,rowIdx,sendCount,storageType,totalNumberOfLocal,variableIdx
 #ifdef WITH_MPI
@@ -1028,13 +1028,14 @@ MODULE BoundaryConditionsRoutines
     CALL BoundaryConditions_SolverEquationsGet(boundaryConditions,solverEquations,err,error,*999)
     NULLIFY(solver)
     CALL SolverEquations_SolverGet(solverEquations,solver,err,error,*999)
-    NULLIFY(workGroup)
+    NULLIFY(workGroup)    
     CALL Solver_WorkGroupGet(solver,workGroup,err,error,*999)
     CALL WorkGroup_GroupCommunicatorGet(workGroup,groupCommunicator,err,error,*999)
     CALL WorkGroup_NumberOfGroupNodesGet(workGroup,numberOfGroupComputationNodes,err,error,*999)
     CALL WorkGroup_GroupNodeNumberGet(workGroup,myGroupComputationNodeNumber,err,error,*999)
     
     CALL BoundaryConditions_NumberOfVariablesGet(boundaryConditions,numberOfBoundaryConditionsVariables,err,error,*999)
+    
     IF(numberOfGroupComputationNodes>0) THEN
       !Transfer all the boundary conditions to all the computation nodes.
       !\todo Look at this.
@@ -1296,8 +1297,9 @@ MODULE BoundaryConditionsRoutines
                     NULLIFY(sparseIndices)
                     CALL List_CreateStart(sparseIndices,err,error,*999)
                     CALL List_DataTypeSet(sparseIndices,LIST_INTG_TYPE,err,error,*999)
-                    CALL List_InitialSizeSet(sparseIndices,boundaryConditionsVariable%numberOfDirichletConditions* &
-                      & numberOfNonZeros/numberOfRows,err,error,*999)
+                    initialListSize=FLOOR(REAL(boundaryConditionsVariable%numberOfDirichletConditions,DP)* &
+                      & REAL(numberOfNonZeros,DP)/REAL(numberOfRows,DP))
+                    CALL List_InitialSizeSet(sparseIndices,initialListSize,err,error,*999)
                     CALL List_CreateFinish(sparseIndices,err,error,*999)
                     count=0
                     sparsityIndices%sparseColumnIndices(1)=1
@@ -1506,8 +1508,8 @@ MODULE BoundaryConditionsRoutines
     IF(diagnostics1) THEN
       CALL WriteString(DIAGNOSTIC_OUTPUT_TYPE,"Boundary conditions:",err,error,*999)
       CALL WriteStringValue(DIAGNOSTIC_OUTPUT_TYPE,"  Number of boundary conditions row variables = ", &
-        & numberOfBoundaryConditionsRowVariables,err,error,*999)
-      DO variableIdx=1,numberOfBoundaryConditionsRowVariables
+        & boundaryConditions%numberOfBoundaryConditionsRowVariables,err,error,*999)
+      DO variableIdx=1,boundaryConditions%numberOfBoundaryConditionsRowVariables
         CALL WriteStringValue(DIAGNOSTIC_OUTPUT_TYPE,"  Row variable index : ",variableIdx,err,error,*999)
         NULLIFY(boundaryConditionsRowVariable)
         CALL BoundaryConditions_RowVariableIndexGet(boundaryConditions,variableIdx,boundaryConditionsRowVariable,err,error,*999)
@@ -1538,7 +1540,7 @@ MODULE BoundaryConditionsRoutines
           & '("    Global BCs:",8(X,I8))','(15X,8(X,I8))',err,error,*999)
       ENDDO !variableIdx
     ENDIF
-    
+      
     EXITS("BoundaryConditions_CreateFinish")
     RETURN
 999 ERRORSEXITS("BoundaryConditions_CreateFinish",err,error)
@@ -1631,14 +1633,16 @@ MODULE BoundaryConditionsRoutines
     TYPE(BoundaryConditionsDofConstraintType), POINTER :: dofConstraint
     TYPE(VARYING_STRING) :: localError
 
+    NULLIFY(dofConstraint)
+
     ENTERS("BoundaryConditions_DOFConstraintSet",err,error,*998)
 
     !Check pointers for association
-    CALL BoundaryConditions_AssertNotFinished(boundaryConditions,err,error,*999)
+    CALL BoundaryConditions_AssertNotFinished(boundaryConditions,err,error,*998)
     NULLIFY(boundaryConditionsVariable)
     CALL BoundaryConditions_VariableExists(boundaryConditions,fieldVariable,boundaryConditionsVariable,err,error,*998)
     NULLIFY(dofConstraints)
-    CALL BoundaryConditionsVariable_DOFConstraintsGet(boundaryConditionsVariable,dofConstraints,err,error,*999)
+    CALL BoundaryConditionsVariable_DOFConstraintsGet(boundaryConditionsVariable,dofConstraints,err,error,*998)
 
     numberOfDOFs=SIZE(dofs,1)
     IF(numberOfDOFs==0) THEN
@@ -1656,7 +1660,7 @@ MODULE BoundaryConditionsRoutines
         IF(dofs(dofIdx)==dofs(dofIdx2)) THEN
           localError="DOF number "//TRIM(NumberToVstring(dofs(dofIdx),"*",err,error))// &
             & " is duplicated in the DOF constraint."
-          CALL FlagError(localError,err,error,*999)
+          CALL FlagError(localError,err,error,*998)
         ENDIF
       ENDDO !dofIdx2
     ENDDO !dofIdx
@@ -2546,23 +2550,30 @@ MODULE BoundaryConditionsRoutines
       NULLIFY(newBoundaryConditionsRowVariables(boundaryConditions%numberOfBoundaryConditionsRowVariables+1)%ptr)
       CALL BoundaryConditionsRowVariable_Initialise(newBoundaryConditionsRowVariables(boundaryConditions% &
         & numberOfBoundaryConditionsRowVariables+1)%ptr,err,error,*999)
-      boundaryConditionsRowVariable=>newBoundaryConditionsRowVariables(boundaryConditions% &
-        & numberOfBoundaryConditionsRowVariables+1)%ptr
-      boundaryConditionsRowVariable%boundaryConditions=>boundaryConditions
-      boundaryConditionsRowVariable%lhsVariable=>lhsVariable
-      boundaryConditionsRowVariable%rhsVariable=>rhsVariable
-      CALL FieldVariable_NumberOfDOFsGet(lhsVariable,boundaryConditionsRowVariable%numberOfDOFs,err,error,*999)
-      CALL FieldVariable_TotalNumberOfDOFsGet(lhsVariable,boundaryConditionsRowVariable%totalNumberOfDOFs,err,error,*999)
-      CALL FieldVariable_NumberOfGlobalDOFsGet(lhsVariable,boundaryConditionsRowVariable%numberOfGLobalDOFs,err,error,*999)
+      newBoundaryConditionsRowVariables(boundaryConditions%numberOfBoundaryConditionsRowVariables+1)%ptr% &
+        & boundaryConditions=>boundaryConditions
+      newBoundaryConditionsRowVariables(boundaryConditions%numberOfBoundaryConditionsRowVariables+1)%ptr% &
+        & lhsVariable=>lhsVariable
+      newBoundaryConditionsRowVariables(boundaryConditions%numberOfBoundaryConditionsRowVariables+1)%ptr% &
+        & rhsVariable=>rhsVariable
+      CALL FieldVariable_NumberOfDOFsGet(lhsVariable,newBoundaryConditionsRowVariables(boundaryConditions% &
+        & numberOfBoundaryConditionsRowVariables+1)%ptr%numberOfDOFs,err,error,*999)
+      CALL FieldVariable_TotalNumberOfDOFsGet(lhsVariable,newBoundaryConditionsRowVariables(boundaryConditions% &
+        & numberOfBoundaryConditionsRowVariables+1)%ptr%totalNumberOfDOFs,err,error,*999)
+      CALL FieldVariable_NumberOfGlobalDOFsGet(lhsVariable,newBoundaryConditionsRowVariables(boundaryConditions% &
+        & numberOfBoundaryConditionsRowVariables+1)%ptr%numberOfGLobalDOFs,err,error,*999)
       !TEMP WHILST WE SWITCH FROM GLOBAL DOFS
       !ALLOCATE(boundaryConditionsRowVariable%rowConditionTypes(boundaryConditionsRowVariable%totalNumberOfDOFs),STAT=err)
-      ALLOCATE(boundaryConditionsRowVariable%rowConditionTypes(boundaryConditionsRowVariable%numberOfGlobalDOFs),STAT=err)
+      ALLOCATE(newBoundaryConditionsRowVariables(boundaryConditions%numberOfBoundaryConditionsRowVariables+1)%ptr% &
+        & rowConditionTypes(newBoundaryConditionsRowVariables(boundaryConditions%numberOfBoundaryConditionsRowVariables+1)%ptr% &
+        & numberOfGlobalDOFs),STAT=err)
       IF(err/=0) CALL FlagError("Could not allocate row condition types.",err,error,*999)
-      boundaryConditionsRowVariable%rowConditionTypes=BOUNDARY_CONDITION_FREE_ROW
-      
+      newBoundaryConditionsRowVariables(boundaryConditions%numberOfBoundaryConditionsRowVariables+1)%ptr%rowConditionTypes= &
+        & BOUNDARY_CONDITION_FREE_ROW
+    
       CALL MOVE_ALLOC(newBoundaryConditionsRowVariables,boundaryConditions%boundaryConditionsRowVariables)
       boundaryConditions%numberOfBoundaryConditionsRowVariables=boundaryConditions%numberOfBoundaryConditionsRowVariables+1
-
+      
     ENDIF
 
     EXITS("BoundaryConditions_RowVariableAdd")
@@ -3960,6 +3971,7 @@ MODULE BoundaryConditionsRoutines
         CALL FlagError(localError,err,error,*999)
       ENDIF
       !Check condition
+      rowConditionType=BOUNDARY_CONDITION_FREE_ROW
       SELECT CASE(rowCondition)
       CASE(BOUNDARY_CONDITION_FREE_ROW)
         rowConditionType=BOUNDARY_CONDITION_FREE_ROW
@@ -4250,7 +4262,8 @@ MODULE BoundaryConditionsRoutines
         & " is invalid. The global number should be >= 1 and <= "//TRIM(NumberToVString(numberOfGlobalDOFs,"*",err,error))//"."
       CALL FlagError(localError,err,error,*999)
     ENDIF
-    
+
+    dofType=0
     SELECT CASE(condition)
     CASE(BOUNDARY_CONDITION_NONE)
       dofType=BOUNDARY_CONDITION_DOF_FREE
@@ -4800,14 +4813,13 @@ MODULE BoundaryConditionsRoutines
     INTEGER(INTG), INTENT(OUT) :: err !<The error code
     TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
     !Local Variables
-    TYPE(BoundaryConditionsNeumannType), POINTER :: boundaryConditionsNeumann
-
+  
     ENTERS("BoundaryConditionsVariable_NeumannFinalise",err,error,*999)
 
-    IF(ASSOCIATED(boundaryConditionsNeumann)) THEN
-      IF(ALLOCATED(boundaryConditionsNeumann%setDOFs)) DEALLOCATE(boundaryConditionsNeumann%setDOFs)
-      CALL BoundaryConditionsVariable_NeumannMatricesFinalise(boundaryConditionsNeumann,err,error,*999)
-      DEALLOCATE(boundaryConditionsNeumann)
+    IF(ASSOCIATED(neumannBoundaryConditions)) THEN
+      IF(ALLOCATED(neumannBoundaryConditions%setDOFs)) DEALLOCATE(neumannBoundaryConditions%setDOFs)
+      CALL BoundaryConditionsVariable_NeumannMatricesFinalise(neumannBoundaryConditions,err,error,*999)
+      DEALLOCATE(neumannBoundaryConditions)
     ENDIF
 
     EXITS("BoundaryConditionsVariable_NeumannFinalise")

@@ -1373,7 +1373,10 @@ CONTAINS
           NULLIFY(interfaceDependentDomainElements)
           CALL DomainTopology_DomainElementsGet(interfaceDependentDomainTopology,interfaceDependentDomainElements,err,error,*999)
           NULLIFY(interfaceDependentBasis)
-          CALL DomainElements_ElementBasisGet(interfaceDependentDomainElements,elementNumber,interfaceDependentBasis,err,error,*999)
+          CALL DomainElements_ElementBasisGet(interfaceDependentDomainElements,elementNumber,interfaceDependentBasis, &
+            & err,error,*999)
+          CALL Basis_NumberOfElementParametersGet(interfaceDependentBasis,numberOfInterfaceDependentElementParameters, &
+            & err,error,*999)
           CALL Basis_NumberOfXiGet(interfaceDependentBasis,numberOfInterfaceDependentXi,err,error,*999)
           CALL Basis_NumberOfLocalNodesGet(interfaceDependentBasis,numberOfInterfaceDependentNodes,err,error,*999)
           !Integrate using the interface quadrature scheme

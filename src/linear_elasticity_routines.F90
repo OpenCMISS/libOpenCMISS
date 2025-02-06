@@ -2206,7 +2206,8 @@ CONTAINS
     TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
     !Local variables
     INTEGER(INTG), PARAMETER :: MAX_NUMBER_OF_ELEMENT_PARAMETERS=64
-    INTEGER(INTG) :: componentIdx1,componentIdx2,elementDOFIdx,elementParameterIdx,totalNumberOfElementParameters,xiIdx
+    INTEGER(INTG) :: componentIdx1,componentIdx2,elementDOFIdx,elementParameterIdx,otherDirection,otherDirectionIdx, &
+      & totalNumberOfElementParameters,xiIdx
     REAL(DP) :: dPhidX(3,3*MAX_NUMBER_OF_ELEMENT_PARAMETERS),dPhidXi(3,3*MAX_NUMBER_OF_ELEMENT_PARAMETERS)
 
     ENTERS("LinearElasticity_StrainMatrixCalculateGauss",err,error,*999)
@@ -2284,20 +2285,18 @@ CONTAINS
     ENDDO !componentIdx1
     !Loop over the dimensions
     elementDOFIdx=0
+    !Loop over element parameters
     DO componentIdx1=1,numberOfDimensions
-      !Loop over element parameters
       DO elementParameterIdx=1,numberOfElementParameters(componentIdx1)
         elementDOFIdx=elementDOFIdx+1
-        DO componentIdx2=1,numberOfDimensions
-          IF(componentIdx2==componentIdx1) THEN
-            BMatrix(TENSOR_TO_VOIGT(componentIdx2,componentIdx2,numberOfDimensions),elementDOFIdx)= &
-              & dPhidX(componentIdx1,elementDOFIdx)
-          ELSE
-            BMatrix(TENSOR_TO_VOIGT(componentIdx2,componentIdx2,numberOfDimensions),elementDOFIdx)= 0.0_DP
-            BMatrix(TENSOR_TO_VOIGT(componentIdx1,componentIdx2,numberOfDimensions),elementDOFIdx)=&
-              & dPhidX(componentIdx2,elementDOFIdx)
-          ENDIF
-        ENDDO !componentIdx2
+        BMatrix(1:NUMBER_OF_VOIGT(numberOfDimensions),elementDOFIdx)=0.0_DP
+        BMatrix(TENSOR_TO_VOIGT(componentIdx1,componentIdx1,numberOfDimensions),elementDOFIdx)= &
+          & dPhidX(componentIdx1,elementDOFIdx)
+        DO otherDirectionIdx=1,NUMBER_OTHER_DIRECTIONS(numberOfDimensions)
+          otherDirection=OTHER_DIRECTIONS(componentIdx1,otherDirectionIdx,numberOfDimensions)
+          BMatrix(TENSOR_TO_VOIGT(componentIdx1,otherDirection,numberOfDimensions),elementDOFIdx)=&
+            & dPhidX(otherDirection,elementDOFIdx)
+        ENDDO !otherDirectionIdx
       ENDDO !elementParameterIdx
     ENDDO !componentIdx1
 
@@ -2309,7 +2308,7 @@ CONTAINS
       CALL WriteStringMatrixTranspose(DIAGNOSTIC_OUTPUT_TYPE,1,1,NUMBER_OF_VOIGT(numberOfDimensions),1,1, &
         & totalNumberOfElementParameters,8,8,BMatrix(1:NUMBER_OF_VOIGT(numberOfDimensions), &
         & 1:totalNumberOfElementParameters),WRITE_STRING_MATRIX_NAME_AND_INDICES, &
-        & '("  B^t','(:,",I1,")',':",8(X,E13.6))','(11X,8(X,E13.6))',err,error,*999)
+        & '("  B^t','(:,",I3,")',':",8(X,E13.6))','(13X,8(X,E13.6))',err,error,*999)
     ENDIF
    
     EXITS("LinearElasticity_StrainMatrixCalculateGauss")

@@ -191,6 +191,14 @@ MODULE FieldRoutines
     MODULE PROCEDURE Field_ParameterSetAddLocalElementL
   END INTERFACE Field_ParameterSetAddLocalElement
 
+  !>Adds the given value to the given parameter set for a particular local element and gauss point of the field variable component. 
+  INTERFACE Field_ParameterSetAddLocalGaussPoint
+    MODULE PROCEDURE Field_ParameterSetAddLocalGaussPointIntg
+    MODULE PROCEDURE Field_ParameterSetAddLocalGaussPointSP
+    MODULE PROCEDURE Field_ParameterSetAddLocalGaussPointDP
+    MODULE PROCEDURE Field_ParameterSetAddLocalGaussPointL
+  END INTERFACE Field_ParameterSetAddLocalGaussPoint
+
   !>Adds the given value to the given parameter set for a particular local node, derivative and version of the field variable component.
   INTERFACE Field_ParameterSetAddLocalNode
     MODULE PROCEDURE Field_ParameterSetAddLocalNodeIntg
@@ -466,6 +474,14 @@ MODULE FieldRoutines
     MODULE PROCEDURE FieldVariable_ParameterSetAddLocalElementDP
     MODULE PROCEDURE FieldVariable_ParameterSetAddLocalElementL
   END INTERFACE FieldVariable_ParameterSetAddLocalElement
+
+  !>Adds the given value to the given parameter set for a particular local Gauss point of the field variable component.
+  INTERFACE FieldVariable_ParameterSetAddLocalGaussPoint
+    MODULE PROCEDURE FieldVariable_ParameterSetAddLocalGaussPointIntg
+    MODULE PROCEDURE FieldVariable_ParameterSetAddLocalGaussPointSP
+    MODULE PROCEDURE FieldVariable_ParameterSetAddLocalGaussPointDP
+    MODULE PROCEDURE FieldVariable_ParameterSetAddLocalGaussPointL
+  END INTERFACE FieldVariable_ParameterSetAddLocalGaussPoint
 
   !>Adds the given value to the given parameter set for a particular local node, derivative and version of the field variable component.
   INTERFACE FieldVariable_ParameterSetAddLocalNode
@@ -769,6 +785,8 @@ MODULE FieldRoutines
 
   PUBLIC Field_ParameterSetDestroy
 
+  PUBLIC Field_ParametersToFieldParametersAdd
+
   PUBLIC Field_ParametersToFieldParametersCopy
 
   PUBLIC Field_ParameterSetAddConstant
@@ -781,6 +799,8 @@ MODULE FieldRoutines
 
   PUBLIC Field_ParameterSetAddLocalElement
 
+  PUBLIC Field_ParameterSetAddLocalGaussPoint
+  
   PUBLIC Field_ParameterSetAddLocalNode
 
   PUBLIC Field_ParameterSetAddNode
@@ -885,6 +905,8 @@ MODULE FieldRoutines
   
   PUBLIC FieldVariable_ParameterSetAddLocalElement
   
+  PUBLIC FieldVariable_ParameterSetAddLocalGaussPoint
+  
   PUBLIC FieldVariable_ParameterSetAddLocalNode
   
   PUBLIC FieldVariable_ParameterSetAddNode
@@ -958,6 +980,8 @@ MODULE FieldRoutines
   PUBLIC FieldVariable_ParameterSetUpdateStart
 
   PUBLIC FieldVariable_ParameterSetVectorGet
+
+  PUBLIC FieldVariable_ParametersToFieldVariableParametersAdd
 
   PUBLIC FieldVariable_ParametersToFieldVariableParametersCopy
 
@@ -1867,6 +1891,7 @@ CONTAINS
      
     ALLOCATE(field%createValuesCache,STAT=err)
     IF(err/=0) CALL FlagError("Could not allocate create values cache.",err,error,*999)
+    numberOfComponents=1
     SELECT CASE(field%TYPE)
     CASE(FIELD_GEOMETRIC_TYPE,FIELD_FIBRE_TYPE,FIELD_GEOMETRIC_GENERAL_TYPE)
       NULLIFY(coordinateSystem)
@@ -3181,7 +3206,8 @@ CONTAINS
     INTEGER(INTG), INTENT(OUT) :: err !<The error code
     TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
     !Local Variables
-    INTEGER(INTG) :: dummyErr,elementIdx,gaussPointIdx,maxNumberOfGauss,numberOfGaussPoints,order
+    INTEGER(INTG) :: dummyErr,elementIdx,gaussPointIdx,maxNumberOfGauss,numberOfDimensions,numberOfElements,numberOfGaussPoints, &
+      & order
     REAL(DP) :: elementVolume
     REAL(DP), ALLOCATABLE :: gaussPoints(:,:),gaussWeights(:)
     TYPE(BasisType), POINTER:: basis
@@ -3210,7 +3236,8 @@ CONTAINS
     CALL Field_GeometricParametersGet(field,geometricParameters,err,error,*999)
     NULLIFY(decomposition)
     CALL Field_DecompositionGet(field,decomposition,err,error,*999)
-    IF(decomposition%numberOfDimensions==3) THEN
+    CALL Decomposition_NumberOfDimensionsGet(decomposition,numberOfDimensions,err,error,*999)    
+    IF(numberOfDimensions==3) THEN
       !Only calculate volumes if we have three dimensional elements
       NULLIFY(fieldVariable)
       CALL Field_VariableGet(field,FIELD_U_VARIABLE_TYPE,fieldVariable,err,error,*999)
@@ -3227,6 +3254,7 @@ CONTAINS
       CALL Decomposition_DecompositionTopologyGet(decomposition,decompositionTopology,err,error,*999)
       NULLIFY(decompositionElements)
       CALL DecompositionTopology_DecompositionElementsGet(decompositionTopology,decompositionElements,err,error,*999)
+      CALL DecompositionElements_NumberOfElementsGet(decompositionElements,numberOfElements,err,error,*999)
       NULLIFY(domain)
       CALL Decomposition_DomainGet(decomposition,0,domain,err,error,*999)
       NULLIFY(domainTopology)
@@ -3245,7 +3273,7 @@ CONTAINS
       !Calculate Gauss points
       CALL Basis_GaussPointsCalculate(basis,order,3,numberOfGaussPoints,gaussPoints,gaussWeights,err,error,*999)
       !Loop over the elements      
-      DO elementIdx=1,decompositionElements%numberOfElements
+      DO elementIdx=1,numberOfElements
         CALL Field_InterpolationParametersElementGet(FIELD_VALUES_SET_TYPE,elementIdx,interpolationParameters,err,error,*999)
         elementVolume=0.0_DP
         DO gaussPointIdx=1,numberOfGaussPoints
@@ -3264,13 +3292,14 @@ CONTAINS
     ENDIF
 
     IF(diagnostics1) THEN
-      CALL WriteString(DIAGNOSTIC_OUTPUT_TYPE,"Element volumes:",err,error,*999)
-      CALL WriteStringValue(DIAGNOSTIC_OUTPUT_TYPE,"  Number of elements = ",decompositionElements%numberOfElements, &
-        & err,error,*999)
-      DO elementIdx=1,decompositionElements%numberOfElements
-        CALL WriteStringFmtTwoValue(DIAGNOSTIC_OUTPUT_TYPE,"    Element ",elementIdx,"(I8)",": Volume = ",field% &
-          & geometricFieldParameters%volumes(elementIdx),"*",err,error,*999)
-      ENDDO !elementIdx
+      IF(numberOfDimensions==3) THEN
+        CALL WriteString(DIAGNOSTIC_OUTPUT_TYPE,"Element volumes:",err,error,*999)
+        CALL WriteStringValue(DIAGNOSTIC_OUTPUT_TYPE,"  Number of elements = ",numberOfElements,err,error,*999)
+        DO elementIdx=1,numberOfElements
+          CALL WriteStringFmtTwoValue(DIAGNOSTIC_OUTPUT_TYPE,"    Element ",elementIdx,"(I8)",": Volume = ",field% &
+            & geometricFieldParameters%volumes(elementIdx),"*",err,error,*999)
+        ENDDO !elementIdx
+      ENDIF
     ENDIF
 
     EXITS("Field_GeometricParametersElementVolumesCalculate")
@@ -3665,6 +3694,8 @@ CONTAINS
     CALL FieldVariable_FieldGet(fieldVariable,field,err,error,*999)
     NULLIFY(coordinateSystem)
     CALL Field_CoordinateSystemGet(field,coordinateSystem,err,error,*999)
+    startComponentIdx=1
+    endComponentIdx=fieldVariable%numberOfComponents
     IF(PRESENT(componentType)) THEN
       SELECT CASE(componentType)
       CASE(FIELD_ALL_COMPONENTS_TYPE)
@@ -3703,10 +3734,7 @@ CONTAINS
         localError="Interpolation component type "//TRIM(NumberToVString(componentType,"*",err,error))//" is not valid."
         CALL FlagError(localError,err,error,*999)
       END SELECT
-    ELSE
-      startComponentIdx=1
-      endComponentIdx=fieldVariable%numberOfComponents
-    ENDIF
+     ENDIF
     
     SELECT CASE(partialDerivativeType)
     CASE(NO_PART_DERIV)
@@ -4401,6 +4429,8 @@ CONTAINS
     CALL FieldVariable_FieldGet(fieldVariable,field,err,error,*999)
     NULLIFY(coordinateSystem)
     CALL Field_CoordinateSystemGet(field,coordinateSystem,err,error,*999)
+    startComponentIdx=1
+    endComponentIdx=fieldVariable%numberOfComponents
     IF(PRESENT(componentType)) THEN
       SELECT CASE(componentType)
       CASE(FIELD_ALL_COMPONENTS_TYPE)
@@ -4439,9 +4469,6 @@ CONTAINS
         localError="Interpolation component type "//TRIM(NumberToVString(componentType,"*",err,error))//" is not valid."
         CALL FlagError(localError,err,error,*999)
       END SELECT
-    ELSE
-      startComponentIdx=1
-      endComponentIdx=fieldVariable%numberOfComponents
     ENDIF
     
     SELECT CASE(partialDerivativeType)
@@ -4624,6 +4651,8 @@ CONTAINS
     CALL FieldVariable_FieldGet(fieldVariable,field,err,error,*999)
     NULLIFY(coordinateSystem)
     CALL Field_CoordinateSystemGet(field,coordinateSystem,err,error,*999)
+    startComponentIdx=1
+    endComponentIdx=fieldVariable%numberOfComponents
     IF(PRESENT(componentType)) THEN
       SELECT CASE(componentType)
       CASE(FIELD_ALL_COMPONENTS_TYPE)
@@ -4662,9 +4691,6 @@ CONTAINS
         localError="Interpolation component type "//TRIM(NumberToVString(componentType,"*",err,error))//" is not valid."
         CALL FlagError(localError,err,error,*999)
       END SELECT
-    ELSE
-      startComponentIdx=1
-      endComponentIdx=fieldVariable%numberOfComponents
     ENDIF
     
     SELECT CASE(partialDerivativeType)
@@ -4859,6 +4885,8 @@ CONTAINS
     CALL FieldVariable_NumberOfComponentsGet(geometricVariable,numberOfDimensions,err,error,*999)
     NULLIFY(coordinateSystem)
     CALL Field_CoordinateSystemGet(field,coordinateSystem,err,error,*999)
+    startComponentIdx=1
+    endComponentIdx=fieldVariable%numberOfComponents
     IF(PRESENT(componentType)) THEN
       SELECT CASE(componentType)
       CASE(FIELD_ALL_COMPONENTS_TYPE)
@@ -4889,9 +4917,6 @@ CONTAINS
         localError="Interpolation component type "//TRIM(NumberToVString(componentType,"*",err,error))//" is not valid."
         CALL FlagError(localError,err,error,*999)
       END SELECT
-    ELSE
-      startComponentIdx=1
-      endComponentIdx=fieldVariable%numberOfComponents
     ENDIF
 
     CALL IdentityMatrix(dXidX(1:numberOfdimensions,1:numberOfDimensions),err,error,*999)
@@ -5075,6 +5100,7 @@ CONTAINS
     numberOfDimensions=decomposition%numberOfDimensions
     interpolatedPoint%maximumPartialDerivativeIndex=PARTIAL_DERIVATIVE_MAXIMUM_MAP(numberOfDimensions)
     !Calculate the number of components for the interpolated point
+    numberOfComponents=fieldVariable%numberOfComponents 
     IF(PRESENT(componentType)) THEN
       SELECT CASE(componentType)
       CASE(FIELD_ALL_COMPONENTS_TYPE)
@@ -5109,8 +5135,6 @@ CONTAINS
         localError="Interpolation component type "//TRIM(NumberToVString(componentType,"*",err,error))//" is not valid."
         CALL FlagError(localError,err,error,*999)
       END SELECT
-    ELSE !.NOT.(PRESENT(componentType)) -default all components
-      numberOfComponents=fieldVariable%numberOfComponents
     ENDIF
     ALLOCATE(interpolatedPoint%values(numberOfComponents,interpolatedPoint%maximumPartialDerivativeIndex),STAT=err)
     IF(err/=0) CALL FlagError("Could not allocate interpolated point values.",err,error,*999)
@@ -5482,6 +5506,7 @@ CONTAINS
     interpolationParameters%fieldVariable=>fieldVariable
     interpolationParameters%numberOfXi=0
     !Calculate the number of components required 
+    numberOfComponents=fieldVariable%numberOfComponents
     IF(PRESENT(componentType)) THEN
       SELECT CASE(componentType)
       CASE(FIELD_ALL_COMPONENTS_TYPE)
@@ -5516,8 +5541,6 @@ CONTAINS
         localError="Interpolation component type "//TRIM(NumberToVString(componentType,"*",err,error))//" is not valid."
         CALL FlagError(localError,err,error,*999)
       END SELECT
-    ELSE
-      numberOfComponents=fieldVariable%numberOfComponents
     ENDIF
     
     ALLOCATE(interpolationParameters%bases(numberOfComponents),STAT=err)
@@ -5593,6 +5616,8 @@ CONTAINS
     CALL FieldVariable_FieldGet(fieldVariable,field,err,error,*999)
     NULLIFY(coordinateSystem)
     CALL Field_CoordinateSystemGet(field,coordinateSystem,err,error,*999)
+    startComponentIdx=1
+    endComponentIdx=fieldVariable%numberOfComponents
     IF(PRESENT(componentType)) THEN
       SELECT CASE(componentType)
       CASE(FIELD_ALL_COMPONENTS_TYPE)
@@ -5631,9 +5656,6 @@ CONTAINS
         localError="Interpolation component type "//TRIM(NumberToVString(componentType,"*",err,error))//" is not valid."
         CALL FlagError(localError,err,error,*999)
       END SELECT
-    ELSE
-      startComponentIdx=1
-      endComponentIdx=fieldVariable%numberOfComponents
     ENDIF
     
     DO componentIdx=startComponentIdx,endComponentIdx
@@ -5874,6 +5896,8 @@ CONTAINS
     CALL FieldVariable_FieldGet(fieldVariable,field,err,error,*999)
     NULLIFY(coordinateSystem)
     CALL Field_CoordinateSystemGet(field,coordinateSystem,err,error,*999)
+    startComponentIdx=1
+    endComponentIdx=fieldVariable%numberOfComponents
     IF(PRESENT(componentType)) THEN
       SELECT CASE(componentType)
       CASE(FIELD_ALL_COMPONENTS_TYPE)
@@ -5912,9 +5936,6 @@ CONTAINS
         localError="Interpolation component type "//TRIM(NumberToVString(componentType,"*",err,error))//" is not valid."
         CALL FlagError(localError,err,error,*999)
       END SELECT
-    ELSE
-      startComponentIdx=1
-      endComponentIdx=fieldVariable%numberOfComponents
     ENDIF
     
     DO componentIdx=startComponentIdx,endComponentIdx
@@ -6073,6 +6094,8 @@ CONTAINS
     CALL FieldVariable_FieldGet(fieldVariable,field,err,error,*999)
     NULLIFY(coordinateSystem)
     CALL Field_CoordinateSystemGet(field,coordinateSystem,err,error,*999)
+    startComponentIdx=1
+    endComponentIdx=fieldVariable%numberOfComponents
     IF(PRESENT(componentType)) THEN
       SELECT CASE(componentType)
       CASE(FIELD_ALL_COMPONENTS_TYPE)
@@ -6111,9 +6134,6 @@ CONTAINS
         localError="Interpolation component type "//TRIM(NumberToVString(componentType,"*",err,error))//" is not valid."
         CALL FlagError(localError,err,error,*999)
       END SELECT
-    ELSE
-      startComponentIdx=1
-      endComponentIdx=fieldVariable%numberOfComponents
     ENDIF
     
     DO componentIdx=startComponentIdx,endComponentIdx
@@ -7212,6 +7232,9 @@ CONTAINS
                 variableGlobalDOFSOffset=variableGlobalDOFSOffset+1
                 variableLocalDOFSOffsets(0:numberOfGroupComputationNodes-1)= &
                   & variableLocalDOFSOffsets(0:numberOfGroupComputationNodes-1)+1
+                IF(componentIdx>1) & 
+                  & variableGhostDOFSOffsets(0:numberOfGroupComputationNodes-1)= &
+                  & variableGhostDOFSOffsets(0:numberOfGroupComputationNodes-1)+1
               ENDIF
             CASE(FIELD_ELEMENT_BASED_INTERPOLATION)
               NULLIFY(domain)
@@ -9009,6 +9032,48 @@ CONTAINS
   !================================================================================================================================
   !
 
+  !>Adds the parameters from the parameter set of a component of a field variable to the paramters of a parameter
+  !>set of a component of another field variable.
+  SUBROUTINE Field_ParametersToFieldParametersAdd(fromField,fromVariableType,fromParameterSetType, &
+    & fromComponentNumber,toField,toVariableType,toParameterSetType,toComponentNumber,err,error,*)
+
+    !Argument variables
+    TYPE(FieldType), POINTER :: fromField !<A pointer to the field to add from
+    INTEGER(INTG), INTENT(IN) :: fromVariableType !<The field variable type to add from
+    INTEGER(INTG), INTENT(IN) :: fromParameterSetType !<The field parameter set type to add from
+    INTEGER(INTG), INTENT(IN) :: fromComponentNumber !<The field variable component number to add from
+    TYPE(FieldType), POINTER :: toField !<A pointer to the field to add to
+    INTEGER(INTG), INTENT(IN) :: toVariableType !<The field variable type to add to
+    INTEGER(INTG), INTENT(IN) :: toParameterSetType !<The parameter set type to add to
+    INTEGER(INTG), INTENT(IN) :: toComponentNumber !<The field variable component to add to
+    INTEGER(INTG), INTENT(OUT) :: err !<The error code
+    TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
+    !Local Variables
+    TYPE(FieldVariableType), POINTER :: fromFieldVariable,toFieldVariable
+ 
+    ENTERS("Field_ParametersToFieldParametersAdd",err,error,*999)
+
+    CALL Field_AssertIsFinished(fromField,err,error,*999)
+    CALL Field_AssertIsFinished(toField,err,error,*999)
+    NULLIFY(fromFieldVariable)
+    CALL Field_VariableGet(fromField,fromVariableTYpe,fromFieldVariable,err,error,*999)
+    NULLIFY(toFieldVariable)
+    CALL Field_VariableGet(toField,toVariableType,toFieldVariable,err,error,*999)
+
+    CALL FieldVariable_ParametersToFieldVariableParametersAdd(fromFieldVariable,fromParameterSetType, &
+      & fromComponentNumber,toFieldVariable,toParameterSetType,toComponentNumber,err,error,*999)
+    
+    EXITS("Field_ParametersToFieldParametersAdd")
+    RETURN
+999 ERRORSEXITS("Field_ParametersToFieldParametersAdd",err,error)
+    RETURN 1
+
+  END SUBROUTINE Field_ParametersToFieldParametersAdd
+
+  !
+  !================================================================================================================================
+  !
+
   !>Copy the parameters from the parameter set of a component of a field variable to the paramters of a parameter set of
   !>a component of another field variable.
   SUBROUTINE Field_ParametersToFieldParametersCopy(fromField,fromVariableType,fromParameterSetType, &
@@ -9726,6 +9791,150 @@ CONTAINS
     RETURN 1
 
   END SUBROUTINE Field_ParameterSetAddLocalElementL
+
+  !
+  !================================================================================================================================
+  !
+
+  !>Adds the given integer value to the given parameter set for a particular local Gauss point of the field variable component.
+  SUBROUTINE Field_ParameterSetAddLocalGaussPointIntg(field,variableType,fieldSetType,gaussPointNumber,localNumberElement, &
+    & componentNumber,value,err,error,*)
+
+    !Argument variables
+    TYPE(FieldType), POINTER :: field !<A pointer to the field to add
+    INTEGER(INTG), INTENT(IN) :: variableType !<The field variable type to add \see FieldRoutines_VariableTypes,FieldRoutines
+    INTEGER(INTG), INTENT(IN) :: fieldSetType !<The field parameter set identifier \see FieldRoutines_ParameterSetTypes,FieldRoutines
+    INTEGER(INTG), INTENT(IN) :: gaussPointNumber !<The Gauss point number to add
+    INTEGER(INTG), INTENT(IN) :: localNumberElement !<The local element number to add
+    INTEGER(INTG), INTENT(IN) :: componentNumber !<The field variable component to add
+    INTEGER(INTG), INTENT(IN) :: value !<The value to add
+    INTEGER(INTG), INTENT(OUT) :: err !<The error code
+    TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
+    !Local Variables
+    TYPE(FieldVariableType), POINTER :: fieldVariable
+
+    ENTERS("Field_ParameterSetAddLocalGaussPointIntg",err,error,*999)
+
+    CALL Field_AssertIsFinished(field,err,error,*999)
+    NULLIFY(fieldVariable)
+    CALL Field_VariableGet(field,variableType,fieldVariable,err,error,*999)
+    CALL FieldVariable_ParameterSetAddLocalGaussPoint(fieldVariable,fieldSetType,gaussPointNumber,localNumberElement, &
+      & componentNumber,value,err,error,*999)
+
+    EXITS("Field_ParameterSetAddLocalGaussPointIntg")
+    RETURN
+999 ERRORSEXITS("Field_ParameterSetAddLocalGaussPointIntg",err,error)
+    RETURN 1
+
+  END SUBROUTINE Field_ParameterSetAddLocalGaussPointIntg
+
+  !
+  !================================================================================================================================
+  !
+
+  !>Adds the given single precision value to the given parameter set for a particular local Gauss point of the field variable component.
+  SUBROUTINE Field_ParameterSetAddLocalGaussPointSP(field,variableType,fieldSetType,gaussPointNumber,localNumberElement,componentNumber, &
+    & value,err,error,*)
+
+    !Argument variables
+    TYPE(FieldType), POINTER :: field !<A pointer to the field to add
+    INTEGER(INTG), INTENT(IN) :: variableType !<The field variable type to add \see FieldRoutines_VariableTypes,FieldRoutines
+    INTEGER(INTG), INTENT(IN) :: fieldSetType !<The field parameter set identifier \see FieldRoutines_ParameterSetTypes,FieldRoutines
+    INTEGER(INTG), INTENT(IN) :: gaussPointNumber !<The Gauss point number to add
+    INTEGER(INTG), INTENT(IN) :: localNumberElement !<The local element number to add
+    INTEGER(INTG), INTENT(IN) :: componentNumber !<The field variable component to add
+    REAL(SP), INTENT(IN) :: value !<The value to add
+    INTEGER(INTG), INTENT(OUT) :: err !<The error code
+    TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
+    !Local Variables
+    TYPE(FieldVariableType), POINTER :: fieldVariable
+
+    ENTERS("Field_ParameterSetAddLocalGaussPointSP",err,error,*999)
+
+    CALL Field_AssertIsFinished(field,err,error,*999)
+    NULLIFY(fieldVariable)
+    CALL Field_VariableGet(field,variableType,fieldVariable,err,error,*999)
+    CALL FieldVariable_ParameterSetAddLocalGaussPoint(fieldVariable,fieldSetType,gaussPointNumber,localNumberElement, &
+      & componentNumber,value,err,error,*999)
+ 
+    EXITS("Field_ParameterSetAddLocalGaussPointSP")
+    RETURN
+999 ERRORSEXITS("Field_ParameterSetAddLocalGaussPointSP",err,error)
+    RETURN 1
+    
+  END SUBROUTINE Field_ParameterSetAddLocalGaussPointSP
+
+  !
+  !================================================================================================================================
+  !
+
+  !>Adds the given double precision value to the given parameter set for a particular local Gauss point of the field variable component.
+  SUBROUTINE Field_ParameterSetAddLocalGaussPointDP(field,variableType,fieldSetType,gaussPointNumber,localNumberElement, &
+    & componentNumber,value,err,error,*)
+
+    !Argument variables
+    TYPE(FieldType), POINTER :: field !<A pointer to the field to add
+    INTEGER(INTG), INTENT(IN) :: variableType !<The field variable type to add \see FieldRoutines_VariableTypes,FieldRoutines
+    INTEGER(INTG), INTENT(IN) :: fieldSetType !<The field parameter set identifier \see FieldRoutines_ParameterSetTypes,FieldRoutines
+    INTEGER(INTG), INTENT(IN) :: gaussPointNumber !<The Gauss point number to add
+    INTEGER(INTG), INTENT(IN) :: localNumberElement !<The local element number to add
+    INTEGER(INTG), INTENT(IN) :: componentNumber !<The field variable component to add
+    REAL(DP), INTENT(IN) :: value !<The value to add
+    INTEGER(INTG), INTENT(OUT) :: err !<The error code
+    TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
+    !Local Variables
+    TYPE(FieldVariableType), POINTER :: fieldVariable
+
+    ENTERS("Field_ParameterSetAddLocalGaussPointDP",err,error,*999)
+
+    CALL Field_AssertIsFinished(field,err,error,*999)
+    NULLIFY(fieldVariable)
+    CALL Field_VariableGet(field,variableType,fieldVariable,err,error,*999)
+    CALL FieldVariable_ParameterSetAddLocalGaussPoint(fieldVariable,fieldSetType,gaussPointNumber,localNumberElement, &
+      & componentNumber,value,err,error,*999)
+
+    EXITS("Field_ParameterSetAddLocalGaussPointDP")
+    RETURN
+999 ERRORSEXITS("Field_ParameterSetAddLocalGaussPointDP",err,error)
+    RETURN 1
+
+  END SUBROUTINE Field_ParameterSetAddLocalGaussPointDP
+
+  !
+  !================================================================================================================================
+  !
+
+  !>Adds the given logical value to the given parameter set for a particular local Gauss point of the field variable component.
+  SUBROUTINE Field_ParameterSetAddLocalGaussPointL(field,variableType,fieldSetType,gaussPointNumber,localNumberElement, &
+    & componentNumber,VALUE,err,error,*)
+
+    !Argument variables
+    TYPE(FieldType), POINTER :: field !<A pointer to the field to add
+    INTEGER(INTG), INTENT(IN) :: variableType !<The field variable type to add \see FieldRoutines_VariableTypes,FieldRoutines
+    INTEGER(INTG), INTENT(IN) :: fieldSetType !<The field parameter set identifier \see FieldRoutines_ParameterSetTypes,FieldRoutines
+    INTEGER(INTG), INTENT(IN) :: gaussPointNumber !<The Gauss point number to add
+    INTEGER(INTG), INTENT(IN) :: localNumberElement !<The local element number to add
+    INTEGER(INTG), INTENT(IN) :: componentNumber !<The field variable component to add
+    LOGICAL, INTENT(IN) :: VALUE !<The value to add
+    INTEGER(INTG), INTENT(OUT) :: err !<The error code
+    TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
+    !Local Variables
+    TYPE(FieldVariableType), POINTER :: fieldVariable
+
+    ENTERS("Field_ParameterSetAddLocalGaussPointL",err,error,*999)
+
+    CALL Field_AssertIsFinished(field,err,error,*999)
+    NULLIFY(fieldVariable)
+    CALL Field_VariableGet(field,variableType,fieldVariable,err,error,*999)
+    CALL FieldVariable_ParameterSetAddLocalGaussPoint(fieldVariable,fieldSetType,gaussPointNumber,localNumberElement,componentNumber, &
+      & value,err,error,*999)
+
+    EXITS("Field_ParameterSetAddLocalGaussPointL")
+    RETURN
+999 ERRORSEXITS("Field_ParameterSetAddLocalGaussPointL",err,error)
+    RETURN 1
+
+  END SUBROUTINE Field_ParameterSetAddLocalGaussPointL
 
   !
   !================================================================================================================================
@@ -14260,6 +14469,9 @@ CONTAINS
 !!TODO: Shouldn't have to search for the derivativeIdx directions. Store them somewhere.
                 !Find the first direction derivativeIdx
                 found=.FALSE.
+                dofIdx1=1
+                dofIdx2=1
+                dofIdx3=1
                 DO derivativeIdx2=1,numberOfNodeDerivatives
                   CALL DomainNodes_DerivativePartialIndexGet(domainNodes,derivativeIdx2,nodeIdx,partialDerivativeIdx3, &
                     & err,error,*999)
@@ -14702,12 +14914,14 @@ CONTAINS
     TYPE(FieldVariableType), POINTER :: fieldVariable
     TYPE(VARYING_STRING) :: dummyError,localError
 
+    NULLIFY(fieldVariable)
+    
     ENTERS("Field_VariableInitialise",err,error,*998)
 
     IF(.NOT.ASSOCIATED(field)) CALL FlagError("Field is not associated.",err,error,*998)
     
     NULLIFY(createValuesCache)
-    CALL Field_CreateValuesCacheGet(field,createValuesCache,err,error,*999)
+    CALL Field_CreateValuesCacheGet(field,createValuesCache,err,error,*998)
     IF(variableNumber<1.OR.variableNumber>field%numberOfVariables) THEN
       localError="Variable number "//TRIM(NumberToVString(variableNumber,"*",err,error))// &
         & " is invalid for field number "//TRIM(NumberToVString(field%userNumber,"*",err,error))//" which has "// &
@@ -15961,6 +16175,7 @@ CONTAINS
     !Check the component number
     CALL FieldVariable_AssertComponentNumberOK(fieldVariable,componentNumber,err,error,*999)
     !Get the parameters values
+    NULLIFY(fieldVariableParameters)
     CALL DistributedVector_DataGet(parameterSet%parameters,fieldVariableParameters,err,error,*999)
     !Set the field components to give a constant value. Note that as the value is constant we can set the ghost dofs
     !and not worry about updating the field parameter set.
@@ -16099,6 +16314,7 @@ CONTAINS
     !Check the component number
     CALL FieldVariable_AssertComponentNumberOK(fieldVariable,componentNumber,err,error,*999)
     !Get the parameters values
+    NULLIFY(fieldVariableParameters)
     CALL DistributedVector_DataGet(parameterSet%parameters,fieldVariableParameters,err,error,*999)
     !Set the field components to give a constant value. Note that as the value is constant we can set the ghost dofs
     !and not worry about updating the field parameter set.
@@ -16237,6 +16453,7 @@ CONTAINS
     !Check the component number
     CALL FieldVariable_AssertComponentNumberOK(fieldVariable,componentNumber,err,error,*999)
     !Get the parameters values
+    NULLIFY(fieldVariableParameters)
     CALL DistributedVector_DataGet(parameterSet%parameters,fieldVariableParameters,err,error,*999)
     !Set the field components to give a constant value. Note that as the value is constant we can set the ghost dofs
     !and not worry about updating the field parameter set.
@@ -16375,6 +16592,7 @@ CONTAINS
     !Check the component number
     CALL FieldVariable_AssertComponentNumberOK(fieldVariable,componentNumber,err,error,*999)
     !Get the parameters values
+    NULLIFY(fieldVariableParameters)
     CALL DistributedVector_DataGet(parameterSet%parameters,fieldVariableParameters,err,error,*999)
     !Set the field components to give a constant value. Note that as the value is constant we can set the ghost dofs
     !and not worry about updating the field parameter set.
@@ -17313,6 +17531,158 @@ CONTAINS
     RETURN 1
 
   END SUBROUTINE FieldVariable_ParameterSetAddLocalElementL
+
+  !
+  !================================================================================================================================
+  !
+
+  !>Adds the given integer value to the given parameter set for a particular gauss point of the field variable component using the local element index. 
+  SUBROUTINE FieldVariable_ParameterSetAddLocalGaussPointIntg(fieldVariable,fieldSetType,gaussPointNumber,localElementNumber, &
+    & componentNumber,value,err,error,*)
+
+    !Argument variables
+    TYPE(FieldVariableType), POINTER :: fieldVariable !<A pointer to the field variable to add
+    INTEGER(INTG), INTENT(IN) :: fieldSetType !<The field parameter set identifier \see FieldRoutines_ParameterSetTypes,FieldRoutines
+    INTEGER(INTG), INTENT(IN) :: gaussPointNumber !<The gauss point number to add
+    INTEGER(INTG), INTENT(IN) :: localElementNumber !<The local element number to add
+    INTEGER(INTG), INTENT(IN) :: componentNumber !<The field variable component to add
+    INTEGER(INTG), INTENT(IN) :: value !<The value to add to
+    INTEGER(INTG), INTENT(OUT) :: err !<The error code
+    TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
+    !Local Variables
+    INTEGER(INTG) :: localDof
+    TYPE(FieldParameterSetType), POINTER :: parameterSet
+ 
+    ENTERS("FieldVariable_ParameterSetAddLocalGaussPointIntg",err,error,*999)
+
+    CALL FieldVariable_AssertIsDPData(fieldVariable,err,error,*999)
+    NULLIFY(parameterSet)
+    CALL FieldVariable_ParameterSetGet(fieldVariable,fieldSetType,parameterSet,err,error,*999)
+    CALL FieldVariable_LocalGaussDOFGet(fieldVariable,gaussPointNumber,localElementNumber,componentNumber,localDof, &
+      & err,error,*999)
+    CALL DistributedVector_ValuesAdd(parameterSet%parameters,localDof,value,err,error,*999)    
+
+    EXITS("FieldVariable_ParameterSetAddLocalGaussPointIntg")
+    RETURN
+999 ERRORS("FieldVariable_ParameterSetAddLocalGaussPointIntg",err,error)
+    EXITS("FieldVariable_ParameterSetAddLocalGaussPointIntg")
+    RETURN 1
+    
+  END SUBROUTINE FieldVariable_ParameterSetAddLocalGaussPointIntg
+
+  !
+  !================================================================================================================================
+  !
+
+  !>Adds the given single precision value to the given parameter set for a particular gauss point of the field variable component using the local element index. 
+  SUBROUTINE FieldVariable_ParameterSetAddLocalGaussPointSP(fieldVariable,fieldSetType,gaussPointNumber,localElementNumber, &
+    & componentNumber,value,err,error,*)
+
+    !Argument variables
+    TYPE(FieldVariableType), POINTER :: fieldVariable !<A pointer to the field variaable to add
+    INTEGER(INTG), INTENT(IN) :: fieldSetType !<The field parameter set identifier \see FieldRoutines_ParameterSetTypes,FieldRoutines
+    INTEGER(INTG), INTENT(IN) :: gaussPointNumber !<The gauss point number to add
+    INTEGER(INTG), INTENT(IN) :: localElementNumber !<The local element number to add
+    INTEGER(INTG), INTENT(IN) :: componentNumber !<The field variable component to add
+    REAL(SP), INTENT(IN) :: value !<The value to add to
+    INTEGER(INTG), INTENT(OUT) :: err !<The error code
+    TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
+    !Local Variables
+    INTEGER(INTG) :: localDof
+    TYPE(FieldParameterSetType), POINTER :: parameterSet
+
+    ENTERS("FieldVariable_ParameterSetAddLocalGaussPointSP",err,error,*999)
+
+    CALL FieldVariable_AssertIsDPData(fieldVariable,err,error,*999)
+    NULLIFY(parameterSet)
+    CALL FieldVariable_ParameterSetGet(fieldVariable,fieldSetType,parameterSet,err,error,*999)
+    CALL FieldVariable_LocalGaussDOFGet(fieldVariable,gaussPointNumber,localElementNumber,componentNumber,localDof, &
+      & err,error,*999)
+    CALL DistributedVector_ValuesAdd(parameterSet%parameters,localDof,value,err,error,*999)    
+
+    EXITS("FieldVariable_ParameterSetAddLocalGaussPointSP")
+    RETURN
+999 ERRORS("FieldVariable_ParameterSetAddLocalGaussPointSP",err,error)
+    EXITS("FieldVariable_ParameterSetAddLocalGaussPointSP")
+    RETURN 1
+
+  END SUBROUTINE FieldVariable_ParameterSetAddLocalGaussPointSP
+
+  !
+  !================================================================================================================================
+  !
+
+  !>Adds the given double precision value to the given parameter set for a particular gauss point of the field variable component using the local element index. 
+  SUBROUTINE FieldVariable_ParameterSetAddLocalGaussPointDP(fieldVariable,fieldSetType,gaussPointNumber,localElementNumber, &
+    & componentNumber,value,err,error,*)
+
+    !Argument variables
+    TYPE(FieldVariableType), POINTER :: fieldVariable !<A pointer to the field variable to add
+    INTEGER(INTG), INTENT(IN) :: fieldSetType !<The field parameter set identifier \see FieldRoutines_ParameterSetTypes,FieldRoutines
+    INTEGER(INTG), INTENT(IN) :: gaussPointNumber !<The gauss point number to add
+    INTEGER(INTG), INTENT(IN) :: localElementNumber !<The local element number to add
+    INTEGER(INTG), INTENT(IN) :: componentNumber !<The field variable component to add
+    REAL(DP), INTENT(IN) :: value !<The value to add to
+    INTEGER(INTG), INTENT(OUT) :: err !<The error code
+    TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
+    !Local Variables
+    INTEGER(INTG) :: localDof
+    TYPE(FieldParameterSetType), POINTER :: parameterSet
+
+    ENTERS("FieldVariable_ParameterSetAddLocalGaussPointDP",err,error,*999)
+
+    CALL FieldVariable_AssertIsDPData(fieldVariable,err,error,*999)
+    NULLIFY(parameterSet)
+    CALL FieldVariable_ParameterSetGet(fieldVariable,fieldSetType,parameterSet,err,error,*999)
+    CALL FieldVariable_LocalGaussDOFGet(fieldVariable,gaussPointNumber,localElementNumber,componentNumber,localDof, &
+      & err,error,*999)
+    CALL DistributedVector_ValuesAdd(parameterSet%parameters,localDof,value,err,error,*999)    
+
+    EXITS("FieldVariable_ParameterSetAddLocalGaussPointDP")
+    RETURN
+999 ERRORS("FieldVariable_ParameterSetAddLocalGaussPointDP",err,error)
+    EXITS("FieldVariable_ParameterSetAddLocalGaussPointDP")
+    RETURN 1
+
+  END SUBROUTINE FieldVariable_ParameterSetAddLocalGaussPointDP
+
+  !
+  !================================================================================================================================
+  !
+
+  !>Adds the given logical value to the given parameter set for a particular gauss point of the field variable component using the local element index. 
+  SUBROUTINE FieldVariable_ParameterSetAddLocalGaussPointL(fieldVariable,fieldSetType,gaussPointNumber,localElementNumber, &
+    & componentNumber,value,err,error,*)
+
+    !Argument variables
+    TYPE(FieldVariableType), POINTER :: fieldVariable !<A pointer to the field variable to add
+    INTEGER(INTG), INTENT(IN) :: fieldSetType !<The field parameter set identifier \see FieldRoutines_ParameterSetTypes,FieldRoutines
+    INTEGER(INTG), INTENT(IN) :: gaussPointNumber !<The gauss point number to add
+    INTEGER(INTG), INTENT(IN) :: localElementNumber !<The local element number to add
+    INTEGER(INTG), INTENT(IN) :: componentNumber !<The field variable component to add
+    LOGICAL, INTENT(IN) :: value !<The value to add to
+    INTEGER(INTG), INTENT(OUT) :: err !<The error code
+    TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
+    !Local Variables
+    INTEGER(INTG) :: localDof
+    TYPE(FieldParameterSetType), POINTER :: parameterSet
+
+    ENTERS("FieldVariable_ParameterSetAddLocalGaussPointL",err,error,*999)
+
+    CALL FieldVariable_AssertIsDPData(fieldVariable,err,error,*999)
+    NULLIFY(parameterSet)
+    CALL FieldVariable_ParameterSetGet(fieldVariable,fieldSetType,parameterSet,err,error,*999)
+    CALL FieldVariable_LocalGaussDOFGet(fieldVariable,gaussPointNumber,localElementNumber,componentNumber,localDof, &
+      & err,error,*999)
+    CALL DistributedVector_ValuesAdd(parameterSet%parameters,localDof,value,err,error,*999)    
+
+    EXITS("FieldVariable_ParameterSetAddLocalGaussPointL")
+    RETURN
+999 ERRORS("FieldVariable_ParameterSetAddLocalGaussPointL",err,error)
+    EXITS("FieldVariable_ParameterSetAddLocalGaussPointL")
+    RETURN 1
+
+  END SUBROUTINE FieldVariable_ParameterSetAddLocalGaussPointL
 
   !
   !================================================================================================================================
@@ -22004,6 +22374,307 @@ CONTAINS
   !================================================================================================================================
   !
 
+  !>Adds the parameters from the parameter set of a component of a field variable to the paramters of a parameter set of
+  !>a component of another field variable.
+  SUBROUTINE FieldVariable_ParametersToFieldVariableParametersAdd(fromFieldVariable,fromParameterSetType, &
+    & fromComponentNumber,toFieldVariable,toParameterSetType,toComponentNumber,err,error,*)
+
+    !Argument variables
+    TYPE(FieldVariableType), POINTER :: fromFieldVariable !<A pointer to the field variable to add from
+    INTEGER(INTG), INTENT(IN) :: fromParameterSetType !<The field parameter set type to add from \see FieldRoutines_ParameterSetTypes,FieldRoutines
+    INTEGER(INTG), INTENT(IN) :: fromComponentNumber !<The field variable component number to add from
+    TYPE(FieldVariableType), POINTER :: toFieldVariable !<A pointer to the field variable to add to
+    INTEGER(INTG), INTENT(IN) :: toParameterSetType !<The parameter set type to add to \see FieldRoutines_ParameterSetTypes,FieldRoutines
+    INTEGER(INTG), INTENT(IN) :: toComponentNumber !<The field variable component to add to
+    INTEGER(INTG), INTENT(OUT) :: err !<The error code
+    TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
+    !Local Variables
+    INTEGER(INTG) :: elementIdx,derivativeIdx,versionIdx,localDOF,nodeIdx,valueIntg,gaussPointIdx
+    INTEGER(INTG), POINTER :: fromParameterDataIntg(:)
+    REAL(SP) :: valueSP
+    REAL(SP), POINTER :: fromParameterDataSP(:)
+    REAL(DP) :: valueDP
+    REAL(DP), POINTER :: fromParameterDataDP(:)
+    LOGICAL :: valueL
+    LOGICAL, POINTER :: fromParameterDataL(:)
+    TYPE(DomainType), POINTER :: fromDomain,toDomain
+    TYPE(DomainElementsType), POINTER :: fromDomainElements
+    TYPE(DomainNodesType), POINTER :: fromDomainNodes
+    TYPE(DomainTopologyType), POINTER :: fromDomainTopology
+    TYPE(VARYING_STRING) :: localError
+
+    NULLIFY(fromParameterDataIntg)
+    NULLIFY(fromParameterDataSP)
+    NULLIFY(fromParameterDataDP)
+    NULLIFY(fromParameterDataL)
+
+    ENTERS("FieldVariable_ParametersToFieldVariableParametersAdd",err,error,*995)
+
+    IF(.NOT.ASSOCIATED(fromFieldVariable)) CALL FlagError("From field variable is not associated.",err,error,*995)
+    IF(.NOT.ASSOCIATED(toFieldVariable)) CALL FlagError("To field variable is not associated.",err,error,*995)
+    NULLIFY(fromDomain)
+    CALL FieldVariable_ComponentDomainGet(fromFieldVariable,fromComponentNumber,fromDomain,err,error,*995)
+    NULLIFY(toDomain)
+    CALL FieldVariable_ComponentDomainGet(toFieldVariable,toComponentNumber,toDomain,err,error,*995)
+    IF(.NOT.ASSOCIATED(fromDomain,toDomain)) THEN
+      CALL FlagError("The from field variable component domain is not associated with the "// &
+        & "to field variable component domain.",err,error,*995)
+    ENDIF
+    IF(fromFieldVariable%components(fromComponentNumber)%interpolationType/= &
+      & toFieldVariable%components(toComponentNumber)%interpolationType) THEN
+      localError="The from field variable component interpolation type of "// &
+        & TRIM(NumberToVString(fromFieldVariable%components(fromComponentNumber)%interpolationType,"*",err,error))// &
+        & " does not match the to variable component interpolation type of "// &
+        & TRIM(NumberToVString(toFieldVariable%components(toComponentNumber)%interpolationType,"*",err,error))//"."
+      CALL FlagError(localError,err,error,*995)
+    ENDIF
+    IF(fromFieldVariable%dataType/=toFieldVariable%dataType) THEN
+      localError="The from field variable data type of "// &
+        & TRIM(NumberToVString(fromFieldVariable%dataType,"*",err,error))// &
+        & " does not match the to variable data type of "// &
+        & TRIM(NumberToVString(toFieldVariable%dataType,"*",err,error))//"."
+      CALL FlagError(localError,err,error,*995)
+    ENDIF
+    
+    SELECT CASE(fromFieldVariable%components(fromComponentNumber)%interpolationType)
+    CASE(FIELD_CONSTANT_INTERPOLATION)
+      SELECT CASE(fromFieldVariable%dataType)
+      CASE(FIELD_INTG_TYPE)
+        CALL FieldVariable_ParameterSetDataGet(fromFieldVariable,fromParameterSetType,fromParameterDataIntg,err,error,*999)
+        localDOF=fromFieldVariable%components(fromComponentNumber)%paramToDOFMap%constantParam2DOFMap
+        valueIntg=fromParameterDataIntg(localDOF)
+        CALL FieldVariable_ParameterSetAddConstant(toFieldVariable,toParameterSetType,toComponentNumber,valueIntg, &
+          & err,error,*999)
+        CALL FieldVariable_ParameterSetDataRestore(fromFieldVariable,fromParameterSetType,fromParameterDataIntg,err,error,*999)
+      CASE(FIELD_SP_TYPE)
+        CALL FieldVariable_ParameterSetDataGet(fromFieldVariable,fromParameterSetType,fromParameterDataSP,err,error,*999)
+        localDOF=fromFieldVariable%components(fromComponentNumber)%paramToDOFMap%constantParam2DOFMap
+        valueSP=fromParameterDataSP(localDOF)
+        CALL FieldVariable_ParameterSetAddConstant(toFieldVariable,toParameterSetType,toComponentNumber,valueSP,err,error,*999)
+        CALL FieldVariable_ParameterSetDataRestore(fromFieldVariable,fromParameterSetType,fromParameterDataSP,err,error,*999)
+      CASE(FIELD_DP_TYPE)
+        CALL FieldVariable_ParameterSetDataGet(fromFieldVariable,fromParameterSetType,fromParameterDataDP,err,error,*999)
+        localDOF=fromFieldVariable%components(fromComponentNumber)%paramToDOFMap%constantParam2DOFMap
+        valueDP=fromParameterDataDP(localDOF)
+        CALL FieldVariable_ParameterSetAddConstant(toFieldVariable,toParameterSetType,toComponentNumber,valueDP,err,error,*999)
+        CALL FieldVariable_ParameterSetDataRestore(fromFieldVariable,fromParameterSetType,fromParameterDataDP,err,error,*999)
+      CASE(FIELD_L_TYPE)
+        CALL FieldVariable_ParameterSetDataGet(fromFieldVariable,fromParameterSetType,fromParameterDataL,err,error,*999)
+        localDOF=fromFieldVariable%components(fromComponentNumber)%paramToDOFMap%constantParam2DOFMap
+        valueL=fromParameterDataL(localDOF)
+        CALL FieldVariable_ParameterSetAddConstant(toFieldVariable,toParameterSetType,toComponentNumber,valueL,err,error,*999)
+        CALL FieldVariable_ParameterSetDataRestore(fromFieldVariable,fromParameterSetType,fromParameterDataL,err,error,*999)
+      CASE DEFAULT
+        localError="The from field variable data type of "//TRIM(NumberToVString(fromFieldVariable%dataType,"*",err,error))// &
+          & " is invalid."
+        CALL FlagError(localError,err,error,*999)
+      END SELECT
+    CASE(FIELD_ELEMENT_BASED_INTERPOLATION)
+      NULLIFY(fromDomainTopology)
+      CALL Domain_DomainTopologyGet(fromDomain,fromDomainTopology,err,error,*999)
+      NULLIFY(fromDomainElements)
+      CALL DomainTopology_DomainElementsGet(fromDomainTopology,fromDomainElements,err,error,*999)
+      SELECT CASE(fromFieldVariable%dataType)
+      CASE(FIELD_INTG_TYPE)
+        CALL FieldVariable_ParameterSetDataGet(fromFieldVariable,fromParameterSetType,fromParameterDataIntg,err,error,*999)
+        DO elementIdx=1,fromDomainElements%totalNumberOfElements
+          localDOF=fromFieldVariable%components(fromComponentNumber)%paramToDOFMap%elementParam2DOFMap%elements(elementIdx)
+          valueIntg=fromParameterDataIntg(localDOF)
+          CALL FieldVariable_ParameterSetAddLocalElement(toFieldVariable,toParameterSetType,elementIdx,toComponentNumber, &
+            & valueIntg,err,error,*999)
+        ENDDO !elementIdx
+        CALL FieldVariable_ParameterSetDataRestore(fromFieldVariable,fromParameterSetType,fromParameterDataIntg,err,error,*999)
+      CASE(FIELD_SP_TYPE)
+        CALL FieldVariable_ParameterSetDataGet(fromFieldVariable,fromParameterSetType,fromParameterDataSP,err,error,*999)
+        DO elementIdx=1,fromDomainElements%totalNumberOfElements
+          localDOF=fromFieldVariable%components(fromComponentNumber)%paramToDOFMap%elementParam2DOFMap%elements(elementIdx)
+          valueSP=fromParameterDataSP(localDOF)
+          CALL FieldVariable_ParameterSetAddLocalElement(toFieldVariable,toParameterSetType,elementIdx,toComponentNumber, &
+            & valueSP,err,error,*999)
+        ENDDO !elementIdx
+        CALL FieldVariable_ParameterSetDataRestore(fromFieldVariable,fromParameterSetType,fromParameterDataSP,err,error,*999)
+      CASE(FIELD_DP_TYPE)
+        CALL FieldVariable_ParameterSetDataGet(fromFieldVariable,fromParameterSetType,fromParameterDataDP,err,error,*999)
+        DO elementIdx=1,fromDomainElements%totalNumberOfElements
+          localDOF=fromFieldVariable%components(fromComponentNumber)%paramToDOFMap%elementParam2DOFMap%elements(elementIdx)
+          valueDP=fromParameterDataDP(localDOF)
+          CALL FieldVariable_ParameterSetAddLocalElement(toFieldVariable,toParameterSetType,elementIdx,toComponentNumber, &
+            & valueDP,err,error,*999)
+        ENDDO !elementIdx
+        CALL FieldVariable_ParameterSetDataRestore(fromFieldVariable,fromParameterSetType,fromParameterDataDP,err,error,*999)
+      CASE(FIELD_L_TYPE)
+        CALL FieldVariable_ParameterSetDataGet(fromFieldVariable,fromParameterSetType,fromParameterDataL,err,error,*999)
+        DO elementIdx=1,fromDomainElements%totalNumberOfElements
+          localDOF=fromFieldVariable%components(fromComponentNumber)%paramToDOFMap%elementParam2DOFMap%elements(elementIdx)
+          valueL=fromParameterDataL(localDOF)
+          CALL FieldVariable_ParameterSetAddLocalElement(toFieldVariable,toParameterSetType,elementIdx,toComponentNumber, &
+            & valueL,err,error,*999)
+        ENDDO !elementIdx
+        CALL FieldVariable_ParameterSetDataRestore(fromFieldVariable,fromParameterSetType,fromParameterDataL,err,error,*999)
+      CASE DEFAULT
+        localError="The from field variable data type of "//TRIM(NumberToVString(fromFieldVariable%dataType,"*",err,error))// &
+          & " is invalid."
+        CALL FlagError(localError,err,error,*999)
+      END SELECT
+    CASE(FIELD_NODE_BASED_INTERPOLATION)
+      NULLIFY(fromDomainTopology)
+      CALL Domain_DomainTopologyGet(fromDomain,fromDomainTopology,err,error,*999)
+      NULLIFY(fromDomainNodes)
+      CALL DomainTopology_DomainNodesGet(fromDomainTopology,fromDomainNodes,err,error,*999)
+      SELECT CASE(fromFieldVariable%dataType)
+      CASE(FIELD_INTG_TYPE)
+        CALL FieldVariable_ParameterSetDataGet(fromFieldVariable,fromParameterSetType,fromParameterDataIntg,err,error,*999)
+        DO nodeIdx=1,fromDomainNodes%totalNumberOfNodes
+          DO derivativeIdx=1,fromDomainNodes%nodes(nodeIdx)%numberOfDerivatives
+            DO versionIdx=1,fromDomainNodes%nodes(nodeIdx)%derivatives(derivativeIdx)%numberOfVersions
+              localDOF=fromFieldVariable%components(fromComponentNumber)%paramToDOFMap% &
+                & nodeParam2DOFMap%nodes(nodeIdx)%derivatives(derivativeIdx)%versions(versionIdx)
+              valueIntg=fromParameterDataIntg(localDOF)
+              CALL FieldVariable_ParameterSetAddLocalNode(toFieldVariable,toParameterSetType,versionIdx,derivativeIdx, &
+                & nodeIdx,toComponentNumber,valueIntg,err,error,*999)
+            ENDDO !versionIdx
+          ENDDO !derivativeIdx
+        ENDDO !nodeIdx
+        CALL FieldVariable_ParameterSetDataRestore(fromFieldVariable,fromParameterSetType,fromParameterDataIntg,err,error,*999)
+      CASE(FIELD_SP_TYPE)
+        CALL FieldVariable_ParameterSetDataGet(fromFieldVariable,fromParameterSetType,fromParameterDataSP,err,error,*999)
+        DO nodeIdx=1,fromDomainNodes%totalNumberOfNodes
+          DO derivativeIdx=1,fromDomainNodes%nodes(nodeIdx)%numberOfDerivatives
+            DO versionIdx=1,fromDomainNodes%nodes(nodeIdx)%derivatives(derivativeIdx)%numberOfVersions
+              localDOF=fromFieldVariable%components(fromComponentNumber)%paramToDOFMap% &
+                & nodeParam2DOFMap%nodes(nodeIdx)%derivatives(derivativeIdx)%versions(versionIdx)
+              valueSP=fromParameterDataSP(localDOF)
+              CALL FieldVariable_ParameterSetAddLocalNode(toFieldVariable,toParameterSetType,versionIdx,derivativeIdx, &
+                & nodeIdx,toComponentNumber,valueSP,err,error,*999)
+            ENDDO !versionIdx
+          ENDDO !derivativeIdx
+        ENDDO !nodeIdx
+        CALL FieldVariable_ParameterSetDataRestore(fromFieldVariable,fromParameterSetType,fromParameterDataSP,err,error,*999)
+      CASE(FIELD_DP_TYPE)
+        CALL FieldVariable_ParameterSetDataGet(fromFieldVariable,fromParameterSetType,fromParameterDataDP,err,error,*999)
+        DO nodeIdx=1,fromDomainNodes%totalNumberOfNodes
+          DO derivativeIdx=1,fromDomainNodes%nodes(nodeIdx)%numberOfDerivatives
+            DO versionIdx=1,fromDomainNodes%nodes(nodeIdx)%derivatives(derivativeIdx)%numberOfVersions
+              localDOF=fromFieldVariable%components(fromComponentNumber)%paramToDOFMap% &
+                & nodeParam2DOFMap%nodes(nodeIdx)%derivatives(derivativeIdx)%versions(versionIdx)
+              valueDP=fromParameterDataDP(localDOF)
+              CALL FieldVariable_ParameterSetAddLocalNode(toFieldVariable,toParameterSetType,versionIdx,derivativeIdx, &
+                & nodeIdx,toComponentNumber,valueDP,err,error,*999)
+            ENDDO !versionIdx
+          ENDDO !derivativeIdx
+        ENDDO !nodeIdx
+        CALL FieldVariable_ParameterSetDataRestore(fromFieldVariable,fromParameterSetType,fromParameterDataDP,err,error,*999)
+      CASE(FIELD_L_TYPE)
+        CALL FieldVariable_ParameterSetDataGet(fromFieldVariable,fromParameterSetType,fromParameterDataL,err,error,*999)
+        DO nodeIdx=1,fromDomainNodes%totalNumberOfNodes
+          DO derivativeIdx=1,fromDomainNodes%nodes(nodeIdx)%numberOfDerivatives
+            DO versionIdx=1,fromDomainNodes%nodes(nodeIdx)%derivatives(derivativeIdx)%numberOfVersions
+              localDOF=fromFieldVariable%components(fromComponentNumber)%paramToDOFMap% &
+                & nodeParam2DOFMap%nodes(nodeIdx)%derivatives(derivativeIdx)%versions(versionIdx)
+              valueL=fromParameterDataL(localDOF)
+              CALL FieldVariable_ParameterSetAddLocalNode(toFieldVariable,toParameterSetType,versionIdx,derivativeIdx, &
+                & nodeIdx,toComponentNumber,valueL,err,error,*999)
+            ENDDO !versionIdx
+          ENDDO !derivativeIdx
+        ENDDO !nodeIdx
+        CALL FieldVariable_ParameterSetDataRestore(fromFieldVariable,fromParameterSetType,fromParameterDataL,err,error,*999)
+      CASE DEFAULT
+        localError="The from field variable data type of "//TRIM(NumberToVString(fromFieldVariable%dataType,"*",err,error))// &
+          & " is invalid."
+        CALL FlagError(localError,err,error,*999)
+      END SELECT
+    CASE(FIELD_GRID_POINT_BASED_INTERPOLATION)
+      CALL FlagError("Not implmented.",err,error,*999)
+    CASE(FIELD_GAUSS_POINT_BASED_INTERPOLATION)
+      NULLIFY(fromDomainTopology)
+      CALL Domain_DomainTopologyGet(fromDomain,fromDomainTopology,err,error,*999)
+      NULLIFY(fromDomainElements)
+      CALL DomainTopology_DomainElementsGet(fromDomainTopology,fromDomainElements,err,error,*999)
+      SELECT CASE(fromFieldVariable%dataType)
+      CASE(FIELD_INTG_TYPE)
+        CALL FieldVariable_ParameterSetDataGet(fromFieldVariable,fromParameterSetType,fromParameterDataIntg,err,error,*999)
+        DO elementIdx=1,fromDomainElements%totalNumberOfElements
+          DO gaussPointIdx=1,SIZE(fromFieldVariable%components(fromComponentNumber)%paramToDOFMap% &
+            & gaussPointParam2DOFMap%gaussPoints,1)
+            localDOF=fromFieldVariable%components(fromComponentNumber)%paramToDOFMap% &
+              & gaussPointParam2DOFMap%gaussPoints(gaussPointIdx,elementIdx)
+            valueIntg=fromParameterDataIntg(localDOF)
+            CALL FieldVariable_ParameterSetAddLocalGaussPoint(toFieldVariable,toParameterSetType,gaussPointIdx, &
+              & elementIdx,toComponentNumber,valueIntg,err,error,*999)
+          ENDDO !gaussPointIdx
+        ENDDO !elementIdx
+        CALL FieldVariable_ParameterSetDataRestore(fromFieldVariable,fromParameterSetType,fromParameterDataIntg,err,error,*999)
+      CASE(FIELD_SP_TYPE)
+        CALL FieldVariable_ParameterSetDataGet(fromFieldVariable,fromParameterSetType,fromParameterDataSP,err,error,*999)
+        DO elementIdx=1,fromDomainElements%totalNumberOfElements
+          DO gaussPointIdx=1,SIZE(fromFieldVariable%components(fromComponentNumber)% &
+            & paramToDOFMap%gaussPointParam2DOFMap%gaussPoints,1)
+            localDOF=fromFieldVariable%components(fromComponentNumber)%paramToDOFMap% &
+              & gaussPointParam2DOFMap%gaussPoints(gaussPointIdx,elementIdx)
+            valueSP=fromParameterDataSP(localDOF)
+            CALL FieldVariable_ParameterSetAddLocalGaussPoint(toFieldVariable,toParameterSetType,gaussPointIdx, &
+              & elementIdx,toComponentNumber,valueSP,err,error,*999)
+          ENDDO !gaussPointIdx
+        ENDDO !elementIdx
+        CALL FieldVariable_ParameterSetDataRestore(fromFieldVariable,fromParameterSetType,fromParameterDataSP,err,error,*999)
+      CASE(FIELD_DP_TYPE)
+        CALL FieldVariable_ParameterSetDataGet(fromFieldVariable,fromParameterSetType,fromParameterDataDP,err,error,*999)
+        DO elementIdx=1,fromDomainElements%totalNumberOfElements
+          DO gaussPointIdx=1,SIZE(fromFieldVariable%components(fromComponentNumber)% &
+            & paramToDOFMap%gaussPointParam2DOFMap%gaussPoints,1)
+            localDOF=fromFieldVariable%components(fromComponentNumber)%paramToDOFMap% &
+              & gaussPointParam2DOFMap%gaussPoints(gaussPointIdx,elementIdx)
+            valueDP=fromParameterDataDP(localDOF)
+            CALL FieldVariable_ParameterSetAddLocalGaussPoint(toFieldVariable,toParameterSetType,gaussPointIdx, &
+              & elementIdx,toComponentNumber,valueDP,err,error,*999)
+          ENDDO !gaussPointIdx
+        ENDDO !elementIdx
+        CALL FieldVariable_ParameterSetDataRestore(fromFieldVariable,fromParameterSetType,fromParameterDataDP,err,error,*999)
+      CASE(FIELD_L_TYPE)
+        CALL FieldVariable_ParameterSetDataGet(fromFieldVariable,fromParameterSetType,fromParameterDataL,err,error,*999)
+        DO elementIdx=1,fromDomainElements%totalNumberOfElements
+          DO gaussPointIdx=1,SIZE(fromFieldVariable%components(fromComponentNumber)% &
+            & paramToDOFMap%gaussPointParam2DOFMap%gaussPoints,1)
+            localDOF=fromFieldVariable%components(fromComponentNumber)%paramToDOFMap% &
+              & gaussPointParam2DOFMap%gaussPoints(gaussPointIdx,elementIdx)
+            valueL=fromParameterDataL(localDOF)
+            CALL FieldVariable_ParameterSetAddLocalGaussPoint(toFieldVariable,toParameterSetType,gaussPointIdx, &
+              & elementIdx,toComponentNumber,valueL,err,error,*999)
+          ENDDO !gaussPointIdx
+        ENDDO !elementIdx
+        CALL FieldVariable_ParameterSetDataRestore(fromFieldVariable,fromParameterSetType,fromParameterDataL,err,error,*999)
+      CASE DEFAULT
+        CALL FlagError("Invalid data type or not implemented.",err,error,*999)
+      END SELECT
+    CASE(FIELD_DATA_POINT_BASED_INTERPOLATION)
+      CALL FlagError("Not implemented.",err,error,*999)
+    CASE DEFAULT
+      localError="The from field variable component interpolation type of "// &
+        & TRIM(NumberToVString(fromFieldVariable%components(fromComponentNumber)% &
+        & interpolationType,"*",err,error))//" is invalid."
+      CALL FlagError(localError,err,error,*999)
+    END SELECT
+
+    EXITS("FieldVariable_ParametersToFieldVariableParametersAdd")
+    RETURN
+999 IF(ASSOCIATED(fromParameterDataIntg)) &
+      & CALL FieldVariable_ParameterSetDataRestore(fromFieldVariable,fromParameterSetType,fromParameterDataIntg,err,error,*998)
+998 IF(ASSOCIATED(fromParameterDataSP)) &
+      & CALL FieldVariable_ParameterSetDataRestore(fromFieldVariable,fromParameterSetType,fromParameterDataSP,err,error,*997)
+997 IF(ASSOCIATED(fromParameterDataDP)) &
+      & CALL FieldVariable_ParameterSetDataRestore(fromFieldVariable,fromParameterSetType,fromParameterDataDP,err,error,*996)
+996 IF(ASSOCIATED(fromParameterDataL)) &
+      & CALL FieldVariable_ParameterSetDataRestore(fromFieldVariable,fromParameterSetType,fromParameterDataDP,err,error,*995)
+995 ERRORS("FieldVariable_ParametersToFieldVariableParametersAdd",err,error)    
+    EXITS("FieldVariable_ParametersToFieldVariableParametersAdd")    
+    RETURN 1
+
+  END SUBROUTINE FieldVariable_ParametersToFieldVariableParametersAdd
+
+  ! 
+  !================================================================================================================================
+  !
+
   !>Copy the parameters from the parameter set of a component of a field variable to the paramters of a parameter set of
   !>a component of another field variable.
   SUBROUTINE FieldVariable_ParametersToFieldVariableParametersCopy(fromFieldVariable,fromParameterSetType, &
@@ -23008,7 +23679,9 @@ CONTAINS
 
     EXITS("FieldVariablesList_VariableGet")
     RETURN
+#ifdef WITH_CHECKS    
 999 NULLIFY(fieldVariable)
+#endif    
 998 ERRORSEXITS("FieldVariablesList_VariableGet",err,error)
     RETURN 1
 

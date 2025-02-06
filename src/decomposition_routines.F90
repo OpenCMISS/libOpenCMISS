@@ -590,6 +590,8 @@ CONTAINS
     !Work out what vertices this rank will deal with in the distributed graph.
     vertexStart=1
     vertexStop=0
+    myVertexStart=1
+    myVertexStop=0
     numberOfvertices=0
     maxNumberOfVerticesPerNode=-1
     ALLOCATE(vertexReceiveCounts(0:numberOfComputationNodes-1),STAT=err)
@@ -3858,6 +3860,7 @@ CONTAINS
     CALL DomainTopology_DomainLinesGet(domainTopology,domainLines,err,error,*999)
     
     !Guestimate the number of lines
+    maxNumberOfLines=1
     SELECT CASE(domain%numberOfDimensions)
     CASE(1)
       maxNumberOfLines=domainElements%totalNumberOfElements
@@ -4421,7 +4424,8 @@ CONTAINS
     CALL DomainTopology_DomainFacesGet(domainTopology,domainFaces,err,error,*999)
         
     !Estimate the number of faces
-    SELECT CASE(DOMAIN%numberOfDimensions)
+    maxNumberOfFaces=1
+    SELECT CASE(domain%numberOfDimensions)
     CASE(1)
       ! Faces not calculated in 1D 
     CASE(2)
@@ -4854,10 +4858,12 @@ CONTAINS
     ENTERS("DecompositionTopology_FacesFinalise",err,error,*999)
 
     IF(ASSOCIATED(decompositionFaces)) THEN
-      DO faceIdx=1,SIZE(decompositionFaces%faces,1)
-        CALL DecompositionFace_Finalise(decompositionFaces%faces(faceIdx),err,error,*999)
-      ENDDO !faceIdx
-      IF(ALLOCATED(decompositionFaces%faces)) DEALLOCATE(decompositionFaces%faces)
+      IF(ALLOCATED(decompositionFaces%faces)) THEN
+        DO faceIdx=1,SIZE(decompositionFaces%faces,1)
+          CALL DecompositionFace_Finalise(decompositionFaces%faces(faceIdx),err,error,*999)
+        ENDDO !faceIdx
+        DEALLOCATE(decompositionFaces%faces)
+      ENDIF
       DEALLOCATE(decompositionFaces)
     ENDIF
 

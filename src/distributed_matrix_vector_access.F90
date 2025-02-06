@@ -509,7 +509,8 @@ CONTAINS
     columnMapping=>distributedMatrix%columnDomainMapping
 
 #ifdef WITH_POSTCHECKS    
-    IF(.NOT.ASSOCIATED(columnMapping)) CALL FlagError("Column mapping is not associated for the distributed matrix.",err,error,*999)
+    IF(.NOT.ASSOCIATED(columnMapping)) &
+      & CALL FlagError("Column mapping is not associated for the distributed matrix.",err,error,*999)
 #endif    
      
     EXITS("DistributedMatrix_ColumnMappingGet")
@@ -1465,17 +1466,16 @@ CONTAINS
     INTEGER(INTG), INTENT(OUT) :: err !<The error code
     TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
     !Local Variables
-    TYPE(DomainMappingType), POINTER :: rowMapping
 
     ENTERS("DistributedVector_NumberOfGlobalRowsGet",err,error,*999)
 
     CALL DistributedVector_AssertIsFinished(distributedVector,err,error,*999)
 #ifdef WITH_PRECHECKS    
-    rowMapping=>distributedVector%domainMapping    
-    IF(.NOT.ASSOCIATED(rowMapping)) CALL FlagError("Row mapping is not associated for the distributed vector.",err,error,*999)
+     IF(.NOT.ASSOCIATED(distributedVector%domainMapping)) &
+      & CALL FlagError("Row mapping is not associated for the distributed vector.",err,error,*999)
 #endif    
     
-    numberOfGlobalRows=rowMapping%numberOfGlobal
+    numberOfGlobalRows=distributedVector%domainMapping%numberOfGlobal
 
     EXITS("DistributedVector_NumberOfGlobalRowsGet")
     RETURN
@@ -1497,17 +1497,16 @@ CONTAINS
     INTEGER(INTG), INTENT(OUT) :: err !<The error code
     TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
     !Local Variables
-    TYPE(DomainMappingType), POINTER :: rowMapping
 
     ENTERS("DistributedVector_NumberOfLocalRowsGet",err,error,*999)
 
     CALL DistributedVector_AssertIsFinished(distributedVector,err,error,*999)
 #ifdef WITH_PRECHECKS    
-    rowMapping=>distributedVector%domainMapping
-    IF(.NOT.ASSOCIATED(rowMapping)) CALL FlagError("Row mapping is not associated for the distributed vector.",err,error,*999)
+    IF(.NOT.ASSOCIATED(distributedVector%domainMapping)) &
+      & CALL FlagError("Row mapping is not associated for the distributed vector.",err,error,*999)
 #endif    
     
-    numberOfLocalRows=rowMapping%numberOfLocal
+    numberOfLocalRows=distributedVector%domainMapping%numberOfLocal
 
     EXITS("DistributedVector_NumberOfLocalRowsGet")
     RETURN
@@ -1599,17 +1598,16 @@ CONTAINS
     INTEGER(INTG), INTENT(OUT) :: err !<The error code
     TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
     !Local Variables
-    TYPE(DomainMappingType), POINTER :: rowMapping
 
     ENTERS("DistributedVector_TotalNumberOfLocalRowsGet",err,error,*999)
 
     CALL DistributedVector_AssertIsFinished(distributedVector,err,error,*999)
 #ifdef WITH_PRECHECKS    
-    rowMapping=>distributedVector%domainMapping
-    IF(.NOT.ASSOCIATED(rowMapping)) CALL FlagError("Row mapping is not associated for the distributed vector.",err,error,*999)
+    IF(.NOT.ASSOCIATED(distributedVector%domainMapping)) &
+      & CALL FlagError("Row mapping is not associated for the distributed vector.",err,error,*999)
 #endif    
     
-    totalNumberOfLocalRows=rowMapping%totalNumberOfLocal
+    totalNumberOfLocalRows=distributedVector%domainMapping%totalNumberOfLocal
 
     EXITS("DistributedVector_TotalNumberOfLocalRowsGet")
     RETURN

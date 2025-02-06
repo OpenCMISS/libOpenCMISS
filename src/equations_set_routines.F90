@@ -438,8 +438,11 @@ CONTAINS
     NULLIFY(geometricVariable)
     CALL Field_VariableGet(geometricField,FIELD_U_VARIABLE_TYPE,geometricVariable,err,error,*999)
     CALL FieldVariable_NumberOfComponentsGet(geometricVariable,numberOfDimensions,err,error,*999)
+    NULLIFY(geometricInterpParameters)
     CALL FieldVariable_InterpolationParameterInitialise(geometricVariable,geometricInterpParameters,err,error,*999)
+    NULLIFY(geometricInterpPoint)
     CALL Field_InterpolatedPointInitialise(geometricInterpParameters,geometricInterpPoint,err,error,*999)
+    NULLIFY(geometricInterpPointMetrics)
     CALL Field_InterpolatedPointMetricsInitialise(geometricInterpPoint,geometricInterpPointMetrics,err,error,*999)
     NULLIFY(analyticField)
     CALL EquationsSet_AnalyticFieldExists(equationsSet,analyticField,err,error,*999)
@@ -447,8 +450,11 @@ CONTAINS
       NULLIFY(analyticVariable)
       CALL Field_VariableGet(analyticField,FIELD_U_VARIABLE_TYPE,analyticVariable,err,error,*999)
       CALL FieldVariable_NumberOfComponentsGet(analyticVariable,numberOfAnalyticComponents,err,error,*999)
+      NULLIFY(analyticInterpParameters)
       CALL FieldVariable_InterpolationParameterInitialise(analyticVariable,analyticInterpParameters,err,error,*999)
+      NULLIFY(analyticInterpPoint)
       CALL Field_InterpolatedPointInitialise(analyticInterpParameters,analyticInterpPoint,err,error,*999)
+      NULLIFY(analyticPhysicalPoint)
       CALL Field_PhysicalPointInitialise(analyticInterpPoint,geometricInterpPoint,analyticPhysicalPoint,err,error,*999)
     ENDIF
     CALL EquationsSet_AnalyticFunctionTypeGet(equationsSet,analyticFunctionType,err,error,*999)
@@ -2956,16 +2962,17 @@ CONTAINS
     equationsSet%deltaTime=0.0_DP
     equationsSet%outputType=EQUATIONS_SET_NO_OUTPUT
     equationsSet%solutionMethod=0
-    CALL EquationsSet_GeometryInitialise(equationsSet,err,error,*999)
-    CALL EquationsSet_DependentInitialise(equationsSet,err,error,*999)
-    CALL EquationsSet_EquationsFieldInitialise(equationsSet,err,error,*999)
+    NULLIFY(equationsSet%analytic)
+    NULLIFY(equationsSet%boundaryConditions)
+    NULLIFY(equationsSet%derived)
+    NULLIFY(equationsSet%equations)
+    NULLIFY(equationsSet%equationsField)
     NULLIFY(equationsSet%independent)
     NULLIFY(equationsSet%materials)
     NULLIFY(equationsSet%source)
-    NULLIFY(equationsSet%analytic)
-    NULLIFY(equationsSet%derived)
-    NULLIFY(equationsSet%equations)
-    NULLIFY(equationsSet%boundaryConditions)
+    CALL EquationsSet_GeometryInitialise(equationsSet,err,error,*999)
+    CALL EquationsSet_DependentInitialise(equationsSet,err,error,*999)
+    CALL EquationsSet_EquationsFieldInitialise(equationsSet,err,error,*999)
        
     EXITS("EquationsSet_Initialise")
     RETURN
@@ -5383,7 +5390,7 @@ CONTAINS
     IF(.NOT.ASSOCIATED(boundaryConditions)) CALL FlagError("Boundary conditions are not associated.",err,error,*999)
     
     IF(diagnostics1) THEN
-      CALL WriteStringValue(GENERAL_OUTPUT_TYPE,"Equations set BC increment: ",equationsSet%label,err,error,*999)
+      CALL WriteStringValue(DIAGNOSTIC_OUTPUT_TYPE,"Equations set BC increment: ",equationsSet%label,err,error,*999)
     ENDIF
 
     NULLIFY(dependentField)
@@ -5497,7 +5504,7 @@ CONTAINS
              & err,error,*999)
             ! conditionGlobalDOF could be for non-incremented point Neumann condition
             IF(conditionType/=BOUNDARY_CONDITION_NEUMANN_POINT_INCREMENTED) CYCLE
-            CALL DomainMapping_DomainNumberFromGlobalGet(domainMapping,globalDirichletDOFIdx,1,dirichletDomainNumber, &
+            CALL DomainMapping_DomainNumberFromGlobalGet(domainMapping,globalDirichletDOFIdx,1,neumannDomainNumber, &
               & err,error,*999)
             IF(neumannDomainNumber==myGroupComputationNodeNumber) THEN
               CALL DomainMapping_LocalNumberFromGlobalGet(domainMapping,globalNeumannDOFIdx,1,localNeumannDOFIdx, &
@@ -6126,6 +6133,8 @@ CONTAINS
       CALL Profiling_TimingsOutput(1,"Setup and initialisation",userElapsed,systemElapsed,err,error,*999)
     ENDIF
     numberOfTimes=0
+    nodeUserElapsed=0.0_DP
+    nodeSystemElapsed=0.0_DP
     !Loop over the internal nodes
     DO nodeIdx=internalStart,internalFinish
       CALL DomainMapping_NumberGet(nodalMapping,nodeIdx,nodeNumber,err,error,*999)

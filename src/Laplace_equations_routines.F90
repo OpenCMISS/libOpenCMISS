@@ -595,7 +595,7 @@ CONTAINS
           CALL Field_InterpolateGauss(NO_PART_DERIV,BASIS_DEFAULT_QUADRATURE_SCHEME,gaussPointIdx,fibreInterpPoint, &
             & err,error,*999)
 
-          CALL CoordinateSystem_MaterialTransformTensor([TENSOR_CONTRAVARIANT_INDEX,TENSOR_COVARIANT_INDEX], &
+          CALL CoordinateSystem_MaterialNuToXTransformTensor([TENSOR_CONTRAVARIANT_INDEX,TENSOR_COVARIANT_INDEX], &
             & geometricInterpPointMetrics,fibreInterpPoint, &
             & materialsInterpPoint%values(1:NUMBER_OF_VOIGT(numberOfDimensions),NO_PART_DERIV),conductivity,err,error,*999)        
         ENDIF

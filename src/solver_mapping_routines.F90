@@ -152,7 +152,6 @@ MODULE SolverMappingRoutines
     TYPE(EquationsMappingNonlinearType), POINTER :: nonlinearMapping
     TYPE(EquationsMappingResidualType), POINTER :: residualMapping
     TYPE(EquationsMappingRHSType), POINTER :: rhsMapping
-    TYPE(EquationsMappingSourceType), POINTER :: sourceMapping
     TYPE(EquationsMappingSourcesType), POINTER :: sourcesMapping
     TYPE(EquationsMatricesToSolverMatrixMapType), POINTER :: equationsMatricesToSolverMatrixMap
     TYPE(EquationsMatrixToSolverMatricesMapType), POINTER :: equationsMatrixToSolverMatricesMap
@@ -408,7 +407,7 @@ MODULE SolverMappingRoutines
       CALL EquationsMappingVector_NonlinearMappingExists(vectorMapping,nonlinearMapping,err,error,*999)
       NULLIFY(rhsMapping)
       CALL EquationsMappingVector_RHSMappingExists(vectorMapping,rhsMapping,err,error,*999)
-      NULLIFY(sourceMapping)
+      NULLIFY(sourcesMapping)
       CALL EquationsMappingVector_SourcesMappingExists(vectorMapping,sourcesMapping,err,error,*999)
       NULLIFY(dependentField)
       CALL EquationsSet_DependentFieldGet(equationsSet,dependentField,err,error,*999)
@@ -416,6 +415,7 @@ MODULE SolverMappingRoutines
       DO globalRow=1,lhsMapping%numberOfGlobalRows
         !Find the rank that owns this global row
         rowRank=-1
+        localRow=-1
         DO rankIdx=1,rowDOFsMapping%globalToLocalMap(globalRow)%numberOfDomains
           IF(rowDOFsMapping%globalToLocalMap(globalRow)%localType(rankIdx)/=DOMAIN_LOCAL_GHOST) THEN
             rowRank=rowDOFsMapping%globalToLocalMap(globalRow)%domainNumber(rankIdx)
@@ -559,6 +559,7 @@ MODULE SolverMappingRoutines
         DO globalColumn=1,interfaceMapping%numberOfGlobalColumns
           !Find the rank that owns this global column
           columnRank=-1
+          localColumn=-1
           DO rankIdx=1,columnDOFsMapping%globalToLocalMap(globalColumn)%numberOfDomains
             IF(columnDOFsMapping%globalToLocalMap(globalColumn)%localType(rankIdx)/=DOMAIN_LOCAL_GHOST) THEN
               columnRank=columnDOFsMapping%globalToLocalMap(globalColumn)%domainNumber(rankIdx)
@@ -851,6 +852,7 @@ MODULE SolverMappingRoutines
                   & couplingCoefficients(rowEquationsRowIdx)=rowEquationsRows%coefficients(rowEquationsRowIdx)
               ENDDO !rowEquationsRowIdx
               !Set up the equations row -> solver row mappings
+              equationsRow=-1
               DO rowEquationsRowIdx=1,numberRowEquationsRows
                 equationsRow=rowEquationsRows%localDofs(rowEquationsRowIdx)
                 !Allocate the equations row to solver row mappings arrays
@@ -1019,11 +1021,11 @@ MODULE SolverMappingRoutines
                 interfaceMatrixIdx=interfaceMapping%numberOfInterfaceMatrices
                 ALLOCATE(solverMapping%interfaceConditionToSolverMatricesMaps(interfaceConditionIdx)%ptr% &
                   & interfaceMatrixToSolverMatricesMaps(interfaceMatrixIdx)%ptr% &
-                  & interfaceRowToSolverRowsMap(equationsRow)%rowCols(1),STAT=err)
+                  & interfaceRowToSolverRowsMap(localColumn)%rowCols(1),STAT=err)
                 IF(err/=0) CALL FlagError("Could not allocate interface row to solver rows map solver row columns.",err,error,*999)
                 ALLOCATE(solverMapping%interfaceConditionToSolverMatricesMaps(interfaceConditionIdx)%ptr% &
                   & interfaceMatrixToSolverMatricesMaps(interfaceMatrixIdx)%ptr% &
-                  & interfaceRowToSolverRowsMap(equationsRow)%couplingCoefficients(1),STAT=err)
+                  & interfaceRowToSolverRowsMap(localColumn)%couplingCoefficients(1),STAT=err)
                 IF(err/=0) CALL FlagError("Could not allocate interface row to solver rows map coupling coefficients.", &
                   & err,error,*999)
                 !Set the mappings
@@ -3522,7 +3524,7 @@ MODULE SolverMappingRoutines
         CALL EquationsMappingVector_NonlinearMappingExists(vectorMapping,nonlinearMapping,err,error,*999)
         NULLIFY(rhsMapping)
         CALL EquationsMappingVector_RHSMappingExists(vectorMapping,rhsMapping,err,error,*999)
-        NULLIFY(sourceMapping)
+        NULLIFY(sourcesMapping)
         CALL EquationsMappingVector_SourcesMappingExists(vectorMapping,sourcesMapping,err,error,*999)
         CALL WriteStringValue(DIAGNOSTIC_OUTPUT_TYPE,"    Equations set index : ",equationsSetIdx,err,error,*999)
         CALL WriteString(DIAGNOSTIC_OUTPUT_TYPE,"      Equations sets rows to solver rows mappings:",err,error,*999)
@@ -3608,6 +3610,9 @@ MODULE SolverMappingRoutines
               CALL WriteStringValue(DIAGNOSTIC_OUTPUT_TYPE,"            Number of liner equations matrices = ", &
                 & equationsMatricesToSolverMatrixMap%numberOfLinearMatrices,err,error,*999)
               DO equationMatrixIdx=1,equationsMatricesToSolverMatrixMap%numberOfLinearMatrices
+                NULLIFY(equationsMatrixToSolverMatrixMap)
+                CALL SolverMappingEMSToSMMap_LinearMatrixToSolverMatrixMapGet(equationsMatricesToSolverMatrixMap, &
+                  & equationMatrixIdx,equationsMatrixToSolverMatrixMap,err,error,*999)
                 NULLIFY(equationsMatrixToVariableMap)
                 CALL EquationsMappingLinear_EquationsMatrixToVarMapGet(linearMapping,equationMatrixIdx, &
                   & equationsMatrixToVariableMap,err,error,*999)
@@ -3615,7 +3620,7 @@ MODULE SolverMappingRoutines
                   & err,error,*999)
                 equationsMatrixNumber=equationsMatrixToSolverMatrixMap%equationsMatrixNumber
                 CALL WriteStringValue(DIAGNOSTIC_OUTPUT_TYPE,"              Equations matrix number = ",equationsMatrixNumber, &
-                  & err,error,*999)
+                  & err,error,*999)                
                 CALL WriteStringValue(DIAGNOSTIC_OUTPUT_TYPE,"              Solver matrix number    = ", &
                   & equationsMatrixToSolverMatrixMap%solverMatrixNumber,err,error,*999)
                 DO columnIdx=1,equationsMatrixToVariableMap%numberOfColumns
@@ -4988,6 +4993,7 @@ MODULE SolverMappingRoutines
     equationsSetToSolverMatricesMap%numberOfSolverMatrices=0
     equationsSetToSolverMatricesMap%numberOfEquationsMatrices=0
     equationsSetToSolverMatricesMap%numberOfJacobianMatrices=0
+    NULLIFY(equationsSetToSolverMatricesMap%equationsRowToSolverRowsMap)
 
     EXITS("SolverMappingESToSMSMap_Initialise")
     RETURN
@@ -6195,7 +6201,7 @@ MODULE SolverMappingRoutines
       & CALL FlagError("The solver column to linear equations map is already associated.",err,error,*998)
 
     ALLOCATE(solverColToLinearEquationsMap,STAT=err)
-    IF(err/=0) CALL FlagError("Could not allocate the solver column to linear equations map.",err,error,*998)
+    IF(err/=0) CALL FlagError("Could not allocate the solver column to linear equations map.",err,error,*999)
     solverColToLinearEquationsMap%numberOfLinearMatrices=0
     
     EXITS("SolverMappingSCToSEquationsMap_Initialise")
@@ -6261,7 +6267,7 @@ MODULE SolverMappingRoutines
       & CALL FlagError("The solver column to nonlinear equations map is already associated.",err,error,*998)
 
     ALLOCATE(solverColToNonlinearEquationsMap,STAT=err)
-    IF(err/=0) CALL FlagError("Could not allocate the solver column to nonlinear equations map.",err,error,*998)
+    IF(err/=0) CALL FlagError("Could not allocate the solver column to nonlinear equations map.",err,error,*999)
     solverColToNonlinearEquationsMap%numberOfJacobianMatrices=0
     
     EXITS("SolverMappingSColToNLEQSMap_Initialise")

@@ -137,7 +137,7 @@ MODULE EquationsMappingAccessRoutines
 
   PUBLIC EquationsMappingNonlinear_ResidualMappingGet
 
-  PUBLIC EquationsMappingResidual_EquationsRowToResidualDOFMapGet
+  !PUBLIC EquationsMappingResidual_EquationsRowToResidualDOFMapGet
 
   PUBLIC EquationsMappingResidual_JacobianMatrixToVarMapGet
 
@@ -1447,39 +1447,39 @@ CONTAINS
   !================================================================================================================================
   !
 
-  !>Gets the equations row to residual DOF map for a residual mapping.
-  SUBROUTINE EquationsMappingResidual_EquationsRowToResidualDOFMapGet(residualMapping,equationsRowToResidualDOFMap,err,error,*)
+!   !>Gets the equations row to residual DOF map for a residual mapping.
+!   SUBROUTINE EquationsMappingResidual_EquationsRowToResidualDOFMapGet(residualMapping,equationsRowToResidualDOFMap,err,error,*)
 
-    !Argument variables
-    TYPE(EquationsMappingResidualType), POINTER :: residualMapping !<A pointer to the residual mapping to get the equations row to residual DOF map for
-    INTEGER(INTG), POINTER :: equationsRowToResidualDOFMap(:) !<On exit, a pointer to the equations row to residual DOF map for the residual mapping. Must not be associated on entry.
-    INTEGER(INTG), INTENT(OUT) :: err !<The error code
-    TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
-    !Local Variables
+!     !Argument variables
+!     TYPE(EquationsMappingResidualType), POINTER :: residualMapping !<A pointer to the residual mapping to get the equations row to residual DOF map for
+!     INTEGER(INTG), POINTER :: equationsRowToResidualDOFMap(:) !<On exit, a pointer to the equations row to residual DOF map for the residual mapping. Must not be associated on entry.
+!     INTEGER(INTG), INTENT(OUT) :: err !<The error code
+!     TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
+!     !Local Variables
  
-    ENTERS("EquationsMappingResidual_EquationsRowToResidualDOFMapGet",err,error,*998)
+!     ENTERS("EquationsMappingResidual_EquationsRowToResidualDOFMapGet",err,error,*998)
 
-#ifdef WITH_PRECHECKS    
-    IF(ASSOCIATED(equationsRowToResidualDOFMap)) &
-      & CALL FlagError("Equations row to residual DOF map is already associated.",err,error,*998)
-    IF(.NOT.ASSOCIATED(residualMapping)) CALL FlagError("Residual mapping is not associated.",err,error,*999)
-#endif    
+! #ifdef WITH_PRECHECKS    
+!     IF(ASSOCIATED(equationsRowToResidualDOFMap)) &
+!       & CALL FlagError("Equations row to residual DOF map is already associated.",err,error,*998)
+!     IF(.NOT.ASSOCIATED(residualMapping)) CALL FlagError("Residual mapping is not associated.",err,error,*999)
+! #endif    
     
-    equationsRowToResidualDOFMap=>residualMapping%equationsRowToResidualDOFMap
+!     equationsRowToResidualDOFMap=>residualMapping%equationsRowToResidualDOFMap
 
-#ifdef WITH_POSTCHECKS    
-    IF(.NOT.ASSOCIATED(equationsRowToResidualDOFMap)) &
-      & CALL FlagError("The equations row to residual DOF map is not associated for the residual mapping.",err,error,*999)
-#endif    
+! #ifdef WITH_POSTCHECKS    
+!     IF(.NOT.ASSOCIATED(equationsRowToResidualDOFMap)) &
+!       & CALL FlagError("The equations row to residual DOF map is not associated for the residual mapping.",err,error,*999)
+! #endif    
     
-    EXITS("EquationsMappingResidual_EquationsRowToResidualDOFMapGet")
-    RETURN
-999 NULLIFY(equationsRowToResidualDOFMap)
-998 ERRORS("EquationsMappingResidual_EquationsRowToResidualDOFMapGet",err,error)
-    EXITS("EquationsMappingResidual_EquationsRowToResidualDOFMapGet")
-    RETURN 1
+!     EXITS("EquationsMappingResidual_EquationsRowToResidualDOFMapGet")
+!     RETURN
+! 999 NULLIFY(equationsRowToResidualDOFMap)
+! 998 ERRORS("EquationsMappingResidual_EquationsRowToResidualDOFMapGet",err,error)
+!     EXITS("EquationsMappingResidual_EquationsRowToResidualDOFMapGet")
+!     RETURN 1
     
-  END SUBROUTINE EquationsMappingResidual_EquationsRowToResidualDOFMapGet
+!   END SUBROUTINE EquationsMappingResidual_EquationsRowToResidualDOFMapGet
 
   !
   !================================================================================================================================

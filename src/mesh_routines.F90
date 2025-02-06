@@ -40,7 +40,6 @@
 !> the provisions above, a recipient may use your version of this file under
 !> the terms of any one of the MPL, the GPL or the LGPL.
 !>
-
 !> This module handles all mesh (node and element) routines.
 MODULE MeshRoutines
 
@@ -1342,9 +1341,12 @@ CONTAINS
     ENDIF
     NULLIFY(meshTopology)
     CALL MeshElements_MeshTopologyGet(meshElements,meshTopology,err,error,*999)
-    NULLIFY(mesh)
+    NULLIFY(mesh)    
     CALL MeshTopology_MeshGet(meshTopology,mesh,err,error,*999)
     region=>mesh%region
+    NULLIFY(nodes)
+    NULLIFY(parentRegion)
+    NULLIFY(interface)
     IF(ASSOCIATED(region)) THEN
       nodes=>region%nodes
     ELSE
@@ -2671,7 +2673,7 @@ CONTAINS
           & err,error,*999)
         DO derivativeIdx=1,meshNodes%nodes(nodeIdx)%numberOfDerivatives
           !TODO: change output string below so that it writes out derivativeIdx index as well
-          CALL WriteStringValue(DIAGNOSTIC_OUTPUT_TYPE,"    Global derivative index(derivativeIdx) = ", &
+          CALL WriteStringValue(DIAGNOSTIC_OUTPUT_TYPE,"    Global derivative index(derivativeIdx)  = ", &
             & meshNodes%nodes(nodeIdx)%derivatives(derivativeIdx)%globalDerivativeIndex,err,error,*999)
           CALL WriteStringValue(DIAGNOSTIC_OUTPUT_TYPE,"    Partial derivative index(derivativeIdx) = ", &
             & meshNodes%nodes(nodeIdx)%derivatives(derivativeIdx)%partialDerivativeIndex,err,error,*999)
@@ -2707,21 +2709,24 @@ CONTAINS
     TYPE(ListPtrType), POINTER :: nodeVersionList(:,:)
     TYPE(MeshElementsType), POINTER :: meshElements
     TYPE(MeshNodesType), POINTER :: meshNodes
-    
-    ENTERS("MeshTopology_NodesVersionCalculate",err,error,*999)
 
-    IF(.NOT.ASSOCIATED(meshTopology)) CALL FlagError("Mesh topology is not associated.",err,error,*999)
+    NULLIFY(nodeVersionList)
+    
+    ENTERS("MeshTopology_NodesVersionCalculate",err,error,*998)
+
+    IF(.NOT.ASSOCIATED(meshTopology)) CALL FlagError("Mesh topology is not associated.",err,error,*998)
     
     NULLIFY(meshElements)
-    CALL MeshTopology_MeshElementsGet(meshTopology,meshElements,err,error,*999)
+    CALL MeshTopology_MeshElementsGet(meshTopology,meshElements,err,error,*998)
     NULLIFY(meshNodes)
-    CALL MeshTopology_MeshNodesGet(meshTopology,meshNodes,err,error,*999)
+    CALL MeshTopology_MeshNodesGet(meshTopology,meshNodes,err,error,*998)
     
     !Loop over the mesh elements
     !Calculate the number of versions at each node. This needs to be calculated by looking at all the mesh elements
     !as we may have an adjacent elements in another domain with a higher order basis along with different versions
     !being assigned to its derivatives.
     !\todo : See if there are any constraints that can be applied to restrict the amount of memory being allocated here
+    NULLIFY(nodeVersionList)
     ALLOCATE(nodeVersionList(MAXIMUM_GLOBAL_DERIV_NUMBER,meshNodes%numberOfNodes),STAT=err)
     IF(err/=0) CALL FlagError("Could not allocate node version list.",err,error,*999)
     DO nodeIdx=1,meshNodes%numberOfNodes

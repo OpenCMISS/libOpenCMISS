@@ -116,15 +116,25 @@ MODULE CoordinateSystemRoutines
     MODULE PROCEDURE CoordinateSystem_DerivativeConvertToRCSP
   END INTERFACE CoordinateSystem_DerivativeConvertToRC
 
-  !>Transform a tensor in material coordinates to a tensor in geometric coordinates using the appropriate tensor transform. 
-  INTERFACE CoordinateSystem_MaterialTransformTensor
-    MODULE PROCEDURE CoordinateSystem_MaterialTransformVector0
-    MODULE PROCEDURE CoordinateSystem_MaterialTransformVector1
-    MODULE PROCEDURE CoordinateSystem_MaterialTransformTensor2
-    MODULE PROCEDURE CoordinateSystem_MaterialTransformTensor4
-    MODULE PROCEDURE CoordinateSystem_MaterialTransformVoigtTensor2
-    MODULE PROCEDURE CoordinateSystem_MaterialTransformVoigtTensor4
-  END INTERFACE CoordinateSystem_MaterialTransformTensor
+  !>Transform a tensor in material fibre coordinates to a tensor in material geometric coordinates using the appropriate tensor transform. 
+  INTERFACE CoordinateSystem_MaterialNuToXTransformTensor
+    MODULE PROCEDURE CoordinateSystem_MaterialNuToXTransformVector0
+    MODULE PROCEDURE CoordinateSystem_MaterialNuToXTransformVector1
+    MODULE PROCEDURE CoordinateSystem_MaterialNuToXTransformTensor2
+    MODULE PROCEDURE CoordinateSystem_MaterialNuToXTransformTensor4
+    MODULE PROCEDURE CoordinateSystem_MaterialNuToXTransformVoigtTensor2
+    MODULE PROCEDURE CoordinateSystem_MaterialNuToXTransformVoigtTensor4
+  END INTERFACE CoordinateSystem_MaterialNuToXTransformTensor
+
+  !>Transform a tensor in material geometric coordinates to a tensor in material fibre coordinates using the appropriate tensor transform. 
+  INTERFACE CoordinateSystem_MaterialXToNuTransformTensor
+    MODULE PROCEDURE CoordinateSystem_MaterialXToNuTransformVector0
+    MODULE PROCEDURE CoordinateSystem_MaterialXToNuTransformVector1
+    MODULE PROCEDURE CoordinateSystem_MaterialXToNuTransformTensor2
+    MODULE PROCEDURE CoordinateSystem_MaterialXToNuTransformTensor4
+    MODULE PROCEDURE CoordinateSystem_MaterialXToNuTransformVoigtTensor2
+    MODULE PROCEDURE CoordinateSystem_MaterialXToNuTransformVoigtTensor4
+  END INTERFACE CoordinateSystem_MaterialXToNuTransformTensor
 
   PUBLIC CoordinateSystem_ConvertFromRC
   
@@ -154,8 +164,10 @@ MODULE CoordinateSystemRoutines
 
   PUBLIC CoordinateSystem_MaterialTransformSymTensor2
 
-  PUBLIC CoordinateSystem_MaterialTransformTensor
+  PUBLIC CoordinateSystem_MaterialNuToXTransformTensor
 
+  PUBLIC CoordinateSystem_MaterialXToNuTransformTensor
+ 
   PUBLIC CoordinateSystem_MetricsCalculate
   
   PUBLIC CoordinateSystem_RadialInterpolationTypeSet
@@ -3640,19 +3652,21 @@ CONTAINS
   !>Calculates the transformation (and the inverse transformation) from the material coordinate system, nu, to the local coordinate
   !>system, xi.
   SUBROUTINE CoordinateSystem_MaterialFibreSystemCalculate(geometricInterpPointMetrics,fibreInterpPoint,dNudXi,dXidNu, &
-    & materialFibreVectors,err,error,*)
+    & dNudX,dXdNu,materialFibreVectors,err,error,*)
   
     !Argument variables
     TYPE(FieldInterpolatedPointMetricsType), POINTER :: geometricInterpPointMetrics !<The geometric interpolation point metrics at the point to calculate the material coordinate system from.
     TYPE(FieldInterpolatedPointType), POINTER :: fibreInterpPoint !<The fibre interpolation point at the point to calculate the material coordinate system from
-    REAL(DP), INTENT(OUT) :: dNudXi(:,:) !<dNudXi(nuIdx,xiIdx). On return, the transformation from the local coordinate system, xi, to the material coordinate system nu.
-    REAL(DP), INTENT(OUT) :: dXidNu(:,:) !<dXidNu(xiIdx,nuIdx). On return, the transformation from the material system, nu, to the local coordinate system, xi.
+    REAL(DP), INTENT(OUT) :: dNudXi(:,:) !<dNudXi(NuIdx,xiIdx). On return, the transformation from the local coordinate system, xi, to the material coordinate system Nu.
+    REAL(DP), INTENT(OUT) :: dXidNu(:,:) !<dXidNu(xiIdx,NuIdx). On return, the transformation from the material system, Nu, to the local coordinate system, xi.
+    REAL(DP), INTENT(OUT) :: dNudX(:,:) !<dNudX(NuIdx,XIdx). On return, the transformation from the coordinate system, X, to the material coordinate system Nu.
+    REAL(DP), INTENT(OUT) :: dXdNu(:,:) !<dXdNu(XIdx,NuIdx). On return, the transformation from the material system, Nu, to the coordinate system, X.
     REAL(DP), INTENT(OUT) :: materialFibreVectors(:,:) !<materialFibreVectors(XIdx,nuIdx). On return, the unit vectors defining the material fibre coorinate system.
     INTEGER(INTG), INTENT(OUT) :: err   !<The error code
     TYPE(VARYING_STRING), INTENT(OUT) ::  error   !<The error string
     !Local variables
     INTEGER(INTG) :: numberOfNuDimensions,numberOfXDimensions,numberOfXiDimensions
-    REAL(DP) :: angles(3),c(3),s(3)
+    REAL(DP) :: angles(3),c(3),detdXdNu,f(3),g(3),R(3,3),s(3)
     TYPE(VARYING_STRING) :: localError 
      
     ENTERS("CoordinateSystem_MaterialFibreSystemCalculate",err,error,*999)
@@ -3695,6 +3709,34 @@ CONTAINS
         & TRIM(NumberToVString(geometricInterpPointMetrics%numberOfXDimensions,"*",err,error))//"."
       CALL FlagError(localError,err,error,*999)
     ENDIF
+    IF(SIZE(dNudX,1)<geometricInterpPointMetrics%numberOfXDimensions) THEN
+      localError="The size of the first index of the specified dNudX matrix of "// &
+        & TRIM(NumberToVString(SIZE(dNudX,1),"*",err,error))// &
+        & " is too small. The size should be >= "// &
+        & TRIM(NumberToVString(geometricInterpPointMetrics%numberOfXDimensions,"*",err,error))//"."
+      CALL FlagError(localError,err,error,*999)
+    ENDIF
+    IF(SIZE(dNudX,2)<geometricInterpPointMetrics%numberOfXiDimensions) THEN
+      localError="The size of the second index of the specified dNudX matrix of "// &
+        & TRIM(NumberToVString(SIZE(dNudX,2),"*",err,error))// &
+        & " is too small. The size should be >= "// &
+        & TRIM(NumberToVString(geometricInterpPointMetrics%numberOfXDimensions,"*",err,error))//"."
+      CALL FlagError(localError,err,error,*999)
+    ENDIF
+    IF(SIZE(dXdNu,1)<geometricInterpPointMetrics%numberOfXiDimensions) THEN
+      localError="The size of the first index of the specified dXdNu matrix of "// &
+        & TRIM(NumberToVString(SIZE(dXdNu,1),"*",err,error))// &
+        & " is too small. The size should be >= "// &
+        & TRIM(NumberToVString(geometricInterpPointMetrics%numberOfXDimensions,"*",err,error))//"."
+      CALL FlagError(localError,err,error,*999)
+    ENDIF
+    IF(SIZE(dXdNu,2)<geometricInterpPointMetrics%numberOfXDimensions) THEN
+      localError="The size of the second index of the specified dXdNu matrix of "// &
+        & TRIM(NumberToVString(SIZE(dXdNu,2),"*",err,error))// &
+        & " is too small. The size should be >= "// &
+        & TRIM(NumberToVString(geometricInterpPointMetrics%numberOfXDimensions,"*",err,error))//"."
+      CALL FlagError(localError,err,error,*999)
+    ENDIF
     IF(SIZE(materialFibreVectors,1)<geometricInterpPointMetrics%numberOfXDimensions) THEN
       localError="The size of the first index of the specified fibre vectors matrix of "// &
         & TRIM(NumberToVString(SIZE(materialFibreVectors,1),"*",err,error))// &
@@ -3715,61 +3757,56 @@ CONTAINS
     numberOfNuDimensions=geometricInterpPointMetrics%numberOfXDimensions
     numberOfXiDimensions=geometricInterpPointMetrics%numberOfXiDimensions
 
-    !Initialise matrices
-    CALL IdentityMatrix(dNudXi,err,error,*999)
-    CALL IdentityMatrix(dXidNu,err,error,*999)
     CALL IdentityMatrix(materialFibreVectors,err,error,*999)
-
+    CALL IdentityMatrix(dXidNu,err,error,*999)
+    CALL IdentityMatrix(dNudXi,err,error,*999)
+    CALL IdentityMatrix(dXdNu,err,error,*999)
+    CALL IdentityMatrix(dNudX,err,error,*999)
+    
+    !Initialise matrices
     SELECT CASE(numberOfNuDimensions)
     CASE(1)
-      !In 1D the material fibre coordinates are aligned with the xi coordinates regardless
-      dNudXi(1,1)=1.0_DP
-      !Calculate dXidNu as the transpose of dNudXi as the matrices are orthogonal 
-      dXidNu(1,1)=1.0_DP
-      !Calculate the unit fibre vectors, f 
-      !f
-      materialFibreVectors(1,1)=1.0_DP
+      !In 1D the material fibre coordinates are aligned with the X coordinate system regardless
+      !Do nothing, initialised above.
     CASE(2)
       IF(ASSOCIATED(fibreInterpPoint)) THEN
         !With fibres
         !Get the fibre angle
         angles(1)=fibreInterpPoint%values(1,NO_PART_DERIV)
-        !Calculate dNudXi as the rotation matrix
-        dNudXi(1,1)=COS(angles(1))
-        dNudXi(1,2)=SIN(angles(1))
-        dNudXi(2,1)=-1.0_DP*SIN(angles(1))
-        dNudXi(2,2)=COS(angles(1))
+        !Calculate the rotation matrix
+        R(1,1)=COS(angles(1))
+        R(1,2)=SIN(angles(1))
+        R(2,1)=-1.0_DP*SIN(angles(1))
+        R(2,2)=COS(angles(1))
+        !Calculate the unit fibre vectors, f & g
+        !f
+        f(1)=R(1,1)*geometricInterpPointMetrics%dXidX(1,1)+ &
+          & R(1,2)*geometricInterpPointMetrics%dXidX(2,1)
+        f(2)=R(1,1)*geometricInterpPointMetrics%dXidX(1,2)+ &
+          & R(1,2)*geometricInterpPointMetrics%dXidX(2,2)  
+        !g
+        g(1)=R(2,1)*geometricInterpPointMetrics%dXidX(1,1)+ &
+          & R(2,2)*geometricInterpPointMetrics%dXidX(2,1)
+        g(2)=R(2,1)*geometricInterpPointMetrics%dXidX(1,2)+ &
+          & R(2,2)*geometricInterpPointMetrics%dXidX(2,2)
+        !Calculate the orthogonal material fibre system
+        CALL Orthogonalise(f(1:2),g(1:2),materialFibreVectors(1:2,1:2),err,error,*999)
+        !Calculate the transformation tensors
+        dXdNu(1:2,1:2)=materialFibreVectors(1:2,1:2)
+        CALL Invert(dXdNu(1:2,1:2),dNudX(1:2,1:2),detdXdNu,err,error,*999)
+        CALL MatrixProduct(dNudX(1:2,1:2),geometricInterpPointMetrics%dXdXi(1:2,1:2),dNudXi(1:2,1:2),err,error,*999)
+        CALL MatrixProduct(geometricInterpPointMetrics%dXidX(1:2,1:2),dXdNu(1:2,1:2),dXidNu(1:2,1:2),err,error,*999)
       ELSE
-        !Without fibres, the material coordinates are aligned with the xi coordinates
-        dNudXi(1,1)=1.0_DP
-        dNudXi(1,2)=0.0_DP
-        dNudXi(2,1)=0.0_DP
-        dNudXi(2,2)=1.0_DP
+        !Without fibres, the material coordinates are aligned with the X coordinates
+        dNudXi(1:2,1:2)=geometricInterpPointMetrics%dXdXi(1:2,1:2)
+        dXidNu(1:2,1:2)=geometricInterpPointMetrics%dXidX(1:2,1:2)
       ENDIF
-      !Calculate dXidNu as the transpose of dNudXi as the matrices are orthogonal 
-      dXidNu(1,1)=dNudXi(1,1)
-      dXidNu(1,2)=dNudXi(2,1)
-      dXidNu(2,1)=dNudXi(1,2)
-      dXidNu(2,2)=dNudXi(2,2)
-      !Calculate the unit fibre vectors, f & g
-      !f
-      materialFibreVectors(1,1)=dNudXi(1,1)*geometricInterpPointMetrics%dXidX(1,1)+ &
-        & dNudXi(1,2)*geometricInterpPointMetrics%dXidX(2,1)
-      materialFibreVectors(2,1)=dNudXi(1,1)*geometricInterpPointMetrics%dXidX(1,2)+ &
-        & dNudXi(1,2)*geometricInterpPointMetrics%dXidX(2,2)      
-      CALL Normalise(materialFibreVectors(1:2,1),materialFibreVectors(1:2,1),err,error,*999)
-      !g
-      materialFibreVectors(1,2)=dNudXi(2,1)*geometricInterpPointMetrics%dXidX(1,1)+ &
-        & dNudXi(2,2)*geometricInterpPointMetrics%dXidX(2,1)
-      materialFibreVectors(2,2)=dNudXi(2,1)*geometricInterpPointMetrics%dXidX(1,2)+ &
-        & dNudXi(2,2)*geometricInterpPointMetrics%dXidX(2,2)
-      CALL Normalise(materialFibreVectors(1:2,2),materialFibreVectors(1:2,2),err,error,*999)
     CASE(3)
       IF(ASSOCIATED(fibreInterpPoint)) THEN
         !With fibres
         !Get the fibre/roll, sheet/pitch and imbrication/yaw angles
         angles(1:3)=fibreInterpPoint%values(1:3,NO_PART_DERIV)
-        !Calculate dNudXi as the 3D rotation matrix
+        !Calculate the 3D rotation matrix
         c(1)=COS(angles(1))
         c(2)=COS(angles(2))
         c(3)=COS(angles(3))
@@ -3777,71 +3814,48 @@ CONTAINS
         s(2)=SIN(angles(2))
         s(3)=SIN(angles(3))
         !Use yaw, pitch, roll convection i.e., extrinsic rotations about X-Y-Z
-        dNudXi(1,1)=c(2)*c(3)
-        dNudXi(1,2)=-1.0_DP*c(2)*s(3)
-        dNudXi(1,3)=s(2)
-        dNudXi(2,1)=c(1)*s(3)+c(3)*s(1)*s(2)
-        dNudXi(2,2)=c(1)*c(3)-s(1)*s(2)*s(3)
-        dNudXi(2,3)=-1.0_DP*c(2)*s(1)
-        dNudXi(3,1)=s(1)*s(3)-c(1)*c(3)*s(2)
-        dNudXi(3,2)=c(3)*s(1)+c(1)*s(2)*s(3)
-        dNudXi(3,3)=c(1)*c(2)                
+        R(1,1)=c(2)*c(3)
+        R(1,2)=-1.0_DP*c(2)*s(3)
+        R(1,3)=s(2)
+        R(2,1)=c(1)*s(3)+c(3)*s(1)*s(2)
+        R(2,2)=c(1)*c(3)-s(1)*s(2)*s(3)
+        R(2,3)=-1.0_DP*c(2)*s(1)
+        R(3,1)=s(1)*s(3)-c(1)*c(3)*s(2)
+        R(3,2)=c(3)*s(1)+c(1)*s(2)*s(3)
+        R(3,3)=c(1)*c(2)                
+        !Calculate the unit fibre vectors, f, g & h
+        !f
+        f(1)=R(1,1)*geometricInterpPointMetrics%dXidX(1,1)+ &
+          & R(1,2)*geometricInterpPointMetrics%dXidX(2,1)+ &
+          & R(1,3)*geometricInterpPointMetrics%dXidX(3,1)
+        f(2)=R(1,1)*geometricInterpPointMetrics%dXidX(1,2)+ &
+          & R(1,2)*geometricInterpPointMetrics%dXidX(2,2)+ &
+          & R(1,3)*geometricInterpPointMetrics%dXidX(3,2)
+        f(3)=R(1,1)*geometricInterpPointMetrics%dXidX(1,3)+ &
+          & R(1,2)*geometricInterpPointMetrics%dXidX(2,3)+ &
+          & R(1,3)*geometricInterpPointMetrics%dXidX(3,3)
+        !g
+        g(1)=R(2,1)*geometricInterpPointMetrics%dXidX(1,1)+ &
+          & R(2,2)*geometricInterpPointMetrics%dXidX(2,1)+ &
+          & R(2,3)*geometricInterpPointMetrics%dXidX(3,1)
+        g(2)=R(2,1)*geometricInterpPointMetrics%dXidX(1,2)+ &
+          & R(2,2)*geometricInterpPointMetrics%dXidX(2,2)+ &
+          & R(2,3)*geometricInterpPointMetrics%dXidX(3,2)
+        g(3)=R(2,1)*geometricInterpPointMetrics%dXidX(1,3)+ &
+          & R(2,2)*geometricInterpPointMetrics%dXidX(2,3)+ &
+          & R(2,3)*geometricInterpPointMetrics%dXidX(3,3)
+        !Calculate the orthogonal material fibre system
+        CALL Orthogonalise(f(1:3),g(1:3),materialFibreVectors(1:3,1:3),err,error,*999)
+        !Calculate the transformation tensors
+        dXdNu(1:3,1:3)=materialFibreVectors(1:3,1:3)
+        CALL Invert(dXdNu(1:3,1:3),dNudX(1:3,1:3),detdXdNu,err,error,*999)
+        CALL MatrixProduct(dNudX(1:3,1:3),geometricInterpPointMetrics%dXdXi(1:3,1:3),dNudXi(1:3,1:3),err,error,*999)
+        CALL MatrixProduct(geometricInterpPointMetrics%dXidX(1:3,1:3),dXdNu(1:3,1:3),dXidNu(1:3,1:3),err,error,*999)
       ELSE
-        !Without fibres, the material coordinates are aligned with the xi coordinates
-        dNudXi(1,1)=1.0_DP
-        dNudXi(1,2)=0.0_DP
-        dNudXi(1,3)=0.0_DP
-        dNudXi(2,1)=0.0_DP
-        dNudXi(2,2)=1.0_DP
-        dNudXi(2,3)=0.0_DP
-        dNudXi(3,1)=0.0_DP
-        dNudXi(3,2)=0.0_DP
-        dNudXi(3,3)=1.0_DP
-      ENDIF
-      !Calculate dXidNu as the transpose of dNudXi as the matrices are orthogonal 
-      dXidNu(1,1)=dNudXi(1,1)
-      dXidNu(1,2)=dNudXi(2,1)
-      dXidNu(1,3)=dNudXi(3,1)
-      dXidNu(2,1)=dNudXi(1,2)
-      dXidNu(2,2)=dNudXi(2,2)
-      dXidNu(2,3)=dNudXi(3,2)
-      dXidNu(3,1)=dNudXi(1,3)
-      dXidNu(3,2)=dNudXi(2,3)
-      dXidNu(3,3)=dNudXi(3,3)
-      !Calculate the unit fibre vectors, f, g & h
-      !f
-      materialFibreVectors(1,1)=dNudXi(1,1)*geometricInterpPointMetrics%dXidX(1,1)+ &
-        & dNudXi(1,2)*geometricInterpPointMetrics%dXidX(2,1)+ &
-        & dNudXi(1,3)*geometricInterpPointMetrics%dXidX(3,1)
-      materialFibreVectors(2,1)=dNudXi(1,1)*geometricInterpPointMetrics%dXidX(1,2)+ &
-        & dNudXi(1,2)*geometricInterpPointMetrics%dXidX(2,2)+ &
-        & dNudXi(1,3)*geometricInterpPointMetrics%dXidX(3,2)
-      materialFibreVectors(3,1)=dNudXi(1,1)*geometricInterpPointMetrics%dXidX(1,2)+ &
-        & dNudXi(1,2)*geometricInterpPointMetrics%dXidX(2,2)+ &
-        & dNudXi(1,3)*geometricInterpPointMetrics%dXidX(3,3)
-      CALL Normalise(materialFibreVectors(1:3,1),materialFibreVectors(1:3,1),err,error,*999)
-      !g
-      materialFibreVectors(1,2)=dNudXi(2,1)*geometricInterpPointMetrics%dXidX(1,1)+ &
-        & dNudXi(2,2)*geometricInterpPointMetrics%dXidX(2,1)+ &
-        & dNudXi(2,3)*geometricInterpPointMetrics%dXidX(3,1)
-      materialFibreVectors(2,2)=dNudXi(2,1)*geometricInterpPointMetrics%dXidX(1,2)+ &
-        & dNudXi(2,2)*geometricInterpPointMetrics%dXidX(2,2)+ &
-        & dNudXi(2,3)*geometricInterpPointMetrics%dXidX(3,2)
-      materialFibreVectors(3,2)=dNudXi(2,1)*geometricInterpPointMetrics%dXidX(1,2)+ &
-        & dNudXi(2,2)*geometricInterpPointMetrics%dXidX(2,2)+ &
-        & dNudXi(2,3)*geometricInterpPointMetrics%dXidX(3,3)
-      CALL Normalise(materialFibreVectors(1:3,2),materialFibreVectors(1:3,2),err,error,*999)
-      !h
-      materialFibreVectors(1,3)=dNudXi(3,1)*geometricInterpPointMetrics%dXidX(1,1)+ &
-        & dNudXi(3,2)*geometricInterpPointMetrics%dXidX(2,1)+ &
-        & dNudXi(3,3)*geometricInterpPointMetrics%dXidX(3,1)
-      materialFibreVectors(2,3)=dNudXi(3,1)*geometricInterpPointMetrics%dXidX(1,2)+ &
-        & dNudXi(3,2)*geometricInterpPointMetrics%dXidX(2,2)+ &
-        & dNudXi(3,3)*geometricInterpPointMetrics%dXidX(3,2)
-      materialFibreVectors(3,3)=dNudXi(3,1)*geometricInterpPointMetrics%dXidX(1,2)+ &
-        & dNudXi(3,2)*geometricInterpPointMetrics%dXidX(2,2)+ &
-        & dNudXi(3,3)*geometricInterpPointMetrics%dXidX(3,3)
-      CALL Normalise(materialFibreVectors(1:3,3),materialFibreVectors(1:3,3),err,error,*999)
+        !Without fibres, the material coordinates are aligned with the X coordinates
+        dNudXi(1:3,1:3)=geometricInterpPointMetrics%dXdXi(1:3,1:3)
+        dXidNu(1:3,1:3)=geometricInterpPointMetrics%dXidX(1:3,1:3)
+      ENDIF     
     CASE DEFAULT
       localError="The number of dimensions in the geometric interpolated point of "// &
         & TRIM(NumberToVString(numberOfNuDimensions,"*",err,error))// &
@@ -3863,15 +3877,23 @@ CONTAINS
       CALL WriteStringMatrix(DIAGNOSTIC_OUTPUT_TYPE,1,1,numberOfXiDimensions,1,1,numberOfNuDimensions, &
         & numberOfNuDimensions,numberOfNuDimensions,dXidNu,WRITE_STRING_MATRIX_NAME_AND_INDICES, &
         & '("    dXidNu','(",I1,",:)',' :",3(X,E13.6))','(17X,3(X,E13.6))',err,error,*999)
+      CALL WriteString(DIAGNOSTIC_OUTPUT_TYPE,"  Derivative of Nu wrt X:",err,error,*999)
+      CALL WriteStringMatrix(DIAGNOSTIC_OUTPUT_TYPE,1,1,numberOfNuDimensions,1,1,numberOfXDimensions, &
+        & numberOfXDimensions,numberOfXDimensions,dNudX,WRITE_STRING_MATRIX_NAME_AND_INDICES, &
+        & '("    dNudX','(",I1,",:)','  :",3(X,E13.6))','(17X,3(X,E13.6))',err,error,*999)
+      CALL WriteString(DIAGNOSTIC_OUTPUT_TYPE,"  Derivative of X wrt Nu:",err,error,*999)
+      CALL WriteStringMatrix(DIAGNOSTIC_OUTPUT_TYPE,1,1,numberOfXDimensions,1,1,numberOfNuDimensions, &
+        & numberOfNuDimensions,numberOfNuDimensions,dXdNu,WRITE_STRING_MATRIX_NAME_AND_INDICES, &
+        & '("    dXdNu','(",I1,",:)','  :",3(X,E13.6))','(17X,3(X,E13.6))',err,error,*999)
       CALL WriteString(DIAGNOSTIC_OUTPUT_TYPE,"  Unit material fibre coordinate system vectors:",err,error,*999)
       CALL WriteStringVector(DIAGNOSTIC_OUTPUT_TYPE,1,1,numberOfXDimensions,numberOfXDimensions,numberOfXDimensions, &
-        & materialFibreVectors(:,1),'("    f              :",3(X,E13.6))','(17X,3(X,E13.6))',err,error,*999)
+        & materialFibreVectors(:,1),'("    f           :",3(X,E13.6))','(17X,3(X,E13.6))',err,error,*999)
       IF(numberOfXDimensions>1) THEN
         CALL WriteStringVector(DIAGNOSTIC_OUTPUT_TYPE,1,1,numberOfXDimensions,numberOfXDimensions,numberOfXDimensions, &
-          & materialFibreVectors(:,2),'("    g              :",3(X,E13.6))','(17X,3(X,E13.6))',err,error,*999)
+          & materialFibreVectors(:,2),'("    g           :",3(X,E13.6))','(17X,3(X,E13.6))',err,error,*999)
         IF(numberOfXDimensions>2) THEN
           CALL WriteStringVector(DIAGNOSTIC_OUTPUT_TYPE,1,1,numberOfXDimensions,numberOfXDimensions,numberOfXDimensions, &
-            & materialFibreVectors(:,3),'("    h              :",3(X,E13.6))','(17X,3(X,E13.6))',err,error,*999)
+            & materialFibreVectors(:,3),'("    h           :",3(X,E13.6))','(17X,3(X,E13.6))',err,error,*999)
         ENDIF
       ENDIF
     ENDIF
@@ -4238,25 +4260,27 @@ CONTAINS
   !================================================================================================================================
   !
 
-  !>Transforms a second order tensor from the materials coordinates (e.g., conductivity tensor) to a tensor in geometric coordinates using the appropriate transformation formula for the tensor type
-  SUBROUTINE CoordinateSystem_MaterialTransformTensor2(tensorIndexTypes,geometricInterpPointMetrics,fibreInterpPoint, &
-    & materialTensor,transformedTensor,err,error,*)
+  !>Transforms a second order tensor from the material fibre coordinates (e.g., conductivity tensor) to a tensor in material geometric coordinates using the appropriate transformation formula for the tensor type
+  SUBROUTINE CoordinateSystem_MaterialNuToXTransformTensor2(tensorIndexTypes,geometricInterpPointMetrics, &
+    & fibreInterpPoint,fibreTensor,transformedGeometricTensor,err,error,*)
 
     !Argument variables
     INTEGER(INTG), INTENT(IN) :: tensorIndexTypes(:) !<tensorIndexTypes(rankIdx). The type (e.g., covariant or contravariant) foreach rankIdx of the second order tensor to transform \see Constants_TensorIndexTypes
-    TYPE(FieldInterpolatedPointMetricsType), POINTER :: geometricInterpPointMetrics !<The geometric interpolated point metrics at the point to tranformed tensor.
+    TYPE(FieldInterpolatedPointMetricsType), POINTER :: geometricInterpPointMetrics !<The geometric interpolated point metrics at the point to tranform the tensor.
     TYPE(FieldInterpolatedPointType), POINTER :: fibreInterpPoint !<The fibre interpolated point (if it exists).
     
-    REAL(DP), INTENT(IN) :: materialTensor(:,:) !<materialTensor(nuCoordinateIdx,nuCoordinateIdx). The original material second order tensor values to transform.
-    REAL(DP), INTENT(OUT) :: transformedTensor(:,:) !<transformedTensor(xCoordinateIdx,xCoordinateIdx). On exit, the second order tensor transformed from material coordinates to geometric coordinates.
+    REAL(DP), INTENT(IN) :: fibreTensor(:,:) !<fibreTensor(NuCoordinateIdx1,NuCoordinateIdx2). The original material second order fibre tensor values to transform.
+    REAL(DP), INTENT(OUT) :: transformedGeometricTensor(:,:) !<transformedGeometricTensor(XCoordinateIdx1,XCoordinateIdx2). On exit, the second order tensor transformed from material fibre coordinates to material geometric coordinates.
     INTEGER(INTG), INTENT(OUT) :: err !<The error code
     TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
     !Local Variables
     INTEGER(INTG) :: numberOfDimensions,numberOfXi
-    REAL(DP) :: dNudXi(3,3),dXidNu(3,3),materialFibreVectors(3,3),tempTensor(3,3)
+    REAL(DP) :: dNudX(3,3),dNudXi(3,3),dXdNu(3,3),dXidNu(3,3),materialFibreVectors(3,3),tempTensor(3,3)
+#ifdef WITH_PRECHECKS    
     TYPE(VARYING_STRING) :: localError
+#endif    
 
-    ENTERS("CoordinateSystem_MaterialTransformTensor2",err,error,*999)
+    ENTERS("CoordinateSystem_MaterialNuToXTransformTensor2",err,error,*999)
 
 #ifdef WITH_PRECHECKS
     IF(SIZE(tensorIndexTypes,1)<2) THEN
@@ -4273,27 +4297,27 @@ CONTAINS
         & TRIM(NumberToVString(geometricInterpPointMetrics%numberOfXiDimensions,"*",err,error))//"."
       CALL FlagError(localError,err,error,*999)
     ENDIF
-    IF(SIZE(materialTensor,1)<geometricInterpPointMetrics%numberOfXDimensions) THEN
-      localError="The first dimension of the specified material tensor of "// &
-        & TRIM(NumberToVString(SIZE(materialTensor,1),"*",err,error))//" is too small. The size should be >= "// &
+    IF(SIZE(fibreTensor,1)<geometricInterpPointMetrics%numberOfXDimensions) THEN
+      localError="The first dimension of the specified fibre tensor of "// &
+        & TRIM(NumberToVString(SIZE(fibreTensor,1),"*",err,error))//" is too small. The size should be >= "// &
         & TRIM(NumberToVString(geometricInterpPointMetrics%numberOfXDimensions,"*",err,error))//"."
       CALL FlagError(localError,err,error,*999)
     ENDIF
-    IF(SIZE(materialTensor,2)<geometricInterpPointMetrics%numberOfXDimensions) THEN
-      localError="The second dimension of the specified material tensor of "// &
-        & TRIM(NumberToVString(SIZE(materialTensor,2),"*",err,error))//" is too small. The size should be >= "// &
+    IF(SIZE(fibreTensor,2)<geometricInterpPointMetrics%numberOfXDimensions) THEN
+      localError="The second dimension of the specified fibre tensor of "// &
+        & TRIM(NumberToVString(SIZE(fibreTensor,2),"*",err,error))//" is too small. The size should be >= "// &
         & TRIM(NumberToVString(geometricInterpPointMetrics%numberOfXDimensions,"*",err,error))//"."
       CALL FlagError(localError,err,error,*999)
     ENDIF
-    IF(SIZE(transformedTensor,1)<geometricInterpPointMetrics%numberOfXDimensions) THEN
-      localError="The first dimension of the specified transformed tensor of "// &
-        & TRIM(NumberToVString(SIZE(transformedTensor,1),"*",err,error))//" is too small. The size should be >= "// &
+    IF(SIZE(transformedGeometricTensor,1)<geometricInterpPointMetrics%numberOfXDimensions) THEN
+      localError="The first dimension of the specified transformed geometric tensor of "// &
+        & TRIM(NumberToVString(SIZE(transformedGeometricTensor,1),"*",err,error))//" is too small. The size should be >= "// &
         & TRIM(NumberToVString(geometricInterpPointMetrics%numberOfXDimensions,"*",err,error))//"."
       CALL FlagError(localError,err,error,*999)
     ENDIF
-    IF(SIZE(transformedTensor,2)<geometricInterpPointMetrics%numberOfXDimensions) THEN
-      localError="The second dimension of the specified transformed tensor of "// &
-        & TRIM(NumberToVString(SIZE(transformedTensor,2),"*",err,error))//" is too small. The size should be >= "// &
+    IF(SIZE(transformedGeometricTensor,2)<geometricInterpPointMetrics%numberOfXDimensions) THEN
+      localError="The second dimension of the specified transformed geometric tensor of "// &
+        & TRIM(NumberToVString(SIZE(transformedGeometricTensor,2),"*",err,error))//" is too small. The size should be >= "// &
         & TRIM(NumberToVString(geometricInterpPointMetrics%numberOfXDimensions,"*",err,error))//"."
       CALL FlagError(localError,err,error,*999)
     ENDIF
@@ -4305,68 +4329,70 @@ CONTAINS
     !Calculate material coordinates
     CALL CoordinateSystem_MaterialFibreSystemCalculate(geometricInterpPointMetrics,fibreInterpPoint, &
       & dNudXi(1:numberOfDimensions,1:numberOfXi),dXidNu(1:numberOfXi,1:numberOfDimensions), &
+      & dNudX(1:numberOfDimensions,1:numberOfDimensions),dXdNu(1:numberOfDimensions,1:numberOfDimensions), &
       & materialFibreVectors(1:numberOfDimensions,1:numberOfXi),err,error,*999)
 
-    !First transform the tensor from material/nu coordinates to element/xi coordinates
-    CALL TensorTransform(numberOfDimensions,tensorIndexTypes,materialTensor(1:numberOfDimensions,1:numberOfDimensions), &
-      & dXidNu(1:numberOfXi,1:numberOfDimensions), &
-      & dNudXi(1:numberOfDimensions,1:numberOfXi), &
+    !First transform the tensor from material fibre coordinates to element/xi coordinates
+    CALL TensorTransform(numberOfDimensions,tensorIndexTypes,fibreTensor(1:numberOfDimensions,1:numberOfDimensions), &
+      & dXidNu(1:numberOfXi,1:numberOfDimensions),dNudXi(1:numberOfDimensions,1:numberOfXi), &
       & tempTensor(1:numberOfXi,1:numberOfXi),err,error,*999)
     !Next transform the tensor from element/xi to geometric coordinates
     CALL TensorTransform(numberOfDimensions,tensorIndexTypes,tempTensor(1:numberOfXi,1:numberOfXi), &
       & geometricInterpPointMetrics%dXdXi(1:numberOfDimensions,1:numberOfXi), &
       & geometricInterpPointMetrics%dXidX(1:numberOfXi,1:numberOfDimensions), &
-      & transformedTensor(1:numberOfDimensions,1:numberOfDimensions), err,error,*999)
+      & transformedGeometricTensor(1:numberOfDimensions,1:numberOfDimensions), err,error,*999)
        
     IF(diagnostics1) THEN
       CALL WriteString(DIAGNOSTIC_OUTPUT_TYPE,"",err,error,*999)
-      CALL WriteString(DIAGNOSTIC_OUTPUT_TYPE,"Material tensor transformation:",err,error,*999)
+      CALL WriteString(DIAGNOSTIC_OUTPUT_TYPE,"Material Nu to X tensor transformation:",err,error,*999)
       CALL WriteStringValue(DIAGNOSTIC_OUTPUT_TYPE,"  Number of X  = ",numberOfDimensions,err,error,*999)
       CALL WriteStringValue(DIAGNOSTIC_OUTPUT_TYPE,"  Number of Xi = ",numberOfXi,err,error,*999)
       CALL WriteStringVector(DIAGNOSTIC_OUTPUT_TYPE,1,1,2,2,2,tensorIndexTypes, &
         & '("  Tensor index types :",2(X,I1))','(22X,2(X,I1))',err,error,*999)      
-      CALL WriteString(DIAGNOSTIC_OUTPUT_TYPE,"  Material tensor:",err,error,*999)
+      CALL WriteString(DIAGNOSTIC_OUTPUT_TYPE,"  Material fibre tensor:",err,error,*999)
       CALL WriteStringMatrix(DIAGNOSTIC_OUTPUT_TYPE,1,1,numberOfDimensions,1,1,numberOfDimensions,numberOfDimensions, &
-        & numberOfDimensions,materialTensor,WRITE_STRING_MATRIX_NAME_AND_INDICES, &
-        & '("    MT','(",I1,",:)',' :",3(X,E13.6))','(12X,3(X,E13.6))',err,error,*999)
-      CALL WriteString(DIAGNOSTIC_OUTPUT_TYPE,"  Transformed tensor:",err,error,*999)
+        & numberOfDimensions,fibreTensor,WRITE_STRING_MATRIX_NAME_AND_INDICES, &
+        & '("    FT','(",I1,",:)',' :",3(X,E13.6))','(12X,3(X,E13.6))',err,error,*999)
+      CALL WriteString(DIAGNOSTIC_OUTPUT_TYPE,"  Transformed material geometric tensor:",err,error,*999)
       CALL WriteStringMatrix(DIAGNOSTIC_OUTPUT_TYPE,1,1,numberOfDimensions,1,1,numberOfDimensions,numberOfDimensions, &
-        & numberOfDimensions,transformedTensor,WRITE_STRING_MATRIX_NAME_AND_INDICES, &
-        & '("    TT','(",I1,",:)','   :",3(X,E13.6))','(12X,3(X,E13.6))',err,error,*999)
+        & numberOfDimensions,transformedGeometricTensor,WRITE_STRING_MATRIX_NAME_AND_INDICES, &
+        & '("    GT','(",I1,",:)','   :",3(X,E13.6))','(12X,3(X,E13.6))',err,error,*999)
     ENDIF
         
-    EXITS("CoordinateSystem_MaterialTransformTensor2")
+    EXITS("CoordinateSystem_MaterialNuToXTransformTensor2")
     RETURN
-999 ERRORS("CoordinateSystem_MaterialTransformTensor2",err,error)
-    EXITS("CoordinateSystem_MaterialTransformTensor2")
+999 ERRORS("CoordinateSystem_MaterialNuToXTransformTensor2",err,error)
+    EXITS("CoordinateSystem_MaterialNuToXTransformTensor2")
     RETURN 1
     
-  END SUBROUTINE CoordinateSystem_MaterialTransformTensor2
+  END SUBROUTINE CoordinateSystem_MaterialNuToXTransformTensor2
 
   !
   !================================================================================================================================
   !
 
-  !>Transforms a fourth order tensor from the materials coordinates (e.g., elasticity tensor) to a tensor in geometric coordinates using the appropriate transformation formula for the tensor type
-  SUBROUTINE CoordinateSystem_MaterialTransformTensor4(tensorIndexTypes,geometricInterpPointMetrics,fibreInterpPoint, &
-    & materialTensor,transformedTensor,err,error,*)
+  !>Transforms a fourth order tensor from the materials fibre coordinates (e.g., elasticity tensor) to a tensor in material geometric coordinates using the appropriate transformation formula for the tensor type
+  SUBROUTINE CoordinateSystem_MaterialNuToXTransformTensor4(tensorIndexTypes,geometricInterpPointMetrics, &
+    & fibreInterpPoint,fibreTensor,transformedGeometricTensor,err,error,*)
 
     !Argument variables
     INTEGER(INTG), INTENT(IN) :: tensorIndexTypes(:) !<tensorIndexTypes(rankIdx). The type (e.g., covariant or contravariant) foreach rankIdx of the fourth order tensor to transform \see Constants_TensorIndexTypes
-    TYPE(FieldInterpolatedPointMetricsType), POINTER :: geometricInterpPointMetrics !<The geometric interpolated point metrics at the point to tranformed tensor.
+    TYPE(FieldInterpolatedPointMetricsType), POINTER :: geometricInterpPointMetrics !<The geometric interpolated point metrics at the point to tranform the tensor.
     TYPE(FieldInterpolatedPointType), POINTER :: fibreInterpPoint !<The fibre interpolated point (if it exists).
     
-    REAL(DP), INTENT(IN) :: materialTensor(:,:,:,:) !<materialTensor(nuCoordinateIdx,nuCoordinateIdx,nuCoordinateIdx,nuCoordinateIdx). The original material fourth order tensor values to transform.
-    REAL(DP), INTENT(OUT) :: transformedTensor(:,:,:,:) !<transformedTensor(xCoordinateIdx,xCoordinateIdx,xCoordinateIdx,xCoordinateIdx). On exit, the fourth order tensor transformed from material coordinates to geometric coordinates.
+    REAL(DP), INTENT(IN) :: fibreTensor(:,:,:,:) !<fibreTensor(NuCoordinateIdx1,NuCoordinateIdx2,NuCoordinateIdx3,NuCoordinateIdx4). The original material fourth order fibre tensor values to transform.
+    REAL(DP), INTENT(OUT) :: transformedGeometricTensor(:,:,:,:) !<transformedGeometricTensor(XCoordinateIdx1,XCoordinateIdx2,XCoordinateIdx3,XCoordinateIdx4). On exit, the fourth order tensor transformed from material fibre coordinates to material geometric coordinates.
     INTEGER(INTG), INTENT(OUT) :: err !<The error code
     TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
     !Local Variables
     INTEGER(INTG) :: numberOfDimensions,numberOfXi
-    REAL(DP) :: dNudXi(3,3),dXidNu(3,3),materialFibreVectors(3,3),tempTensor(3,3,3,3)
+    REAL(DP) :: dNudX(3,3),dNudXi(3,3),dXdNu(3,3),dXidNu(3,3),materialFibreVectors(3,3),tempTensor(3,3,3,3)
+#ifdef WITH_PRECHECKS    
     TYPE(VARYING_STRING) :: localError
+#endif    
 
-    ENTERS("CoordinateSystem_MaterialTransformTensor4",err,error,*999)
-
+    ENTERS("CoordinateSystem_MaterialNuToXTransformTensor4",err,error,*999)
+    
 #ifdef WITH_PRECHECKS
     IF(SIZE(tensorIndexTypes,1)<4) THEN
       localError="The size of the specified tensor index types array is "// &
@@ -4382,51 +4408,51 @@ CONTAINS
         & TRIM(NumberToVString(geometricInterpPointMetrics%numberOfXiDimensions,"*",err,error))//"."
       CALL FlagError(localError,err,error,*999)
     ENDIF
-    IF(SIZE(materialTensor,1)<geometricInterpPointMetrics%numberOfXDimensions) THEN
-      localError="The first dimension of the specified material tensor of "// &
-        & TRIM(NumberToVString(SIZE(materialTensor,1),"*",err,error))//" is too small. The size should be >= "// &
+    IF(SIZE(fibreTensor,1)<geometricInterpPointMetrics%numberOfXDimensions) THEN
+      localError="The first dimension of the specified fibre tensor of "// &
+        & TRIM(NumberToVString(SIZE(fibreTensor,1),"*",err,error))//" is too small. The size should be >= "// &
         & TRIM(NumberToVString(geometricInterpPointMetrics%numberOfXDimensions,"*",err,error))//"."
       CALL FlagError(localError,err,error,*999)
     ENDIF
-    IF(SIZE(materialTensor,2)<geometricInterpPointMetrics%numberOfXDimensions) THEN
-      localError="The second dimension of the specified material tensor of "// &
-        & TRIM(NumberToVString(SIZE(materialTensor,2),"*",err,error))//" is too small. The size should be >= "// &
+    IF(SIZE(fibreTensor,2)<geometricInterpPointMetrics%numberOfXDimensions) THEN
+      localError="The second dimension of the specified fibre tensor of "// &
+        & TRIM(NumberToVString(SIZE(fibreTensor,2),"*",err,error))//" is too small. The size should be >= "// &
         & TRIM(NumberToVString(geometricInterpPointMetrics%numberOfXDimensions,"*",err,error))//"."
       CALL FlagError(localError,err,error,*999)
     ENDIF
-    IF(SIZE(materialTensor,3)<geometricInterpPointMetrics%numberOfXDimensions) THEN
-      localError="The third dimension of the specified material tensor of "// &
-        & TRIM(NumberToVString(SIZE(materialTensor,3),"*",err,error))//" is too small. The size should be >= "// &
+    IF(SIZE(fibreTensor,3)<geometricInterpPointMetrics%numberOfXDimensions) THEN
+      localError="The third dimension of the specified fibre tensor of "// &
+        & TRIM(NumberToVString(SIZE(fibreTensor,3),"*",err,error))//" is too small. The size should be >= "// &
         & TRIM(NumberToVString(geometricInterpPointMetrics%numberOfXDimensions,"*",err,error))//"."
       CALL FlagError(localError,err,error,*999)
     ENDIF
-    IF(SIZE(materialTensor,4)<geometricInterpPointMetrics%numberOfXDimensions) THEN
-      localError="The fourth dimension of the specified material tensor of "// &
-        & TRIM(NumberToVString(SIZE(materialTensor,4),"*",err,error))//" is too small. The size should be >= "// &
+    IF(SIZE(fibreTensor,4)<geometricInterpPointMetrics%numberOfXDimensions) THEN
+      localError="The fourth dimension of the specified fibre tensor of "// &
+        & TRIM(NumberToVString(SIZE(fibreTensor,4),"*",err,error))//" is too small. The size should be >= "// &
         & TRIM(NumberToVString(geometricInterpPointMetrics%numberOfXDimensions,"*",err,error))//"."
       CALL FlagError(localError,err,error,*999)
     ENDIF
-    IF(SIZE(transformedTensor,1)<geometricInterpPointMetrics%numberOfXDimensions) THEN
-      localError="The first dimension of the specified transformed tensor of "// &
-        & TRIM(NumberToVString(SIZE(transformedTensor,1),"*",err,error))//" is too small. The size should be >= "// &
+    IF(SIZE(transformedGeometricTensor,1)<geometricInterpPointMetrics%numberOfXDimensions) THEN
+      localError="The first dimension of the specified transformed geometric tensor of "// &
+        & TRIM(NumberToVString(SIZE(transformedGeometricTensor,1),"*",err,error))//" is too small. The size should be >= "// &
         & TRIM(NumberToVString(geometricInterpPointMetrics%numberOfXDimensions,"*",err,error))//"."
       CALL FlagError(localError,err,error,*999)
     ENDIF
-    IF(SIZE(transformedTensor,2)<geometricInterpPointMetrics%numberOfXDimensions) THEN
-      localError="The second dimension of the specified transformed tensor of "// &
-        & TRIM(NumberToVString(SIZE(transformedTensor,2),"*",err,error))//" is too small. The size should be >= "// &
+    IF(SIZE(transformedGeometricTensor,2)<geometricInterpPointMetrics%numberOfXDimensions) THEN
+      localError="The second dimension of the specified transformed geometric tensor of "// &
+        & TRIM(NumberToVString(SIZE(transformedGeometricTensor,2),"*",err,error))//" is too small. The size should be >= "// &
         & TRIM(NumberToVString(geometricInterpPointMetrics%numberOfXDimensions,"*",err,error))//"."
       CALL FlagError(localError,err,error,*999)
     ENDIF
-    IF(SIZE(transformedTensor,3)<geometricInterpPointMetrics%numberOfXDimensions) THEN
-      localError="The third dimension of the specified transformed tensor of "// &
-        & TRIM(NumberToVString(SIZE(transformedTensor,3),"*",err,error))//" is too small. The size should be >= "// &
+    IF(SIZE(transformedGeometricTensor,3)<geometricInterpPointMetrics%numberOfXDimensions) THEN
+      localError="The third dimension of the specified transformed geometric tensor of "// &
+        & TRIM(NumberToVString(SIZE(transformedGeometricTensor,3),"*",err,error))//" is too small. The size should be >= "// &
         & TRIM(NumberToVString(geometricInterpPointMetrics%numberOfXDimensions,"*",err,error))//"."
       CALL FlagError(localError,err,error,*999)
     ENDIF
-    IF(SIZE(transformedTensor,4)<geometricInterpPointMetrics%numberOfXDimensions) THEN
-      localError="The fourth dimension of the specified transformed tensor of "// &
-        & TRIM(NumberToVString(SIZE(transformedTensor,4),"*",err,error))//" is too small. The size should be >= "// &
+    IF(SIZE(transformedGeometricTensor,4)<geometricInterpPointMetrics%numberOfXDimensions) THEN
+      localError="The fourth dimension of the specified transformed geometric tensor of "// &
+        & TRIM(NumberToVString(SIZE(transformedGeometricTensor,4),"*",err,error))//" is too small. The size should be >= "// &
         & TRIM(NumberToVString(geometricInterpPointMetrics%numberOfXDimensions,"*",err,error))//"."
       CALL FlagError(localError,err,error,*999)
     ENDIF
@@ -4438,79 +4464,81 @@ CONTAINS
     !Calculate material coordinates
     CALL CoordinateSystem_MaterialFibreSystemCalculate(geometricInterpPointMetrics,fibreInterpPoint, &
       & dNudXi(1:numberOfDimensions,1:numberOfXi),dXidNu(1:numberOfXi,1:numberOfDimensions), &
+      & dNudX(1:numberOfDimensions,1:numberOfDimensions),dXdNu(1:numberOfDimensions,1:numberOfDimensions), &
       & materialFibreVectors(1:numberOfDimensions,1:numberOfDimensions),err,error,*999)
     
-    !First transform the tensor from material/nu coordinates to element/xi coordinates
+    !First transform the tensor from material fibre coordinates to element/xi coordinates
     CALL TensorTransform(numberOfDimensions,tensorIndexTypes, &
-      & materialTensor(1:numberOfDimensions,1:numberOfDimensions,1:numberOfDimensions,1:numberOfDimensions), &
-      & dXidNu(1:numberOfXi,1:numberOfDimensions), &
-      & dNudXi(1:numberOfDimensions,1:numberOfXi), &
+      & fibreTensor(1:numberOfDimensions,1:numberOfDimensions,1:numberOfDimensions,1:numberOfDimensions), &
+      & dXidNu(1:numberOfXi,1:numberOfDimensions),dNudXi(1:numberOfDimensions,1:numberOfXi), &
       & tempTensor(1:numberOfXi,1:numberOfXi,1:numberOfXi,1:numberOfXi),err,error,*999)
-    !Next transform the tensor from element/xi to geometric coordinates
+    !Next transform the tensor from element/xi to material geometric coordinates
     CALL TensorTransform(numberOfDimensions,tensorIndexTypes, &
       & tempTensor(1:numberOfXi,1:numberOfXi,1:numberOfXi,1:numberOfXi), &
       & geometricInterpPointMetrics%dXdXi(1:numberOfDimensions,1:numberOfXi), &
       & geometricInterpPointMetrics%dXidX(1:numberOfXi,1:numberOfDimensions), &
-      & transformedTensor(1:numberOfDimensions,1:numberOfDimensions,1:numberOfDimensions,1:numberOfDimensions), &
+      & transformedGeometricTensor(1:numberOfDimensions,1:numberOfDimensions,1:numberOfDimensions,1:numberOfDimensions), &
       & err,error,*999)
         
     IF(diagnostics1) THEN
       CALL WriteString(DIAGNOSTIC_OUTPUT_TYPE,"",err,error,*999)
-      CALL WriteString(DIAGNOSTIC_OUTPUT_TYPE,"Material tensor transformation:",err,error,*999)
+      CALL WriteString(DIAGNOSTIC_OUTPUT_TYPE,"Material Nu to X tensor transformation:",err,error,*999)
       CALL WriteStringValue(DIAGNOSTIC_OUTPUT_TYPE,"  Number of X  = ",numberOfDimensions,err,error,*999)
       CALL WriteStringValue(DIAGNOSTIC_OUTPUT_TYPE,"  Number of Xi = ",numberOfXi,err,error,*999)
       CALL WriteStringVector(DIAGNOSTIC_OUTPUT_TYPE,1,1,4,4,4,tensorIndexTypes, &
         & '("  Tensor index types :",4(X,I1))','(22X,4(X,I1))',err,error,*999)      
-      CALL WriteString(DIAGNOSTIC_OUTPUT_TYPE,"  Material tensor:",err,error,*999)
+      CALL WriteString(DIAGNOSTIC_OUTPUT_TYPE,"  Material fibre tensor:",err,error,*999)
       CALL WriteStringMatrixFour(DIAGNOSTIC_OUTPUT_TYPE,1,1,numberOfDimensions,1,1,numberOfDimensions, &
-        & 1,1,numberOfDimensions,1,1,numberOfDimensions,numberOfDimensions,numberOfDimensions,materialTensor, &
-        & WRITE_STRING_MATRIX_NAME_AND_INDICES,'("    MT','(",I1,",",I1,",",I1,",:)',' :",3(X,E13.6))','(17X,3(X,E13.6))', &
+        & 1,1,numberOfDimensions,1,1,numberOfDimensions,numberOfDimensions,numberOfDimensions,fibreTensor, &
+        & WRITE_STRING_MATRIX_NAME_AND_INDICES,'("    FT','(",I1,",",I1,",",I1,",:)',' :",3(X,E13.6))','(17X,3(X,E13.6))', &
         & err,error,*999)
-      CALL WriteString(DIAGNOSTIC_OUTPUT_TYPE,"  Transformed tensor:",err,error,*999)
+      CALL WriteString(DIAGNOSTIC_OUTPUT_TYPE,"  Transformed material geometric tensor:",err,error,*999)
       CALL WriteStringMatrixFour(DIAGNOSTIC_OUTPUT_TYPE,1,1,numberOfDimensions,1,1,numberOfDimensions, &
-        & 1,1,numberOfDimensions,1,1,numberOfDimensions,numberOfDimensions,numberOfDimensions,transformedTensor, &
-        & WRITE_STRING_MATRIX_NAME_AND_INDICES,'("    TT','(",I1,",",I1,",",I1,",:)',' :",3(X,E13.6))','(17X,3(X,E13.6))', &
+        & 1,1,numberOfDimensions,1,1,numberOfDimensions,numberOfDimensions,numberOfDimensions,transformedGeometricTensor, &
+        & WRITE_STRING_MATRIX_NAME_AND_INDICES,'("    GT','(",I1,",",I1,",",I1,",:)',' :",3(X,E13.6))','(17X,3(X,E13.6))', &
         & err,error,*999)
    ENDIF
         
-    EXITS("CoordinateSystem_MaterialTransformTensor4")
+    EXITS("CoordinateSystem_MaterialNuToXTransformTensor4")
     RETURN
-999 ERRORS("CoordinateSystem_MaterialTransformTensor4",err,error)
-    EXITS("CoordinateSystem_MaterialTransformTensor4")
+999 ERRORS("CoordinateSystem_MaterialNuToXTransformTensor4",err,error)
+    EXITS("CoordinateSystem_MaterialNuToXTransformTensor4")
     RETURN 1
     
-  END SUBROUTINE CoordinateSystem_MaterialTransformTensor4
-
+  END SUBROUTINE CoordinateSystem_MaterialNuToXTransformTensor4
+  
   !
   !================================================================================================================================
   !
 
-  !>Transforms a second order Voigt tensor in materials coordinates (e.g., conductivity tensor) to a tensor in geometric coordinates using the appropriate transformation formula for the tensor type
-  SUBROUTINE CoordinateSystem_MaterialTransformVoigtTensor2(tensorIndexTypes,geometricInterpPointMetrics,fibreInterpPoint, &
-    & voigtMaterialTensor,transformedTensor,err,error,*)
+  !>Transforms a second order Voigt tensor in material fibre coordinates (e.g., conductivity tensor) to a tensor in material geometric coordinates using the appropriate transformation formula for the tensor type
+  SUBROUTINE CoordinateSystem_MaterialNuToXTransformVoigtTensor2(tensorIndexTypes,geometricInterpPointMetrics, &
+    & fibreInterpPoint,voigtFibreTensor,transformedGeometricTensor,err,error,*)
 
     !Argument variables
     INTEGER(INTG), INTENT(IN) :: tensorIndexTypes(:) !<tensorIndexTypes(rankIdx). The type (e.g., covariant or contravariant) foreach rankIdx of the second order tensor to transform \see Constants_TensorIndexTypes
-    TYPE(FieldInterpolatedPointMetricsType), POINTER :: geometricInterpPointMetrics !<The geometric interpolated point metrics at the point to tranformed tensor.
+    TYPE(FieldInterpolatedPointMetricsType), POINTER :: geometricInterpPointMetrics !<The geometric interpolated point metrics at the point to tranform the tensor.
     TYPE(FieldInterpolatedPointType), POINTER :: fibreInterpPoint !<The fibre interpolated point (if it exists).
     
-    REAL(DP), INTENT(IN) :: voigtMaterialTensor(:) !<voigtMaterialTensor(voigtIdx). The original symmetric material second order tensor values (in Voigt form) to transform.
-    REAL(DP), INTENT(OUT) :: transformedTensor(:,:) !<transformedTensor(xCoordinateIdx,xCoordinateIdx). On exit, the second order tensor transformed from material coordinates to geometric coordinates.
+    REAL(DP), INTENT(IN) :: voigtFibreTensor(:) !<voigtFibreTensor(NuVoigtIdx). The original symmetric material second order fibre tensor values (in Voigt form) to transform.
+    REAL(DP), INTENT(OUT) :: transformedGeometricTensor(:,:) !<transformedGeometricTensor(XCoordinateIdx1,XCoordinateIdx2). On exit, the second order tensor transformed from material fibre coordinates to material geometric coordinates.
     INTEGER(INTG), INTENT(OUT) :: err !<The error code
     TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
     !Local Variables
     INTEGER(INTG) :: numberOfDimensions,voigtTensorIndexTypes(1)
-    REAL(DP) :: materialTensor(3,3)
+    REAL(DP) :: fibreTensor(3,3)
+#ifdef WITH_PRECHECKS    
     TYPE(VARYING_STRING) :: localError
+#endif    
 
-    ENTERS("CoordinateSystem_MaterialTransformVoigtTensor2",err,error,*999)
+    ENTERS("CoordinateSystem_MaterialNuToXTransformVoigtTensor2",err,error,*999)
 
 #ifdef WITH_PRECHECKS
     IF(.NOT.ASSOCIATED(geometricInterpPointMetrics)) &
       & CALL FlagError("Geometric interpolated point metrics is not associated.",err,error,*999)
-    IF(SIZE(voigtMaterialTensor,1)<NUMBER_OF_VOIGT(geometricInterpPointMetrics%numberOfXDimensions)) THEN
+    IF(SIZE(voigtFibreTensor,1)<NUMBER_OF_VOIGT(geometricInterpPointMetrics%numberOfXDimensions)) THEN
       localError="The size of the specified symmetric tensor of "// &
-        & TRIM(NumberToVString(SIZE(voigtMaterialTensor,1),"*",err,error))// &
+        & TRIM(NumberToVString(SIZE(voigtFibreTensor,1),"*",err,error))// &
         & " is too small. The size should be >= "// &
         & TRIM(NumberToVString(NUMBER_OF_VOIGT(geometricInterpPointMetrics%numberOfXDimensions),"*",err,error))//"."
       CALL FlagError(localError,err,error,*999)
@@ -4525,57 +4553,59 @@ CONTAINS
     ELSE
       voigtTensorIndexTypes(1)=TENSOR_CONTRAVARIANT_INDEX
     ENDIF
-    CALL VoigtToTensor(numberOfDimensions,voigtTensorIndexTypes,voigtMaterialTensor,materialTensor,err,error,*999)
+    CALL VoigtToTensor(numberOfDimensions,voigtTensorIndexTypes,voigtFibreTensor,fibreTensor,err,error,*999)
 
     !Tranform the tensor
-    CALL CoordinateSystem_MaterialTransformTensor2(tensorIndexTypes,geometricInterpPointMetrics,fibreInterpPoint, &
-      & materialTensor,transformedTensor,err,error,*999)
+    CALL CoordinateSystem_MaterialNuToXTransformTensor2(tensorIndexTypes,geometricInterpPointMetrics,fibreInterpPoint, &
+      & fibreTensor,transformedGeometricTensor,err,error,*999)
         
-    EXITS("CoordinateSystem_MaterialTransformVoigtTensor2")
+    EXITS("CoordinateSystem_MaterialNuToXTransformVoigtTensor2")
     RETURN
-999 ERRORS("CoordinateSystem_MaterialTransformVoigtTensor2",err,error)
-    EXITS("CoordinateSystem_MaterialTransformVoigtTensor2")
+999 ERRORS("CoordinateSystem_MaterialNuToXTransformVoigtTensor2",err,error)
+    EXITS("CoordinateSystem_MaterialNuToXTransformVoigtTensor2")
     RETURN 1
     
-  END SUBROUTINE CoordinateSystem_MaterialTransformVoigtTensor2
+  END SUBROUTINE CoordinateSystem_MaterialNuToXTransformVoigtTensor2
 
   !
   !================================================================================================================================
   !
 
-  !>Transforms a fourth order Voigt tensor in materials coordinates (e.g., elasticity tensor) to a tensor in geometric coordinates using the appropriate transformation formula for the tensor type
-  SUBROUTINE CoordinateSystem_MaterialTransformVoigtTensor4(tensorIndexTypes,geometricInterpPointMetrics,fibreInterpPoint, &
-    & voigtMaterialTensor,transformedTensor,err,error,*)
+  !>Transforms a fourth order Voigt tensor in material fibre coordinates (e.g., elasticity tensor) to a tensor in material geometric coordinates using the appropriate transformation formula for the tensor type
+  SUBROUTINE CoordinateSystem_MaterialNuToXTransformVoigtTensor4(tensorIndexTypes,geometricInterpPointMetrics, &
+    & fibreInterpPoint,voigtFibreTensor,transformedGeometricTensor,err,error,*)
 
     !Argument variables
     INTEGER(INTG), INTENT(IN) :: tensorIndexTypes(:) !<tensorIndexTypes(rankIdx). The type (e.g., covariant or contravariant) foreach rankIdx of the second order tensor to transform \see Constants_TensorIndexTypes
-    TYPE(FieldInterpolatedPointMetricsType), POINTER :: geometricInterpPointMetrics !<The geometric interpolated point metrics at the point to tranformed tensor.
+    TYPE(FieldInterpolatedPointMetricsType), POINTER :: geometricInterpPointMetrics !<The geometric interpolated point metrics at the point to tranform the tensor.
     TYPE(FieldInterpolatedPointType), POINTER :: fibreInterpPoint !<The fibre interpolated point (if it exists).
     
-    REAL(DP), INTENT(IN) :: voigtMaterialTensor(:,:) !<voigtMaterialTensor(voigtIdx,voigtIdx). The original symmetric material fourth order tensor values (in Voigt form) to transform.
-    REAL(DP), INTENT(OUT) :: transformedTensor(:,:,:,:) !<transformedTensor(xCoordinateIdx,xCoordinateIdx,xCoordinateIdx,xCoordinateIdx). On exit, the fourth order tensor transformed from material coordinates to geometric coordinates.
+    REAL(DP), INTENT(IN) :: voigtFibreTensor(:,:) !<voigtFibreTensor(NuVoigtIdx1,NuVoigtIdx2). The original symmetric material fourth order fibre tensor values (in Voigt form) to transform.
+    REAL(DP), INTENT(OUT) :: transformedGeometricTensor(:,:,:,:) !<transformedGeometricTensor(XCoordinateIdx1,XCordinateIdx2,XCoordinateIdx3,XCoordinateIdx4). On exit, the fourth order tensor transformed from material fibre coordinates to material geometric coordinates.
     INTEGER(INTG), INTENT(OUT) :: err !<The error code
     TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
     !Local Variables
     INTEGER(INTG) :: numberOfDimensions,voigtTensorIndexTypes(2)
-    REAL(DP) :: materialTensor(3,3,3,3)
+    REAL(DP) :: fibreTensor(3,3,3,3)
+#ifdef WITH_PRECHECKS    
     TYPE(VARYING_STRING) :: localError
+#endif    
 
-    ENTERS("CoordinateSystem_MaterialTransformVoigtTensor4",err,error,*999)
+    ENTERS("CoordinateSystem_MaterialNuToXTransformVoigtTensor4",err,error,*999)
 
 #ifdef WITH_PRECHECKS
     IF(.NOT.ASSOCIATED(geometricInterpPointMetrics)) &
       & CALL FlagError("Geometric interpolated point metrics is not associated.",err,error,*999)
-    IF(SIZE(voigtMaterialTensor,1)<NUMBER_OF_VOIGT(geometricInterpPointMetrics%numberOfXDimensions)) THEN
-      localError="The size of the first index of the specified Voigt material tensor of "// &
-        & TRIM(NumberToVString(SIZE(voigtMaterialTensor,1),"*",err,error))// &
+    IF(SIZE(voigtFibreTensor,1)<NUMBER_OF_VOIGT(geometricInterpPointMetrics%numberOfXDimensions)) THEN
+      localError="The size of the first index of the specified Voigt fibre tensor of "// &
+        & TRIM(NumberToVString(SIZE(voigtFibreTensor,1),"*",err,error))// &
         & " is too small. The size should be >= "// &
         & TRIM(NumberToVString(NUMBER_OF_VOIGT(geometricInterpPointMetrics%numberOfXDimensions),"*",err,error))//"."
       CALL FlagError(localError,err,error,*999)
     ENDIF
-    IF(SIZE(voigtMaterialTensor,2)<NUMBER_OF_VOIGT(geometricInterpPointMetrics%numberOfXDimensions)) THEN
-      localError="The size of the second index of the specified Voigt material tensor of "// &
-        & TRIM(NumberToVString(SIZE(voigtMaterialTensor,2),"*",err,error))// &
+    IF(SIZE(voigtFibreTensor,2)<NUMBER_OF_VOIGT(geometricInterpPointMetrics%numberOfXDimensions)) THEN
+      localError="The size of the second index of the specified Voigt fibre tensor of "// &
+        & TRIM(NumberToVString(SIZE(voigtFibreTensor,2),"*",err,error))// &
         & " is too small. The size should be >= "// &
         & TRIM(NumberToVString(NUMBER_OF_VOIGT(geometricInterpPointMetrics%numberOfXDimensions),"*",err,error))//"."
       CALL FlagError(localError,err,error,*999)
@@ -4595,25 +4625,25 @@ CONTAINS
     ELSE
       voigtTensorIndexTypes(2)=TENSOR_CONTRAVARIANT_INDEX
     ENDIF
-    CALL VoigtToTensor(numberOfDimensions,voigtTensorIndexTypes,voigtMaterialTensor,materialTensor,err,error,*999)
+    CALL VoigtToTensor(numberOfDimensions,voigtTensorIndexTypes,voigtFibreTensor,fibreTensor,err,error,*999)
 
     !Tranform the tensor
-    CALL CoordinateSystem_MaterialTransformTensor4(tensorIndexTypes,geometricInterpPointMetrics,fibreInterpPoint, &
-      & materialTensor,transformedTensor,err,error,*999)
+    CALL CoordinateSystem_MaterialNuToXTransformTensor4(tensorIndexTypes,geometricInterpPointMetrics,fibreInterpPoint, &
+      & fibreTensor,transformedGeometricTensor,err,error,*999)
         
-    EXITS("CoordinateSystem_MaterialTransformVoigtTensor4")
+    EXITS("CoordinateSystem_MaterialNuToXTransformVoigtTensor4")
     RETURN
-999 ERRORS("CoordinateSystem_MaterialTransformVoigtTensor4",err,error)
-    EXITS("CoordinateSystem_MaterialTransformVoigtTensor4")
+999 ERRORS("CoordinateSystem_MaterialNuToXTransformVoigtTensor4",err,error)
+    EXITS("CoordinateSystem_MaterialNuToXTransformVoigtTensor4")
     RETURN 1
     
-  END SUBROUTINE CoordinateSystem_MaterialTransformVoigtTensor4
+  END SUBROUTINE CoordinateSystem_MaterialNuToXTransformVoigtTensor4
 
   !
   !================================================================================================================================
   !
 
-  !>Transforms a symmetric second order tensor in materials coordinates (e.g., conductivity tensor) to a tensor in xi coordinates
+  !>Transforms a symmetric second order tensor in material fibre coordinates (e.g., conductivity tensor) to a tensor in xi coordinates
   SUBROUTINE CoordinateSystem_MaterialTransformSymTensor2(geometricInterpPointMetrics,fibreInterpPoint,symmetricMaterialTensor, &
     & transformedTensor,err,error,*)
 
@@ -4737,57 +4767,59 @@ CONTAINS
   !================================================================================================================================
   !
 
-  !>Transforms a vector in materials coordinates to a tensor in x coordinates using the appropriate transformation formula for the vector type
-  SUBROUTINE CoordinateSystem_MaterialTransformVector0(vectorIndexType,geometricInterpPointMetrics,fibreInterpPoint, &
-    & materialVector,transformedVector,err,error,*)
+  !>Transforms a vector in material fibre coordinates to a tensor in material geometric coordinates using the appropriate transformation formula for the vector type
+  SUBROUTINE CoordinateSystem_MaterialNuToXTransformVector0(vectorIndexType,geometricInterpPointMetrics, &
+    & fibreInterpPoint,fibreVector,transformedGeometricVector,err,error,*)
 
     !Argument variables
     INTEGER(INTG), INTENT(IN) :: vectorIndexType !<The type (e.g., covariant or contravariant) of the vector index to transform \see Constants_TensorIndexTypes
-    TYPE(FieldInterpolatedPointMetricsType), POINTER :: geometricInterpPointMetrics !<The geometric interpolated point metrics at the point to tranformed vector.
+    TYPE(FieldInterpolatedPointMetricsType), POINTER :: geometricInterpPointMetrics !<The geometric interpolated point metrics at the point to tranform the vector.
     TYPE(FieldInterpolatedPointType), POINTER :: fibreInterpPoint !<The fibre interpolated point (if it exists).
     
-    REAL(DP), INTENT(IN) :: materialVector(:) !<materialVector(materialIdx). The original material vector values to transform.
-    REAL(DP), INTENT(OUT) :: transformedVector(:) !<transformedVector(coordinateIdx). On exit, the vector transformed from material coordinates.
+    REAL(DP), INTENT(IN) :: fibreVector(:) !<fibreVector(NuIdx). The original material fibre vector values to transform.
+    REAL(DP), INTENT(OUT) :: transformedGeometricVector(:) !<transformedGeometricVector(XCoordinateIdx). On exit, the vector transformed from material fibre coordinates to material geometric coordinates.
     INTEGER(INTG), INTENT(OUT) :: err !<The error code
     TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
     !Local Variables
 
-    ENTERS("CoordinateSystem_MaterialTransformVector0",err,error,*999)
+    ENTERS("CoordinateSystem_MaterialNuToXTransformVector0",err,error,*999)
     
-    CALL CoordinateSystem_MaterialTransformVector1([vectorIndexType],geometricInterpPointMetrics,fibreInterpPoint, &
-      & materialVector,transformedVector,err,error,*999)
+    CALL CoordinateSystem_MaterialNuToXTransformVector1([vectorIndexType],geometricInterpPointMetrics, &
+      & fibreInterpPoint,fibreVector,transformedGeometricVector,err,error,*999)
         
-    EXITS("CoordinateSystem_MaterialTransformVector0")
+    EXITS("CoordinateSystem_MaterialNuToXTransformVector0")
     RETURN
-999 ERRORS("CoordinateSystem_MaterialTransformVector0",err,error)
-    EXITS("CoordinateSystem_MaterialTransformVector0")
+999 ERRORS("CoordinateSystem_MaterialNuToXTransformVector0",err,error)
+    EXITS("CoordinateSystem_MaterialNuToXTransformVector0")
     RETURN 1
     
-  END SUBROUTINE CoordinateSystem_MaterialTransformVector0
+  END SUBROUTINE CoordinateSystem_MaterialNuToXTransformVector0
 
   !
   !================================================================================================================================
   !
 
-  !>Transforms a vector in materials coordinates to a tensor in x coordinates using the appropriate transformation formula for the vector type
-  SUBROUTINE CoordinateSystem_MaterialTransformVector1(vectorIndexType,geometricInterpPointMetrics,fibreInterpPoint, &
-    & materialVector,transformedVector,err,error,*)
+  !>Transforms a vector in material fibre coordinates to a tensor in material geometric coordinates using the appropriate transformation formula for the vector type
+  SUBROUTINE CoordinateSystem_MaterialNuToXTransformVector1(vectorIndexType,geometricInterpPointMetrics, &
+    & fibreInterpPoint,fibreVector,transformedGeometricVector,err,error,*)
 
     !Argument variables
     INTEGER(INTG), INTENT(IN) :: vectorIndexType(1) !<The type (e.g., covariant or contravariant) of the vector index to transform \see Constants_TensorIndexTypes
-    TYPE(FieldInterpolatedPointMetricsType), POINTER :: geometricInterpPointMetrics !<The geometric interpolated point metrics at the point to tranformed vector.
+    TYPE(FieldInterpolatedPointMetricsType), POINTER :: geometricInterpPointMetrics !<The geometric interpolated point metrics at the point to tranform the vector.
     TYPE(FieldInterpolatedPointType), POINTER :: fibreInterpPoint !<The fibre interpolated point (if it exists).
     
-    REAL(DP), INTENT(IN) :: materialVector(:) !<materialVector(materialIdx). The original material vector values to transform.
-    REAL(DP), INTENT(OUT) :: transformedVector(:) !<transformedVector(coordinateIdx). On exit, the vector transformed from material coordinates.
+    REAL(DP), INTENT(IN) :: fibreVector(:) !<fibreVector(NuIdx). The original material fibre vector values to transform.
+    REAL(DP), INTENT(OUT) :: transformedGeometricVector(:) !<transformedGeometricVector(XCoordinateIdx). On exit, the vector transformed from material fibre coordinates to geometric coordinates
     INTEGER(INTG), INTENT(OUT) :: err !<The error code
     TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
     !Local Variables
     INTEGER(INTG) :: numberOfDimensions,numberOfXi
-    REAL(DP) :: dNudXi(3,3),dXidNu(3,3),materialFibreVectors(3,3),tempVector(3)
+    REAL(DP) :: dNudX(3,3),dNudXi(3,3),dXdNu(3,3),dXidNu(3,3),materialFibreVectors(3,3),tempVector(3)
+#ifdef WITH_PRECHECKS    
     TYPE(VARYING_STRING) :: localError
+#endif    
 
-    ENTERS("CoordinateSystem_MaterialTransformVector1",err,error,*999)
+    ENTERS("CoordinateSystem_MaterialNuToXTransformVector1",err,error,*999)
 
 #ifdef WITH_PRECHECKS
     IF(.NOT.ASSOCIATED(geometricInterpPointMetrics)) &
@@ -4799,23 +4831,24 @@ CONTAINS
         & TRIM(NumberToVString(geometricInterpPointMetrics%numberOfXiDimensions,"*",err,error))//"."
       CALL FlagError(localError,err,error,*999)
     ENDIF
-    IF(SIZE(materialVector,1)<geometricInterpPointMetrics%numberOfXDimensions) THEN
-      localError="The size of the specified material vector of "// &
-        & TRIM(NumberToVString(SIZE(materialVector,1),"*",err,error))// &
+    IF(SIZE(fibreVector,1)<geometricInterpPointMetrics%numberOfXDimensions) THEN
+      localError="The size of the specified fibre vector of "// &
+        & TRIM(NumberToVString(SIZE(fibreVector,1),"*",err,error))// &
         & " is too small. The size should be >= "// &
         & TRIM(NumberToVString(geometricInterpPointMetrics%numberOfXDimensions,"*",err,error))//"."
       CALL FlagError(localError,err,error,*999)
     ENDIF
-    IF(SIZE(transformedVector,1)<geometricInterpPointMetrics%numberOfXiDimensions) THEN
-      localError="The size of the specified transformed vector of "// &
-        & TRIM(NumberToVString(SIZE(transformedVector,1),"*",err,error))//" is too small. The size should be >= "// &
-        & TRIM(NumberToVString(geometricInterpPointMetrics%numberOfXiDimensions,"*",err,error))//"."
+    IF(SIZE(transformedGeometricVector,1)<geometricInterpPointMetrics%numberOfXDimensions) THEN
+      localError="The size of the specified transformed geometric vector of "// &
+        & TRIM(NumberToVString(SIZE(transformedGeometricVector,1),"*",err,error))//" is too small. The size should be >= "// &
+        & TRIM(NumberToVString(geometricInterpPointMetrics%numberOfXDimensions,"*",err,error))//"."
       CALL FlagError(localError,err,error,*999)
     ENDIF
-    IF(SIZE(materialVector,1)/=SIZE(transformedVector,1)) THEN
-      localError="The size of the material vector of "// &
-        & TRIM(NumberToVString(SIZE(materialVector,1),"*",err,error))//" does not match the size of the transformed vector of "// &
-        & TRIM(NumberToVString(SIZE(transformedVector,1),"*",err,error))//"."
+    IF(SIZE(fibreVector,1)/=SIZE(transformedGeometricVector,1)) THEN
+      localError="The size of the fibre vector of "// &
+        & TRIM(NumberToVString(SIZE(fibreVector,1),"*",err,error))// &
+        & " does not match the size of the transformed geometric vector of "// &
+        & TRIM(NumberToVString(SIZE(transformedGeometricVector,1),"*",err,error))//"."
       CALL FlagError(localError,err,error,*999)
     ENDIF
 #endif
@@ -4825,41 +4858,556 @@ CONTAINS
     
     !Calculate material coordinates
     CALL CoordinateSystem_MaterialFibreSystemCalculate(geometricInterpPointMetrics,fibreInterpPoint, &
-      & dNudXi(1:numberOfDimensions,1:numberOfDimensions),dXidNu(1:numberOfXi,1:numberOfDimensions), &
+      & dNudXi(1:numberOfDimensions,1:numberOfXi),dXidNu(1:numberOfXi,1:numberOfDimensions), &
+      & dNudX(1:numberOfDimensions,1:numberOfDimensions),dXdNu(1:numberOfDimensions,1:numberOfDimensions), &
       & materialFibreVectors(1:numberOfDimensions,1:numberOfDimensions),err,error,*999)
 
-    !First transform the tensor from material/nu coordinates to element/xi coordinates
-    CALL TensorTransform(numberOfDimensions,vectorIndexType,materialVector(1:numberOfDimensions), &
-      & dXidNu(1:numberOfXi,1:numberOfDimensions), &
-      & dNudXi(1:numberOfDimensions,1:numberOfXi), &
+    !First transform the tensor from material fibre coordinates to element/xi coordinates
+    CALL TensorTransform(numberOfDimensions,vectorIndexType,fibreVector(1:numberOfDimensions), &
+      & dXidNu(1:numberOfXi,1:numberOfDimensions),dNudXi(1:numberOfDimensions,1:numberOfXi), &
       & tempVector(1:numberOfXi),err,error,*999)
     !Next transform the tensor from element/xi to geometric coordinates
     CALL TensorTransform(numberOfDimensions,vectorIndexType,tempVector(1:numberOfXi), &
       & geometricInterpPointMetrics%dXdXi(1:numberOfDimensions,1:numberOfXi), &
       & geometricInterpPointMetrics%dXidX(1:numberOfXi,1:numberOfDimensions), &
-      & transformedVector(1:numberOfDimensions),err,error,*999)
+      & transformedGeometricVector(1:numberOfDimensions),err,error,*999)
            
     IF(diagnostics1) THEN
       CALL WriteString(DIAGNOSTIC_OUTPUT_TYPE,"",err,error,*999)
-      CALL WriteString(DIAGNOSTIC_OUTPUT_TYPE,"Material vector transformation:",err,error,*999)
+      CALL WriteString(DIAGNOSTIC_OUTPUT_TYPE,"Material Nu to X vector transformation:",err,error,*999)
       CALL WriteStringValue(DIAGNOSTIC_OUTPUT_TYPE,"  Number of X  = ",numberOfDimensions,err,error,*999)
       CALL WriteStringValue(DIAGNOSTIC_OUTPUT_TYPE,"  Number of Xi = ",numberOfXi,err,error,*999)
       CALL WriteStringValue(DIAGNOSTIC_OUTPUT_TYPE,"  Vector index type = ",vectorIndexType(1),err,error,*999)      
-      CALL WriteString(DIAGNOSTIC_OUTPUT_TYPE,"  Material Vector:",err,error,*999)
+      CALL WriteString(DIAGNOSTIC_OUTPUT_TYPE,"  Material fibre vector:",err,error,*999)
       CALL WriteStringVector(DIAGNOSTIC_OUTPUT_TYPE,1,1,numberOfDimensions,numberOfDimensions, &
-        & numberOfDimensions,materialVector,'("    mv :",3(X,E13.6))','(8X,3(X,E13.6))',err,error,*999)
-      CALL WriteString(DIAGNOSTIC_OUTPUT_TYPE,"  Transformed vector:",err,error,*999)
+        & numberOfDimensions,fibreVector,'("    fv :",3(X,E13.6))','(8X,3(X,E13.6))',err,error,*999)
+      CALL WriteString(DIAGNOSTIC_OUTPUT_TYPE,"  Transformed material geometric vector:",err,error,*999)
       CALL WriteStringVector(DIAGNOSTIC_OUTPUT_TYPE,1,1,numberOfDimensions,numberOfDimensions, &
-        & numberOfDimensions,transformedVector,'("    tv :",3(X,E13.6))','(8X,3(X,E13.6))',err,error,*999)
+        & numberOfDimensions,transformedGeometricVector,'("    gv :",3(X,E13.6))','(8X,3(X,E13.6))',err,error,*999)
     ENDIF
         
-    EXITS("CoordinateSystem_MaterialTransformVector1")
+    EXITS("CoordinateSystem_MaterialNuToXTransformVector1")
     RETURN
-999 ERRORS("CoordinateSystem_MaterialTransformVector1",err,error)
-    EXITS("CoordinateSystem_MaterialTransformVector1")
+999 ERRORS("CoordinateSystem_MaterialNuToXTransformVector1",err,error)
+    EXITS("CoordinateSystem_MaterialNuToXTransformVector1")
     RETURN 1
     
-  END SUBROUTINE CoordinateSystem_MaterialTransformVector1
+  END SUBROUTINE CoordinateSystem_MaterialNuToXTransformVector1
+
+  !
+  !================================================================================================================================
+  !
+
+  !>Transforms a second order tensor from the material geometric coordinates (e.g., conductivity tensor) to a tensor in material fibre coordinates using the appropriate transformation formula for the tensor type
+  SUBROUTINE CoordinateSystem_MaterialXToNuTransformTensor2(tensorIndexTypes,geometricInterpPointMetrics, &
+    & fibreInterpPoint,geometricTensor,transformedFibreTensor,err,error,*)
+
+    !Argument variables
+    INTEGER(INTG), INTENT(IN) :: tensorIndexTypes(:) !<tensorIndexTypes(rankIdx). The type (e.g., covariant or contravariant) foreach rankIdx of the second order tensor to transform \see Constants_TensorIndexTypes
+    TYPE(FieldInterpolatedPointMetricsType), POINTER :: geometricInterpPointMetrics !<The geometric interpolated point metrics at the point to tranformed tensor.
+    TYPE(FieldInterpolatedPointType), POINTER :: fibreInterpPoint !<The fibre interpolated point (if it exists).
+    
+    REAL(DP), INTENT(IN) :: geometricTensor(:,:) !<geomatricTensor(XCoordinateIdx1,XCoordinateIdx2). The original material second order geometric tensor values to transform.
+    REAL(DP), INTENT(OUT) :: transformedFibreTensor(:,:) !<transformedFibreTensor(NuCoordinateIdx1,NuCoordinateIdx2). On exit, the second order tensor transformed from material geometric coordinates to material fibre coordinates.
+    INTEGER(INTG), INTENT(OUT) :: err !<The error code
+    TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
+    !Local Variables
+    INTEGER(INTG) :: numberOfDimensions,numberOfXi
+    REAL(DP) :: dNudX(3,3),dNudXi(3,3),dXdNu(3,3),dXidNu(3,3),materialFibreVectors(3,3),tempTensor(3,3)
+#ifdef WITH_PRECHECKS    
+    TYPE(VARYING_STRING) :: localError
+#endif    
+
+    ENTERS("CoordinateSystem_MaterialXToNuTransformTensor2",err,error,*999)
+    
+#ifdef WITH_PRECHECKS
+    IF(SIZE(tensorIndexTypes,1)<2) THEN
+      localError="The size of the specified tensor index types array is "// &
+        & NumberToVString(SIZE(tensorIndexTypes,1),"*",err,error)//" and needs to be at least two for a second order tensor."
+      CALL FlagError(localError,err,error,*999)
+    ENDIF
+    IF(.NOT.ASSOCIATED(geometricInterpPointMetrics)) &
+      & CALL FlagError("Geometric interpolated point metrics is not associated.",err,error,*999)
+    IF(geometricInterpPointMetrics%numberOfXDimensions/=geometricInterpPointMetrics%numberOfXiDimensions) THEN
+      localError="A different number of x and xi dimensions is not implemented. The number of x dimensions is "// &
+        & TRIM(NumberToVString(geometricInterpPointMetrics%numberOfXDimensions,"*",err,error))// &
+        & " and the number of xi dimensions is "// &
+        & TRIM(NumberToVString(geometricInterpPointMetrics%numberOfXiDimensions,"*",err,error))//"."
+      CALL FlagError(localError,err,error,*999)
+    ENDIF
+    IF(SIZE(geometricTensor,1)<geometricInterpPointMetrics%numberOfXDimensions) THEN
+      localError="The first dimension of the specified geometric tensor of "// &
+        & TRIM(NumberToVString(SIZE(geometricTensor,1),"*",err,error))//" is too small. The size should be >= "// &
+        & TRIM(NumberToVString(geometricInterpPointMetrics%numberOfXDimensions,"*",err,error))//"."
+      CALL FlagError(localError,err,error,*999)
+    ENDIF
+    IF(SIZE(geometricTensor,2)<geometricInterpPointMetrics%numberOfXDimensions) THEN
+      localError="The second dimension of the specified geometric tensor of "// &
+        & TRIM(NumberToVString(SIZE(geometricTensor,2),"*",err,error))//" is too small. The size should be >= "// &
+        & TRIM(NumberToVString(geometricInterpPointMetrics%numberOfXDimensions,"*",err,error))//"."
+      CALL FlagError(localError,err,error,*999)
+    ENDIF
+    IF(SIZE(transformedFibreTensor,1)<geometricInterpPointMetrics%numberOfXDimensions) THEN
+      localError="The first dimension of the specified transformed fibre tensor of "// &
+        & TRIM(NumberToVString(SIZE(transformedFibreTensor,1),"*",err,error))//" is too small. The size should be >= "// &
+        & TRIM(NumberToVString(geometricInterpPointMetrics%numberOfXDimensions,"*",err,error))//"."
+      CALL FlagError(localError,err,error,*999)
+    ENDIF
+    IF(SIZE(transformedFibreTensor,2)<geometricInterpPointMetrics%numberOfXDimensions) THEN
+      localError="The second dimension of the specified transformed fibre tensor of "// &
+        & TRIM(NumberToVString(SIZE(transformedFibreTensor,2),"*",err,error))//" is too small. The size should be >= "// &
+        & TRIM(NumberToVString(geometricInterpPointMetrics%numberOfXDimensions,"*",err,error))//"."
+      CALL FlagError(localError,err,error,*999)
+    ENDIF
+#endif
+    
+    numberOfDimensions=geometricInterpPointMetrics%numberOfXDimensions
+    numberOfXi=geometricInterpPointMetrics%numberOfXiDimensions
+    
+    !Calculate material coordinates
+    CALL CoordinateSystem_MaterialFibreSystemCalculate(geometricInterpPointMetrics,fibreInterpPoint, &
+      & dNudXi(1:numberOfDimensions,1:numberOfXi),dXidNu(1:numberOfXi,1:numberOfDimensions), &
+      & dNudX(1:numberOfDimensions,1:numberOfDimensions),dXdNu(1:numberOfDimensions,1:numberOfDimensions), &
+      & materialFibreVectors(1:numberOfDimensions,1:numberOfXi),err,error,*999)
+    
+    !First transform the tensor from material geometric coordinates to element/xi coordinates
+    CALL TensorTransform(numberOfDimensions,tensorIndexTypes,geometricTensor(1:numberOfDimensions,1:numberOfDimensions), &
+      & geometricInterpPointMetrics%dXidX(1:numberOfXi,1:numberOfDimensions), &
+      & geometricInterpPointMetrics%dXdXi(1:numberOfDimensions,1:numberOfXi), &
+      & tempTensor(1:numberOfXi,1:numberOfXi),err,error,*999)
+    !Next transform the tensor from element/xi to material fibre coordinates
+    CALL TensorTransform(numberOfDimensions,tensorIndexTypes,tempTensor(1:numberOfXi,1:numberOfXi), &
+      & dNudXi(1:numberOfDimensions,1:numberOfXi),dXidNu(1:numberOfXi,1:numberOfDimensions), &
+      & transformedFibreTensor(1:numberOfDimensions,1:numberOfDimensions), err,error,*999)
+       
+    IF(diagnostics1) THEN
+      CALL WriteString(DIAGNOSTIC_OUTPUT_TYPE,"",err,error,*999)
+      CALL WriteString(DIAGNOSTIC_OUTPUT_TYPE,"Material X to Nu tensor transformation:",err,error,*999)
+      CALL WriteStringValue(DIAGNOSTIC_OUTPUT_TYPE,"  Number of X  = ",numberOfDimensions,err,error,*999)
+      CALL WriteStringValue(DIAGNOSTIC_OUTPUT_TYPE,"  Number of Xi = ",numberOfXi,err,error,*999)
+      CALL WriteStringVector(DIAGNOSTIC_OUTPUT_TYPE,1,1,2,2,2,tensorIndexTypes, &
+        & '("  Tensor index types :",2(X,I1))','(22X,2(X,I1))',err,error,*999)      
+      CALL WriteString(DIAGNOSTIC_OUTPUT_TYPE,"  Material geometric tensor:",err,error,*999)
+      CALL WriteStringMatrix(DIAGNOSTIC_OUTPUT_TYPE,1,1,numberOfDimensions,1,1,numberOfDimensions,numberOfDimensions, &
+        & numberOfDimensions,geometricTensor,WRITE_STRING_MATRIX_NAME_AND_INDICES, &
+        & '("    GT','(",I1,",:)',' :",3(X,E13.6))','(12X,3(X,E13.6))',err,error,*999)
+      CALL WriteString(DIAGNOSTIC_OUTPUT_TYPE,"  Transformed material fibre tensor:",err,error,*999)
+      CALL WriteStringMatrix(DIAGNOSTIC_OUTPUT_TYPE,1,1,numberOfDimensions,1,1,numberOfDimensions,numberOfDimensions, &
+        & numberOfDimensions,transformedFibreTensor,WRITE_STRING_MATRIX_NAME_AND_INDICES, &
+        & '("    FT','(",I1,",:)','   :",3(X,E13.6))','(12X,3(X,E13.6))',err,error,*999)
+    ENDIF
+        
+    EXITS("CoordinateSystem_MaterialXToNuTransformTensor2")
+    RETURN
+999 ERRORS("CoordinateSystem_MaterialXToNuTransformTensor2",err,error)
+    EXITS("CoordinateSystem_MaterialXToNuTransformTensor2")
+    RETURN 1
+    
+  END SUBROUTINE CoordinateSystem_MaterialXToNuTransformTensor2
+
+  !
+  !================================================================================================================================
+  !
+
+  !>Transforms a fourth order tensor from the material geometric coordinates (e.g., elasticity tensor) to a tensor in material fibre coordinates using the appropriate transformation formula for the tensor type
+  SUBROUTINE CoordinateSystem_MaterialXToNuTransformTensor4(tensorIndexTypes,geometricInterpPointMetrics, &
+    & fibreInterpPoint,geometricTensor,transformedfibreTensor,err,error,*)
+
+    !Argument variables
+    INTEGER(INTG), INTENT(IN) :: tensorIndexTypes(:) !<tensorIndexTypes(rankIdx). The type (e.g., covariant or contravariant) foreach rankIdx of the fourth order tensor to transform \see Constants_TensorIndexTypes
+    TYPE(FieldInterpolatedPointMetricsType), POINTER :: geometricInterpPointMetrics !<The geometric interpolated point metrics at the point to tranform the tensor.
+    TYPE(FieldInterpolatedPointType), POINTER :: fibreInterpPoint !<The fibre interpolated point (if it exists).
+    
+    REAL(DP), INTENT(IN) :: geometricTensor(:,:,:,:) !<geometricTensor(XCoordinateIdx1,XCoordinateIdx2,XCoordinateIdx3,XCoordinateIdx4). The original material fourth order material geometric tensor values to transform.
+    REAL(DP), INTENT(OUT) :: transformedFibreTensor(:,:,:,:) !<transformedFibreTensor(NuCoordinateIdx1,NuCoordinateIdx2,NuCoordinateIdx3,NuCoordinateIdx4). On exit, the fourth order tensor transformed from material geometric coordinates to material fibre coordinates.
+    INTEGER(INTG), INTENT(OUT) :: err !<The error code
+    TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
+    !Local Variables
+    INTEGER(INTG) :: numberOfDimensions,numberOfXi
+    REAL(DP) :: dNudX(3,3),dNudXi(3,3),dXdNu(3,3),dXidNu(3,3),materialFibreVectors(3,3),tempTensor(3,3,3,3)
+#ifdef WITH_PRECHECKS    
+    TYPE(VARYING_STRING) :: localError
+#endif    
+
+    ENTERS("CoordinateSystem_MaterialXtoNuTransformTensor4",err,error,*999)
+    
+#ifdef WITH_PRECHECKS
+    IF(SIZE(tensorIndexTypes,1)<4) THEN
+      localError="The size of the specified tensor index types array is "// &
+        & NumberToVString(SIZE(tensorIndexTypes,1),"*",err,error)//" and needs to be at least four for a fourth order tensor."
+      CALL FlagError(localError,err,error,*999)
+    ENDIF
+    IF(.NOT.ASSOCIATED(geometricInterpPointMetrics)) &
+      & CALL FlagError("Geometric interpolated point metrics is not associated.",err,error,*999)
+    IF(geometricInterpPointMetrics%numberOfXDimensions/=geometricInterpPointMetrics%numberOfXiDimensions) THEN
+      localError="A different number of x and xi dimensions is not implemented. The number of x dimensions is "// &
+        & TRIM(NumberToVString(geometricInterpPointMetrics%numberOfXDimensions,"*",err,error))// &
+        & " and the number of xi dimensions is "// &
+        & TRIM(NumberToVString(geometricInterpPointMetrics%numberOfXiDimensions,"*",err,error))//"."
+      CALL FlagError(localError,err,error,*999)
+    ENDIF
+    IF(SIZE(geometricTensor,1)<geometricInterpPointMetrics%numberOfXDimensions) THEN
+      localError="The first dimension of the specified geometric tensor of "// &
+        & TRIM(NumberToVString(SIZE(geometricTensor,1),"*",err,error))//" is too small. The size should be >= "// &
+        & TRIM(NumberToVString(geometricInterpPointMetrics%numberOfXDimensions,"*",err,error))//"."
+      CALL FlagError(localError,err,error,*999)
+    ENDIF
+    IF(SIZE(geometricTensor,2)<geometricInterpPointMetrics%numberOfXDimensions) THEN
+      localError="The second dimension of the specified geometric tensor of "// &
+        & TRIM(NumberToVString(SIZE(geometricTensor,2),"*",err,error))//" is too small. The size should be >= "// &
+        & TRIM(NumberToVString(geometricInterpPointMetrics%numberOfXDimensions,"*",err,error))//"."
+      CALL FlagError(localError,err,error,*999)
+    ENDIF
+    IF(SIZE(geometricTensor,3)<geometricInterpPointMetrics%numberOfXDimensions) THEN
+      localError="The third dimension of the specified geometric tensor of "// &
+        & TRIM(NumberToVString(SIZE(geometricTensor,3),"*",err,error))//" is too small. The size should be >= "// &
+        & TRIM(NumberToVString(geometricInterpPointMetrics%numberOfXDimensions,"*",err,error))//"."
+      CALL FlagError(localError,err,error,*999)
+    ENDIF
+    IF(SIZE(geometricTensor,4)<geometricInterpPointMetrics%numberOfXDimensions) THEN
+      localError="The fourth dimension of the specified geometric tensor of "// &
+        & TRIM(NumberToVString(SIZE(geometricTensor,4),"*",err,error))//" is too small. The size should be >= "// &
+        & TRIM(NumberToVString(geometricInterpPointMetrics%numberOfXDimensions,"*",err,error))//"."
+      CALL FlagError(localError,err,error,*999)
+    ENDIF
+    IF(SIZE(transformedFibreTensor,1)<geometricInterpPointMetrics%numberOfXDimensions) THEN
+      localError="The first dimension of the specified transformed fibre tensor of "// &
+        & TRIM(NumberToVString(SIZE(transformedFibreTensor,1),"*",err,error))//" is too small. The size should be >= "// &
+        & TRIM(NumberToVString(geometricInterpPointMetrics%numberOfXDimensions,"*",err,error))//"."
+      CALL FlagError(localError,err,error,*999)
+    ENDIF
+    IF(SIZE(transformedFibreTensor,2)<geometricInterpPointMetrics%numberOfXDimensions) THEN
+      localError="The second dimension of the specified transformed fibre tensor of "// &
+        & TRIM(NumberToVString(SIZE(transformedFibreTensor,2),"*",err,error))//" is too small. The size should be >= "// &
+        & TRIM(NumberToVString(geometricInterpPointMetrics%numberOfXDimensions,"*",err,error))//"."
+      CALL FlagError(localError,err,error,*999)
+    ENDIF
+    IF(SIZE(transformedFibreTensor,3)<geometricInterpPointMetrics%numberOfXDimensions) THEN
+      localError="The third dimension of the specified transformed fibre tensor of "// &
+        & TRIM(NumberToVString(SIZE(transformedFibreTensor,3),"*",err,error))//" is too small. The size should be >= "// &
+        & TRIM(NumberToVString(geometricInterpPointMetrics%numberOfXDimensions,"*",err,error))//"."
+      CALL FlagError(localError,err,error,*999)
+    ENDIF
+    IF(SIZE(transformedFibreTensor,4)<geometricInterpPointMetrics%numberOfXDimensions) THEN
+      localError="The fourth dimension of the specified transformed fibre tensor of "// &
+        & TRIM(NumberToVString(SIZE(transformedFibreTensor,4),"*",err,error))//" is too small. The size should be >= "// &
+        & TRIM(NumberToVString(geometricInterpPointMetrics%numberOfXDimensions,"*",err,error))//"."
+      CALL FlagError(localError,err,error,*999)
+    ENDIF
+#endif
+    
+    numberOfDimensions=geometricInterpPointMetrics%numberOfXDimensions
+    numberOfXi=geometricInterpPointMetrics%numberOfXiDimensions
+    
+    !Calculate material coordinates
+    CALL CoordinateSystem_MaterialFibreSystemCalculate(geometricInterpPointMetrics,fibreInterpPoint, &
+      & dNudXi(1:numberOfDimensions,1:numberOfXi),dXidNu(1:numberOfXi,1:numberOfDimensions), &
+      & dNudX(1:numberOfDimensions,1:numberOfDimensions),dXdNu(1:numberOfDimensions,1:numberOfDimensions), &
+      & materialFibreVectors(1:numberOfDimensions,1:numberOfDimensions),err,error,*999)
+    
+    !First transform the tensor from material geometric coordinates to element/xi coordinates
+    CALL TensorTransform(numberOfDimensions,tensorIndexTypes, &
+      & geometricTensor(1:numberOfDimensions,1:numberOfDimensions,1:numberOfDimensions,1:numberOfDimensions), &
+      & geometricInterpPointMetrics%dXidX(1:numberOfXi,1:numberOfDimensions), &
+      & geometricInterpPointMetrics%dXdXi(1:numberOfDimensions,1:numberOfXi), &
+      & tempTensor(1:numberOfXi,1:numberOfXi,1:numberOfXi,1:numberOfXi),err,error,*999)
+    !Next transform the tensor from element/xi to material fibre coordinates
+    CALL TensorTransform(numberOfDimensions,tensorIndexTypes, &
+      & tempTensor(1:numberOfXi,1:numberOfXi,1:numberOfXi,1:numberOfXi), &
+      & dNudXi(1:numberOfDimensions,1:numberOfXi), &
+      & dXidNu(1:numberOfXi,1:numberOfDimensions), &
+      & transformedFibreTensor(1:numberOfDimensions,1:numberOfDimensions,1:numberOfDimensions,1:numberOfDimensions), &
+      & err,error,*999)
+        
+    IF(diagnostics1) THEN
+      CALL WriteString(DIAGNOSTIC_OUTPUT_TYPE,"",err,error,*999)
+      CALL WriteString(DIAGNOSTIC_OUTPUT_TYPE,"Material X to Nu tensor transformation:",err,error,*999)
+      CALL WriteStringValue(DIAGNOSTIC_OUTPUT_TYPE,"  Number of X  = ",numberOfDimensions,err,error,*999)
+      CALL WriteStringValue(DIAGNOSTIC_OUTPUT_TYPE,"  Number of Xi = ",numberOfXi,err,error,*999)
+      CALL WriteStringVector(DIAGNOSTIC_OUTPUT_TYPE,1,1,4,4,4,tensorIndexTypes, &
+        & '("  Tensor index types :",4(X,I1))','(22X,4(X,I1))',err,error,*999)      
+      CALL WriteString(DIAGNOSTIC_OUTPUT_TYPE,"  Material geometric tensor:",err,error,*999)
+      CALL WriteStringMatrixFour(DIAGNOSTIC_OUTPUT_TYPE,1,1,numberOfDimensions,1,1,numberOfDimensions, &
+        & 1,1,numberOfDimensions,1,1,numberOfDimensions,numberOfDimensions,numberOfDimensions,geometricTensor, &
+        & WRITE_STRING_MATRIX_NAME_AND_INDICES,'("    GT','(",I1,",",I1,",",I1,",:)',' :",3(X,E13.6))','(17X,3(X,E13.6))', &
+        & err,error,*999)
+      CALL WriteString(DIAGNOSTIC_OUTPUT_TYPE,"  Transformed material fibre tensor:",err,error,*999)
+      CALL WriteStringMatrixFour(DIAGNOSTIC_OUTPUT_TYPE,1,1,numberOfDimensions,1,1,numberOfDimensions, &
+        & 1,1,numberOfDimensions,1,1,numberOfDimensions,numberOfDimensions,numberOfDimensions,transformedFibreTensor, &
+        & WRITE_STRING_MATRIX_NAME_AND_INDICES,'("    TT','(",I1,",",I1,",",I1,",:)',' :",3(X,E13.6))','(17X,3(X,E13.6))', &
+        & err,error,*999)
+   ENDIF
+        
+    EXITS("CoordinateSystem_MaterialXToNuTransformTensor4")
+    RETURN
+999 ERRORS("CoordinateSystem_MaterialXToNuTransformTensor4",err,error)
+    EXITS("CoordinateSystem_MaterialXToNuTransformTensor4")
+    RETURN 1
+    
+  END SUBROUTINE CoordinateSystem_MaterialXToNuTransformTensor4
+  
+  !
+  !================================================================================================================================
+  !
+
+  !>Transforms a second order Voigt tensor in material geometric coordinates (e.g., conductivity tensor) to a tensor in material fibre coordinates using the appropriate transformation formula for the tensor type
+  SUBROUTINE CoordinateSystem_MaterialXToNuTransformVoigtTensor2(tensorIndexTypes,geometricInterpPointMetrics, &
+    & fibreInterpPoint,voigtGeometricTensor,transformedFibreTensor,err,error,*)
+
+    !Argument variables
+    INTEGER(INTG), INTENT(IN) :: tensorIndexTypes(:) !<tensorIndexTypes(rankIdx). The type (e.g., covariant or contravariant) foreach rankIdx of the second order tensor to transform \see Constants_TensorIndexTypes
+    TYPE(FieldInterpolatedPointMetricsType), POINTER :: geometricInterpPointMetrics !<The geometric interpolated point metrics at the point to tranform the tensor.
+    TYPE(FieldInterpolatedPointType), POINTER :: fibreInterpPoint !<The fibre interpolated point (if it exists).
+    
+    REAL(DP), INTENT(IN) :: voigtGeometricTensor(:) !<voigtGeometricTensor(XVoigtIdx). The original symmetric material second order geometric tensor values (in Voigt form) to transform.
+    REAL(DP), INTENT(OUT) :: transformedFibreTensor(:,:) !<transformedFibreTensor(NuCoordinateIdx1,NuCoordinateIdx2). On exit, the second order tensor transformed from material geometric coordinates to material fibre coordinates.
+    INTEGER(INTG), INTENT(OUT) :: err !<The error code
+    TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
+    !Local Variables
+    INTEGER(INTG) :: numberOfDimensions,voigtTensorIndexTypes(1)
+    REAL(DP) :: geometricTensor(3,3)
+#ifdef WITH_PRECHECKS    
+    TYPE(VARYING_STRING) :: localError
+#endif    
+
+    ENTERS("CoordinateSystem_MaterialXToNuTransformVoigtTensor2",err,error,*999)
+
+#ifdef WITH_PRECHECKS
+    IF(.NOT.ASSOCIATED(geometricInterpPointMetrics)) &
+      & CALL FlagError("Geometric interpolated point metrics is not associated.",err,error,*999)
+    IF(SIZE(voigtGeometricTensor,1)<NUMBER_OF_VOIGT(geometricInterpPointMetrics%numberOfXDimensions)) THEN
+      localError="The size of the specified symmetric tensor of "// &
+        & TRIM(NumberToVString(SIZE(voigtGeometricTensor,1),"*",err,error))// &
+        & " is too small. The size should be >= "// &
+        & TRIM(NumberToVString(NUMBER_OF_VOIGT(geometricInterpPointMetrics%numberOfXDimensions),"*",err,error))//"."
+      CALL FlagError(localError,err,error,*999)
+    ENDIF
+#endif
+    
+    numberOfDimensions=geometricInterpPointMetrics%numberOfXDimensions
+     
+    !Calculate the untransformed tensor in material coordinates
+    IF(ALL(tensorIndexTypes==TENSOR_COVARIANT_INDEX)) THEN
+      voigtTensorIndexTypes(1)=TENSOR_COVARIANT_INDEX
+    ELSE
+      voigtTensorIndexTypes(1)=TENSOR_CONTRAVARIANT_INDEX
+    ENDIF
+    CALL VoigtToTensor(numberOfDimensions,voigtTensorIndexTypes,voigtGeometricTensor,geometricTensor,err,error,*999)
+
+    !Tranform the tensor
+    CALL CoordinateSystem_MaterialXToNuTransformTensor2(tensorIndexTypes,geometricInterpPointMetrics,fibreInterpPoint, &
+      & geometricTensor,transformedFibreTensor,err,error,*999)
+        
+    EXITS("CoordinateSystem_MaterialXToNuTransformVoigtTensor2")
+    RETURN
+999 ERRORS("CoordinateSystem_MaterialXToNuTransformVoigtTensor2",err,error)
+    EXITS("CoordinateSystem_MaterialXToNuTransformVoigtTensor2")
+    RETURN 1
+    
+  END SUBROUTINE CoordinateSystem_MaterialXToNuTransformVoigtTensor2
+
+  !
+  !================================================================================================================================
+  !
+
+  !>Transforms a fourth order Voigt tensor in material geometric coordinates (e.g., elasticity tensor) to a tensor in material fibre coordinates using the appropriate transformation formula for the tensor type
+  SUBROUTINE CoordinateSystem_MaterialXToNuTransformVoigtTensor4(tensorIndexTypes,geometricInterpPointMetrics, &
+    & fibreInterpPoint,voigtGeometricTensor,transformedFibreTensor,err,error,*)
+
+    !Argument variables
+    INTEGER(INTG), INTENT(IN) :: tensorIndexTypes(:) !<tensorIndexTypes(rankIdx). The type (e.g., covariant or contravariant) foreach rankIdx of the second order tensor to transform \see Constants_TensorIndexTypes
+    TYPE(FieldInterpolatedPointMetricsType), POINTER :: geometricInterpPointMetrics !<The geometric interpolated point metrics at the point to tranform the tensor.
+    TYPE(FieldInterpolatedPointType), POINTER :: fibreInterpPoint !<The fibre interpolated point (if it exists).
+    
+    REAL(DP), INTENT(IN) :: voigtGeometricTensor(:,:) !<voigtGeometricTensor(XVoigtIdx1,XVoigtIdx2). The original symmetric material fourth order geometric tensor values (in Voigt form) to transform.
+    REAL(DP), INTENT(OUT) :: transformedFibreTensor(:,:,:,:) !<transformedFibreTensor(NuCoordinateIdx1,NuCordinateIdx2,NuCoordinateIdx3,NuCoordinateIdx4). On exit, the fourth order tensor transformed from material geometric coordinates to material fibre coordinates.
+    INTEGER(INTG), INTENT(OUT) :: err !<The error code
+    TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
+    !Local Variables
+    INTEGER(INTG) :: numberOfDimensions,voigtTensorIndexTypes(2)
+    REAL(DP) :: geometricTensor(3,3,3,3)
+#ifdef WITH_PRECHECKS    
+    TYPE(VARYING_STRING) :: localError
+#endif    
+
+    ENTERS("CoordinateSystem_MaterialXToNuTransformVoigtTensor4",err,error,*999)
+
+#ifdef WITH_PRECHECKS
+    IF(.NOT.ASSOCIATED(geometricInterpPointMetrics)) &
+      & CALL FlagError("Geometric interpolated point metrics is not associated.",err,error,*999)
+    IF(SIZE(voigtGeometricTensor,1)<NUMBER_OF_VOIGT(geometricInterpPointMetrics%numberOfXDimensions)) THEN
+      localError="The size of the first index of the specified Voigt geometric tensor of "// &
+        & TRIM(NumberToVString(SIZE(voigtGeometricTensor,1),"*",err,error))// &
+        & " is too small. The size should be >= "// &
+        & TRIM(NumberToVString(NUMBER_OF_VOIGT(geometricInterpPointMetrics%numberOfXDimensions),"*",err,error))//"."
+      CALL FlagError(localError,err,error,*999)
+    ENDIF
+    IF(SIZE(voigtGeometricTensor,2)<NUMBER_OF_VOIGT(geometricInterpPointMetrics%numberOfXDimensions)) THEN
+      localError="The size of the second index of the specified Voigt geometric tensor of "// &
+        & TRIM(NumberToVString(SIZE(voigtGeometricTensor,2),"*",err,error))// &
+        & " is too small. The size should be >= "// &
+        & TRIM(NumberToVString(NUMBER_OF_VOIGT(geometricInterpPointMetrics%numberOfXDimensions),"*",err,error))//"."
+      CALL FlagError(localError,err,error,*999)
+    ENDIF
+#endif
+    
+    numberOfDimensions=geometricInterpPointMetrics%numberOfXDimensions
+
+    !Calculate the untransformed tensor in material coordinates
+    IF(ALL(tensorIndexTypes(1:2)==TENSOR_COVARIANT_INDEX)) THEN
+      voigtTensorIndexTypes(1)=TENSOR_COVARIANT_INDEX
+    ELSE
+      voigtTensorIndexTypes(1)=TENSOR_CONTRAVARIANT_INDEX
+    ENDIF
+    IF(ALL(tensorIndexTypes(3:4)==TENSOR_COVARIANT_INDEX)) THEN
+      voigtTensorIndexTypes(2)=TENSOR_COVARIANT_INDEX
+    ELSE
+      voigtTensorIndexTypes(2)=TENSOR_CONTRAVARIANT_INDEX
+    ENDIF
+    CALL VoigtToTensor(numberOfDimensions,voigtTensorIndexTypes,voigtGeometricTensor,geometricTensor,err,error,*999)
+
+    !Tranform the tensor
+    CALL CoordinateSystem_MaterialXToNuTransformTensor4(tensorIndexTypes,geometricInterpPointMetrics,fibreInterpPoint, &
+      & geometricTensor,transformedFibreTensor,err,error,*999)
+        
+    EXITS("CoordinateSystem_MaterialXToNuTransformVoigtTensor4")
+    RETURN
+999 ERRORS("CoordinateSystem_MaterialXToNuTransformVoigtTensor4",err,error)
+    EXITS("CoordinateSystem_MaterialXToNuTransformVoigtTensor4")
+    RETURN 1
+
+  END SUBROUTINE CoordinateSystem_MaterialXToNuTransformVoigtTensor4
+    
+  !
+  !================================================================================================================================
+  !
+
+  !>Transforms a vector in material geometric coordinates to a tensor in material fibre coordinates using the appropriate transformation formula for the vector type
+  SUBROUTINE CoordinateSystem_MaterialXToNuTransformVector0(vectorIndexType,geometricInterpPointMetrics, &
+    & fibreInterpPoint,geometricVector,transformedFibreVector,err,error,*)
+
+    !Argument variables
+    INTEGER(INTG), INTENT(IN) :: vectorIndexType !<The type (e.g., covariant or contravariant) of the vector index to transform \see Constants_TensorIndexTypes
+    TYPE(FieldInterpolatedPointMetricsType), POINTER :: geometricInterpPointMetrics !<The geometric interpolated point metrics at the point to tranform the vector.
+    TYPE(FieldInterpolatedPointType), POINTER :: fibreInterpPoint !<The fibre interpolated point (if it exists).
+    
+    REAL(DP), INTENT(IN) :: geometricVector(:) !<geometricVector(XIdx). The original material geometric vector values to transform.
+    REAL(DP), INTENT(OUT) :: transformedFibreVector(:) !<transformedFibreVector(NuCoordinateIdx). On exit, the vector transformed from material geometric coordinates to material fibre coordinates.
+    INTEGER(INTG), INTENT(OUT) :: err !<The error code
+    TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
+    !Local Variables
+
+    ENTERS("CoordinateSystem_MaterialXToNuTransformVector0",err,error,*999)
+    
+    CALL CoordinateSystem_MaterialXToNuTransformVector1([vectorIndexType],geometricInterpPointMetrics, &
+      & fibreInterpPoint,geometricVector,transformedFibreVector,err,error,*999)
+        
+    EXITS("CoordinateSystem_MaterialXToNuTransformVector0")
+    RETURN
+999 ERRORS("CoordinateSystem_MaterialXToNuTransformVector0",err,error)
+    EXITS("CoordinateSystem_MaterialXToNuTransformVector0")
+    RETURN 1
+    
+  END SUBROUTINE CoordinateSystem_MaterialXToNuTransformVector0
+
+  !
+  !================================================================================================================================
+  !
+
+  !>Transforms a vector in material geometric coordinates to a tensor in material fibre coordinates using the appropriate transform7ation formula for the vector type
+  SUBROUTINE CoordinateSystem_MaterialXToNuTransformVector1(vectorIndexType,geometricInterpPointMetrics, &
+    & fibreInterpPoint,geometricVector,transformedFibreVector,err,error,*)
+
+    !Argument variables
+    INTEGER(INTG), INTENT(IN) :: vectorIndexType(1) !<The type (e.g., covariant or contravariant) of the vector index to transform \see Constants_TensorIndexTypes
+    TYPE(FieldInterpolatedPointMetricsType), POINTER :: geometricInterpPointMetrics !<The geometric interpolated point metrics at the point to tranform the vector.
+    TYPE(FieldInterpolatedPointType), POINTER :: fibreInterpPoint !<The fibre interpolated point (if it exists).
+    
+    REAL(DP), INTENT(IN) :: geometricVector(:) !<geometricVector("CoordinateSystem_MaterialFibreSystemCalculate"],err)XIdx). The original material geometric vector values to transform.
+    REAL(DP), INTENT(OUT) :: transformedFibreVector(:) !<transformedFibreVector(NuCoordinateIdx). On exit, the vector transformed from material geometric coordinates to material fibre coordinates
+    INTEGER(INTG), INTENT(OUT) :: err !<The error code
+    TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
+    !Local Variables
+    INTEGER(INTG) :: numberOfDimensions,numberOfXi
+    REAL(DP) :: dNudX(3,3),dNudXi(3,3),dXdNu(3,3),dXidNu(3,3),materialFibreVectors(3,3),tempVector(3)
+#ifdef WITH_PRECHECKS    
+    TYPE(VARYING_STRING) :: localError
+#endif    
+
+    ENTERS("CoordinateSystem_MaterialXToNuTransformVector1",err,error,*999)
+
+#ifdef WITH_PRECHECKS
+    IF(.NOT.ASSOCIATED(geometricInterpPointMetrics)) &
+      & CALL FlagError("Geometry interpolated point metrics is not associated.",err,error,*999)
+    IF(geometricInterpPointMetrics%numberOfXDimensions/=geometricInterpPointMetrics%numberOfXiDimensions) THEN
+      localError="A different number of x and xi dimensions is not implemented. The number of x dimensions is "// &
+        & TRIM(NumberToVString(geometricInterpPointMetrics%numberOfXDimensions,"*",err,error))// &
+        & " and the number of xi dimensions is "// &
+        & TRIM(NumberToVString(geometricInterpPointMetrics%numberOfXiDimensions,"*",err,error))//"."
+      CALL FlagError(localError,err,error,*999)
+    ENDIF
+    IF(SIZE(geometricVector,1)<geometricInterpPointMetrics%numberOfXDimensions) THEN
+      localError="The size of the specified geometric vector of "// &
+        & TRIM(NumberToVString(SIZE(geometricVector,1),"*",err,error))// &
+        & " is too small. The size should be >= "// &
+        & TRIM(NumberToVString(geometricInterpPointMetrics%numberOfXDimensions,"*",err,error))//"."
+      CALL FlagError(localError,err,error,*999)
+    ENDIF
+    IF(SIZE(transformedFibreVector,1)<geometricInterpPointMetrics%numberOfXDimensions) THEN
+      localError="The size of the specified transformed fibre vector of "// &
+        & TRIM(NumberToVString(SIZE(transformedFibreVector,1),"*",err,error))//" is too small. The size should be >= "// &
+        & TRIM(NumberToVString(geometricInterpPointMetrics%numberOfXDimensions,"*",err,error))//"."
+      CALL FlagError(localError,err,error,*999)
+    ENDIF
+    IF(SIZE(geometricVector,1)/=SIZE(transformedFibreVector,1)) THEN
+      localError="The size of the geometric vector of "// &
+        & TRIM(NumberToVString(SIZE(geometricVector,1),"*",err,error))// &
+        & " does not match the size of the transformed vector of "// &
+        & TRIM(NumberToVString(SIZE(transformedFibreVector,1),"*",err,error))//"."
+      CALL FlagError(localError,err,error,*999)
+    ENDIF
+#endif
+    
+    numberOfDimensions=geometricInterpPointMetrics%numberOfXDimensions
+    numberOfXi=geometricInterpPointMetrics%numberOfXiDimensions
+    
+    !Calculate material coordinates
+    CALL CoordinateSystem_MaterialFibreSystemCalculate(geometricInterpPointMetrics,fibreInterpPoint, &
+      & dNudXi(1:numberOfDimensions,1:numberOfXi),dXidNu(1:numberOfXi,1:numberOfDimensions), &
+      & dNudX(1:numberOfDimensions,1:numberOfDimensions),dXdNu(1:numberOfDimensions,1:numberOfDimensions), &
+      & materialFibreVectors(1:numberOfDimensions,1:numberOfDimensions),err,error,*999)
+
+    !First transform the tensor from geometric coordinates to element/xi coordinates
+    CALL TensorTransform(numberOfDimensions,vectorIndexType,geometricVector(1:numberOfDimensions), &
+      & geometricInterpPointMetrics%dXidX(1:numberOfXi,1:numberOfDimensions), &
+      & geometricInterpPointMetrics%dXdXi(1:numberOfDimensions,1:numberOfXi), &
+      & tempVector(1:numberOfXi),err,error,*999)
+    !Next transform the tensor from element/xi to fibre coordinates
+    CALL TensorTransform(numberOfDimensions,vectorIndexType,tempVector(1:numberOfXi), &
+      & dNudXi(1:numberOfDimensions,1:numberOfXi),dXidNu(1:numberOfXi,1:numberOfDimensions), &
+      & transformedFibreVector(1:numberOfDimensions),err,error,*999)
+           
+    IF(diagnostics1) THEN
+      CALL WriteString(DIAGNOSTIC_OUTPUT_TYPE,"",err,error,*999)
+      CALL WriteString(DIAGNOSTIC_OUTPUT_TYPE,"Material X to Nu vector transformation:",err,error,*999)
+      CALL WriteStringValue(DIAGNOSTIC_OUTPUT_TYPE,"  Number of X  = ",numberOfDimensions,err,error,*999)
+      CALL WriteStringValue(DIAGNOSTIC_OUTPUT_TYPE,"  Number of Xi = ",numberOfXi,err,error,*999)
+      CALL WriteStringValue(DIAGNOSTIC_OUTPUT_TYPE,"  Vector index type = ",vectorIndexType(1),err,error,*999)      
+      CALL WriteString(DIAGNOSTIC_OUTPUT_TYPE,"  Material geometric vector:",err,error,*999)
+      CALL WriteStringVector(DIAGNOSTIC_OUTPUT_TYPE,1,1,numberOfDimensions,numberOfDimensions, &
+        & numberOfDimensions,geometricVector,'("    gv :",3(X,E13.6))','(8X,3(X,E13.6))',err,error,*999)
+      CALL WriteString(DIAGNOSTIC_OUTPUT_TYPE,"  Transformed material fibre vector:",err,error,*999)
+      CALL WriteStringVector(DIAGNOSTIC_OUTPUT_TYPE,1,1,numberOfDimensions,numberOfDimensions, &
+        & numberOfDimensions,transformedFibreVector,'("    fv :",3(X,E13.6))','(8X,3(X,E13.6))',err,error,*999)
+    ENDIF
+        
+    EXITS("CoordinateSystem_MaterialXToNuTransformVector1")
+    RETURN
+999 ERRORS("CoordinateSystem_MaterialXToNuTransformVector1",err,error)
+    EXITS("CoordinateSystem_MaterialXToNuTransformVector1")
+    RETURN 1
+    
+  END SUBROUTINE CoordinateSystem_MaterialXToNuTransformVector1
 
   !
   !================================================================================================================================

@@ -122,10 +122,10 @@ CONTAINS
       & numberOfRowsComponents,numberOfRowsElementParameters,numberOfRowsXi,numberOfSolidColsComponents,numberOfSolidXi, &
       & numberOfXi,rowComponentIdx,rowElementDOFIdx,rowXiIdx,rowElementParameterIdx,rowsVariableType,scalingType, &
       & solidColsVariableType,xiIdx   
-    REAL(DP) :: colsdPhidXi(3),density,dNudXi(3,3),dXidNu(3,3),dZdNu(3,3),dZdX(3,3),fibreVectors(3,3), &
+    REAL(DP) :: colsdPhidXi(3),density,dNudX(3,3),dNudXi(3,3),dXdNu(3,3),dXidNu(3,3),dZdNu(3,3),dZdX(3,3),fibreVectors(3,3), &
       & gaussWeight,jacobian,jacobianGaussWeight,JZ,JZNu,rowsdPhidXi(3),sigma(3,3),sum,tempMatrix(3,3)
     LOGICAL :: update,updateResidual,updateRHS
-    TYPE(BasisType), POINTER :: dependentBasis,fluidBasis,geometricBasis,rowsBasis,solidBasis
+    TYPE(BasisType), POINTER :: fluidBasis,geometricBasis,rowsBasis,solidBasis
     TYPE(DecompositionType), POINTER :: geometricDecomposition
     TYPE(DomainType), POINTER :: colsDomain,geometricDomain,rowsDomain   
     TYPE(DomainElementsType), POINTER :: fluidDomainElements,geometricDomainElements,rowsDomainElements,solidDomainElements
@@ -339,7 +339,7 @@ CONTAINS
         
         !Get the permeability tensor and density
 !!TODO: CHECK TENSOR TYPE OF PERMEABILITY TENSOR
-        CALL CoordinateSystem_MaterialTransformTensor([TENSOR_CONTRAVARIANT_INDEX,TENSOR_CONTRAVARIANT_INDEX], &
+        CALL CoordinateSystem_MaterialNuToXTransformTensor([TENSOR_CONTRAVARIANT_INDEX,TENSOR_CONTRAVARIANT_INDEX], &
           & solidDependentInterpPointMetrics,fibreInterpPoint, &
           & materialsInterpPoint%values(1:NUMBER_OF_VOIGT(numberOfDimensions),NO_PART_DERIV),sigma,err,error,*999)        
         density=materialsInterpPoint%values(NUMBER_OF_VOIGT(numberOfDimensions)+1,NO_PART_DERIV)
@@ -347,10 +347,11 @@ CONTAINS
         !Calculate material fibre coordinate system
         CALL CoordinateSystem_MaterialFibreSystemCalculate(geometricInterpPointMetrics,fibreInterpPoint, &
           & dNudXi(1:numberOfDimensions,1:numberOfXi),dXidNu(1:numberOfXi,1:numberOfDimensions), &
+          & dNudX(1:numberOfDimensions,1:numberOfDimensions),dXdNu(1:numberOfDimensions,1:numberOfDimensions), &
           & fibreVectors(1:numberOfDimensions,1:numberOfDimensions),err,error,*999)
         !Calculate F=dZ/dNu, the deformation gradient tensor at the gauss point
         CALL FiniteElasticity_DeformationGradientTensorCalculate(solidDependentInterpPointMetrics,geometricInterpPointMetrics, &
-          & dXidNu(1:numberOfXi,1:numberOfDimensions),dZdX,JZ,dZdNu,JZNu,err,error,*999)
+          & dXdNu(1:numberOfDimensions,1:numberOfDimensions),dZdX,JZ,dZdNu,JZNu,err,error,*999)
 
         sigma=density*JZNu*sigma
         
@@ -387,7 +388,7 @@ CONTAINS
           CALL Basis_QuadratureSchemeGet(rowsBasis,BASIS_DEFAULT_QUADRATURE_SCHEME,rowsQuadratureScheme,err,error,*999)
           CALL Basis_NumberOfElementParametersGet(rowsBasis,numberOfRowsElementParameters,err,error,*999)
           !Loop over element rows
-          DO rowElementParameterIdx=1,dependentBasis%numberOfElementParameters
+          DO rowElementParameterIdx=1,numberOfRowsElementParameters
             rowElementDOFIdx=rowElementDOFIdx+1
             DO xiIdx=1,numberOfRowsXi
               CALL BasisQuadratureScheme_GaussBasisFunctionGet(rowsQuadratureScheme,rowElementParameterIdx, &

@@ -2553,7 +2553,7 @@ CONTAINS
       & outputIteration,pSpecification(3),outputType
     REAL(DP) :: currentTime,startTime,stopTime,timeIncrement
     CHARACTER(14) :: outputFile
-    EXTERNAL :: SYSTEM
+    !EXTERNAL :: SYSTEM
     TYPE(ControlLoopType), POINTER :: controlLoop 
     TYPE(EquationsSetType), POINTER :: equationsSet 
     TYPE(EquationsSetAnalyticType), POINTER :: equationsAnalytic
@@ -2574,7 +2574,7 @@ CONTAINS
     CALL Problem_SpecificationGet(problem,3,pSpecification,err,error,*999)
 
     CALL Solver_OutputTypeGet(solver,outputType,err,error,*999)
-    CALL System('mkdir -p ./output')
+    CALL EXECUTE_COMMAND_LINE('mkdir -p ./output')
     
     SELECT CASE(pSpecification(3))
     CASE(PROBLEM_STATIC_STOKES_SUBTYPE,PROBLEM_LAPLACE_STOKES_SUBTYPE)

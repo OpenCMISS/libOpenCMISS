@@ -161,11 +161,11 @@ MODULE FIELD_IO_ROUTINES
 
   !Interfaces
   INTERFACE
-    FUNCTION FieldExport_OpenSession( exportType, filename, handle ) &
+    FUNCTION FieldExport_OpenSession( exExportType, filename, handle ) &
       & BIND(C,NAME="FieldExport_OpenSession")
       USE Types
       USE ISO_C_BINDING
-      INTEGER(C_INT), VALUE :: exportType
+      INTEGER(C_INT), VALUE :: exExportType
       CHARACTER(C_CHAR), INTENT(IN) :: filename(*)
       INTEGER(C_INT), INTENT(OUT) :: handle
       INTEGER(C_INT) :: FieldExport_OpenSession
@@ -343,7 +343,7 @@ MODULE FIELD_IO_ROUTINES
       INTEGER(C_INT), VALUE :: handle
       INTEGER(C_INT), VALUE :: isFirstSet
       INTEGER(C_INT), VALUE :: numberOfXi
-      REAL(DP), VALUE :: elementValue
+      REAL(C_DOUBLE), VALUE :: elementValue
       INTEGER(C_INT) :: FieldExport_ElementGridValues
     END FUNCTION FieldExport_ElementGridValues
 
@@ -1012,7 +1012,9 @@ CONTAINS
     INTEGER(INTG) :: FIELD_IO_ELEMENT_DERIVATIVE_INDEX !<On return, the calculated derative index
     !Local Variables
     INTEGER(INTG) :: VERSION_NUMBER,numberOfDerivatives
-
+    
+    FIELD_IO_ELEMENT_DERIVATIVE_INDEX=0
+    
     ENTERS("FIELD_IO_ELEMENT_DERIVATIVE_INDEX", ERR, ERROR, *999)
 
     VERSION_NUMBER=ELEMENT%elementVersions(DERIVATIVE_NUMBER, NODE_NUMBER)
@@ -1023,7 +1025,7 @@ CONTAINS
     EXITS("FIELD_IO_ELEMENT_DERIVATIVE_INDEX")
     RETURN
 999 ERRORSEXITS("FIELD_IO_ELEMENT_DERIVATIVE_INDEX",ERR,ERROR)
-    RETURN
+    RETURN 
     
   END FUNCTION FIELD_IO_ELEMENT_DERIVATIVE_INDEX
 
@@ -2731,6 +2733,7 @@ CONTAINS
     INTEGER(INTG) :: domainIndex
     INTEGER(INTG) :: myDomainIndex
 
+    myDomainIndex = 1
     DO domainIndex = 1, mapping%numberOfDomains
       IF( mapping%domainNumber( domainIndex ) == myWorldComputationNodeNumber ) THEN
         myDomainIndex = domainIndex
@@ -2798,6 +2801,8 @@ CONTAINS
     MAX_NODE_COMP_INDEX=0
     MAX_SIMPLEX_ORDER=1
     NULLIFY(variable_ptr)
+    NULLIFY(MAX_NODE_ELEMENT)
+    NULLIFY(MAX_ELEMENT_DOMAIN_NODES)
 
     CALL REALLOCATE( GROUP_LOCAL_NUMBER, elementalInfoSet%numberOfComponents, &
         & "Could not allocate GROUP_LOCAL_NUMBER in exelem header", ERR, ERROR, *999 )
@@ -2888,6 +2893,7 @@ CONTAINS
       GROUP_VARIABLES(NUM_OF_VARIABLES)=GROUP_VARIABLES(NUM_OF_VARIABLES)+1
     ENDDO  !comp_idx
 
+    NULLIFY(basis)
     DO scaleIndex = 1, NUM_OF_SCALING_FACTOR_SETS
       BASIS => listScaleBases( scaleIndex )%PTR
       IF(.NOT.ASSOCIATED(BASIS)) THEN

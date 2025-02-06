@@ -67,6 +67,8 @@ set(OpenCMISS_Fortran_SRC
   equations_matrices_access_routines.F90
   equations_set_routines.F90
   equations_set_access_routines.F90
+  export_routines.F90
+  export_access_routines.F90
   field_IO_routines.F90
   field_routines.F90
   field_access_routines.F90
@@ -146,6 +148,7 @@ set(OpenCMISS_Fortran_SRC
   trees.F90
   types.F90
   util_array.F90
+  vtk_routines.F90
 )
 # Add platform dependent files
 if(UNIX OR LINUX} MATCHES linux)

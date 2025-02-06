@@ -2175,6 +2175,7 @@ CONTAINS
         CALL Field_InterpolateGauss(NO_PART_DERIV,BASIS_DEFAULT_QUADRATURE_SCHEME,gaussPointIdx,uMaterialsInterpPoint, &
           & err,error,*999)
         !Get coupling source parameter
+        coupledSourceParam=0.0_DP
         IF(ASSOCIATED(vDependentVariable)) THEN
           CALL Field_InterpolateGauss(NO_PART_DERIV,BASIS_DEFAULT_QUADRATURE_SCHEME,gaussPointIdx,vDependentInterpPoint, &
             & err,error,*999)
@@ -2183,11 +2184,13 @@ CONTAINS
         !Interpolate to get the advective velocity
         CALL Field_InterpolateGauss(NO_PART_DERIV,BASIS_DEFAULT_QUADRATURE_SCHEME,gaussPointIdx,independentInterpPoint, &
           & err,error,*999)
+        sourceParam=0.0_DP
         IF(ASSOCIATED(sourceVariable)) THEN
           CALL Field_InterpolateGauss(NO_PART_DERIV,BASIS_DEFAULT_QUADRATURE_SCHEME,gaussPointIdx,sourceInterpPoint, &
             & err,error,*999)            
           sourceParam=sourceInterpPoint%values(1,NO_PART_DERIV)
         ENDIF
+        couplingParam=0.0_DP
         IF(ASSOCIATED(vMaterialsVariable)) THEN
           CALL Field_InterpolateGauss(NO_PART_DERIV,BASIS_DEFAULT_QUADRATURE_SCHEME,gaussPointIdx,vMaterialsInterpPoint, &
             & err,error,*999)
@@ -2196,6 +2199,7 @@ CONTAINS
 
         aParam=uMaterialsInterpPoint%values(1,NO_PART_DERIV)
         bParam=uMaterialsInterpPoint%values(2,NO_PART_DERIV)
+        cParam=0.0_DP
         SELECT CASE(equationsSetSubtype)
         CASE(EQUATIONS_SET_LINEAR_SOURCE_ADVEC_DIFF_SUBTYPE, &
           & EQUATIONS_SET_LINEAR_SOURCE_ALE_ADVEC_DIFF_SUBTYPE, &
@@ -2204,14 +2208,14 @@ CONTAINS
           & EQUATIONS_SET_MULTI_COMP_TRANSPORT_ADVEC_DIFF_SUBTYPE)
           cParam=uMaterialsInterpPoint%values(3,NO_PART_DERIV)
           !Calculate conductivity tensor
-          CALL CoordinateSystem_MaterialTransformTensor([TENSOR_CONTRAVARIANT_INDEX,TENSOR_COVARIANT_INDEX], &
+          CALL CoordinateSystem_MaterialNuToXTransformTensor([TENSOR_CONTRAVARIANT_INDEX,TENSOR_COVARIANT_INDEX], &
             & geometricInterpPointMetrics,fibreInterpPoint, &
-            & uMaterialsInterpPoint%values(4:4+NUMBER_OF_VOIGT(numberOfDimensions),NO_PART_DERIV),conductivity,err,error,*999)
+            & uMaterialsInterpPoint%values(4:2+NUMBER_OF_VOIGT(numberOfDimensions),NO_PART_DERIV),conductivity,err,error,*999)
         CASE DEFAULT
           !Calculate conductivity tensor
-          CALL CoordinateSystem_MaterialTransformTensor([TENSOR_CONTRAVARIANT_INDEX,TENSOR_COVARIANT_INDEX], &
+          CALL CoordinateSystem_MaterialNuToXTransformTensor([TENSOR_CONTRAVARIANT_INDEX,TENSOR_COVARIANT_INDEX], &
             & geometricInterpPointMetrics,fibreInterpPoint, &
-            & uMaterialsInterpPoint%values(3:3+NUMBER_OF_VOIGT(numberOfDimensions),NO_PART_DERIV),conductivity,err,error,*999)
+            & uMaterialsInterpPoint%values(3:2+NUMBER_OF_VOIGT(numberOfDimensions),NO_PART_DERIV),conductivity,err,error,*999)
         END SELECT
 
         !Get the advection velocity

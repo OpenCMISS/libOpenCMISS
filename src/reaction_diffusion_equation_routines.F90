@@ -152,8 +152,7 @@ CONTAINS
     TYPE(DomainNodesType), POINTER :: domainNodes
     TYPE(DomainTopologyType), POINTER :: domainTopology
     TYPE(FieldType), POINTER :: analyticField,dependentField,geometricField
-    TYPE(FieldParameterSetType), POINTER :: accelerationParameterSet,analyticAccelerationParameterSet, &
-      & analyticVelocityParameterSet,velocityParameterSet
+    TYPE(FieldParameterSetType), POINTER :: accelerationParameterSet,velocityParameterSet
     TYPE(FieldVariableType), POINTER :: analyticVariable,dependentVariable,geometricVariable
 
     ENTERS("ReactionDiffusion_AnalyticBoundaryConditionsCalculate",err,error,*999)
@@ -1459,9 +1458,10 @@ CONTAINS
       & esSpecification(3),gaussPointIdx,numberOfColsComponents,numberOfColumnElementParameters(MAX_NUMBER_OF_COMPONENTS), &
       & numberOfDimensions,numberOfGauss,numberOfRowElementParameters(MAX_NUMBER_OF_COMPONENTS),numberOfRowsComponents, &
       & numberOfXi,rowComponentIdx,rowElementDOFIdx,rowElementParameterIdx,rowXiIdx,rowsVariableType,scalingType,xiIdx
-    REAL(DP) :: aParam,bParam,columnPhi,columndPhidXi(3),conductivity(3,3),correctionFactor,currentJ,deltaTime,dJdt,dNudXi(3,3), &
-      & dXidNu(3,3),fibreVectors(3,3),F(3,3),FNu(3,3),gaussWeight,jacobian,jacobianGaussWeight,JZ,JZNu,JZNuRef,prevF(3,3), &
-      & prevFNu(3,3),prevJ,prevJZ,prevJZNu,prevJZNuRef,rowPhi,rowdPhidXi(3),sourceParam,sum,velocity(3),gradVelocity(3)
+    REAL(DP) :: aParam,bParam,columnPhi,columndPhidXi(3),conductivity(3,3),correctionFactor,currentJ,deltaTime,dJdt,dNudX(3,3), &
+      & dNudXi(3,3),dXdNu(3,3),dXidNu(3,3),fibreVectors(3,3),F(3,3),FNu(3,3),gaussWeight,jacobian,jacobianGaussWeight,JZ,JZNu, &
+      & JZNuRef,prevF(3,3),prevFNu(3,3),prevJ,prevJZ,prevJZNu,prevJZNuRef,rowPhi,rowdPhidXi(3),sourceParam,sum,velocity(3), &
+      & gradVelocity(3)
     LOGICAL :: update,updateDamping,updateMatrices,updateRHS,updateSource,updateStiffness
     TYPE(BasisType), POINTER :: dependentBasis,geometricBasis
     TYPE(BasisPtrType) :: columnBasis(MAX_NUMBER_OF_COMPONENTS),rowBasis(MAX_NUMBER_OF_COMPONENTS)
@@ -1771,6 +1771,7 @@ CONTAINS
           CALL Field_InterpolateGauss(FIRST_PART_DERIV,BASIS_DEFAULT_QUADRATURE_SCHEME,gaussPointIdx,fibreInterpPoint, &
             & err,error,*999)
         ENDIF
+        sourceParam=0.0_DP
         IF(ASSOCIATED(sourceField)) THEN
           CALL Field_InterpolateGauss(NO_PART_DERIV,BASIS_DEFAULT_QUADRATURE_SCHEME,gaussPointIdx,sourceInterpPoint, &
             & err,error,*999)
@@ -1803,21 +1804,25 @@ CONTAINS
           !Calculate material fibre coordinate system
           CALL CoordinateSystem_MaterialFibreSystemCalculate(geometricInterpPointMetrics,fibreInterpPoint, &
             & dNudXi(1:numberOfDimensions,1:numberOfXi),dXidNu(1:numberOfXi,1:numberOfDimensions), &
+            & dNudX(1:numberOfDimensions,1:numberOfDimensions),dXdNu(1:numberOfDimensions,1:numberOfDimensions), &
             & fibreVectors(1:numberOfDimensions,1:numberOfDimensions),err,error,*999)
           !Calculate current deformation state
           CALL FiniteElasticity_DeformationGradientTensorCalculate(independentInterpPointMetrics,geometricInterpPointMetrics, &
-            & dXidNu(1:numberOfXi,1:numberOfDimensions),F,JZ,FNu,JZNu,err,error,*999)
+            & dXdNu(1:numberOfDimensions,1:numberOfDimensions),F,JZ,FNu,JZNu,err,error,*999)
           !Calculate previous deformation gradient tensor and its determinant
           CALL FiniteElasticity_DeformationGradientTensorCalculate(independentInterpPointMetrics,geometricInterpPointMetrics, &
-            & dXidNu(1:numberOfXi,1:numberOfDimensions),prevF,prevJZ,prevFNu,prevJZNu,err,error,*999)
+            & dXdNu(1:numberOfDimensions,1:numberOfDimensions),prevF,prevJZ,prevFNu,prevJZNu,err,error,*999)
           dJdt=(JZNu-prevJZNu)/deltaTime
         ENDIF
-        
+
+        aParam=0.0_DP
+        bParam=0.0_DP
+        correctionFactor=1.0_DP
         SELECT CASE(esSpecification(3))
         CASE(EQUATIONS_SET_CELLML_SPLIT_GEN_REACT_DIFF_SUBTYPE)
           aParam=1.0_DP
           !Calculate conductivity tensor
-          CALL CoordinateSystem_MaterialTransformTensor([TENSOR_CONTRAVARIANT_INDEX,TENSOR_COVARIANT_INDEX], &
+          CALL CoordinateSystem_MaterialNuToXTransformTensor([TENSOR_CONTRAVARIANT_INDEX,TENSOR_COVARIANT_INDEX], &
             & geometricInterpPointMetrics,fibreInterpPoint, &
             & materialsInterpPoint%values(1:NUMBER_OF_VOIGT(numberOfDimensions),NO_PART_DERIV),conductivity,err,error,*999)
           correctionFactor=1.0_DP
@@ -1825,16 +1830,16 @@ CONTAINS
           aParam=materialsInterpPoint%values(1,NO_PART_DERIV)
           bParam=materialsInterpPoint%values(2,NO_PART_DERIV)
           !Calculate conductivity tensor
-          CALL CoordinateSystem_MaterialTransformTensor([TENSOR_CONTRAVARIANT_INDEX,TENSOR_COVARIANT_INDEX], &
+          CALL CoordinateSystem_MaterialNuToXTransformTensor([TENSOR_CONTRAVARIANT_INDEX,TENSOR_COVARIANT_INDEX], &
             & geometricInterpPointMetrics,fibreInterpPoint, &
-            & materialsInterpPoint%values(3:3+NUMBER_OF_VOIGT(numberOfDimensions),NO_PART_DERIV),conductivity,err,error,*999)
+            & materialsInterpPoint%values(3:2+NUMBER_OF_VOIGT(numberOfDimensions),NO_PART_DERIV),conductivity,err,error,*999)
           correctionFactor=1.0_DP
         CASE(EQUATIONS_SET_GEN_FISHERS_SPLIT_REACT_DIFF_SUBTYPE)
           aParam=materialsInterpPoint%values(1,NO_PART_DERIV)
           !Calculate conductivity tensor
-          CALL CoordinateSystem_MaterialTransformTensor([TENSOR_CONTRAVARIANT_INDEX,TENSOR_COVARIANT_INDEX], &
+          CALL CoordinateSystem_MaterialNuToXTransformTensor([TENSOR_CONTRAVARIANT_INDEX,TENSOR_COVARIANT_INDEX], &
             & geometricInterpPointMetrics,fibreInterpPoint, &
-            & materialsInterpPoint%values(4:4+NUMBER_OF_VOIGT(numberOfDimensions),NO_PART_DERIV),conductivity,err,error,*999)
+            & materialsInterpPoint%values(4:3+NUMBER_OF_VOIGT(numberOfDimensions),NO_PART_DERIV),conductivity,err,error,*999)
           correctionFactor=aParam
         CASE DEFAULT
           localError="Equations set subtype "//TRIM(NumberToVString(esSpecification(3),"*",err,error))// &
@@ -2185,6 +2190,7 @@ CONTAINS
         
         uValue=dependentInterpPoint%values(1,NO_PART_DERIV)
         bParam=materialsInterpPoint%values(2,NO_PART_DERIV)
+        cParam=0.0_DP
         IF(esSpecification(3)==EQUATIONS_SET_GEN_FISHERS_NOSPLIT_REACT_DIFF_SUBTYPE) THEN
           cParam=materialsInterpPoint%values(3,NO_PART_DERIV)
         ENDIF
@@ -2208,6 +2214,7 @@ CONTAINS
                 columnElementDOFIdx=columnElementDOFIdx+1
                 CALL BasisQuadratureScheme_GaussBasisFunctionGet(columnQuadratureScheme(columnComponentIdx)%ptr, &
                   & columnElementParameterIdx,NO_PART_DERIV,gaussPointIdx,columnPhi,err,error,*999)
+                sum=0.0_DP
                 SELECT CASE(esSpecification(3))
                 CASE(EQUATIONS_SET_CELLML_NOSPLIT_NONLINEAR_GEN_REACT_DIFF_SUBTYPE)
                   CALL FlagError("Not implemented.",err,error,*999)
@@ -2568,6 +2575,7 @@ CONTAINS
           & err,error,*999)
         CALL Field_InterpolateGauss(NO_PART_DERIV,BASIS_DEFAULT_QUADRATURE_SCHEME,gaussPointIdx,materialsInterpPoint, &
           & err,error,*999)
+        sourceValue=0.0_DP
         IF(ASSOCIATED(sourceField)) THEN
           CALL Field_InterpolateGauss(NO_PART_DERIV,BASIS_DEFAULT_QUADRATURE_SCHEME,gaussPointIdx,sourceInterpPoint, &
             & err,error,*999)
@@ -2577,19 +2585,20 @@ CONTAINS
         uValue=dependentInterpPoint%values(1,NO_PART_DERIV)
         aParam=materialsInterpPoint%values(1,NO_PART_DERIV)
         bParam=materialsInterpPoint%values(2,NO_PART_DERIV)
+        cParam=0.0_DP
         SELECT CASE(esSpecification(3))
         CASE(EQUATIONS_SET_CELLML_NOSPLIT_NONLINEAR_GEN_REACT_DIFF_SUBTYPE)
           bParam=materialsInterpPoint%values(2,NO_PART_DERIV)
           !Calculate conductivity tensor
-          CALL CoordinateSystem_MaterialTransformTensor([TENSOR_CONTRAVARIANT_INDEX,TENSOR_COVARIANT_INDEX], &
+          CALL CoordinateSystem_MaterialNuToXTransformTensor([TENSOR_CONTRAVARIANT_INDEX,TENSOR_COVARIANT_INDEX], &
             & geometricInterpPointMetrics,fibreInterpPoint, &
-            & materialsInterpPoint%values(3:3+NUMBER_OF_VOIGT(numberOfDimensions),NO_PART_DERIV),conductivity,err,error,*999)
+            & materialsInterpPoint%values(3:2+NUMBER_OF_VOIGT(numberOfDimensions),NO_PART_DERIV),conductivity,err,error,*999)
         CASE(EQUATIONS_SET_GEN_FISHERS_NOSPLIT_REACT_DIFF_SUBTYPE)
           cParam=materialsInterpPoint%values(3,NO_PART_DERIV)
           !Calculate conductivity tensor
-          CALL CoordinateSystem_MaterialTransformTensor([TENSOR_CONTRAVARIANT_INDEX,TENSOR_COVARIANT_INDEX], &
+          CALL CoordinateSystem_MaterialNuToXTransformTensor([TENSOR_CONTRAVARIANT_INDEX,TENSOR_COVARIANT_INDEX], &
             & geometricInterpPointMetrics,fibreInterpPoint, &
-            & materialsInterpPoint%values(4:4+NUMBER_OF_VOIGT(numberOfDimensions),NO_PART_DERIV),conductivity,err,error,*999)
+            & materialsInterpPoint%values(4:3+NUMBER_OF_VOIGT(numberOfDimensions),NO_PART_DERIV),conductivity,err,error,*999)
           correctionFactor=aParam
         CASE DEFAULT
           localError="Equations set subtype "//TRIM(NumberToVString(esSpecification(3),"*",err,error))// &
@@ -2653,6 +2662,7 @@ CONTAINS
               ENDDO !columnComponentIdx
             ENDIF !updateMatrices
             IF(updateResidual) THEN
+              sum=0.0_DP
               IF(esSpecification(3)==EQUATIONS_SET_CELLML_NOSPLIT_NONLINEAR_GEN_REACT_DIFF_SUBTYPE) THEN
                 CALL FlagError("Not implemented.",err,error,*999)
 !!TODO: Work out where the nonlinear CellML reaction term is stored? It can't be source because that is linear not nonlinear?

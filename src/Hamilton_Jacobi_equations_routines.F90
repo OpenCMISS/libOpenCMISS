@@ -130,9 +130,9 @@ CONTAINS
     INTEGER(INTG), INTENT(OUT) :: err !<The error code
     TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
     !Local Variables
-    INTEGER(INTG) :: analyticFunctionType,componentIdx,dependentVariableType,derivativeIdx,dimensionIdx,esSpecification(3), &
+    INTEGER(INTG) :: analyticFunctionType,componentIdx,dependentVariableType,derivativeIdx,dimensionIdx, &
       & globalDerivativeIndex,localDOFIdx,nodeIdx,numberOfDependentComponents,numberOfDependentVariables,numberOfDimensions, &
-      & numberOfNodes,numberOfNodeDerivatives,variableIdx,variableType
+      & numberOfNodes,numberOfNodeDerivatives,variableIdx
     REAL(DP) :: analyticValue,X(3)
     REAL(DP), POINTER :: geometricParameters(:)
     LOGICAL :: boundaryNode
@@ -445,7 +445,7 @@ CONTAINS
     TYPE(FieldInterpolationParametersType), POINTER :: colsInterpParameters,geometricInterpParameters,rowsInterpParameters
     TYPE(FieldInterpolatedPointType), POINTER :: geometricInterpPoint
     TYPE(FieldInterpolatedPointMetricsType), POINTER :: geometricInterpPointMetrics
-    TYPE(FieldVariableType), POINTER :: colsVariable,fieldVariable,geometricVariable,rowsVariable
+    TYPE(FieldVariableType), POINTER :: colsVariable,geometricVariable,rowsVariable
     TYPE(QuadratureSchemeType), POINTER :: colQuadratureScheme,dependentQuadratureScheme,rowQuadratureScheme
     TYPE(VARYING_STRING) :: localError
 

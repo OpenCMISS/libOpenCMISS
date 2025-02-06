@@ -1589,7 +1589,7 @@ CONTAINS
     REAL(DP), ALLOCATABLE :: pressureCoefficient(:),pressure(:),pressureGradient(:,:)
     LOGICAL :: boundaryElement,stabilized,update,updateCoupling,updateDamping,updateMatrices,updateMatrix,updateRHS, &
       & updateSource,updateStiffness
-    TYPE(BasisType), POINTER :: colsBasis,dependentBasis,geometricBasis,rowsBasis
+    TYPE(BasisType), POINTER :: colsBasis,geometricBasis,rowsBasis
     TYPE(DecompositionType), POINTER :: dependentDecomposition,geometricDecomposition
     TYPE(DecompositionTopologyType), POINTER :: geometricDecompositionTopology
     TYPE(DecompositionElementsType), POINTER :: geometricDecompositionElements
@@ -1622,7 +1622,7 @@ CONTAINS
     TYPE(FieldInterpolationParametersType), POINTER :: colsInterpParameters,elasticityDependentInterpParameters, &
       & geometricInterpParameters,materialsUInterpParameters,materialsU1InterpParameters,materialsVInterpParameters, &
       & referenceGeometricInterpParameters,rowsInterpParameters,sourceInterpParameters
-    TYPE(FieldVariableType), POINTER :: colsVariable,fieldVariable,geometricVariable,rowsVariable
+    TYPE(FieldVariableType), POINTER :: colsVariable,geometricVariable,rowsVariable
     TYPE(FieldVariablePtrType) :: fieldVariables(99)
     TYPE(QuadratureSchemeType), POINTER :: colsQuadratureScheme,geometricQuadratureScheme,rowsQuadratureScheme
     TYPE(VARYING_STRING) :: localError
@@ -1763,6 +1763,8 @@ CONTAINS
       CALL EquationsMappingVector_LinearMappingGet(vectorMapping,linearMapping,err,error,*999)
       NULLIFY(linearMatrices)
       CALL EquationsMatricesVector_LinearMatricesGet(vectorMatrices,linearMatrices,err,error,*999)
+      myCompartment = equationsSetFieldData(1)
+      numberOfCompartments  = equationsSetFieldData(2) 
       variableCount=0
       DO matrixIdx=1,numberOfCompartments
         IF(matrixIdx/=myCompartment)THEN
@@ -1792,6 +1794,8 @@ CONTAINS
       !If it is just a mass coupling, then all of the additional terms are placed in the RHS of the mass-increase equation      
       CALL EquationsMappingVector_LinearMappingGet(vectorMapping,linearMapping,err,error,*999)
       CALL EquationsMatricesVector_LinearMatricesGet(vectorMatrices,linearMatrices,err,error,*999)
+      myCompartment = equationsSetFieldData(1)
+      numberOfCompartments  = equationsSetFieldData(2) 
       variableCount=0
       DO matrixIdx=1,numberOfCompartments
         IF(matrixIdx/=myCompartment)THEN
@@ -1922,8 +1926,8 @@ CONTAINS
         & equationsSetSubtype==EQUATIONS_SET_INCOMPRESSIBLE_ELAST_MULTI_COMP_DARCY_SUBTYPE) THEN
         CALL EquationsInterpolation_DependentParametersGet(equationsInterpolation,FIELD_U_VARIABLE_TYPE, &
           & elasticityDependentInterpParameters,err,error,*999)
-        CALL EquationsInterpolation_DependentPointGet(equationsInterpolation,FIELD_U_VARIABLE_TYPE,elasticityDependentInterpPoint, &
-          & err,error,*999)
+        CALL EquationsInterpolation_DependentPointGet(equationsInterpolation,FIELD_U_VARIABLE_TYPE, &
+          & elasticityDependentInterpPoint,err,error,*999)
         CALL Field_InterpolationParametersElementGet(FIELD_VALUES_SET_TYPE,elementNumber,elasticityDependentInterpParameters, &
           & err,error,*999)
       ENDIF
@@ -1949,7 +1953,8 @@ CONTAINS
         NULLIFY(materialsU1InterpPoint)
         CALL EquationsInterpolation_MaterialsPointGet(equationsInterpolation,FIELD_U1_VARIABLE_TYPE,materialsU1InterpPoint, &
           & err,error,*999)
-        CALL Field_InterpolationParametersElementGet(FIELD_VALUES_SET_TYPE,elementNumber,materialsU1InterpParameters,err,error,*999)
+        CALL Field_InterpolationParametersElementGet(FIELD_VALUES_SET_TYPE,elementNumber,materialsU1InterpParameters, &
+          & err,error,*999)
       ENDIF
 
       NULLIFY(sourceInterpParameters)
@@ -2055,10 +2060,10 @@ CONTAINS
             & err,error,*999)
         END IF
 
+        permeabilityOverViscosity=0.0_DP
         SELECT CASE(equationsSetSubtype)
         CASE(EQUATIONS_SET_STANDARD_DARCY_SUBTYPE,EQUATIONS_SET_QUASISTATIC_DARCY_SUBTYPE,EQUATIONS_SET_ALE_DARCY_SUBTYPE)
           !scalar permeability/viscosity
-          permeabilityOverViscosity=0.0_DP
           permeabilityOverViscosity(1,1) = materialsUInterpPoint%values(2,NO_PART_DERIV)
           permeabilityOverViscosity(2,2) = materialsUInterpPoint%values(2,NO_PART_DERIV)
           permeabilityOverViscosity(3,3) = materialsUInterpPoint%values(2,NO_PART_DERIV)
@@ -2125,7 +2130,7 @@ CONTAINS
             & elasticityDependentInterpPoint,err,error,*999)
           !Mind the sign !!!
           lmPressure = -elasticityDependentInterpPoint%values(4,NO_PART_DERIV)
-          DO xiIdx=1,dependentBasis%numberOfXi
+          DO xiIdx=1,colsBasis%numberOfXi
             derivativeIdx=PARTIAL_DERIVATIVE_FIRST_DERIVATIVE_MAP(xiIdx) !2,4,7
             !gradient wrt. element coordinates xi
             gradientLMPressure(xiIdx) = -elasticityDependentInterpPoint%values(4,derivativeIdx)
@@ -2520,7 +2525,7 @@ CONTAINS
               CASE(EQUATIONS_SET_INCOMPRESSIBLE_ELAST_MULTI_COMP_DARCY_SUBTYPE)
                 !------------------------------------------------------------------------------------------------------
                 !velocity test function
-                IF( rowComponentIdx<fieldVariable%numberOfComponents ) THEN
+                IF( rowComponentIdx<rowsVariable%numberOfComponents ) THEN
 
                   sum = 0.0_DP
                   !Term arising from the pressure / Lagrange Multiplier of elasticity (given):
@@ -2537,7 +2542,7 @@ CONTAINS
 
                   !-----------------------------------------------------------------------------------------------------
                   !mass-increase test function
-                ELSE IF( rowComponentIdx==fieldVariable%numberOfComponents ) THEN
+                ELSE IF( rowComponentIdx==rowsVariable%numberOfComponents ) THEN
 
                   ! n o   s o u r c e
                   !source terms need to be converted to use source field & vector
@@ -3503,7 +3508,7 @@ CONTAINS
     TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
     !Local Variables
     INTEGER(INTG) :: analyticFunctionType,loopType,matrixNumber,numberOfSolverMatrices,pSpecification(3),problemSubType, &
-      & solveNumber,solverMatrixIdx,solverNumber,solverNumberDarcy,solverNumberMatProperties,solverNumberSolid
+      & solverMatrixIdx,solverNumber,solverNumberDarcy,solverNumberMatProperties,solverNumberSolid
     TYPE(ControlLoopType), POINTER :: controlLoop 
     TYPE(EquationsSetType), POINTER :: equationsSet
     TYPE(EquationsSetAnalyticType), POINTER :: equationsAnalytic
@@ -3524,7 +3529,9 @@ CONTAINS
     CALL ControlLoop_ProblemGet(controlLoop,problem,err,error,*999)
     CALL Problem_SpecificationGet(problem,3,pSpecification,err,error,*999)
     problemSubType=pSpecification(3)
-    
+
+   CALL Solver_GlobalNumberGet(solver,solverNumber,err,error,*999)
+
     SELECT CASE(problemSubType)
     CASE(PROBLEM_STANDARD_DARCY_SUBTYPE,PROBLEM_QUASISTATIC_DARCY_SUBTYPE,PROBLEM_TRANSIENT_DARCY_SUBTYPE)
       solverNumberDarcy=1
@@ -3563,7 +3570,7 @@ CONTAINS
       ! do nothing
     CASE(PROBLEM_TRANSIENT_DARCY_SUBTYPE)
       CALL Solver_GlobalNumberGet(solver,solverNumber,err,error,*999)
-      IF(solveNumber==solverNumberDarcy) CALL Darcy_PreSolveUpdateBoundaryConditions(solver,err,error,*999)
+      IF(solverNumber==solverNumberDarcy) CALL Darcy_PreSolveUpdateBoundaryConditions(solver,err,error,*999)
     CASE(PROBLEM_QUASISTATIC_ELASTICITY_TRANSIENT_DARCY_SUBTYPE)
       CALL ControlLoop_TypeGet(controlLoop,loopType,err,error,*999)
       CALL Solver_GlobalNumberGet(solver,solverNumber,err,error,*999)
@@ -4479,7 +4486,7 @@ CONTAINS
     REAL(DP) :: absoluteTolerance,currentTime,relativeTolerance,startTime,stopTime,timeIncrement
     CHARACTER(14) :: outputFile
     LOGICAL :: continueLoop
-    EXTERNAL :: SYSTEM
+    !EXTERNAL :: SYSTEM
     TYPE(ControlLoopType), POINTER :: controlLoop,parentLoop
     TYPE(EquationsSetType), POINTER :: equationsSet
     TYPE(FieldsType), POINTER :: fields
@@ -4498,7 +4505,7 @@ CONTAINS
     CALL Problem_SpecificationGet(problem,3,pSpecification,err,error,*999)
     CALL Solver_OutputTypeGet(solver,solverOutputType,err,error,*999)
     
-    CALL SYSTEM('mkdir -p ./output')
+    CALL EXECUTE_COMMAND_LINE('mkdir -p ./output')
     SELECT CASE(pSpecification(3))
     CASE(PROBLEM_STANDARD_DARCY_SUBTYPE)
       NULLIFY(solverEquations)
@@ -5998,7 +6005,7 @@ CONTAINS
     INTEGER(INTG), INTENT(OUT) :: err !<The error code
     TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
     !Local Variables
-    INTEGER(INTG) :: computationNodeNumber,dofNumber,equationsSetIdx,esSpecification(3),fileunitN,fileunitN1,iterationNumber, &
+    INTEGER(INTG) :: computationNodeNumber,dofNumber,equationsSetIdx,esSpecification(3),iterationNumber, &
       & loopType,numberOfDofs,numberOfEquationsSets,pSpecification(3),solverOutputType,variableType
     REAL(DP) :: residualNorm,residualNorm_0
     REAL(DP), POINTER :: iterationValuesN(:),iterationValuesN1(:)
@@ -6170,8 +6177,8 @@ CONTAINS
     END SELECT
 
     CLOSE(23)
-    CLOSE(fileunitN)
-    CLOSE(fileunitN1)
+    !CLOSE(fileunitN)
+    !CLOSE(fileunitN1)
 
     EXITS("Darcy_MonitorConvergence")
     RETURN

@@ -250,15 +250,16 @@ CONTAINS
   !================================================================================================================================
   !   
     
-  SUBROUTINE ANALYTICHELMHOLTZ_GENERIC(NUMBER_GLOBAL_X_ELEMENTS,NUMBER_GLOBAL_Y_ELEMENTS,NUMBER_GLOBAL_Z_ELEMENTS, &
-    & INTERPOLATION_SPECIFICATIONS,DEPENDENT_FIELD)
+  SUBROUTINE ANALYTICHELMHOLTZ_GENERIC(NUM_GLOBAL_X_ELEMENTS,NUM_GLOBAL_Y_ELEMENTS,NUM_GLOBAL_Z_ELEMENTS, &
+    & INTERP_SPECIFICATIONS,DEPENDENT_FIELD)
     !Argument variables
-    INTEGER(OC_Intg), INTENT(IN) :: NUMBER_GLOBAL_X_ELEMENTS !<number of elements on x axis
-    INTEGER(OC_Intg), INTENT(IN) :: NUMBER_GLOBAL_Y_ELEMENTS !<number of elements on y axis
-    INTEGER(OC_Intg), INTENT(IN) :: NUMBER_GLOBAL_Z_ELEMENTS !<number of elements on z axis
-    INTEGER(OC_Intg), INTENT(IN) :: INTERPOLATION_SPECIFICATIONS !<the interpolation specifications
+    INTEGER(OC_Intg), INTENT(IN) :: NUM_GLOBAL_X_ELEMENTS !<number of elements on x axis
+    INTEGER(OC_Intg), INTENT(IN) :: NUM_GLOBAL_Y_ELEMENTS !<number of elements on y axis
+    INTEGER(OC_Intg), INTENT(IN) :: NUM_GLOBAL_Z_ELEMENTS !<number of elements on z axis
+    INTEGER(OC_Intg), INTENT(IN) :: INTERP_SPECIFICATIONS !<the interpolation specifications
     TYPE(OC_FieldType) :: DEPENDENT_FIELD
     !Local Variables
+    INTEGER(OC_Intg) :: NUMBER_GLOBAL_X_ELEMENTS,NUMBER_GLOBAL_Y_ELEMENTS,NUMBER_GLOBAL_Z_ELEMENTS,INTERPOLATION_SPECIFICATIONS
     INTEGER(OC_Intg) :: MPI_IERROR
 
     INTEGER(OC_Intg) :: AnalyticFunction
@@ -304,6 +305,10 @@ CONTAINS
     CALL OC_ComputationEnvironment_WorldWorkGroupGet(computationEnvironment,worldWorkGroup,err)
     
     !Broadcast the number of elements in the X & Y directions and the number of partitions to the other computation nodes
+    NUMBER_GLOBAL_X_ELEMENTS=NUM_GLOBAL_X_ELEMENTS
+    NUMBER_GLOBAL_Y_ELEMENTS=NUM_GLOBAL_Y_ELEMENTS
+    NUMBER_GLOBAL_Z_ELEMENTS=NUM_GLOBAL_Z_ELEMENTS
+    INTERPOLATION_SPECIFICATIONS=INTERP_SPECIFICATIONS
     CALL MPI_BCAST(NUMBER_GLOBAL_X_ELEMENTS,1,MPI_INTEGER,0,MPI_COMM_WORLD,MPI_IERROR)
     CALL MPI_BCAST(NUMBER_GLOBAL_Y_ELEMENTS,1,MPI_INTEGER,0,MPI_COMM_WORLD,MPI_IERROR)
     CALL MPI_BCAST(NUMBER_GLOBAL_Z_ELEMENTS,1,MPI_INTEGER,0,MPI_COMM_WORLD,MPI_IERROR)

@@ -8509,11 +8509,11 @@ CONTAINS
                 & .AND.esSpecification(2)==EQUATIONS_SET_FINITE_ELASTICITY_TYPE &
                 & .AND.((esSpecification(3)==EQUATIONS_SET_MOONEY_RIVLIN_SUBTYPE) &
                 & .OR.(esSpecification(3)==EQUATIONS_SET_COMPRESSIBLE_FINITE_ELASTICITY_SUBTYPE) &
-                & .OR.(esSpecification(3)==EQUATIONS_SET_MR_AND_GROWTH_LAW_IN_CELLML_SUBTYPE) &
+                & .OR.(esSpecification(3)==EQUATIONS_SET_CELLML_GROWTH_LAW_MOONEY_RIVLIN_SUBTYPE) &
                 & .OR.(esSpecification(3)==EQUATIONS_SET_DYNAMIC_ST_VENANT_KIRCHOFF_SUBTYPE) &
                 & .OR.(esSpecification(3)==EQUATIONS_SET_DYNAMIC_MOONEY_RIVLIN_SUBTYPE) &
-                & .OR.(esSpecification(3)==EQUATIONS_SET_DYNAMIC_COMP_ST_VENANT_KIRCHOFF_SUBTYPE) &
-                & .OR.(esSpecification(3)==EQUATIONS_SET_DYNAMIC_COMP_MOONEY_RIVLIN_SUBTYPE))) THEN
+                & .OR.(esSpecification(3)==EQUATIONS_SET_DYNAMIC_COMPRESSIBLE_ST_VENANT_KIRCHOFF_SUBTYPE) &
+                & .OR.(esSpecification(3)==EQUATIONS_SET_DYNAMIC_COMPRESSIBLE_MOONEY_RIVLIN_SUBTYPE))) THEN
                 solidEquationsSetFound=.TRUE.
               ELSE
                 equationsSetIndex=equationsSetIndex+1
@@ -8981,7 +8981,8 @@ CONTAINS
             IF(solidEquationsSet%specification(1)==EQUATIONS_SET_ELASTICITY_CLASS.AND. &
               & solidEquationsSet%specification(2)==EQUATIONS_SET_FINITE_ELASTICITY_TYPE.AND. &
               & (solidEquationsSet%specification(3)==EQUATIONS_SET_MOONEY_RIVLIN_SUBTYPE.OR. &
-              & solidEquationsSet%specification(3)==EQUATIONS_SET_MR_AND_GROWTH_LAW_IN_CELLML_SUBTYPE.OR. &
+              & solidEquationsSet%specification(3)==EQUATIONS_SET_CELLML_GROWTH_LAW_NEO_HOOKEAN_SUBTYPE.OR. &
+              & solidEquationsSet%specification(3)==EQUATIONS_SET_CELLML_GROWTH_LAW_MOONEY_RIVLIN_SUBTYPE.OR. &
               & solidEquationsSet%specification(3)==EQUATIONS_SET_COMPRESSIBLE_FINITE_ELASTICITY_SUBTYPE.OR. &
               & solidEquationsSet%specification(3)==EQUATIONS_SET_DYNAMIC_ST_VENANT_KIRCHOFF_SUBTYPE.OR. &
               & solidEquationsSet%specification(3)==EQUATIONS_SET_DYNAMIC_MOONEY_RIVLIN_SUBTYPE)) THEN
@@ -9303,7 +9304,7 @@ CONTAINS
       & solverGlobalNumber
     REAL(DP) :: currentTime,timeIncrement,startTime,stopTime
     CHARACTER(20) :: file,outputFile
-    EXTERNAL :: SYSTEM
+    !EXTERNAL :: SYSTEM
     TYPE(ControlLoopType), POINTER :: controlLoop
     TYPE(EquationsSetType), POINTER :: equationsSet
     TYPE(EquationsSetAnalyticType), POINTER :: equationsAnalytic
@@ -9325,7 +9326,7 @@ CONTAINS
     CALL ControlLoop_ProblemGet(controlLoop,problem,err,error,*999)
     CALL Problem_SpecificationGet(problem,3,pSpecification,err,error,*999)
 
-    CALL SYSTEM('mkdir -p ./output')
+    CALL EXECUTE_COMMAND_LINE('mkdir -p ./output')
     SELECT CASE(pSpecification(3))
     CASE(PROBLEM_STATIC_NAVIER_STOKES_SUBTYPE,PROBLEM_LAPLACE_NAVIER_STOKES_SUBTYPE)
       CALL Solver_OutputTypeGet(solver,outputType,err,error,*999)
@@ -10998,15 +10999,15 @@ CONTAINS
     INTEGER(INTG), INTENT(OUT) :: err !<The error code
     TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
     !Local Variables
-    INTEGER(INTG) :: columnComponentIdx,columnElementDOFIdx,columnElementParameterIdx,crossStress,dimensionIdx,dimensionIdx2, &
+    INTEGER(INTG) :: columnComponentIdx,columnElementDOFIdx,columnElementParameterIdx,dimensionIdx,dimensionIdx2, &
       & esSpecification(3),i,j,k,l,numberOfDimensions,meshComponent1,meshComponent2,numberOfDependentComponents, &
       & numberOfElementParameters(4),numberOfXi,pressureIndex,rowComponentIdx,rowElementDOFIdx,rowElementParameterIdx, &
       & stabilisationType,variableType,velocityInterpolationOrder(4),xiIdx,xiIdx2
-    REAL(DP) :: C1,columnPhi,columndPhi2dXi(3,3),doubleDotG,dPhidXPressure(27,3),dPhidXVelocity(27,3),dPhidXi,dXidX(3,3), &
-      & elementInverse,jacobian,jacobianContinuity,jacobianGaussWeight,jacobianMomentum(3),LSIC,meshVelocity(3),momentumTerm, &
-      & nuLSIC,pressure,pressureDeriv(3),pressureGaussWeight,PSPG,residualContinuity,residualMomentum(3),reynoldsStress,rowPhi, &
-      & stabilisationValueDP,sum,sum2,SUPG,tauC,tauMp,tauMu,tauSUPS,timeIncrement,traceG,uDotGu,velocity(3),velocityDeriv(3,3), &
-      & velocityGaussWeight,velocityPrevious(3),velocity2Deriv(3,3,3)
+    REAL(DP) :: C1,columnPhi,columndPhi2dXi(3,3),crossStress,doubleDotG,dPhidXPressure(27,3),dPhidXVelocity(27,3),dPhidXi, &
+      & dXidX(3,3),elementInverse,jacobian,jacobianContinuity,jacobianGaussWeight,jacobianMomentum(3),LSIC,meshVelocity(3), &
+      & momentumTerm,nuLSIC,pressure,pressureDeriv(3),pressureGaussWeight,PSPG,residualContinuity,residualMomentum(3), &
+      & reynoldsStress,rowPhi,stabilisationValueDP,sum,sum2,SUPG,tauC,tauMp,tauMu,tauSUPS,timeIncrement,traceG,uDotGu, &
+      & velocity(3),velocityDeriv(3,3),velocityGaussWeight,velocityPrevious(3),velocity2Deriv(3,3,3)
     LOGICAL :: linearElement
     TYPE(BasisType), POINTER :: basisVelocity,basisPressure
     TYPE(DecompositionType), POINTER :: dependentDecomposition
@@ -11532,11 +11533,10 @@ CONTAINS
                       ! Additional terms for RBVM
                       crossStress=0.0_DP
                       reynoldsStress=0.0_DP
-                      crossStress = 0.0_DP
                       IF(columnComponentIdx <= numberOfDimensions) THEN
                         IF(rowComponentIdx == columnComponentIdx) THEN
                           DO dimensionIdx=1,numberOfDimensions
-                            crossStress= crossStress + dPhidXVelocity(columnElementParameterIdx,dimensionIdx)* &
+                            crossStress = crossStress + dPhidXVelocity(columnElementParameterIdx,dimensionIdx)* &
                               & residualMomentum(dimensionIdx)
                           ENDDO !dimensionIdx
                         ENDIF
@@ -12217,7 +12217,8 @@ CONTAINS
             !This speeds things up but is also important, as non-boundary faces have an xi direction that might
             !correspond to the other element.
             IF(.NOT.(boundaryFace)) CYCLE
-            
+
+            orientation=1
             SELECT CASE(dependentBasisType1)
             CASE(BASIS_LAGRANGE_HERMITE_TP_TYPE)
               CALL DecompositionFaces_FaceXiNormalDirectionGet(decompositionFaces,boundaryNumber,xiNormalDirection,err,error,*999)
@@ -12255,7 +12256,8 @@ CONTAINS
             !This speeds things up but is also important, as non-boundary lines have an xi direction that might
             !correspond to the other element.
             IF(.NOT.(boundaryLine)) CYCLE
-            
+
+            orientation=1
             SELECT CASE(dependentBasisType1)
             CASE(BASIS_LAGRANGE_HERMITE_TP_TYPE)
               CALL DecompositionLines_LineXiDirectionGet(decompositionLines,boundaryNumber,lineXiDirection,err,error,*999)
@@ -12727,7 +12729,8 @@ CONTAINS
             !This speeds things up but is also important, as non-boundary faces have an XI_DIRECTION that might
             !correspond to the other element.
             IF(.NOT.(boundaryFace)) CYCLE
-
+            
+            normalComponentIdx=1
             SELECT CASE(dependentBasisType)
             CASE(BASIS_LAGRANGE_HERMITE_TP_TYPE)
               CALL DecompositionFaces_FaceXiNormalDirectionGet(decompositionFaces3D,faceNumber,xiNormalDirection,err,error,*999)
@@ -13854,20 +13857,20 @@ CONTAINS
     ! C h e c k   G l o b a l   C o u p l i n g   C o n v e r g e n c e
     ! ------------------------------------------------------------------
     ! Check whether all boundaries on the local process have converged
-    localConverged=.FALSE.
-    globalConverged=.FALSE.
-    IF(numberOfBoundaries==0.OR.ALL(boundaryConverged(1:numberOfBoundaries))) THEN
-      localConverged = .TRUE.
-    ENDIF
     !Need to check that boundaries have converged globally (on all domains) if this is a MPI problem
     NULLIFY(workGroup)
     CALL Decomposition_WorkGroupGet(decomposition,workGroup,err,error,*999)
     CALL WorkGroup_GroupCommunicatorGet(workGroup,groupCommunicator,err,error,*999)
     CALL WorkGroup_NumberOfGroupNodesGet(workGroup,numberOfGroupComputationNodes,err,error,*999)
     CALL WorkGroup_GroupNodeNumberGet(workGroup,computationNode,err,error,*999)
+    localConverged=.FALSE.
+    IF(numberOfBoundaries==0.OR.ALL(boundaryConverged(1:numberOfBoundaries))) THEN
+      localConverged = .TRUE.
+    ENDIF
     IF(numberOfGroupComputationNodes>1) THEN !use mpi
       !allocate array for mpi communication
       ALLOCATE(globalConverged(numberOfGroupComputationNodes),STAT=err)
+      globalConverged=.FALSE.
       IF(err/=0) CALL FlagError("Could not allocate global convergence check array.",err,error,*999)
 #ifdef WITH_MPI
 #ifdef WITH_F08_MPI

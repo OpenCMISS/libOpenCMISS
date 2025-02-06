@@ -770,9 +770,9 @@ CONTAINS
     TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
     !Local Variables
     INTEGER(INTG) :: elementIdx,equationsSetIdx,gaussPointIdx,iterationNumber,loopType, &
-      & numberOfDimensions,numberOfElements,numberOfEquationsSets,numberOfGauss,numberOfIterations,numberOfSubLoops, &
+      & numberOfDimensions,numberOfElements,numberOfEquationsSets,numberOfGauss,numberOfSubLoops, &
       & numberOfXi,variableType
-    REAL(DP) :: AZL(3,3),dNudXi(3,3),dXidNu(3,3),dZdNu(3,3),dZdNuT(3,3),dZdX(3,3),fibreVectors(3,3),JZ,JZNu
+    REAL(DP) :: AZL(3,3),dNudX(3,3),dNudXi(3,3),dXdNu(3,3),dXidNu(3,3),dZdNu(3,3),dZdNuT(3,3),dZdX(3,3),fibreVectors(3,3),JZ,JZNu
     TYPE(BasisType), POINTER :: dependentBasis
     TYPE(DecompositionType), POINTER :: decomposition
     TYPE(DecompositionElementsType), POINTER :: decompositionElements
@@ -810,7 +810,7 @@ CONTAINS
       CASE(CONTROL_LOAD_INCREMENT_LOOP_TYPE)
         !do nothing
       CASE(CONTROL_WHILE_LOOP_TYPE)
-        CALL ControlLoop_IterationNumberGet(controlLoop,numberOfIterations,err,error,*999)
+        CALL ControlLoop_IterationNumberGet(controlLoop,iterationNumber,err,error,*999)
         NULLIFY(solvers)
         CALL ControlLoop_SolversGet(controlLoop,solvers,err,error,*999)
         NULLIFY(solver)
@@ -933,10 +933,11 @@ CONTAINS
             !Calculate material fibre coordinate system
             CALL CoordinateSystem_MaterialFibreSystemCalculate(geometricInterpPointMetrics,fibreInterpPoint, &
               & dNudXi(1:numberOfDimensions,1:numberOfXi),dXidNu(1:numberOfXi,1:numberOfDimensions), &
+              & dNudX(1:numberOfDimensions,1:numberOfXi),dXdNu(1:numberOfXi,1:numberOfDimensions), &
               & fibreVectors(1:numberOfDimensions,1:numberOfDimensions),err,error,*999)
             !Calculate F=dZ/dNu, the deformation gradient tensor at the gauss point
             CALL FiniteElasticity_DeformationGradientTensorCalculate(dependentInterpPointMetrics,geometricInterpPointMetrics, &
-              & dXidNu(1:numberOfXi,1:numberOfDimensions),dZdX,JZ,dZdNu,JZNu,err,error,*999)
+              & dXdNu(1:numberOfXi,1:numberOfDimensions),dZdX,JZ,dZdNu,JZNu,err,error,*999)
               
             !compute CNu=FNu^T.FNu
             CALL MatrixTranspose(dZdNu,dZdNuT,err,error,*999)
@@ -1050,7 +1051,7 @@ CONTAINS
         CALL FieldVariable_ParameterSetGetConstant(u1IndependentVariable,FIELD_VALUES_SET_TYPE,3,maxVelocity,err,error,*999)
         
         !in the first iteration store the unaltered homogenized active stress field 
-        IF(iterationNumber==1) THEN
+        IF(currentIteration==1) THEN
           CALL FieldVariable_ParameterSetsCopy(uIndependentVariable,FIELD_VALUES_SET_TYPE,FIELD_PREVIOUS_VALUES_SET_TYPE,1.0_DP, &
             & err,error,*999)
         ELSE
@@ -1143,7 +1144,7 @@ CONTAINS
             !NOTE: maxVelocity is the max shortening velocity, and hence negative
             IF(velocity<maxVelocity) THEN
               CALL FlagWarning('Exceeded maximum contraction velocity (shortening).',err,error,*999)
-              IF(iterationNumber<(maximumIterations/2)) THEN
+              IF(currentIteration<(maximumIterations/2)) THEN
                 velocity=velocity*1.0_DP/DBLE((maximumIterations/2)-iterationNumber)
               ENDIF
             ELSE IF(velocity>(ABS(maxVelocity))) THEN

@@ -235,11 +235,113 @@ MODULE OpenCMISS
     TYPE(DecompositionType), POINTER :: decomposition
   END TYPE OC_DecompositionType
 
+  !>Contains information on the mesh decomposition topology
+  TYPE OC_DecompositionTopologyType
+    PRIVATE
+    TYPE(DecompositionTopologyType), POINTER :: decompositionTopology
+  END TYPE OC_DecompositionTopologyType
+
+  !>Contains information on the mesh decomposition element.
+  TYPE OC_DecompositionElementType
+    PRIVATE
+    TYPE(DecompositionElementType), POINTER :: decompositionElement
+  END TYPE OC_DecompositionElementType
+
+  !>Contains information on the mesh decomposition elements.
+  TYPE OC_DecompositionElementsType
+    PRIVATE
+    TYPE(DecompositionElementsType), POINTER :: decompositionElements
+  END TYPE OC_DecompositionElementsType
+
+  !>Contains information on the mesh decomposition face.
+  TYPE OC_DecompositionFaceType
+    PRIVATE
+    TYPE(DecompositionFaceType), POINTER :: decompositionFace
+  END TYPE OC_DecompositionFaceType
+
+  !>Contains information on the mesh decomposition faces.
+  TYPE OC_DecompositionFacesType
+    PRIVATE
+    TYPE(DecompositionFacesType), POINTER :: decompositionFaces
+  END TYPE OC_DecompositionFacesType
+
+  !>Contains information on the mesh decomposition line.
+  TYPE OC_DecompositionLineType
+    PRIVATE
+    TYPE(DecompositionLineType), POINTER :: decompositionLine
+  END TYPE OC_DecompositionLineType
+
+  !>Contains information on the mesh decomposition lines.
+  TYPE OC_DecompositionLinesType
+    PRIVATE
+    TYPE(DecompositionLinesType), POINTER :: decompositionLines
+  END TYPE OC_DecompositionLinesType
+
   !>Contains information on the decomposer.
   TYPE OC_DecomposerType
     PRIVATE
     TYPE(DecomposerType), POINTER :: decomposer
   END TYPE OC_DecomposerType
+
+  !>Contains information on the decomposition domain.
+  TYPE OC_DomainType
+    PRIVATE
+    TYPE(DomainType), POINTER :: domain
+  END TYPE OC_DomainType
+
+  !>Contains information on the decomposition domain element.
+  TYPE OC_DomainElementType
+    PRIVATE
+    TYPE(DomainElementType), POINTER :: domainElement
+  END TYPE OC_DomainElementType
+
+  !>Contains information on the decomposition domain elements.
+  TYPE OC_DomainElementsType
+    PRIVATE
+    TYPE(DomainElementsType), POINTER :: domainElements
+  END TYPE OC_DomainElementsType
+
+  !>Contains information on the decomposition domain faces.
+  TYPE OC_DomainFacesType
+    PRIVATE
+    TYPE(DomainFacesType), POINTER :: domainFaces
+  END TYPE OC_DomainFacesType
+
+  !>Contains information on the decomposition domain face.
+  TYPE OC_DomainFaceType
+    PRIVATE
+    TYPE(DomainFaceType), POINTER :: domainFace
+  END TYPE OC_DomainFaceType
+
+  !>Contains information on the decomposition domain line.
+  TYPE OC_DomainLineType
+    PRIVATE
+    TYPE(DomainLineType), POINTER :: domainLine
+  END TYPE OC_DomainLineType
+
+  !>Contains information on the decomposition domain lines.
+  TYPE OC_DomainLinesType
+    PRIVATE
+    TYPE(DomainLinesType), POINTER :: domainLines
+  END TYPE OC_DomainLinesType
+
+  !>Contains information on the decomposition domain node.
+  TYPE OC_DomainNodeType
+    PRIVATE
+    TYPE(DomainNodeType), POINTER :: domainNode
+  END TYPE OC_DomainNodeType
+
+  !>Contains information on the decomposition domain nodes.
+  TYPE OC_DomainNodesType
+    PRIVATE
+    TYPE(DomainNodesType), POINTER :: domainNodes
+  END TYPE OC_DomainNodesType
+
+  !>Contains information on the decomposition domain topology.
+  TYPE OC_DomainTopologyType
+    PRIVATE
+    TYPE(DomainTopologyType), POINTER :: domainTopology
+  END TYPE OC_DomainTopologyType
 
   !>Contains information about the equations in an equations set.
   TYPE OC_EquationsType
@@ -405,10 +507,22 @@ MODULE OpenCMISS
 
   PUBLIC OC_Finalise,OC_Initialise
 
-  PUBLIC OC_WorkingRealPrecisionGet
+  PUBLIC OC_ComponentToTensorTwoComponentsGet
+  
+  PUBLIC OC_NumberOfTensorTwoComponentsGet
+
+  PUBLIC OC_NumberOfVoigtComponentsGet
 
   PUBLIC OC_PetscOptionsSetValue
 
+  PUBLIC OC_TensorTwoComponentsToComponentGet
+
+  PUBLIC OC_TensorComponentsToVoigtComponentGet
+
+  PUBLIC OC_VoigtComponentToTensorComponentsGet
+  
+  PUBLIC OC_WorkingRealPrecisionGet
+  
   PUBLIC OC_BasisType,OC_BasisTypesCopy,OC_Basis_Finalise,OC_Basis_Initialise
 
   PUBLIC OC_BoundaryConditionsType,OC_BoundaryConditions_Finalise,OC_BoundaryConditions_Initialise
@@ -431,11 +545,45 @@ MODULE OpenCMISS
 
   PUBLIC OC_DecompositionType,OC_Decomposition_Finalise,OC_Decomposition_Initialise
 
+  PUBLIC OC_DecompositionElementType,OC_DecompositionElement_Finalise,OC_DecompositionElement_Initialise
+  
+  PUBLIC OC_DecompositionElementsType,OC_DecompositionElements_Finalise,OC_DecompositionElements_Initialise
+  
+  PUBLIC OC_DecompositionFaceType,OC_DecompositionFace_Finalise,OC_DecompositionFace_Initialise
+  
+  PUBLIC OC_DecompositionFacesType,OC_DecompositionFaces_Finalise,OC_DecompositionFaces_Initialise
+
+  PUBLIC OC_DecompositionLineType,OC_DecompositionLine_Finalise,OC_DecompositionLine_Initialise
+  
+  PUBLIC OC_DecompositionLinesType,OC_DecompositionLines_Finalise,OC_DecompositionLines_Initialise
+
+  PUBLIC OC_DecompositionTopologyType,OC_DecompositionTopology_Finalise,OC_DecompositionTopology_Initialise
+
   PUBLIC OC_DecomposerType,OC_Decomposer_Finalise,OC_Decomposer_Initialise
 
   PUBLIC OC_DistributedMatrixType,OC_DistributedVectorType
 
   PUBLIC OC_DistributedMatrix_Initialise,OC_DistributedVector_Initialise
+
+  PUBLIC OC_DomainType,OC_Domain_Finalise,OC_Domain_Initialise
+
+  PUBLIC OC_DomainElementType,OC_DomainElement_Finalise,OC_DomainElement_Initialise
+  
+  PUBLIC OC_DomainElementsType,OC_DomainElements_Finalise,OC_DomainElements_Initialise
+  
+  PUBLIC OC_DomainFaceType,OC_DomainFace_Finalise,OC_DomainFace_Initialise
+  
+  PUBLIC OC_DomainFacesType,OC_DomainFaces_Finalise,OC_DomainFaces_Initialise
+  
+  PUBLIC OC_DomainLineType,OC_DomainLine_Finalise,OC_DomainLine_Initialise
+
+  PUBLIC OC_DomainLinesType,OC_DomainLines_Finalise,OC_DomainLines_Initialise
+
+  PUBLIC OC_DomainNodeType,OC_DomainNode_Finalise,OC_DomainNode_Initialise
+
+  PUBLIC OC_DomainNodesType,OC_DomainNodes_Finalise,OC_DomainNodes_Initialise
+
+  PUBLIC OC_DomainTopologyType,OC_DomainTopology_Finalise,OC_DomainTopology_Initialise
 
   PUBLIC OC_EquationsType,OC_Equations_Finalise,OC_Equations_Initialise
 
@@ -1115,7 +1263,7 @@ MODULE OpenCMISS
 
   !==================================================================================================================================
   !
-  ! CmissCellML
+  ! CellML
   !
   !==================================================================================================================================
 
@@ -3023,30 +3171,30 @@ MODULE OpenCMISS
     & EQUATIONS_SET_TWO_DIM_PLANE_STRESS_STOKES_DAMPING_SUBTYPE !<Two dimensionsional plane stress Stokes damping linear elasticity equations set subtype \see OpenCMISS_EquationsSetSubtypes,OpenCMISS
   INTEGER(INTG), PARAMETER :: OC_EQUATIONS_SET_MOONEY_RIVLIN_SUBTYPE = EQUATIONS_SET_MOONEY_RIVLIN_SUBTYPE !< Mooney-Rivlin constitutive law for finite elasticity equations set subtype \see OpenCMISS_EquationsSetSubtypes,OpenCMISS
   INTEGER(INTG), PARAMETER :: OC_EQUATIONS_SET_INCOMPRESSIBLE_MOONEY_RIVLIN_SUBTYPE = &
-    & EQUATIONS_SET_INCOMPRESSIBLE_MOONEY_RIVLIN_SUBTYPE !< Incompressible Mooney-Rivlin constitutive law for finite elasticity equations set subtype \see OpenCMISS_EquationsSetSubtypes,OpenCMISS
+    & EQUATIONS_SET_MOONEY_RIVLIN_SUBTYPE !< Incompressible Mooney-Rivlin constitutive law for finite elasticity equations set subtype \see OpenCMISS_EquationsSetSubtypes,OpenCMISS
   INTEGER(INTG), PARAMETER :: OC_EQUATIONS_SET_NEARLY_INCOMPRESSIBLE_MOONEY_RIVLIN_SUBTYPE = &
-    & EQUATIONS_SET_NEARLY_INCOMPRESSIBLE_MOONEY_RIVLIN_SUBTYPE !< Nearly Incompressible Mooney-Rivlin constitutive law for finite elasticity equations set subtype \see OpenCMISS_EquationsSetSubtypes,OpenCMISS
-  INTEGER(INTG), PARAMETER :: OC_EQUATIONS_SET_MOONEY_RIVLIN_ACTIVECONTRACTION_SUBTYPE = &
-    & EQUATIONS_SET_MOONEY_RIVLIN_ACTIVECONTRACTION_SUBTYPE !< Mooney-Rivlin constitutive law with steady-state active contraction for finite elasticity equations set subtype \see OpenCMISS_EquationsSetSubtypes,OpenCMISS
-  INTEGER(INTG), PARAMETER :: OC_EQUATIONS_SET_STVENANT_KIRCHOFF_ACTIVECONTRACTION_SUBTYPE = &
-    & EQUATIONS_SET_STVENANT_KIRCHOFF_ACTIVECONTRACTION_SUBTYPE !< St Venant Kirchoff constitutive law with steady-state active contraction for finite elasticity equations set subtype \see OpenCMISS_EquationsSetSubtypes,OpenCMISS
-  INTEGER(INTG), PARAMETER :: OC_EQUATIONS_SET_ACTIVECONTRACTION_SUBTYPE =&
-    & EQUATIONS_SET_ACTIVECONTRACTION_SUBTYPE !< Active contraction/costa-based law with quasistatic time loop for finite elasticity equations set subtype \see OpenCMISS_EquationsSetSubtypes,OpenCMISS
-  INTEGER(INTG), PARAMETER :: OC_EQUATIONS_SET_ISOTROPIC_EXPONENTIAL_SUBTYPE = EQUATIONS_SET_ISOTROPIC_EXPONENTIAL_SUBTYPE !< Isotropic exponential constitutive law for finite elasticity equations set subtype \see OpenCMISS_EquationsSetSubtypes,OpenCMISS
+    & EQUATIONS_SET_NEARLY_INCOMP_MOONEY_RIVLIN_SUBTYPE !< Nearly Incompressible Mooney-Rivlin constitutive law for finite elasticity equations set subtype \see OpenCMISS_EquationsSetSubtypes,OpenCMISS
+  INTEGER(INTG), PARAMETER :: OC_EQUATIONS_SET_MOONEY_RIVLIN_ACTIVE_CONTRACTION_SUBTYPE = &
+    & EQUATIONS_SET_MOONEY_RIVLIN_ACTIVE_CONTRACTION_SUBTYPE !< Mooney-Rivlin constitutive law with steady-state active contraction for finite elasticity equations set subtype \see OpenCMISS_EquationsSetSubtypes,OpenCMISS
+  INTEGER(INTG), PARAMETER :: OC_EQUATIONS_SET_ST_VENANT_KIRCHOFF_ACTIVE_CONTRACTION_SUBTYPE = &
+    & EQUATIONS_SET_ST_VENANT_KIRCHOFF_ACTIVE_CONTRACTION_SUBTYPE !< St Venant Kirchoff constitutive law with steady-state active contraction for finite elasticity equations set subtype \see OpenCMISS_EquationsSetSubtypes,OpenCMISS
+  INTEGER(INTG), PARAMETER :: OC_EQUATIONS_SET_ACTIVE_CONTRACTION_SUBTYPE =&
+    & EQUATIONS_SET_ACTIVE_CONTRACTION_SUBTYPE !< Active contraction/costa-based law with quasistatic time loop for finite elasticity equations set subtype \see OpenCMISS_EquationsSetSubtypes,OpenCMISS
+  INTEGER(INTG), PARAMETER :: OC_EQUATIONS_SET_ISOTROPIC_EXPONENTIAL_SUBTYPE = EQUATIONS_SET_ISOTROPIC_EXP_SUBTYPE !< Isotropic exponential constitutive law for finite elasticity equations set subtype \see OpenCMISS_EquationsSetSubtypes,OpenCMISS
   INTEGER(INTG), PARAMETER :: OC_EQUATIONS_SET_TRANSVERSE_ISOTROPIC_EXPONENTIAL_SUBTYPE = &
-    & EQUATIONS_SET_TRANSVERSE_ISOTROPIC_EXPONENTIAL_SUBTYPE !< Transverse isotropic exponential constitutive law for finite elasticity equations set subtype \see OpenCMISS_EquationsSetSubtypes,OpenCMISS
+    & EQUATIONS_SET_TRANS_ISOTROPIC_EXP_SUBTYPE !< Transverse isotropic exponential constitutive law for finite elasticity equations set subtype \see OpenCMISS_EquationsSetSubtypes,OpenCMISS
   INTEGER(INTG), PARAMETER :: OC_EQUATIONS_SET_TRANSVERSE_ISOTROPIC_ACTIVE_SUBTYPE = &
-    & EQUATIONS_SET_TRANSVERSE_ISOTROPIC_ACTIVE_SUBTYPE !< Transverse isotropic, active-contraction constitutive law for finite elasticity equations set subtype \see OpenCMISS_EquationsSetSubtypes,OpenCMISS
+    & EQUATIONS_SET_TRANS_ISOTROPIC_ACTIVE_CONTRACTION_SUBTYPE !< Transverse isotropic, active-contraction constitutive law for finite elasticity equations set subtype \see OpenCMISS_EquationsSetSubtypes,OpenCMISS
   INTEGER(INTG), PARAMETER :: OC_EQUATIONS_SET_TRANS_ISOTROPIC_ACTIVE_TRANSITION_SUBTYPE = &
     & EQUATIONS_SET_TRANS_ISOTROPIC_ACTIVE_TRANSITION_SUBTYPE !< Transverse isotropic, active-contraction material-transition constitutive law for finite elasticity equations set subtype \see OpenCMISS_EquationsSetSubtypes,OpenCMISS
   INTEGER(INTG), PARAMETER :: OC_EQUATIONS_SET_ORTHOTROPIC_MATERIAL_COSTA_SUBTYPE = &
-    & EQUATIONS_SET_ORTHOTROPIC_MATERIAL_COSTA_SUBTYPE !< Orthotropic Costa constitutive law for finite elasticity equations set subtype \see OpenCMISS_EquationsSetSubtypes,OpenCMISS
+    & EQUATIONS_SET_ORTHOTROPIC_COSTA_SUBTYPE !< Orthotropic Costa constitutive law for finite elasticity equations set subtype \see OpenCMISS_EquationsSetSubtypes,OpenCMISS
   INTEGER(INTG), PARAMETER :: OC_EQUATIONS_SET_COMPRESSIBLE_FINITE_ELASTICITY_SUBTYPE= &
     & EQUATIONS_SET_COMPRESSIBLE_FINITE_ELASTICITY_SUBTYPE !<Compressible version for finite elasticity equations set subtype \see OpenCMISS_EquationsSetSubtypes,OpenCMISS
-  INTEGER(INTG), PARAMETER :: OC_EQUATIONS_SET_COMPRESSIBLE_ACTIVECONTRACTION_SUBTYPE= &
-    & EQUATIONS_SET_COMPRESSIBLE_ACTIVECONTRACTION_SUBTYPE !<Compressible version for finite elasticity equations set with active contraction subtype \see OpenCMISS_EquationsSetSubtypes,OpenCMISS
+  INTEGER(INTG), PARAMETER :: OC_EQUATIONS_SET_COMPRESSIBLE_ACTIVE_CONTRACTION_SUBTYPE= &
+    & EQUATIONS_SET_COMPRESSIBLE_ACTIVE_CONTRACTION_SUBTYPE !<Compressible version for finite elasticity equations set with active contraction subtype \see OpenCMISS_EquationsSetSubtypes,OpenCMISS
   INTEGER(INTG), PARAMETER :: OC_EQUATIONS_SET_TRANSVERSE_ISOTROPIC_GUCCIONE_SUBTYPE = &
-    & EQUATIONS_SET_TRANSVERSE_ISOTROPIC_GUCCIONE_SUBTYPE !< Transverse isotropic Guccione constitutive law for finite elasticity equations set subtype \see OpenCMISS_EquationsSetSubtypes,OpenCMISS
+    & EQUATIONS_SET_TRANS_ISOTROPIC_GUCCIONE_SUBTYPE !< Transverse isotropic Guccione constitutive law for finite elasticity equations set subtype \see OpenCMISS_EquationsSetSubtypes,OpenCMISS
   INTEGER(INTG), PARAMETER :: OC_EQUATIONS_SET_ACTIVE_STRAIN_SUBTYPE = &
     & EQUATIONS_SET_ACTIVE_STRAIN_SUBTYPE !< Isotropic active strain constitutive law based on multiplicative decomposition of the deformation gradient subtype \see OpenCMISS_EquationsSetSubtypes,OpenCMISS
   INTEGER(INTG), PARAMETER :: OC_EQUATIONS_SET_MULTISCALE_ACTIVE_STRAIN_SUBTYPE = &
@@ -3054,13 +3202,13 @@ MODULE OpenCMISS
   INTEGER(INTG), PARAMETER :: OC_EQUATIONS_SET_REFERENCE_STATE_MOONEY_RIVLIN_SUBTYPE = &
     & EQUATIONS_SET_REFERENCE_STATE_MOONEY_RIVLIN_SUBTYPE !< Determine the reference configuration using Mooney-Rivlin constitutive law for finite elasticity equations set subtype \see OpenCMISS_EquationsSetSubtypes,OpenCMISS
   INTEGER(INTG), PARAMETER :: OC_EQUATIONS_SET_REFERENCE_STATE_TRANSVERSE_GUCCIONE_SUBTYPE = &
-    & EQUATIONS_SET_REFERENCE_STATE_TRANSVERSE_GUCCIONE_SUBTYPE !< Transverse isotropic Guccione constitutive law for finite elasticity equstions set subtype \see OpenCMISS_EquationsSetSubtypes,OpenCMISS
-  INTEGER(INTG), PARAMETER :: OC_EQUATIONS_SET_GUCCIONE_ACTIVECONTRACTION_SUBTYPE = &
-    & EQUATIONS_SET_GUCCIONE_ACTIVECONTRACTION_SUBTYPE !< Transverse isotropic Guccione constitutive law with active contraction subtype \see OpenCMISS_EquationsSetSubtypes,OpenCMISS
-  INTEGER(INTG), PARAMETER :: OC_EQUATIONS_SET_GUCCIONE_ACTIVECONTRACTION_NOLENDEP_SUBTYPE = &
-    & EQUATIONS_SET_GUCCIONE_ACTIVECONTRACTION_NOLENDEP_SUBTYPE !< Transverse isotropic Guccione constitutive law with active contraction subtype without length dependence \see OpenCMISS_EquationsSetSubtypes,OpenCMISS
-  INTEGER(INTG), PARAMETER :: OC_EQUATIONS_SET_GUCCIONE_ACTIVECONTRACTION_2NDPIOLA_SUBTYPE = &
-    & EQUATIONS_SET_GUCCIONE_ACTIVECONTRACTION_2NDPIOLA_SUBTYPE !< Transverse isotropic Guccione constitutive law with active contraction subtype for benchmark problem \see OpenCMISS_EquationsSetSubtypes,OpenCMISS
+    & EQUATIONS_SET_REFERENCE_STATE_TRANS_GUCCIONE_SUBTYPE !< Transverse isotropic Guccione constitutive law for finite elasticity equstions set subtype \see OpenCMISS_EquationsSetSubtypes,OpenCMISS
+  INTEGER(INTG), PARAMETER :: OC_EQUATIONS_SET_GUCCIONE_ACTIVE_CONTRACTION_SUBTYPE = &
+    & EQUATIONS_SET_GUCCIONE_ACTIVE_CONTRACTION_SUBTYPE !< Transverse isotropic Guccione constitutive law with active contraction subtype \see OpenCMISS_EquationsSetSubtypes,OpenCMISS
+  INTEGER(INTG), PARAMETER :: OC_EQUATIONS_SET_GUCCIONE_ACTIVE_CONTRACTION_NOLENDEP_SUBTYPE = &
+    & EQUATIONS_SET_GUCCIONE_ACTIVE_CONTRACTION_NOLENDEP_SUBTYPE !< Transverse isotropic Guccione constitutive law with active contraction subtype without length dependence \see OpenCMISS_EquationsSetSubtypes,OpenCMISS
+  INTEGER(INTG), PARAMETER :: OC_EQUATIONS_SET_GUCCIONE_ACTIVE_CONTRACTION_2NDPIOLA_SUBTYPE = &
+    & EQUATIONS_SET_GUCCIONE_ACTIVE_CONTRACTION_2NDPIOLA_SUBTYPE !< Transverse isotropic Guccione constitutive law with active contraction subtype for benchmark problem \see OpenCMISS_EquationsSetSubtypes,OpenCMISS
   INTEGER(INTG), PARAMETER :: OC_EQUATIONS_SET_INCOMPRESS_FINITE_ELASTICITY_DARCY_SUBTYPE= &
     & EQUATIONS_SET_INCOMPRESSIBLE_FINITE_ELASTICITY_DARCY_SUBTYPE !<Incompressible version for finite elasticity coupled with Darcy equations set subtype \see OpenCMISS_EquationsSetSubtypes,OpenCMISS
   INTEGER(INTG), PARAMETER :: OC_EQUATIONS_SET_ELASTICITY_DARCY_INRIA_MODEL_SUBTYPE= &
@@ -3075,9 +3223,9 @@ MODULE OpenCMISS
     & EQUATIONS_SET_INCOMPRESSIBLE_ELAST_MULTI_COMP_DARCY_SUBTYPE
   INTEGER(INTG), PARAMETER :: OC_EQUATIONS_SET_MEMBRANE_SUBTYPE = EQUATIONS_SET_MEMBRANE_SUBTYPE !<Compressible version for finite elasticity equations set subtype \see OpenCMISS_EquationsSetSubtypes,OpenCMISS
   INTEGER(INTG), PARAMETER :: OC_EQUATIONS_SET_ORTHOTROPIC_HOLZAPFEL_OGDEN_SUBTYPE = &
-    & EQUATIONS_SET_ORTHOTROPIC_MATERIAL_HOLZAPFEL_OGDEN_SUBTYPE !< Orthotropic Holzapfel-Ogden constitutive law for finite elasticity equations set subtype \see OpenCMISS_EquationsSetSubtypes,OpenCMISS
-  INTEGER(INTG), PARAMETER :: OC_EQUATIONS_SET_HOLZAPFEL_OGDEN_ACTIVECONTRACTION_SUBTYPE = &
-    & EQUATIONS_SET_HOLZAPFEL_OGDEN_ACTIVECONTRACTION_SUBTYPE &
+    & EQUATIONS_SET_ORTHOTROPIC_HOLZAPFEL_OGDEN_SUBTYPE !< Orthotropic Holzapfel-Ogden constitutive law for finite elasticity equations set subtype \see OpenCMISS_EquationsSetSubtypes,OpenCMISS
+  INTEGER(INTG), PARAMETER :: OC_EQUATIONS_SET_HOLZAPFEL_OGDEN_ACTIVE_CONTRACTION_SUBTYPE = &
+    & EQUATIONS_SET_HOLZAPFEL_OGDEN_ACTIVE_CONTRACTION_SUBTYPE &
     & !< Orthotropic Holzapfel-Ogden constitutive law with active contraction for finite elasticity equations set subtype \see OpenCMISS_EquationsSetSubtypes,OpenCMISS
     INTEGER(INTG), PARAMETER :: OC_EQUATIONS_SET_ELASTICITY_FLUID_PRES_STATIC_INRIA_SUBTYPE = &
     & EQUATIONS_SET_ELASTICITY_FLUID_PRESSURE_STATIC_INRIA_SUBTYPE !< Static finite elasticity coupled with fluid pressure set subtype \see OpenCMISS_EquationsSetSubtypes,OpenCMISS
@@ -3086,27 +3234,27 @@ MODULE OpenCMISS
   INTEGER(INTG), PARAMETER :: OC_EQUATIONS_SET_ELASTI_FLUID_PRES_HOLMES_MOW_ACTIVE_SUBTYPE= &
     & EQUATIONS_SET_ELASTICITY_FLUID_PRES_HOLMES_MOW_ACTIVE_SUBTYPE !<Holmes and Mow's poroelastic constitutive relation subtype with active contraction \see OpenCMISS_EquationsSetSubtypes,OpenCMISS
   INTEGER(INTG), PARAMETER :: OC_EQUATIONS_SET_TRANSVERSE_ISOTROPIC_POLYNOMIAL_SUBTYPE = &
-    & EQUATIONS_SET_TRANSVERSE_ISOTROPIC_POLYNOMIAL_SUBTYPE !<Transverse isotropic constitutive law for finite elasticity equations set subtype \see OpenCMISS_EquationsSetSubtypes,OpenCMISS
+    & EQUATIONS_SET_TRANS_ISOTROPIC_POLYNOMIAL_SUBTYPE !<Transverse isotropic constitutive law for finite elasticity equations set subtype \see OpenCMISS_EquationsSetSubtypes,OpenCMISS
   INTEGER(INTG), PARAMETER :: OC_EQUATIONS_SET_ANISOTROPIC_POLYNOMIAL_SUBTYPE = &
     & EQUATIONS_SET_ANISOTROPIC_POLYNOMIAL_SUBTYPE !<Anisotropic polynomial constitutive law for finite elasticity equations set subtype \see OpenCMISS_EquationsSetSubtypes,OpenCMISS
   INTEGER(INTG), PARAMETER :: OC_EQUATIONS_SET_ANISOTROPIC_POLYNOMIAL_ACTIVE_SUBTYPE = &
-    & EQUATIONS_SET_ANISOTROPIC_POLYNOMIAL_ACTIVE_SUBTYPE !<Anisotropic polynomial active constitutive law for finite elasticity equations set subtype \see OpenCMISS_EquationsSetSubtypes,OpenCMISS
+    & EQUATIONS_SET_ANISOTROPIC_POLYNOMIAL_ACTIVE_CONTRACTION_SUBTYPE !<Anisotropic polynomial active constitutive law for finite elasticity equations set subtype \see OpenCMISS_EquationsSetSubtypes,OpenCMISS
   INTEGER(INTG), PARAMETER :: OC_EQUATIONS_SET_TRANSVERSE_ISOTROPIC_HUMPHREY_YIN_SUBTYPE= &
-    & EQUATIONS_SET_TRANSVERSE_ISOTROPIC_HUMPHREY_YIN_SUBTYPE !<Humphrey and Yin transversely isotropic constitutive relation subtype \see OpenCMISS_EquationsSetSubtypes,OpenCMISS
+    & EQUATIONS_SET_TRANS_ISOTROPIC_HUMPHREY_YIN_SUBTYPE !<Humphrey and Yin transversely isotropic constitutive relation subtype \see OpenCMISS_EquationsSetSubtypes,OpenCMISS
   INTEGER(INTG), PARAMETER :: OC_EQUATIONS_SET_DYNAMIC_ST_VENANT_KIRCHOFF_SUBTYPE = &
     & EQUATIONS_SET_DYNAMIC_ST_VENANT_KIRCHOFF_SUBTYPE !<Dynamic St Venant-Kirchoff constitutative \see OpenCMISS_EquationsSetSubtypes,OpenCMISS
   INTEGER(INTG), PARAMETER :: OC_EQUATIONS_SET_DYNAMIC_MOONEY_RIVLIN_SUBTYPE = &
     & EQUATIONS_SET_DYNAMIC_MOONEY_RIVLIN_SUBTYPE !<Dynamic Mooney-Rivlin constitutative \see OpenCMISS_EquationsSetSubtypes,OpenCMISS
   INTEGER(INTG), PARAMETER :: OC_EQUATIONS_SET_DYNAMIC_COMP_ST_VENANT_KIRCHOFF_SUBTYPE = &
-    & EQUATIONS_SET_DYNAMIC_COMP_ST_VENANT_KIRCHOFF_SUBTYPE !<Dynamic compressible St Venant-Kirchoff constitutative \see OpenCMISS_EquationsSetSubtypes,OpenCMISS
+    & EQUATIONS_SET_DYNAMIC_COMPRESSIBLE_ST_VENANT_KIRCHOFF_SUBTYPE !<Dynamic compressible St Venant-Kirchoff constitutative \see OpenCMISS_EquationsSetSubtypes,OpenCMISS
   INTEGER(INTG), PARAMETER :: OC_EQUATIONS_SET_DYNAMIC_COMP_MOONEY_RIVLIN_SUBTYPE = &
-    & EQUATIONS_SET_DYNAMIC_COMP_MOONEY_RIVLIN_SUBTYPE !<Dynamic compressible Mooney-Rivlin constitutative \see OpenCMISS_EquationsSetSubtypes,OpenCMISS
+    & EQUATIONS_SET_DYNAMIC_COMPRESSIBLE_MOONEY_RIVLIN_SUBTYPE !<Dynamic compressible Mooney-Rivlin constitutative \see OpenCMISS_EquationsSetSubtypes,OpenCMISS
   INTEGER(INTG), PARAMETER :: OC_EQUATIONS_SET_COMP_MOONEY_RIVLIN_SUBTYPE = &
-    & EQUATIONS_SET_COMP_MOONEY_RIVLIN_SUBTYPE !<Compressible Mooney-Rivlin constitutative \see OpenCMISS_EquationsSetSubtypes,OpenCMISS
+    & EQUATIONS_SET_COMPRESSIBLE_MOONEY_RIVLIN_SUBTYPE !<Compressible Mooney-Rivlin constitutative \see OpenCMISS_EquationsSetSubtypes,OpenCMISS
   INTEGER(INTG), PARAMETER :: OC_EQUATIONS_SET_ST_VENANT_KIRCHOFF_SUBTYPE = &
     & EQUATIONS_SET_ST_VENANT_KIRCHOFF_SUBTYPE !<St Venant-Kirchoff constitutative \see OpenCMISS_EquationsSetSubtypes,OpenCMISS
   INTEGER(INTG), PARAMETER :: OC_EQUATIONS_SET_COMP_ST_VENANT_KIRCHOFF_SUBTYPE = &
-    & EQUATIONS_SET_COMP_ST_VENANT_KIRCHOFF_SUBTYPE !<Compressible St Venant-Kirchoff constitutative \see OpenCMISS_EquationsSetSubtypes,OpenCMISS
+    & EQUATIONS_SET_COMPRESSIBLE_ST_VENANT_KIRCHOFF_SUBTYPE !<Compressible St Venant-Kirchoff constitutative \see OpenCMISS_EquationsSetSubtypes,OpenCMISS
   INTEGER(INTG), PARAMETER :: OC_EQUATIONS_SET_STATIC_STOKES_SUBTYPE = EQUATIONS_SET_STATIC_STOKES_SUBTYPE !<Static Stokes equations set subtype \see OpenCMISS_EquationsSetSubtypes,OpenCMISS
   INTEGER(INTG), PARAMETER :: OC_EQUATIONS_SET_LAPLACE_STOKES_SUBTYPE = EQUATIONS_SET_LAPLACE_STOKES_SUBTYPE !<Laplace type Stokes equations set subtype \see OpenCMISS_EquationsSetSubtypes,OpenCMISS
   INTEGER(INTG), PARAMETER :: OC_EQUATIONS_SET_TRANSIENT_STOKES_SUBTYPE = EQUATIONS_SET_TRANSIENT_STOKES_SUBTYPE !<Transient Stokes equations set subtype \see OpenCMISS_EquationsSetSubtypes,OpenCMISS
@@ -3207,10 +3355,45 @@ MODULE OpenCMISS
     & EQUATIONS_SET_COMPRESSIBLE_RATE_BASED_GROWTH_MODEL_SUBTYPE !<Rubin compressible rate based growth model for finite elasticity equations set subtype \see OpenCMISS_EquationsSetSubtypes,OpenCMISS
   INTEGER(INTG), PARAMETER :: OC_EQUATIONS_SET_CONSTIT_AND_GROWTH_LAW_IN_CELLML_SUBTYPE = &
     & EQUATIONS_SET_CONSTITUTIVE_AND_GROWTH_LAW_IN_CELLML_SUBTYPE !<CellML evaluated growth and constituative material law for finite elasticity equations set subtype \see OpenCMISS_EquationsSetSubtypes,OpenCMISS
-  INTEGER(INTG), PARAMETER :: OC_EQUATIONS_SET_MR_AND_GROWTH_LAW_IN_CELLML_SUBTYPE = &
-    & EQUATIONS_SET_MR_AND_GROWTH_LAW_IN_CELLML_SUBTYPE !<CellML evaluated growth and Mooney-Rivlin constituative material law for finite elasticity equations set subtype \see OpenCMISS_EquationsSetSubtypes,OpenCMISS
+  INTEGER(INTG), PARAMETER :: OC_EQUATIONS_SET_CELLML_GROWTH_LAW_SUBTYPE = EQUATIONS_SET_CELLML_GROWTH_LAW_SUBTYPE !<CellML evaluated growth or finite elasticity equations set subtype \see OpenCMISS_EquationsSetSubtypes,OpenCMISS
+  INTEGER(INTG), PARAMETER :: OC_EQUATIONS_SET_CELLML_GROWTH_LAW_NEO_HOOKEAN_SUBTYPE = &
+    & EQUATIONS_SET_CELLML_GROWTH_LAW_NEO_HOOKEAN_SUBTYPE !<CellML evaluated growth and Neo-Hookean constitutive material law for finite elasticity equations set subtype \see OpenCMISS_EquationsSetSubtypes,OpenCMISS
+  INTEGER(INTG), PARAMETER :: OC_EQUATIONS_SET_CELLML_GROWTH_LAW_MOONEY_RIVLIN_SUBTYPE = &
+    & EQUATIONS_SET_CELLML_GROWTH_LAW_MOONEY_RIVLIN_SUBTYPE !<CellML evaluated growth and Mooney-Rivlin constitutive material law for finite elasticity equations set subtype \see OpenCMISS_EquationsSetSubtypes,OpenCMISS
+  
+  INTEGER(INTG), PARAMETER :: OC_EQUATIONS_SET_FIBRE_GROWTH_LAW_ST_VENANT_SUBTYPE = &
+    & EQUATIONS_SET_FIBRE_GROWTH_LAW_ST_VENANT_SUBTYPE !<Fibre growth tensor law and St. Venant-Kirchoff constitutive material law for finite elasticity equations set subtype \see OpenCMISS_EquationsSetSubtypes,OpenCMISS
+  INTEGER(INTG), PARAMETER :: OC_EQUATIONS_SET_ISOTROPIC_GROWTH_LAW_ST_VENANT_SUBTYPE = &
+    & EQUATIONS_SET_ISOTROPIC_GROWTH_LAW_ST_VENANT_SUBTYPE !<Isotropic growth tensor law and St. Venant-Kirchoff constitutive material law for finite elasticity equations set subtype \see OpenCMISS_EquationsSetSubtypes,OpenCMISS
+  INTEGER(INTG), PARAMETER :: OC_EQUATIONS_SET_TRANS_ISO_GROWTH_LAW_ST_VENANT_SUBTYPE = &
+    & EQUATIONS_SET_TRANS_ISO_GROWTH_LAW_ST_VENANT_SUBTYPE !<Transversely isotropic growth tensor law and St. Venant-Kirchoff constitutive material law for finite elasticity equations set subtype \see OpenCMISS_EquationsSetSubtypes,OpenCMISS
+  INTEGER(INTG), PARAMETER :: OC_EQUATIONS_SET_ORTHOTROPIC_GROWTH_LAW_ST_VENANT_SUBTYPE = &
+    & EQUATIONS_SET_ORTHOTROPIC_GROWTH_LAW_ST_VENANT_SUBTYPE !<Orthotropic growth tensor law and St. Venant-Kirchoff constitutive material law for finite elasticity equations set subtype \see OpenCMISS_EquationsSetSubtypes,OpenCMISS
+  INTEGER(INTG), PARAMETER :: OC_EQUATIONS_SET_FULL_TENSOR_GROWTH_LAW_ST_VENANT_SUBTYPE = &
+    & EQUATIONS_SET_FULL_TENSOR_GROWTH_LAW_ST_VENANT_SUBTYPE !<Full specificied growth tensor law and St. Venant-Kirchoff constitutive material law for finite elasticity equations set subtype \see OpenCMISS_EquationsSetSubtypes,OpenCMISS
+  
+  INTEGER(INTG), PARAMETER :: OC_EQUATIONS_SET_FIBRE_GROWTH_LAW_NEO_HOOKEAN_SUBTYPE = &
+    & EQUATIONS_SET_FIBRE_GROWTH_LAW_NEO_HOOKEAN_SUBTYPE !<Fibre growth tensor law and Neo-Hookean constitutive material law for finite elasticity equations set subtype \see OpenCMISS_EquationsSetSubtypes,OpenCMISS
+  INTEGER(INTG), PARAMETER :: OC_EQUATIONS_SET_ISOTROPIC_GROWTH_LAW_NEO_HOOKEAN_SUBTYPE = &
+    & EQUATIONS_SET_ISOTROPIC_GROWTH_LAW_NEO_HOOKEAN_SUBTYPE !<Isotropic growth tensor law and Neo-Hookean constitutive material law for finite elasticity equations set subtype \see OpenCMISS_EquationsSetSubtypes,OpenCMISS
+  INTEGER(INTG), PARAMETER :: OC_EQUATIONS_SET_TRANS_ISO_GROWTH_LAW_NEO_HOOKEAN_SUBTYPE = &
+    & EQUATIONS_SET_TRANS_ISO_GROWTH_LAW_NEO_HOOKEAN_SUBTYPE !<Transversely isotropic growth tensor law and Neo-Hookean constitutive material law for finite elasticity equations set subtype \see OpenCMISS_EquationsSetSubtypes,OpenCMISS
+  INTEGER(INTG), PARAMETER :: OC_EQUATIONS_SET_ORTHOTROPIC_GROWTH_LAW_NEO_HOOKEAN_SUBTYPE = &
+    & EQUATIONS_SET_ORTHOTROPIC_GROWTH_LAW_NEO_HOOKEAN_SUBTYPE !<Orthotropic growth tensor law and Neo-Hookean constitutive material law for finite elasticity equations set subtype \see OpenCMISS_EquationsSetSubtypes,OpenCMISS
+  INTEGER(INTG), PARAMETER :: OC_EQUATIONS_SET_FULL_TENSOR_GROWTH_LAW_NEO_HOOKEAN_SUBTYPE = &
+    & EQUATIONS_SET_FULL_TENSOR_GROWTH_LAW_NEO_HOOKEAN_SUBTYPE !<Full specificied growth tensor law and Neo-Hookean constitutive material law for finite elasticity equations set subtype \see OpenCMISS_EquationsSetSubtypes,OpenCMISS
 
-  INTEGER(INTG), PARAMETER :: OC_EQUATIONS_SET_GROWTH_LAW_IN_CELLML_SUBTYPE = EQUATIONS_SET_GROWTH_LAW_IN_CELLML_SUBTYPE !<CellML evaluated growth or finite elasticity equations set subtype \see OpenCMISS_EquationsSetSubtypes,OpenCMISS
+  INTEGER(INTG), PARAMETER :: OC_EQUATIONS_SET_FIBRE_GROWTH_LAW_MOONEY_RIVLIN_SUBTYPE = &
+    & EQUATIONS_SET_FIBRE_GROWTH_LAW_MOONEY_RIVLIN_SUBTYPE !<Fibre growth tensor law and Mooney-Rivlin constitutive material law for finite elasticity equations set subtype \see OpenCMISS_EquationsSetSubtypes,OpenCMISS
+  INTEGER(INTG), PARAMETER :: OC_EQUATIONS_SET_ISOTROPIC_GROWTH_LAW_MOONEY_RIVLIN_SUBTYPE = &
+    & EQUATIONS_SET_ISOTROPIC_GROWTH_LAW_MOONEY_RIVLIN_SUBTYPE !<Isotropic growth tensor law and Mooney-Rivlin constitutive material law for finite elasticity equations set subtype \see OpenCMISS_EquationsSetSubtypes,OpenCMISS
+  INTEGER(INTG), PARAMETER :: OC_EQUATIONS_SET_TRANS_ISO_GROWTH_LAW_MOONEY_RIVLIN_SUBTYPE = &
+    & EQUATIONS_SET_TRANS_ISO_GROWTH_LAW_MOONEY_RIVLIN_SUBTYPE !<Transversely isotropic growth tensor law and Mooney-Rivlin constitutive material law for finite elasticity equations set subtype \see OpenCMISS_EquationsSetSubtypes,OpenCMISS
+  INTEGER(INTG), PARAMETER :: OC_EQUATIONS_SET_ORTHOTROPIC_GROWTH_LAW_MOONEY_RIVLIN_SUBTYPE = &
+    & EQUATIONS_SET_ORTHOTROPIC_GROWTH_LAW_MOONEY_RIVLIN_SUBTYPE !<Orthotropic growth tensor law and Mooney-Rivlin constitutive material law for finite elasticity equations set subtype \see OpenCMISS_EquationsSetSubtypes,OpenCMISS
+  INTEGER(INTG), PARAMETER :: OC_EQUATIONS_SET_FULL_TENSOR_GROWTH_LAW_MOONEY_RIVLIN_SUBTYPE = &
+    & EQUATIONS_SET_FULL_TENSOR_GROWTH_LAW_MOONEY_RIVLIN_SUBTYPE !<Full specificied growth tensor law and Mooney-Rivlin constitutive material law for finite elasticity equations set subtype \see OpenCMISS_EquationsSetSubtypes,OpenCMISS
+  
   INTEGER(INTG), PARAMETER :: OC_EQUATIONS_SET_GENERALISED_ALE_ADVEC_DIFF_SUBTYPE = &
     & EQUATIONS_SET_GENERALISED_ALE_ADVEC_DIFF_SUBTYPE !<Generalsed ALE advection diffusion equations set subtype \see OpenCMISS_EquationsSetSubtypes,OpenCMISS
   INTEGER(INTG), PARAMETER :: OC_EQUATIONS_SET_LINEAR_SOURCE_ALE_ADVEC_DIFF_SUBTYPE = &
@@ -3335,12 +3518,19 @@ MODULE OpenCMISS
   !> \brief EquationsSet derived tensor type parameters
   !> \see OpenCMISS::EquationsSet::Constants,OpenCMISS::EquationsSet
   !>@{
-  INTEGER(INTG), PARAMETER :: OC_EQUATIONS_SET_DERIVED_DEFORMATION_GRADIENT = EQUATIONS_SET_DEFORMATION_GRADIENT_TENSOR !<Green strain tensor field output. \see OpenCMISS_EquationsSetDerivedTensorTypes,OpenCMISS
+  INTEGER(INTG), PARAMETER :: OC_EQUATIONS_SET_DERIVED_DEFORMATION_GRADIENT = EQUATIONS_SET_DEFORMATION_GRADIENT_TENSOR !<Deformation gradient tensor, F, output. \see OpenCMISS_EquationsSetDerivedTensorTypes,OpenCMISS
   INTEGER(INTG), PARAMETER :: OC_EQUATIONS_SET_DERIVED_DEFORMATION_GRADIENT_SPATIAL = &
     & EQUATIONS_SET_DEFORMATION_GRADIENT_TENSOR_SPATIAL !<Deformation gradient tensor field output. \see OpenCMISS_EquationsSetDerivedTensorTypes,OpenCMISS
   INTEGER(INTG), PARAMETER :: OC_EQUATIONS_SET_DERIVED_DEFORMATION_GRADIENT_FIBRE = &
-    & EQUATIONS_SET_DEFORMATION_GRADIENT_TENSOR_FIBRE !<Deformation gradient tensor field output. \see OpenCMISS_EquationsSetDerivedTensorTypes,OpenCMISS
-  INTEGER(INTG), PARAMETER :: OC_EQUATIONS_SET_DERIVED_DEFORMATION_GROWTH = EQUATIONS_SET_DEFORMATION_GROWTH_TENSOR !<Growth deformation tensor field output. \see OpenCMISS_EquationsSetDerivedTensorTypes,OpenCMISS
+    & EQUATIONS_SET_DEFORMATION_GRADIENT_TENSOR_FIBRE !<Deformation gradient tensor field wrt fibre coordinates, FNu, output. \see OpenCMISS_EquationsSetDerivedTensorTypes,OpenCMISS
+  INTEGER(INTG), PARAMETER :: OC_EQUATIONS_SET_DERIVED_DEFORMATION_ELASTIC = EQUATIONS_SET_DEFORMATION_ELASTIC_TENSOR !<Elastic deformation tensor field, Fe, output. \see OpenCMISS_EquationsSetDerivedTensorTypes,OpenCMISS
+  INTEGER(INTG), PARAMETER :: OC_EQUATIONS_SET_DERIVED_DEFORMATION_GROWTH = EQUATIONS_SET_DEFORMATION_GROWTH_TENSOR !<Growth deformation tensor field, Fg, output. \see OpenCMISS_EquationsSetDerivedTensorTypes,OpenCMISS
+  INTEGER(INTG), PARAMETER :: OC_EQUATIONS_SET_DERIVED_RIGHT_STRETCH = EQUATIONS_SET_RIGHT_STRETCH_TENSOR !<Deformation right stretch tensor field output i.e., U from F = R.U \see OpenCMISS_EquationsSetDerivedTensorTypes,OpenCMISS
+  INTEGER(INTG), PARAMETER :: OC_EQUATIONS_SET_DERIVED_LEFT_STRETCH = EQUATIONS_SET_LEFT_STRETCH_TENSOR !<Deformation left stretch tensor field output i.e., v from F = v.R \see OpenCMISS_EquationsSetDerivedTensorTypes,OpenCMISS
+  INTEGER(INTG), PARAMETER :: OC_EQUATIONS_SET_DERIVED_ROTATION = EQUATIONS_SET_ROTATION_TENSOR !<Deformation rotation tensor field output i.e., R from F = R.U = v.R \see OpenCMISS_EquationsSetDerivedTensorTypes,OpenCMISS
+  INTEGER(INTG), PARAMETER :: OC_EQUATIONS_SET_DERIVED_RIGHT_STRETCH_FIBRE = EQUATIONS_SET_RIGHT_STRETCH_TENSOR_FIBRE !<Deformation right stretch tensor field wrt fibre coordinates output i.e., U from FNu = R.U \see OpenCMISS_EquationsSetDerivedTensorTypes,OpenCMISS
+  INTEGER(INTG), PARAMETER :: OC_EQUATIONS_SET_DERIVED_LEFT_STRETCH_FIBRE = EQUATIONS_SET_LEFT_STRETCH_TENSOR_FIBRE !<Deformation left stretch tensor field wrt fibre coordinates output i.e., v from FNu = v.R \see OpenCMISS_EquationsSetDerivedTensorTypes,OpenCMISS
+  INTEGER(INTG), PARAMETER :: OC_EQUATIONS_SET_DERIVED_ROTATION_FIBRE = EQUATIONS_SET_ROTATION_TENSOR_FIBRE !<Deformation rotation tensor field wrt fibre coordinates output i.e., R from FNu = R.U = v.R \see OpenCMISS_EquationsSetDerivedTensorTypes,OpenCMISS
   INTEGER(INTG), PARAMETER :: OC_EQUATIONS_SET_DERIVED_R_CAUCHY_GREEN_DEFORMATION = &
     & EQUATIONS_SET_R_CAUCHY_GREEN_DEFORMATION_TENSOR !<Right Cauchy-Green deformation field \see OpenCMISS_EquationsSetDerivedTensorTypes,OpenCMISS
   INTEGER(INTG), PARAMETER :: OC_EQUATIONS_SET_DERIVED_L_CAUCHY_GREEN_DEFORMATION = &
@@ -3530,7 +3720,8 @@ MODULE OpenCMISS
   !> \brief The analytic function types for a FiniteElasticity equation
   !> \see OpenCMISS::EquationsSet::AnalyticFunctionTypes,OpenCMISS
   !>@{
-  INTEGER(INTG), PARAMETER :: OC_EQUATIONS_SET_FINITE_ELASTICITY_CYLINDER = EQUATIONS_SET_FINITE_ELASTICITY_CYLINDER !<u=tbd \see OpenCMISS_EquationsSetLinearElasticityAnalyticFunctionTypes,OpenCMISS
+  INTEGER(INTG), PARAMETER :: OC_EQUATIONS_SET_FINITE_ELASTICITY_CYLINDER = EQUATIONS_SET_FINITE_ELASTICITY_CYLINDER !<u=tbd \see OpenCMISS_EquationsSetFiniteElasticityAnalyticFunctionTypes,OpenCMISS
+  INTEGER(INTG), PARAMETER :: OC_EQUATIONS_SET_FINITE_ELASTICITY_CYLINDER_GROWTH = EQUATIONS_SET_FINITE_ELASTICITY_CYLINDER_GROWTH !<u=tbd \see OpenCMISS_EquationsSetFiniteElasticityAnalyticFunctionTypes,OpenCMISS
   !>@}
   !>@}
   !>@}
@@ -3599,10 +3790,10 @@ MODULE OpenCMISS
     & OC_EQUATIONS_SET_INCOMPRESSIBLE_MOONEY_RIVLIN_SUBTYPE,OC_EQUATIONS_SET_NEARLY_INCOMPRESSIBLE_MOONEY_RIVLIN_SUBTYPE, &
     & OC_EQUATIONS_SET_MOONEY_RIVLIN_SUBTYPE, &
     & OC_EQUATIONS_SET_REFERENCE_STATE_MOONEY_RIVLIN_SUBTYPE, OC_EQUATIONS_SET_ISOTROPIC_EXPONENTIAL_SUBTYPE, &
-    & OC_EQUATIONS_SET_ACTIVECONTRACTION_SUBTYPE,OC_EQUATIONS_SET_MOONEY_RIVLIN_ACTIVECONTRACTION_SUBTYPE, &
-    & OC_EQUATIONS_SET_COMPRESSIBLE_ACTIVECONTRACTION_SUBTYPE,OC_EQUATIONS_SET_TRANSVERSE_ISOTROPIC_ACTIVE_SUBTYPE, &
+    & OC_EQUATIONS_SET_ACTIVE_CONTRACTION_SUBTYPE,OC_EQUATIONS_SET_MOONEY_RIVLIN_ACTIVE_CONTRACTION_SUBTYPE, &
+    & OC_EQUATIONS_SET_COMPRESSIBLE_ACTIVE_CONTRACTION_SUBTYPE,OC_EQUATIONS_SET_TRANSVERSE_ISOTROPIC_ACTIVE_SUBTYPE, &
     & OC_EQUATIONS_SET_TRANS_ISOTROPIC_ACTIVE_TRANSITION_SUBTYPE, &
-    & OC_EQUATIONS_SET_TRANSVERSE_ISOTROPIC_POLYNOMIAL_SUBTYPE,OC_EQUATIONS_SET_STVENANT_KIRCHOFF_ACTIVECONTRACTION_SUBTYPE, &
+    & OC_EQUATIONS_SET_TRANSVERSE_ISOTROPIC_POLYNOMIAL_SUBTYPE,OC_EQUATIONS_SET_ST_VENANT_KIRCHOFF_ACTIVE_CONTRACTION_SUBTYPE, &
     & OC_EQUATIONS_SET_ANISOTROPIC_POLYNOMIAL_SUBTYPE,OC_EQUATIONS_SET_ANISOTROPIC_POLYNOMIAL_ACTIVE_SUBTYPE, &
     & OC_EQUATIONS_SET_TRANSVERSE_ISOTROPIC_EXPONENTIAL_SUBTYPE,OC_EQUATIONS_SET_ORTHOTROPIC_MATERIAL_COSTA_SUBTYPE, &
     & OC_EQUATIONS_SET_COMPRESSIBLE_FINITE_ELASTICITY_SUBTYPE,OC_EQUATIONS_SET_INCOMPRESS_FINITE_ELASTICITY_DARCY_SUBTYPE, &
@@ -3610,14 +3801,14 @@ MODULE OpenCMISS
     & OC_EQUATIONS_SET_INCOMPRESS_ELASTICITY_DRIVEN_DARCY_SUBTYPE, &
     & OC_EQUATIONS_SET_INCOMPRESSIBLE_ELASTICITY_DRIVEN_MR_SUBTYPE, &
     & OC_EQUATIONS_SET_INCOMPRESS_ELAST_MULTI_COMP_DARCY_SUBTYPE,OC_EQUATIONS_SET_TRANSVERSE_ISOTROPIC_GUCCIONE_SUBTYPE, &
-    & OC_EQUATIONS_SET_GUCCIONE_ACTIVECONTRACTION_SUBTYPE, &
-    & OC_EQUATIONS_SET_GUCCIONE_ACTIVECONTRACTION_NOLENDEP_SUBTYPE, &
-    & OC_EQUATIONS_SET_GUCCIONE_ACTIVECONTRACTION_2NDPIOLA_SUBTYPE, &
+    & OC_EQUATIONS_SET_GUCCIONE_ACTIVE_CONTRACTION_SUBTYPE, &
+    & OC_EQUATIONS_SET_GUCCIONE_ACTIVE_CONTRACTION_NOLENDEP_SUBTYPE, &
+    & OC_EQUATIONS_SET_GUCCIONE_ACTIVE_CONTRACTION_2NDPIOLA_SUBTYPE, &
     & OC_EQUATIONS_SET_ACTIVE_STRAIN_SUBTYPE, &
     & OC_EQUATIONS_SET_MULTISCALE_ACTIVE_STRAIN_SUBTYPE, &
     & OC_EQUATIONS_SET_REFERENCE_STATE_TRANSVERSE_GUCCIONE_SUBTYPE, &
     & OC_EQUATIONS_SET_MEMBRANE_SUBTYPE, OC_EQUATIONS_SET_ORTHOTROPIC_HOLZAPFEL_OGDEN_SUBTYPE, &
-    & OC_EQUATIONS_SET_HOLZAPFEL_OGDEN_ACTIVECONTRACTION_SUBTYPE,  &
+    & OC_EQUATIONS_SET_HOLZAPFEL_OGDEN_ACTIVE_CONTRACTION_SUBTYPE,  &
     & OC_EQUATIONS_SET_DYNAMIC_ST_VENANT_KIRCHOFF_SUBTYPE,OC_EQUATIONS_SET_DYNAMIC_MOONEY_RIVLIN_SUBTYPE, &
     & OC_EQUATIONS_SET_DYNAMIC_COMP_ST_VENANT_KIRCHOFF_SUBTYPE,OC_EQUATIONS_SET_DYNAMIC_COMP_MOONEY_RIVLIN_SUBTYPE, &
     & OC_EQUATIONS_SET_COMP_MOONEY_RIVLIN_SUBTYPE, &
@@ -3697,8 +3888,24 @@ MODULE OpenCMISS
     & OC_EQUATIONS_SET_1D3D_MONODOMAIN_ELASTICITY_SUBTYPE,OC_EQUATIONS_SET_MONODOMAIN_ELASTICITY_W_TITIN_SUBTYPE, &
     & OC_EQUATIONS_SET_1D3D_MONODOMAIN_ACTIVE_STRAIN_SUBTYPE, &
     & OC_EQUATIONS_SET_CONSTIT_AND_GROWTH_LAW_IN_CELLML_SUBTYPE, &
-    & OC_EQUATIONS_SET_GROWTH_LAW_IN_CELLML_SUBTYPE, &
-    & OC_EQUATIONS_SET_MR_AND_GROWTH_LAW_IN_CELLML_SUBTYPE, &
+    & OC_EQUATIONS_SET_CELLML_GROWTH_LAW_SUBTYPE, &
+    & OC_EQUATIONS_SET_CELLML_GROWTH_LAW_NEO_HOOKEAN_SUBTYPE, &
+    & OC_EQUATIONS_SET_CELLML_GROWTH_LAW_MOONEY_RIVLIN_SUBTYPE, &
+    & OC_EQUATIONS_SET_FIBRE_GROWTH_LAW_ST_VENANT_SUBTYPE, &
+    & OC_EQUATIONS_SET_ISOTROPIC_GROWTH_LAW_ST_VENANT_SUBTYPE, &
+    & OC_EQUATIONS_SET_TRANS_ISO_GROWTH_LAW_ST_VENANT_SUBTYPE, &
+    & OC_EQUATIONS_SET_ORTHOTROPIC_GROWTH_LAW_ST_VENANT_SUBTYPE, &
+    & OC_EQUATIONS_SET_FULL_TENSOR_GROWTH_LAW_ST_VENANT_SUBTYPE, &
+    & OC_EQUATIONS_SET_FIBRE_GROWTH_LAW_NEO_HOOKEAN_SUBTYPE, &
+    & OC_EQUATIONS_SET_ISOTROPIC_GROWTH_LAW_NEO_HOOKEAN_SUBTYPE, &
+    & OC_EQUATIONS_SET_TRANS_ISO_GROWTH_LAW_NEO_HOOKEAN_SUBTYPE, &
+    & OC_EQUATIONS_SET_ORTHOTROPIC_GROWTH_LAW_NEO_HOOKEAN_SUBTYPE, &
+    & OC_EQUATIONS_SET_FULL_TENSOR_GROWTH_LAW_NEO_HOOKEAN_SUBTYPE, &
+    & OC_EQUATIONS_SET_FIBRE_GROWTH_LAW_MOONEY_RIVLIN_SUBTYPE, &
+    & OC_EQUATIONS_SET_ISOTROPIC_GROWTH_LAW_MOONEY_RIVLIN_SUBTYPE, &
+    & OC_EQUATIONS_SET_TRANS_ISO_GROWTH_LAW_MOONEY_RIVLIN_SUBTYPE, &
+    & OC_EQUATIONS_SET_ORTHOTROPIC_GROWTH_LAW_MOONEY_RIVLIN_SUBTYPE, &
+    & OC_EQUATIONS_SET_FULL_TENSOR_GROWTH_LAW_MOONEY_RIVLIN_SUBTYPE, &
     & OC_EQUATIONS_SET_MONODOMAIN_ELASTICITY_VELOCITY_SUBTYPE, &
     & OC_EQUATIONS_SET_FINITE_ELASTICITY_NAVIER_STOKES_ALE_SUBTYPE, &
     & OC_EQUATIONS_SET_RATE_BASED_SMOOTH_MODEL_SUBTYPE,OC_EQUATIONS_SET_COMPRESSIBLE_RATE_BASED_SMOOTH_MODEL_SUBTYPE, &
@@ -3715,8 +3922,12 @@ MODULE OpenCMISS
     & OC_EQUATIONS_SET_FV_SOLUTION_METHOD,OC_EQUATIONS_SET_GFEM_SOLUTION_METHOD,OC_EQUATIONS_SET_GFD_SOLUTION_METHOD, &
     & OC_EQUATIONS_SET_GFV_SOLUTION_METHOD
 
-  PUBLIC OC_EQUATIONS_SET_DERIVED_DEFORMATION_GRADIENT,OC_EQUATIONS_SET_DERIVED_DEFORMATION_GROWTH, &
-    & OC_EQUATIONS_SET_DERIVED_DEFORMATION_GRADIENT_SPATIAL,OC_EQUATIONS_SET_DERIVED_DEFORMATION_GRADIENT_FIBRE, &
+  PUBLIC OC_EQUATIONS_SET_DERIVED_DEFORMATION_GRADIENT,OC_EQUATIONS_SET_DERIVED_DEFORMATION_ELASTIC, &
+    & OC_EQUATIONS_SET_DERIVED_DEFORMATION_GROWTH,OC_EQUATIONS_SET_DERIVED_DEFORMATION_GRADIENT_SPATIAL, &
+    & OC_EQUATIONS_SET_DERIVED_DEFORMATION_GRADIENT_FIBRE, &
+    & OC_EQUATIONS_SET_DERIVED_RIGHT_STRETCH,OC_EQUATIONS_SET_DERIVED_LEFT_STRETCH,OC_EQUATIONS_SET_DERIVED_ROTATION, &
+    & OC_EQUATIONS_SET_DERIVED_RIGHT_STRETCH_FIBRE,OC_EQUATIONS_SET_DERIVED_LEFT_STRETCH_FIBRE, &
+    & OC_EQUATIONS_SET_DERIVED_ROTATION_FIBRE, &
     & OC_EQUATIONS_SET_DERIVED_R_CAUCHY_GREEN_DEFORMATION,OC_EQUATIONS_SET_DERIVED_L_CAUCHY_GREEN_DEFORMATION, &
     & OC_EQUATIONS_SET_DERIVED_GREEN_LAGRANGE_STRAIN,OC_EQUATIONS_SET_DERIVED_SMALL_STRAIN, &
     & OC_EQUATIONS_SET_DERIVED_CAUCHY_STRESS,OC_EQUATIONS_SET_DERIVED_CAUCHY_STRESS_FIBRE, &
@@ -3784,7 +3995,7 @@ MODULE OpenCMISS
     & OC_EQUATIONS_SET_DARCY_EQUATION_THREE_DIM_3
   PUBLIC OC_EQUATIONS_SET_INCOMP_ELAST_DARCY_ANALYTIC_DARCY
 
-  PUBLIC OC_EQUATIONS_SET_FINITE_ELASTICITY_CYLINDER
+  PUBLIC OC_EQUATIONS_SET_FINITE_ELASTICITY_CYLINDER,OC_EQUATIONS_SET_FINITE_ELASTICITY_CYLINDER_GROWTH
   PUBLIC OC_FINITE_ELASTICITY_ANALYTIC_CYLINDER_PARAM_PIN_IDX,OC_FINITE_ELASTICITY_ANALYTIC_CYLINDER_PARAM_POUT_IDX
   PUBLIC OC_FINITE_ELASTICITY_ANALYTIC_CYLINDER_PARAM_LAMBDA_IDX,OC_FINITE_ELASTICITY_ANALYTIC_CYLINDER_PARAM_TSI_IDX
   PUBLIC OC_FINITE_ELASTICITY_ANALYTIC_CYLINDER_PARAM_RIN_IDX,OC_FINITE_ELASTICITY_ANALYTIC_CYLINDER_PARAM_ROUT_IDX
@@ -4777,6 +4988,13 @@ MODULE OpenCMISS
     MODULE PROCEDURE OC_Field_ParameterSetUpdateStartObj
   END INTERFACE OC_Field_ParameterSetUpdateStart
 
+  !>Add the parameters from the parameter set of a component of a field variable to the paramters of a parameter set of
+  !>a component of another field variable.
+  INTERFACE OC_Field_ParametersToFieldParametersComponentAdd
+    MODULE PROCEDURE OC_Field_ParametersToFieldParametersComponentAddNumber
+    MODULE PROCEDURE OC_Field_ParametersToFieldParametersComponentAddObj
+  END INTERFACE OC_Field_ParametersToFieldParametersComponentAdd
+
   !>Copy the parameters from the parameter set of a component of a field variable to the paramters of a parameter set of
   !>a component of another field variable.
   INTERFACE OC_Field_ParametersToFieldParametersComponentCopy
@@ -4975,6 +5193,8 @@ MODULE OpenCMISS
   PUBLIC OC_Field_ParameterSetUpdateElementDataPoint
 
   PUBLIC OC_Field_ParameterSetUpdateFinish,OC_Field_ParameterSetUpdateStart
+
+  PUBLIC OC_Field_ParametersToFieldParametersComponentAdd
 
   PUBLIC OC_Field_ParametersToFieldParametersComponentCopy
 
@@ -6169,6 +6389,12 @@ MODULE OpenCMISS
     MODULE PROCEDURE OC_Decomposition_DestroyObj
   END INTERFACE OC_Decomposition_Destroy
 
+  !>Returns a domain of a decomposition.
+  INTERFACE OC_Decomposition_DomainGet
+    MODULE PROCEDURE OC_Decomposition_DomainGetNumber
+    MODULE PROCEDURE OC_Decomposition_DomainGetObj
+  END INTERFACE OC_Decomposition_DomainGet
+
   ! !>Calculates the element domains for the decomposition of a mesh.
   ! INTERFACE OC_Decomposition_ElementDomainCalculate
   !   MODULE PROCEDURE OC_Decomposition_ElementDomainCalculateNumber
@@ -6187,6 +6413,12 @@ MODULE OpenCMISS
     MODULE PROCEDURE OC_Decomposition_ElementDomainSetObj
   END INTERFACE OC_Decomposition_ElementDomainSet
 
+  !>Returns the user element number for a given (local) element in a decomposition of a mesh.
+  INTERFACE OC_Decomposition_ElementNumberGet
+    MODULE PROCEDURE OC_Decomposition_ElementNumberGetNumber
+    MODULE PROCEDURE OC_Decomposition_ElementNumberGetObj
+  END INTERFACE OC_Decomposition_ElementNumberGet
+
   !>Returns the mesh component number used for the decomposition of a mesh.
   INTERFACE OC_Decomposition_MeshComponentGet
     MODULE PROCEDURE OC_Decomposition_MeshComponentGetNumber
@@ -6198,6 +6430,54 @@ MODULE OpenCMISS
     MODULE PROCEDURE OC_Decomposition_MeshComponentSetNumber
     MODULE PROCEDURE OC_Decomposition_MeshComponentSetObj
   END INTERFACE OC_Decomposition_MeshComponentSet
+
+  !>Returns the user node number for a given (local) node in a decomposition of a mesh component.
+  INTERFACE OC_Decomposition_NodeNumberGet
+    MODULE PROCEDURE OC_Decomposition_NodeNumberGetNumber
+    MODULE PROCEDURE OC_Decomposition_NodeNumberGetObj
+  END INTERFACE OC_Decomposition_NodeNumberGet
+  
+  !>Returns the number of (local+ghost) elements in a decomposition of a mesh.
+  INTERFACE OC_Decomposition_NumberOfElementsGet
+    MODULE PROCEDURE OC_Decomposition_NumberOfElementsGetNumber
+    MODULE PROCEDURE OC_Decomposition_NumberOfElementsGetObj
+  END INTERFACE OC_Decomposition_NumberOfElementsGet
+  
+  !>Returns the number of ghost elements in a decomposition of a mesh.
+  INTERFACE OC_Decomposition_NumberOfGhostElementsGet
+    MODULE PROCEDURE OC_Decomposition_NumberOfGhostElementsGetNumber
+    MODULE PROCEDURE OC_Decomposition_NumberOfGhostElementsGetObj
+  END INTERFACE OC_Decomposition_NumberOfGhostElementsGet
+  
+  !>Returns the number of ghost nodes in a decomposition of a mesh component
+  INTERFACE OC_Decomposition_NumberOfGhostNodesGet
+    MODULE PROCEDURE OC_Decomposition_NumberOfGhostNodesGetNumber
+    MODULE PROCEDURE OC_Decomposition_NumberOfGhostNodesGetObj
+  END INTERFACE OC_Decomposition_NumberOfGhostNodesGet
+  
+  !>Returns the number of local elements in a decomposition of a mesh.
+  INTERFACE OC_Decomposition_NumberOfLocalElementsGet
+    MODULE PROCEDURE OC_Decomposition_NumberOfLocalElementsGetNumber
+    MODULE PROCEDURE OC_Decomposition_NumberOfLocalElementsGetObj
+  END INTERFACE OC_Decomposition_NumberOfLocalElementsGet
+  
+  !>Returns the number of local nodes in a decomposition of a mesh component.
+  INTERFACE OC_Decomposition_NumberOfLocalNodesGet
+    MODULE PROCEDURE OC_Decomposition_NumberOfLocalNodesGetNumber
+    MODULE PROCEDURE OC_Decomposition_NumberOfLocalNodesGetObj
+  END INTERFACE OC_Decomposition_NumberOfLocalNodesGet
+  
+  !>Returns the number of (local+ghost) nodes in a decomposition of a mesh component.
+  INTERFACE OC_Decomposition_NumberOfNodesGet
+    MODULE PROCEDURE OC_Decomposition_NumberOfNodesGetNumber
+    MODULE PROCEDURE OC_Decomposition_NumberOfNodesGetObj
+  END INTERFACE OC_Decomposition_NumberOfNodesGet
+
+  !>Returns the topology of a decomposition.
+  INTERFACE OC_Decomposition_TopologyGet
+    MODULE PROCEDURE OC_Decomposition_TopologyGetNumber
+    MODULE PROCEDURE OC_Decomposition_TopologyGetObj
+  END INTERFACE OC_Decomposition_TopologyGet
 
   !>Returns the type of decomposition.
   INTERFACE OC_Decomposition_TypeGet
@@ -6229,11 +6509,89 @@ MODULE OpenCMISS
     MODULE PROCEDURE OC_Decomposition_CalculateFacesSetObj
   END INTERFACE OC_Decomposition_CalculateFacesSet
 
-  !>Returns the domain for a given element in a decomposition of a mesh.
+  !>Returns the adjacent element for a given element in a decomposition of a mesh.
+  INTERFACE OC_Decomposition_ElementAdjacentElementGet
+    MODULE PROCEDURE OC_Decomposition_ElementAdjacentElementGetNumber
+    MODULE PROCEDURE OC_Decomposition_ElementAdjacentElementGetObj
+  END INTERFACE OC_Decomposition_ElementAdjacentElementGet
+
+  !>Returns the basis for a given element in a decomposition of a mesh.
+  INTERFACE OC_Decomposition_ElementBasisGet
+    MODULE PROCEDURE OC_Decomposition_ElementBasisGetNumber
+    MODULE PROCEDURE OC_Decomposition_ElementBasisGetObj
+  END INTERFACE OC_Decomposition_ElementBasisGet
+
+  !>Returns the number of adjacent elements for a given element in a decomposition of a mesh.
+  INTERFACE OC_Decomposition_ElementNumberOfAdjacentGet
+    MODULE PROCEDURE OC_Decomposition_ElementNumberOfAdjacentGetNumber
+    MODULE PROCEDURE OC_Decomposition_ElementNumberOfAdjacentGetObj
+  END INTERFACE OC_Decomposition_ElementNumberOfAdjacentGet
+
+  !>Returns the number of nodes for a given element in a decomposition of a mesh component.
+  INTERFACE OC_Decomposition_ElementNodeGet
+    MODULE PROCEDURE OC_Decomposition_ElementNodeGetNumber
+    MODULE PROCEDURE OC_Decomposition_ElementNodeGetObj
+  END INTERFACE OC_Decomposition_ElementNodeGet
+
+  !>Returns the basis for a given element in a decomposition of a mesh.
+  INTERFACE OC_Decomposition_ElementOnBoundaryGet
+    MODULE PROCEDURE OC_Decomposition_ElementOnBoundaryGetNumber
+    MODULE PROCEDURE OC_Decomposition_ElementOnBoundaryGetObj
+  END INTERFACE OC_Decomposition_ElementOnBoundaryGet
+
+  !>Returns the version number used for a derivative of a node in a element of a decomposed mesh component.
+  INTERFACE OC_Decomposition_ElementVersionGet
+    MODULE PROCEDURE OC_Decomposition_ElementVersionGetNumber
+    MODULE PROCEDURE OC_Decomposition_ElementVersionGetObj
+  END INTERFACE OC_Decomposition_ElementVersionGet
+
+  !>Returns the domain for a given node in a decomposition of a mesh component.
   INTERFACE OC_Decomposition_NodeDomainGet
     MODULE PROCEDURE OC_Decomposition_NodeDomainGetNumber
     MODULE PROCEDURE OC_Decomposition_NodeDomainGetObj
   END INTERFACE OC_Decomposition_NodeDomainGet
+  
+  !>Returns the global derivative index for a given local derivative of node in a decomposition of a mesh component.
+  INTERFACE OC_Decomposition_NodeGlobalDerivativeGet
+    MODULE PROCEDURE OC_Decomposition_NodeGlobalDerivativeGetNumber
+    MODULE PROCEDURE OC_Decomposition_NodeGlobalDerivativeGetObj
+  END INTERFACE OC_Decomposition_NodeGlobalDerivativeGet
+  
+  !>Returns the number of derivatives for a node in a decomposition of a mesh component.
+  INTERFACE OC_Decomposition_NodeNumberOfDerivativesGet
+    MODULE PROCEDURE OC_Decomposition_NodeNumberOfDerivativesGetNumber
+    MODULE PROCEDURE OC_Decomposition_NodeNumberOfDerivativesGetObj
+  END INTERFACE OC_Decomposition_NodeNumberOfDerivativesGet
+  
+  !>Returns the number of elements surrounding a node in a decomposition of a mesh.
+  INTERFACE OC_Decomposition_NodeNumberOfSurroundingElementsGet
+    MODULE PROCEDURE OC_Decomposition_NodeNumberOfSurroundingElementsGetNumber
+    MODULE PROCEDURE OC_Decomposition_NodeNumberOfSurroundingElementsGetObj
+  END INTERFACE OC_Decomposition_NodeNumberOfSurroundingElementsGet
+
+  !>Returns the number of elements surrounding a node in a decomposition of a mesh.
+  INTERFACE OC_Decomposition_NodeNumberOfVersionsGet
+    MODULE PROCEDURE OC_Decomposition_NodeNumberOfVersionsGetNumber
+    MODULE PROCEDURE OC_Decomposition_NodeNumberOfVersionsGetObj
+  END INTERFACE OC_Decomposition_NodeNumberOfVersionsGet
+
+  !>Returns whether or not a given node in a decomposition of a mesh component is on the boundary of the mesh.
+  INTERFACE OC_Decomposition_NodeOnBoundaryGet
+    MODULE PROCEDURE OC_Decomposition_NodeOnBoundaryGetNumber
+    MODULE PROCEDURE OC_Decomposition_NodeOnBoundaryGetObj
+  END INTERFACE OC_Decomposition_NodeOnBoundaryGet
+
+  !>Returns the partial derivative index for a given local derivative of node in a decomposition of a mesh component.
+  INTERFACE OC_Decomposition_NodePartialDerivativeGet
+    MODULE PROCEDURE OC_Decomposition_NodePartialDerivativeGetNumber
+    MODULE PROCEDURE OC_Decomposition_NodePartialDerivativeGetObj
+  END INTERFACE OC_Decomposition_NodePartialDerivativeGet
+  
+  !>Returns an element surrounding a node in a decomposition of a mesh.
+  INTERFACE OC_Decomposition_NodeSurroundingElementGet
+    MODULE PROCEDURE OC_Decomposition_NodeSurroundingElementGetNumber
+    MODULE PROCEDURE OC_Decomposition_NodeSurroundingElementGetObj
+  END INTERFACE OC_Decomposition_NodeSurroundingElementGet
 
   !>Calculates the decomposition topology for data points .
   INTERFACE OC_Decomposition_DataProjectionCalculate
@@ -6251,9 +6609,42 @@ MODULE OpenCMISS
   END INTERFACE OC_Decomposition_ElementDataPointUserNumberGet
 
   !>Gets the number of data points projected on an element
-  INTERFACE OC_Decomposition_NumberOfElementDataPointsGet
-    MODULE PROCEDURE OC_Decomposition_NumberOfElementDataPointsGetObj
-  END INTERFACE OC_Decomposition_NumberOfElementDataPointsGet
+  INTERFACE OC_Decomposition_ElementNumberOfDataPointsGet
+    MODULE PROCEDURE OC_Decomposition_ElementNumberOfDataPointsGetObj
+  END INTERFACE OC_Decomposition_ElementNumberOfDataPointsGet
+
+  !>Returns a decomposition element
+  INTERFACE OC_DecompositionElements_ElementGet
+    MODULE PROCEDURE OC_DecompositionElements_ElementGetObj
+  END INTERFACE OC_DecompositionElements_ElementGet
+
+  !>Returns a decomposition face
+  !INTERFACE OC_DecompositionFaces_FaceGet
+  !  MODULE PROCEDURE OC_DecompositionFaces_FaceGetObj
+  !END INTERFACE OC_DecompositionFaces_FaceGet
+
+  !>Returns a decomposition line
+  !INTERFACE OC_DecompositionLines_LineGet
+  !  MODULE PROCEDURE OC_DecompositionLines_LineGetObj
+  !END INTERFACE OC_DecompositionLines_LineGet
+
+  !>Returns the decomposition elements of a decomposition toplogy.
+  INTERFACE OC_DecompositionTopology_ElementsGet
+    MODULE PROCEDURE OC_DecompositionTopology_ElementsGetNumber
+    MODULE PROCEDURE OC_DecompositionTopology_ElementsGetObj
+  END INTERFACE OC_DecompositionTopology_ElementsGet
+
+  !>Returns the decomposition faces of a decomposition toplogy.
+  INTERFACE OC_DecompositionTopology_FacesGet
+    MODULE PROCEDURE OC_DecompositionTopology_FacesGetNumber
+    MODULE PROCEDURE OC_DecompositionTopology_FacesGetObj
+  END INTERFACE OC_DecompositionTopology_FacesGet
+
+  !>Returns the decomposition lines of a decomposition toplogy.
+  INTERFACE OC_DecompositionTopology_LinesGet
+    MODULE PROCEDURE OC_DecompositionTopology_LinesGetNumber
+    MODULE PROCEDURE OC_DecompositionTopology_LinesGetObj
+  END INTERFACE OC_DecompositionTopology_LinesGet
 
   PUBLIC OC_DECOMPOSER_NO_OUTPUT,OC_DECOMPOSER_TIMING_OUTPUT,OC_DECOMPOSER_ALL_OUTPUT
 
@@ -6273,26 +6664,83 @@ MODULE OpenCMISS
 
   PUBLIC OC_Decomposition_Destroy
 
-  ! PUBLIC OC_Decomposition_ElementDomainCalculate
+  PUBLIC OC_Decomposition_DataProjectionCalculate
+
+  PUBLIC OC_Decomposition_DomainGet
+
+  PUBLIC OC_Decomposition_ElementAdjacentElementGet
+
+  PUBLIC OC_Decomposition_ElementBasisGet
+  
+  PUBLIC OC_Decomposition_ElementDataPointLocalNumberGet
+
+  PUBLIC OC_Decomposition_ElementDataPointUserNumberGet
+
+  !PUBLIC OC_Decomposition_ElementDomainCalculate
 
   PUBLIC OC_Decomposition_ElementDomainGet,OC_Decomposition_ElementDomainSet
+
+  PUBLIC OC_Decomposition_ElementNodeGet
+
+  PUBLIC OC_Decomposition_ElementNumberGet
+
+  PUBLIC OC_Decomposition_ElementNumberOfAdjacentGet
+  
+  PUBLIC OC_Decomposition_ElementNumberOfDataPointsGet
+  
+  PUBLIC OC_Decomposition_ElementOnBoundaryGet
+
+  PUBLIC OC_Decomposition_ElementVersionGet
 
   PUBLIC OC_Decomposition_MeshComponentGet,OC_Decomposition_MeshComponentSet
 
   PUBLIC OC_Decomposition_NodeDomainGet
 
-  PUBLIC OC_Decomposition_DataProjectionCalculate
+  PUBLIC OC_Decomposition_NodeGlobalDerivativeGet
+  
+  PUBLIC OC_Decomposition_NodeNumberGet
 
-  PUBLIC OC_Decomposition_ElementDataPointLocalNumberGet
+  PUBLIC OC_Decomposition_NodeNumberOfDerivativesGet
+  
+  PUBLIC OC_Decomposition_NodeNumberOfVersionsGet
 
-  PUBLIC OC_Decomposition_ElementDataPointUserNumberGet
+  PUBLIC OC_Decomposition_NodeNumberOfSurroundingElementsGet
 
-  PUBLIC OC_Decomposition_NumberOfElementDataPointsGet
+  PUBLIC OC_Decomposition_NodeOnBoundaryGet
+
+  PUBLIC OC_Decomposition_NodePartialDerivativeGet
+  
+  PUBLIC OC_Decomposition_NodeSurroundingElementGet
+  
+  PUBLIC OC_Decomposition_NumberOfElementsGet
+
+  PUBLIC OC_Decomposition_NumberOfGhostElementsGet
+
+  PUBLIC OC_Decomposition_NumberOfGhostNodesGet
+
+  PUBLIC OC_Decomposition_NumberOfLocalElementsGet
+
+  PUBLIC OC_Decomposition_NumberOfLocalNodesGet
+
+  PUBLIC OC_Decomposition_NumberOfNodesGet
+
+  PUBLIC OC_Decomposition_TopologyGet
 
   PUBLIC OC_Decomposition_TypeGet,OC_Decomposition_TypeSet
 
   PUBLIC OC_Decomposition_WorkGroupSet
 
+  PUBLIC OC_DecompositionElements_ElementGet
+
+  !PUBLIC OC_DecompositionFaces_FaceGet
+
+  !PUBLIC OC_DecompositionLines_LineGet
+
+  PUBLIC OC_DecompositionTopology_ElementsGet
+
+  PUBLIC OC_DecompositionTopology_FacesGet
+
+  PUBLIC OC_DecompositionTopology_LinesGet
 
   !==================================================================================================================================
   !
@@ -6403,7 +6851,44 @@ MODULE OpenCMISS
 
   !==================================================================================================================================
   !
-  ! NODE_ROUTINES
+  ! DomainRoutines
+  !
+  !==================================================================================================================================
+
+  !>Returns the topology of a domain.
+  INTERFACE OC_Domain_TopologyGet
+    MODULE PROCEDURE OC_Domain_TopologyGetNumber
+    MODULE PROCEDURE OC_Domain_TopologyGetObj
+  END INTERFACE OC_Domain_TopologyGet
+
+  !>Returns the domain elements of a domain toplogy.
+  INTERFACE OC_DomainTopology_ElementsGet
+    MODULE PROCEDURE OC_DomainTopology_ElementsGetNumber
+    MODULE PROCEDURE OC_DomainTopology_ElementsGetObj
+  END INTERFACE OC_DomainTopology_ElementsGet
+
+  !>Returns the domain faces of a domain toplogy.
+  INTERFACE OC_DomainTopology_FacesGet
+    MODULE PROCEDURE OC_DomainTopology_FacesGetNumber
+    MODULE PROCEDURE OC_DomainTopology_FacesGetObj
+  END INTERFACE OC_DomainTopology_FacesGet
+
+  !>Returns the domain lines of a domain toplogy.
+  INTERFACE OC_DomainTopology_LinesGet
+    MODULE PROCEDURE OC_DomainTopology_LinesGetNumber
+    MODULE PROCEDURE OC_DomainTopology_LinesGetObj
+  END INTERFACE OC_DomainTopology_LinesGet
+
+  !>Returns the domain nodes of a domain toplogy.
+  INTERFACE OC_DomainTopology_NodesGet
+    MODULE PROCEDURE OC_DomainTopology_NodesGetNumber
+    MODULE PROCEDURE OC_DomainTopology_NodesGetObj
+  END INTERFACE OC_DomainTopology_NodesGet
+
+
+  !==================================================================================================================================
+  !
+  ! NodeRoutines
   !
   !==================================================================================================================================
 
@@ -8481,6 +8966,108 @@ CONTAINS
   !================================================================================================================================
   !
 
+  !>Return the rank 2 tensor component numbers in OpenCMISS for a given component.
+  SUBROUTINE OC_ComponentToTensorTwoComponentsGet(numberOfDimensions,component,tensorComponent1,tensorComponent2,err)
+    !DLLEXPORT(OC_ComponentToTensorTwoComponentsGet)
+    
+    !Argument variables
+    INTEGER(INTG), INTENT(IN) :: numberOfDimensions !<The number of dimensions to get the tensor components for
+    INTEGER(INTG), INTENT(IN) :: component !<The component to get the tensor components for
+    INTEGER(INTG), INTENT(OUT) :: tensorComponent1 !<On return, the first tensor component corresponding to the component
+    INTEGER(INTG), INTENT(OUT) :: tensorComponent2 !<On return, the second tensor component corresponding to the component
+    INTEGER(INTG), INTENT(OUT) :: err !<The error code.
+    !Local variables
+    TYPE(VARYING_STRING) :: error
+
+    tensorComponent1 = 0_Intg
+    tensorComponent2 = 0_Intg
+    IF(numberOfDimensions>=1.AND.numberOfDimensions<=3) THEN
+      IF(component>=1.AND.component<=NUMBER_OF_TENSOR_TWO(numberOfDimensions)) THEN
+        tensorComponent1 = COMPONENT_TO_TENSOR_TWO(1,component,numberOfDimensions)
+        tensorComponent2 = COMPONENT_TO_TENSOR_TWO(2,component,numberOfDimensions)
+      ELSE
+        error="The specified component of "//TRIM(NumberToVString(component,"*",err,error))// &
+          & " is invalid. The component must be >= 1 and <= "// &
+          & TRIM(NumberToVString(NUMBER_OF_TENSOR_TWO(numberOfDimensions),"*",err,error))// &
+          & " for a rank 2 tensor in "//TRIM(NumberToVString(numberOfDimensions,"*",err,error))//" dimensions."
+        GOTO 999
+      ENDIF
+    ELSE
+      error="The specified number of dimensions of "//TRIM(NumberToVString(numberOfDimensions,"*",err,error))// &
+        & " is invalid. The number of dimensions must be >= 1 and <= 3."
+      GOTO 999
+    ENDIF
+
+    RETURN
+999 CALL OC_HandleError(err,error)
+    RETURN
+
+  END SUBROUTINE OC_ComponentToTensorTwoComponentsGet
+  
+  !
+  !================================================================================================================================
+  !
+
+  !>Return the number of rank 2 tensor components in OpenCMISS for the given number of dimensions.
+  SUBROUTINE OC_NumberOfTensorTwoComponentsGet(numberOfDimensions,numberOfTensor,err)
+    !DLLEXPORT(OC_NumberOfTensorTwoComponentsGet)
+
+    !Argument variables
+    INTEGER(INTG), INTENT(IN) :: numberOfDimensions !<The number of dimensions to get the number of tensor components for
+    INTEGER(INTG), INTENT(OUT) :: numberOfTensor !<On return, the number of Tensor components for the number of dimensions
+    INTEGER(INTG), INTENT(OUT) :: err !<The error code.
+    !Local variables
+    TYPE(VARYING_STRING) :: error
+
+    numberOfTensor = 0_Intg
+    IF(numberOfDimensions>=1.AND.numberOfDimensions<=3) THEN
+      numberOfTensor = NUMBER_OF_TENSOR_TWO(numberOfDimensions)
+    ELSE
+      error="The specified number of dimensions of "//TRIM(NumberToVString(numberOfDimensions,"*",err,error))// &
+        & " is invalid. The number of dimensions must be >= 1 and <= 3."
+      GOTO 999
+    ENDIF
+
+    RETURN
+999 CALL OC_HandleError(err,error)
+    RETURN
+
+  END SUBROUTINE OC_NumberOfTensorTwoComponentsGet
+
+  !
+  !================================================================================================================================
+  !
+
+  !>Return the number of Voigt components in OpenCMISS for the given number of dimensions.
+  SUBROUTINE OC_NumberOfVoigtComponentsGet(numberOfDimensions,numberOfVoigt,err)
+    !DLLEXPORT(OC_NumberOfVoigtComponentsGet)
+
+    !Argument variables
+    INTEGER(INTG), INTENT(IN) :: numberOfDimensions !<The number of dimensions to get the number of Voigt components for
+    INTEGER(INTG), INTENT(OUT) :: numberOfVoigt !<On return, the number of Voigt components for the number of dimensions
+    INTEGER(INTG), INTENT(OUT) :: err !<The error code.
+    !Local variables
+    TYPE(VARYING_STRING) :: error
+
+    numberOfVoigt = 0_Intg
+    IF(numberOfDimensions>=1.AND.numberOfDimensions<=3) THEN
+      numberOfVoigt = NUMBER_OF_VOIGT(numberOfDimensions)
+    ELSE
+      error="The specified number of dimensions of "//TRIM(NumberToVString(numberOfDimensions,"*",err,error))// &
+        & " is invalid. The number of dimensions must be >= 1 and <= 3."
+      GOTO 999
+    ENDIF
+
+    RETURN
+999 CALL OC_HandleError(err,error)
+    RETURN
+
+  END SUBROUTINE OC_NumberOfVoigtComponentsGet
+
+  !
+  !================================================================================================================================
+  !
+
   !>Sets a PETSc option (so that they can be set from python when we don't have the command line.)
   SUBROUTINE OC_PetscOptionsSetValue(name,VALUE,err)
     !DLLEXPORT(OC_PetscOptionsSetValue)
@@ -8503,6 +9090,140 @@ CONTAINS
 
   END SUBROUTINE OC_PetscOptionsSetValue
 
+  !
+  !================================================================================================================================
+  !
+
+  !>Return the component number in OpenCMISS for the given second order tensor components.
+  SUBROUTINE OC_TensorTwoComponentsToComponentGet(numberOfDimensions,tensorComponent1,tensorComponent2,component,err)
+    !DLLEXPORT(OC_TensorTwoComponentsToComponentGet)
+
+    !Argument variables
+    INTEGER(INTG), INTENT(IN) :: numberOfDimensions !<The number of dimensions to get the tensor component for
+    INTEGER(INTG), INTENT(IN) :: tensorComponent1 !<The first tensor component to get the tensor component for
+    INTEGER(INTG), INTENT(IN) :: tensorComponent2 !<The second tensor component to get the tensor component for
+    INTEGER(INTG), INTENT(OUT) :: component !<On return, the component for the tensor components
+    INTEGER(INTG), INTENT(OUT) :: err !<The error code.
+    !Local variables
+    TYPE(VARYING_STRING) :: error
+
+    component = 0_Intg
+    IF(numberOfDimensions>=1.AND.numberOfDimensions<=3) THEN
+      IF(tensorComponent1>=1.AND.tensorComponent2<=numberOfDimensions) THEN
+        IF(tensorCOmponent2>=1.AND.tensorComponent2<=numberOfDimensions) THEN
+           component= TENSOR_TWO_TO_COMPONENT(tensorComponent1,tensorComponent2,numberOfDimensions)
+        ELSE
+          error="The specified second tensor component of "//TRIM(NumberToVString(tensorComponent2,"*",err,error))// &
+            & " is invalid. The tensor component must be >= 1 and <= "// &
+            & TRIM(NumberToVString(numberOfDimensions,"*",err,error))//"."
+          GOTO 999
+        ENDIF
+      ELSE
+        error="The specified first tensor component of "//TRIM(NumberToVString(tensorComponent1,"*",err,error))// &
+          & " is invalid. The tensor component must be >= 1 and <= "// &
+          & TRIM(NumberToVString(numberOfDimensions,"*",err,error))//"."
+        GOTO 999
+      ENDIF
+    ELSE
+      error="The specified number of dimensions of "//TRIM(NumberToVString(numberOfDimensions,"*",err,error))// &
+        & " is invalid. The number of dimensions must be >= 1 and <= 3."
+      GOTO 999
+    ENDIF
+
+    RETURN
+999 CALL OC_HandleError(err,error)
+    RETURN
+
+  END SUBROUTINE OC_TensorTwoComponentsToComponentGet
+  
+  !
+  !================================================================================================================================
+  !
+
+  !>Return the Voigt component number in OpenCMISS for the given symmetric second order tensor components.
+  SUBROUTINE OC_TensorComponentsToVoigtComponentGet(numberOfDimensions,tensorComponent1,tensorComponent2,voigtComponent,err)
+    !DLLEXPORT(OC_TensorComponentsToVoigtComponentGet)
+
+    !Argument variables
+    INTEGER(INTG), INTENT(IN) :: numberOfDimensions !<The number of dimensions to get the Voigt component for
+    INTEGER(INTG), INTENT(IN) :: tensorComponent1 !<The first tensor component to get the Voigt component for
+    INTEGER(INTG), INTENT(IN) :: tensorComponent2 !<The second tensor component to get the Voigt component for
+    INTEGER(INTG), INTENT(OUT) :: voigtComponent !<On return, the Voigt component for the tensor components
+    INTEGER(INTG), INTENT(OUT) :: err !<The error code.
+    !Local variables
+    TYPE(VARYING_STRING) :: error
+
+    voigtComponent = 0_Intg
+    IF(numberOfDimensions>=1.AND.numberOfDimensions<=3) THEN
+      IF(tensorComponent1>=1.AND.tensorComponent2<=numberOfDimensions) THEN
+        IF(tensorCOmponent2>=1.AND.tensorComponent2<=numberOfDimensions) THEN
+           voigtComponent= TENSOR_TO_VOIGT(tensorComponent1,tensorComponent2,numberOfDimensions)
+        ELSE
+          error="The specified second tensor component of "//TRIM(NumberToVString(tensorComponent2,"*",err,error))// &
+            & " is invalid. The tensor component must be >= 1 and <= "// &
+            & TRIM(NumberToVString(numberOfDimensions,"*",err,error))//"."
+          GOTO 999
+        ENDIF
+      ELSE
+        error="The specified first tensor component of "//TRIM(NumberToVString(tensorComponent1,"*",err,error))// &
+          & " is invalid. The tensor component must be >= 1 and <= "// &
+          & TRIM(NumberToVString(numberOfDimensions,"*",err,error))//"."
+        GOTO 999
+      ENDIF
+    ELSE
+      error="The specified number of dimensions of "//TRIM(NumberToVString(numberOfDimensions,"*",err,error))// &
+        & " is invalid. The number of dimensions must be >= 1 and <= 3."
+      GOTO 999
+    ENDIF
+
+    RETURN
+999 CALL OC_HandleError(err,error)
+    RETURN
+
+  END SUBROUTINE OC_TensorComponentsToVoigtComponentGet
+  
+  !
+  !================================================================================================================================
+  !
+
+  !>Return the tensor component numbers in OpenCMISS for a given Voigt tensor component.
+  SUBROUTINE OC_VoigtComponentToTensorComponentsGet(numberOfDimensions,voigtComponent,tensorComponent1,tensorComponent2,err)
+    !DLLEXPORT(OC_VoigtComponentToTensorComponentsGet)
+    
+    !Argument variables
+    INTEGER(INTG), INTENT(IN) :: numberOfDimensions !<The number of dimensions to get the tensor components for
+    INTEGER(INTG), INTENT(IN) :: voigtComponent !<The Voigt component to get the tensor components for
+    INTEGER(INTG), INTENT(OUT) :: tensorComponent1 !<On return, the first tensor component corresponding to the Voigt component
+    INTEGER(INTG), INTENT(OUT) :: tensorComponent2 !<On return, the second tensor component corresponding to the Voigt component
+    INTEGER(INTG), INTENT(OUT) :: err !<The error code.
+    !Local variables
+    TYPE(VARYING_STRING) :: error
+
+    tensorComponent1 = 0_Intg
+    tensorComponent2 = 0_Intg
+    IF(numberOfDimensions>=1.AND.numberOfDimensions<=3) THEN
+      IF(voigtComponent>=1.AND.voigtComponent<=NUMBER_OF_VOIGT(numberOfDimensions)) THEN
+        tensorComponent1 = VOIGT_TO_TENSOR(1,voigtComponent,numberOfDimensions)
+        tensorComponent2 = VOIGT_TO_TENSOR(2,voigtComponent,numberOfDimensions)
+      ELSE
+        error="The specified Voigt component of "//TRIM(NumberToVString(voigtComponent,"*",err,error))// &
+          & " is invalid. The Voigt component must be >= 1 and <= "// &
+          & TRIM(NumberToVString(NUMBER_OF_VOIGT(numberOfDimensions),"*",err,error))// &
+          & " for "//TRIM(NumberToVString(numberOfDimensions,"*",err,error))//" dimensions."
+        GOTO 999
+      ENDIF
+    ELSE
+      error="The specified number of dimensions of "//TRIM(NumberToVString(numberOfDimensions,"*",err,error))// &
+        & " is invalid. The number of dimensions must be >= 1 and <= 3."
+      GOTO 999
+    ENDIF
+
+    RETURN
+999 CALL OC_HandleError(err,error)
+    RETURN
+
+  END SUBROUTINE OC_VoigtComponentToTensorComponentsGet
+  
   !
   !================================================================================================================================
   !
@@ -9151,8 +9872,7 @@ CONTAINS
 
     ENTERS("OC_Decomposition_Finalise",err,error,*999)
 
-    IF(ASSOCIATED(OC_Decomposition%decomposition))  &
-      & CALL DECOMPOSITION_DESTROY(OC_Decomposition%decomposition,err,error,*999)
+    IF(ASSOCIATED(OC_Decomposition%decomposition)) CALL Decomposition_Destroy(OC_Decomposition%decomposition,err,error,*999)
 
     EXITS("OC_Decomposition_Finalise")
     RETURN
@@ -9186,6 +9906,363 @@ CONTAINS
     RETURN
 
   END SUBROUTINE OC_Decomposition_Initialise
+
+  !
+  !================================================================================================================================
+  !
+
+  !>Finalises a OC_DecompositionElementType object.
+  SUBROUTINE OC_DecompositionElement_Finalise(OC_DecompositionElement,err)
+    !DLLEXPORT(OC_DecompositionElement_Finalise)
+
+    !Argument variables
+    TYPE(OC_DecompositionElementType), INTENT(OUT) :: OC_DecompositionElement !<The OC_DecompositionElementType object to finalise.
+    INTEGER(INTG), INTENT(OUT) :: err !<The error code.
+    !Local variables
+
+    ENTERS("OC_DecompositionElement_Finalise",err,error,*999)
+
+    !Don't destroy the decomposition element, just nullify it. It will be destroyed with the decomposition.
+    IF(ASSOCIATED(OC_DecompositionElement%decompositionElement)) NULLIFY(OC_DecompositionElement%decompositionElement)
+
+    EXITS("OC_DecompositionElement_Finalise")
+    RETURN
+999 ERRORSEXITS("OC_DecompositionElement_Finalise",err,error)
+    CALL OC_HandleError(err,error)
+    RETURN
+
+  END SUBROUTINE OC_DecompositionElement_Finalise
+
+  !
+  !================================================================================================================================
+  !
+
+  !>Initialises a OC_DecompositionElementType object.
+  SUBROUTINE OC_DecompositionElement_Initialise(OC_DecompositionElement,err)
+    !DLLEXPORT(OC_DecompositionElement_Initialise)
+
+    !Argument variables
+    TYPE(OC_DecompositionElementType), INTENT(OUT) :: OC_DecompositionElement !<The OC_DecompositionElementType object to initialise.
+    INTEGER(INTG), INTENT(OUT) :: err !<The error code.
+    !Local variables
+
+    ENTERS("OC_DecompositionElement_Initialise",err,error,*999)
+
+    NULLIFY(OC_DecompositionElement%decompositionElement)
+
+    EXITS("OC_DecompositionElement_Initialise")
+    RETURN
+999 ERRORSEXITS("OC_DecompositionElement_Initialise",err,error)
+    CALL OC_HandleError(err,error)
+    RETURN
+
+  END SUBROUTINE OC_DecompositionElement_Initialise
+
+  !
+  !================================================================================================================================
+  !
+
+  !>Finalises a OC_DecompositionElementsType object.
+  SUBROUTINE OC_DecompositionElements_Finalise(OC_DecompositionElements,err)
+    !DLLEXPORT(OC_DecompositionElements_Finalise)
+
+    !Argument variables
+    TYPE(OC_DecompositionElementsType), INTENT(OUT) :: OC_DecompositionElements !<The OC_DecompositionElementsType object to finalise.
+    INTEGER(INTG), INTENT(OUT) :: err !<The error code.
+    !Local variables
+
+    ENTERS("OC_DecompositionElements_Finalise",err,error,*999)
+
+    !Don't destroy the decomposition elements, just nullify it. It will be destroyed with the decomposition.
+    IF(ASSOCIATED(OC_DecompositionElements%decompositionElements)) NULLIFY(OC_DecompositionElements%decompositionElements)
+
+    EXITS("OC_DecompositionElements_Finalise")
+    RETURN
+999 ERRORSEXITS("OC_DecompositionElements_Finalise",err,error)
+    CALL OC_HandleError(err,error)
+    RETURN
+
+  END SUBROUTINE OC_DecompositionElements_Finalise
+
+  !
+  !================================================================================================================================
+  !
+
+  !>Initialises a OC_DecompositionElementsType object.
+  SUBROUTINE OC_DecompositionElements_Initialise(OC_DecompositionElements,err)
+    !DLLEXPORT(OC_DecompositionElements_Initialise)
+
+    !Argument variables
+    TYPE(OC_DecompositionElementsType), INTENT(OUT) :: OC_DecompositionElements !<The OC_DecompositionElementsType object to initialise.
+    INTEGER(INTG), INTENT(OUT) :: err !<The error code.
+    !Local variables
+
+    ENTERS("OC_DecompositionElements_Initialise",err,error,*999)
+
+    NULLIFY(OC_DecompositionElements%decompositionElements)
+
+    EXITS("OC_DecompositionElements_Initialise")
+    RETURN
+999 ERRORSEXITS("OC_DecompositionElements_Initialise",err,error)
+    CALL OC_HandleError(err,error)
+    RETURN
+
+  END SUBROUTINE OC_DecompositionElements_Initialise
+
+  !
+  !================================================================================================================================
+  !
+
+  !>Finalises a OC_DecompositionFaceType object.
+  SUBROUTINE OC_DecompositionFace_Finalise(OC_DecompositionFace,err)
+    !DLLEXPORT(OC_DecompositionFace_Finalise)
+
+    !Argument variables
+    TYPE(OC_DecompositionFaceType), INTENT(OUT) :: OC_DecompositionFace !<The OC_DecompositionFaceType object to finalise.
+    INTEGER(INTG), INTENT(OUT) :: err !<The error code.
+    !Local variables
+
+    ENTERS("OC_DecompositionFace_Finalise",err,error,*999)
+
+    !Don't destroy the decomposition face, just nullify it. It will be destroyed with the decomposition.
+    IF(ASSOCIATED(OC_DecompositionFace%decompositionFace)) NULLIFY(OC_DecompositionFace%decompositionFace)
+
+    EXITS("OC_DecompositionFace_Finalise")
+    RETURN
+999 ERRORSEXITS("OC_DecompositionFace_Finalise",err,error)
+    CALL OC_HandleError(err,error)
+    RETURN
+
+  END SUBROUTINE OC_DecompositionFace_Finalise
+
+  !
+  !================================================================================================================================
+  !
+
+  !>Initialises a OC_DecompositionFaceType object.
+  SUBROUTINE OC_DecompositionFace_Initialise(OC_DecompositionFace,err)
+    !DLLEXPORT(OC_DecompositionFace_Initialise)
+
+    !Argument variables
+    TYPE(OC_DecompositionFaceType), INTENT(OUT) :: OC_DecompositionFace !<The OC_DecompositionFaceType object to initialise.
+    INTEGER(INTG), INTENT(OUT) :: err !<The error code.
+    !Local variables
+
+    ENTERS("OC_DecompositionFace_Initialise",err,error,*999)
+
+    NULLIFY(OC_DecompositionFace%decompositionFace)
+
+    EXITS("OC_DecompositionFace_Initialise")
+    RETURN
+999 ERRORSEXITS("OC_DecompositionFace_Initialise",err,error)
+    CALL OC_HandleError(err,error)
+    RETURN
+
+  END SUBROUTINE OC_DecompositionFace_Initialise
+
+  !
+  !================================================================================================================================
+  !
+
+  !>Finalises a OC_DecompositionFacesType object.
+  SUBROUTINE OC_DecompositionFaces_Finalise(OC_DecompositionFaces,err)
+    !DLLEXPORT(OC_DecompositionFaces_Finalise)
+
+    !Argument variables
+    TYPE(OC_DecompositionFacesType), INTENT(OUT) :: OC_DecompositionFaces !<The OC_DecompositionFacesType object to finalise.
+    INTEGER(INTG), INTENT(OUT) :: err !<The error code.
+    !Local variables
+
+    ENTERS("OC_DecompositionFaces_Finalise",err,error,*999)
+
+    !Don't destroy the decomposition faces, just nullify it. It will be destroyed with the decomposition.
+    IF(ASSOCIATED(OC_DecompositionFaces%decompositionFaces)) NULLIFY(OC_DecompositionFaces%decompositionFaces)
+
+    EXITS("OC_DecompositionFaces_Finalise")
+    RETURN
+999 ERRORSEXITS("OC_DecompositionFaces_Finalise",err,error)
+    CALL OC_HandleError(err,error)
+    RETURN
+
+  END SUBROUTINE OC_DecompositionFaces_Finalise
+
+  !
+  !================================================================================================================================
+  !
+
+  !>Initialises a OC_DecompositionFacesType object.
+  SUBROUTINE OC_DecompositionFaces_Initialise(OC_DecompositionFaces,err)
+    !DLLEXPORT(OC_DecompositionFaces_Initialise)
+
+    !Argument variables
+    TYPE(OC_DecompositionFacesType), INTENT(OUT) :: OC_DecompositionFaces !<The OC_DecompositionFacesType object to initialise.
+    INTEGER(INTG), INTENT(OUT) :: err !<The error code.
+    !Local variables
+
+    ENTERS("OC_DecompositionFaces_Initialise",err,error,*999)
+
+    NULLIFY(OC_DecompositionFaces%decompositionFaces)
+
+    EXITS("OC_DecompositionFaces_Initialise")
+    RETURN
+999 ERRORSEXITS("OC_DecompositionFaces_Initialise",err,error)
+    CALL OC_HandleError(err,error)
+    RETURN
+
+  END SUBROUTINE OC_DecompositionFaces_Initialise
+
+  !
+  !================================================================================================================================
+  !
+
+  !>Finalises a OC_DecompositionLineType object.
+  SUBROUTINE OC_DecompositionLine_Finalise(OC_DecompositionLine,err)
+    !DLLEXPORT(OC_DecompositionLine_Finalise)
+
+    !Argument variables
+    TYPE(OC_DecompositionLineType), INTENT(OUT) :: OC_DecompositionLine !<The OC_DecompositionLineType object to finalise.
+    INTEGER(INTG), INTENT(OUT) :: err !<The error code.
+    !Local variables
+
+    ENTERS("OC_DecompositionLine_Finalise",err,error,*999)
+
+    !Don't destroy the decomposition line, just nullify it. It will be destroyed with the decomposition.
+    IF(ASSOCIATED(OC_DecompositionLine%decompositionLine)) NULLIFY(OC_DecompositionLine%decompositionLine)
+
+    EXITS("OC_DecompositionLine_Finalise")
+    RETURN
+999 ERRORSEXITS("OC_DecompositionLine_Finalise",err,error)
+    CALL OC_HandleError(err,error)
+    RETURN
+
+  END SUBROUTINE OC_DecompositionLine_Finalise
+
+  !
+  !================================================================================================================================
+  !
+
+  !>Initialises a OC_DecompositionLineType object.
+  SUBROUTINE OC_DecompositionLine_Initialise(OC_DecompositionLine,err)
+    !DLLEXPORT(OC_DecompositionLine_Initialise)
+
+    !Argument variables
+    TYPE(OC_DecompositionLineType), INTENT(OUT) :: OC_DecompositionLine !<The OC_DecompositionLineType object to initialise.
+    INTEGER(INTG), INTENT(OUT) :: err !<The error code.
+    !Local variables
+
+    ENTERS("OC_DecompositionLine_Initialise",err,error,*999)
+
+    NULLIFY(OC_DecompositionLine%decompositionLine)
+
+    EXITS("OC_DecompositionLine_Initialise")
+    RETURN
+999 ERRORSEXITS("OC_DecompositionLine_Initialise",err,error)
+    CALL OC_HandleError(err,error)
+    RETURN
+
+  END SUBROUTINE OC_DecompositionLine_Initialise
+
+  !
+  !================================================================================================================================
+  !
+
+  !>Finalises a OC_DecompositionLinesType object.
+  SUBROUTINE OC_DecompositionLines_Finalise(OC_DecompositionLines,err)
+    !DLLEXPORT(OC_DecompositionLines_Finalise)
+
+    !Argument variables
+    TYPE(OC_DecompositionLinesType), INTENT(OUT) :: OC_DecompositionLines !<The OC_DecompositionLinesType object to finalise.
+    INTEGER(INTG), INTENT(OUT) :: err !<The error code.
+    !Local variables
+
+    ENTERS("OC_DecompositionLines_Finalise",err,error,*999)
+
+    !Don't destroy the decomposition lines, just nullify it. It will be destroyed with the decomposition.
+    IF(ASSOCIATED(OC_DecompositionLines%decompositionLines)) NULLIFY(OC_DecompositionLines%decompositionLines)
+
+    EXITS("OC_DecompositionLines_Finalise")
+    RETURN
+999 ERRORSEXITS("OC_DecompositionLines_Finalise",err,error)
+    CALL OC_HandleError(err,error)
+    RETURN
+
+  END SUBROUTINE OC_DecompositionLines_Finalise
+
+  !
+  !================================================================================================================================
+  !
+
+  !>Initialises a OC_DecompositionLinesType object.
+  SUBROUTINE OC_DecompositionLines_Initialise(OC_DecompositionLines,err)
+    !DLLEXPORT(OC_DecompositionLines_Initialise)
+
+    !Argument variables
+    TYPE(OC_DecompositionLinesType), INTENT(OUT) :: OC_DecompositionLines !<The OC_DecompositionLinesType object to initialise.
+    INTEGER(INTG), INTENT(OUT) :: err !<The error code.
+    !Local variables
+
+    ENTERS("OC_DecompositionLines_Initialise",err,error,*999)
+
+    NULLIFY(OC_DecompositionLines%decompositionLines)
+
+    EXITS("OC_DecompositionLines_Initialise")
+    RETURN
+999 ERRORSEXITS("OC_DecompositionLines_Initialise",err,error)
+    CALL OC_HandleError(err,error)
+    RETURN
+
+  END SUBROUTINE OC_DecompositionLines_Initialise
+
+  !
+  !================================================================================================================================
+  !
+
+  !>Finalises a OC_DecompositionTopologyType object.
+  SUBROUTINE OC_DecompositionTopology_Finalise(OC_DecompositionTopology,err)
+    !DLLEXPORT(OC_DecompositionTopology_Finalise)
+
+    !Argument variables
+    TYPE(OC_DecompositionTopologyType), INTENT(OUT) :: OC_DecompositionTopology !<The OC_DecompositionTopologyType object to finalise.
+    INTEGER(INTG), INTENT(OUT) :: err !<The error code.
+    !Local variables
+
+    ENTERS("OC_DecompositionTopology_Finalise",err,error,*999)
+
+    !Don't destroy the topology, just nullify it. It will be destroyed with the decomposition.
+    IF(ASSOCIATED(OC_DecompositionTopology%decompositionTopology)) NULLIFY(OC_DecompositionTopology%decompositionTopology)
+
+    EXITS("OC_DecompositionTopology_Finalise")
+    RETURN
+999 ERRORSEXITS("OC_DecompositionTopology_Finalise",err,error)
+    CALL OC_HandleError(err,error)
+    RETURN
+
+  END SUBROUTINE OC_DecompositionTopology_Finalise
+
+  !
+  !================================================================================================================================
+  !
+
+  !>Initialises a OC_DecompositionTopologyType object.
+  SUBROUTINE OC_DecompositionTopology_Initialise(OC_DecompositionTopology,err)
+    !DLLEXPORT(OC_DecompositionTopology_Initialise)
+
+    !Argument variables
+    TYPE(OC_DecompositionTopologyType), INTENT(OUT) :: OC_DecompositionTopology !<The OC_DecompositionTopologyType object to initialise.
+    INTEGER(INTG), INTENT(OUT) :: err !<The error code.
+    !Local variables
+
+    ENTERS("OC_DecompositionTopology_Initialise",err,error,*999)
+
+    NULLIFY(OC_DecompositionTopology%decompositionTopology)
+
+    EXITS("OC_DecompositionTopology_Initialise")
+    RETURN
+999 ERRORSEXITS("OC_DecompositionTopology_Initialise",err,error)
+    CALL OC_HandleError(err,error)
+    RETURN
+
+  END SUBROUTINE OC_DecompositionTopology_Initialise
 
   !
   !================================================================================================================================
@@ -9236,6 +10313,516 @@ CONTAINS
     RETURN
 
   END SUBROUTINE OC_DistributedVector_Initialise
+
+  !
+  !================================================================================================================================
+  !
+
+  !>Finalises a OC_DomainType object.
+  SUBROUTINE OC_Domain_Finalise(OC_Domain,err)
+    !DLLEXPORT(OC_Domain_Finalise)
+
+    !Argument variables
+    TYPE(OC_DomainType), INTENT(OUT) :: OC_Domain !<The OC_DomainType object to finalise.
+    INTEGER(INTG), INTENT(OUT) :: err !<The error code.
+    !Local variables
+
+    ENTERS("OC_Domain_Finalise",err,error,*999)
+
+    !Don't destroy, just nullify. Destroy will happen when the decomposition is destroyed.
+    IF(ASSOCIATED(OC_Domain%domain)) NULLIFY(OC_Domain%domain)
+
+    EXITS("OC_Domain_Finalise")
+    RETURN
+999 ERRORSEXITS("OC_Domain_Finalise",err,error)
+    CALL OC_HandleError(err,error)
+    RETURN
+
+  END SUBROUTINE OC_Domain_Finalise
+
+  !
+  !================================================================================================================================
+  !
+
+  !>Initialises a OC_DomainType object.
+  SUBROUTINE OC_Domain_Initialise(OC_Domain,err)
+    !DLLEXPORT(OC_Domain_Initialise)
+
+    !Argument variables
+    TYPE(OC_DomainType), INTENT(OUT) :: OC_Domain !<The OC_DomainType object to initialise.
+    INTEGER(INTG), INTENT(OUT) :: err !<The error code.
+    !Local variables
+
+    ENTERS("OC_Domain_Initialise",err,error,*999)
+
+    NULLIFY(OC_Domain%domain)
+
+    EXITS("OC_Domain_Initialise")
+    RETURN
+999 ERRORSEXITS("OC_Domain_Initialise",err,error)
+    CALL OC_HandleError(err,error)
+    RETURN
+
+  END SUBROUTINE OC_Domain_Initialise
+
+  !
+  !================================================================================================================================
+  !
+
+  !>Finalises a OC_DomainElementType object.
+  SUBROUTINE OC_DomainElement_Finalise(OC_DomainElement,err)
+    !DLLEXPORT(OC_DomainElement_Finalise)
+
+    !Argument variables
+    TYPE(OC_DomainElementType), INTENT(OUT) :: OC_DomainElement !<The OC_DomainElementType object to finalise.
+    INTEGER(INTG), INTENT(OUT) :: err !<The error code.
+    !Local variables
+
+    ENTERS("OC_DomainElement_Finalise",err,error,*999)
+
+    !Don't destroy the domain element, just nullify it. It will be destroyed with the decomposition.
+    IF(ASSOCIATED(OC_DomainElement%domainElement)) NULLIFY(OC_DomainElement%domainElement)
+
+    EXITS("OC_DomainElement_Finalise")
+    RETURN
+999 ERRORSEXITS("OC_DomainElement_Finalise",err,error)
+    CALL OC_HandleError(err,error)
+    RETURN
+
+  END SUBROUTINE OC_DomainElement_Finalise
+
+  !
+  !================================================================================================================================
+  ! 
+
+  !>Initialises a OC_DomainElementType object.
+  SUBROUTINE OC_DomainElement_Initialise(OC_DomainElement,err)
+    !DLLEXPORT(OC_DomainElement_Initialise)
+
+    !Argument variables
+    TYPE(OC_DomainElementType), INTENT(OUT) :: OC_DomainElement !<The OC_DomainElementType object to initialise.
+    INTEGER(INTG), INTENT(OUT) :: err !<The error code.
+    !Local variables
+
+    ENTERS("OC_DomainElement_Initialise",err,error,*999)
+
+    NULLIFY(OC_DomainElement%domainElement)
+
+    EXITS("OC_DomainElement_Initialise")
+    RETURN
+999 ERRORSEXITS("OC_DomainElement_Initialise",err,error)
+    CALL OC_HandleError(err,error)
+    RETURN
+
+  END SUBROUTINE OC_DomainElement_Initialise
+
+  !
+  !================================================================================================================================
+  !
+
+  !>Finalises a OC_DomainElementsType object.
+  SUBROUTINE OC_DomainElements_Finalise(OC_DomainElements,err)
+    !DLLEXPORT(OC_DomainElements_Finalise)
+
+    !Argument variables
+    TYPE(OC_DomainElementsType), INTENT(OUT) :: OC_DomainElements !<The OC_DomainElementsType object to finalise.
+    INTEGER(INTG), INTENT(OUT) :: err !<The error code.
+    !Local variables
+
+    ENTERS("OC_DomainElements_Finalise",err,error,*999)
+
+    !Don't destroy the domain elements, just nullify it. It will be destroyed with the decomposition.
+    IF(ASSOCIATED(OC_DomainElements%domainElements)) NULLIFY(OC_DomainElements%domainElements)
+
+    EXITS("OC_DomainElements_Finalise")
+    RETURN
+999 ERRORSEXITS("OC_DomainElements_Finalise",err,error)
+    CALL OC_HandleError(err,error)
+    RETURN
+
+  END SUBROUTINE OC_DomainElements_Finalise
+
+  !
+  !================================================================================================================================
+  ! 
+
+  !>Initialises a OC_DomainElementsType object.
+  SUBROUTINE OC_DomainElements_Initialise(OC_DomainElements,err)
+    !DLLEXPORT(OC_DomainElements_Initialise)
+
+    !Argument variables
+    TYPE(OC_DomainElementsType), INTENT(OUT) :: OC_DomainElements !<The OC_DomainElementsType object to initialise.
+    INTEGER(INTG), INTENT(OUT) :: err !<The error code.
+    !Local variables
+
+    ENTERS("OC_DomainElements_Initialise",err,error,*999)
+
+    NULLIFY(OC_DomainElements%domainElements)
+
+    EXITS("OC_DomainElements_Initialise")
+    RETURN
+999 ERRORSEXITS("OC_DomainElements_Initialise",err,error)
+    CALL OC_HandleError(err,error)
+    RETURN
+
+  END SUBROUTINE OC_DomainElements_Initialise
+
+  !
+  !================================================================================================================================
+  !
+
+  !>Finalises a OC_DomainFaceType object.
+  SUBROUTINE OC_DomainFace_Finalise(OC_DomainFace,err)
+    !DLLEXPORT(OC_DomainFace_Finalise)
+
+    !Argument variables
+    TYPE(OC_DomainFaceType), INTENT(OUT) :: OC_DomainFace !<The OC_DomainFaceType object to finalise.
+    INTEGER(INTG), INTENT(OUT) :: err !<The error code.
+    !Local variables
+
+    ENTERS("OC_DomainFace_Finalise",err,error,*999)
+
+    !Don't destroy the domain face, just nullify it. It will be destroyed with the decomposition.
+    IF(ASSOCIATED(OC_DomainFace%domainFace)) NULLIFY(OC_DomainFace%domainFace)
+
+    EXITS("OC_DomainFace_Finalise")
+    RETURN
+999 ERRORSEXITS("OC_DomainFace_Finalise",err,error)
+    CALL OC_HandleError(err,error)
+    RETURN
+
+  END SUBROUTINE OC_DomainFace_Finalise
+
+  !
+  !================================================================================================================================
+  !
+
+  !>Initialises a OC_DomainFaceType object.
+  SUBROUTINE OC_DomainFace_Initialise(OC_DomainFace,err)
+    !DLLEXPORT(OC_DomainFace_Initialise)
+
+    !Argument variables
+    TYPE(OC_DomainFaceType), INTENT(OUT) :: OC_DomainFace !<The OC_DomainFaceType object to initialise.
+    INTEGER(INTG), INTENT(OUT) :: err !<The error code.
+    !Local variables
+
+    ENTERS("OC_DomainFace_Initialise",err,error,*999)
+
+    NULLIFY(OC_DomainFace%domainFace)
+
+    EXITS("OC_DomainFace_Initialise")
+    RETURN
+999 ERRORSEXITS("OC_DomainFace_Initialise",err,error)
+    CALL OC_HandleError(err,error)
+    RETURN
+
+  END SUBROUTINE OC_DomainFace_Initialise
+
+  !
+  !================================================================================================================================
+  !
+
+  !>Finalises a OC_DomainFacesType object.
+  SUBROUTINE OC_DomainFaces_Finalise(OC_DomainFaces,err)
+    !DLLEXPORT(OC_DomainFaces_Finalise)
+
+    !Argument variables
+    TYPE(OC_DomainFacesType), INTENT(OUT) :: OC_DomainFaces !<The OC_DomainFacesType object to finalise.
+    INTEGER(INTG), INTENT(OUT) :: err !<The error code.
+    !Local variables
+
+    ENTERS("OC_DomainFaces_Finalise",err,error,*999)
+
+    !Don't destroy the domain faces, just nullify it. It will be destroyed with the decomposition.
+    IF(ASSOCIATED(OC_DomainFaces%domainFaces)) NULLIFY(OC_DomainFaces%domainFaces)
+
+    EXITS("OC_DomainFaces_Finalise")
+    RETURN
+999 ERRORSEXITS("OC_DomainFaces_Finalise",err,error)
+    CALL OC_HandleError(err,error)
+    RETURN
+
+  END SUBROUTINE OC_DomainFaces_Finalise
+
+  !
+  !================================================================================================================================
+  !
+
+  !>Initialises a OC_DomainFacesType object.
+  SUBROUTINE OC_DomainFaces_Initialise(OC_DomainFaces,err)
+    !DLLEXPORT(OC_DomainFaces_Initialise)
+
+    !Argument variables
+    TYPE(OC_DomainFacesType), INTENT(OUT) :: OC_DomainFaces !<The OC_DomainFacesType object to initialise.
+    INTEGER(INTG), INTENT(OUT) :: err !<The error code.
+    !Local variables
+
+    ENTERS("OC_DomainFaces_Initialise",err,error,*999)
+
+    NULLIFY(OC_DomainFaces%domainFaces)
+
+    EXITS("OC_DomainFaces_Initialise")
+    RETURN
+999 ERRORSEXITS("OC_DomainFaces_Initialise",err,error)
+    CALL OC_HandleError(err,error)
+    RETURN
+
+  END SUBROUTINE OC_DomainFaces_Initialise
+
+  !
+  !================================================================================================================================
+  !
+
+  !>Finalises a OC_DomainLineType object.
+  SUBROUTINE OC_DomainLine_Finalise(OC_DomainLine,err)
+    !DLLEXPORT(OC_DomainLine_Finalise)
+
+    !Argument variables
+    TYPE(OC_DomainLineType), INTENT(OUT) :: OC_DomainLine !<The OC_DomainLineType object to finalise.
+    INTEGER(INTG), INTENT(OUT) :: err !<The error code.
+    !Local variables
+
+    ENTERS("OC_DomainLine_Finalise",err,error,*999)
+
+    !Don't destroy the domain line, just nullify it. It will be destroyed with the decomposition.
+    IF(ASSOCIATED(OC_DomainLine%domainLine)) NULLIFY(OC_DomainLine%domainLine)
+
+    EXITS("OC_DomainLine_Finalise")
+    RETURN
+999 ERRORSEXITS("OC_DomainLine_Finalise",err,error)
+    CALL OC_HandleError(err,error)
+    RETURN
+
+  END SUBROUTINE OC_DomainLine_Finalise
+
+  !
+  !================================================================================================================================
+  !
+
+  !>Initialises a OC_DomainLineType object.
+  SUBROUTINE OC_DomainLine_Initialise(OC_DomainLine,err)
+    !DLLEXPORT(OC_DomainLine_Initialise)
+
+    !Argument variables
+    TYPE(OC_DomainLineType), INTENT(OUT) :: OC_DomainLine !<The OC_DomainLineType object to initialise.
+    INTEGER(INTG), INTENT(OUT) :: err !<The error code.
+    !Local variables
+
+    ENTERS("OC_DomainLine_Initialise",err,error,*999)
+
+    NULLIFY(OC_DomainLine%domainLine)
+
+    EXITS("OC_DomainLine_Initialise")
+    RETURN
+999 ERRORSEXITS("OC_DomainLine_Initialise",err,error)
+    CALL OC_HandleError(err,error)
+    RETURN
+
+  END SUBROUTINE OC_DomainLine_Initialise
+
+  !
+  !================================================================================================================================
+  !
+
+  !>Finalises a OC_DomainLinesType object.
+  SUBROUTINE OC_DomainLines_Finalise(OC_DomainLines,err)
+    !DLLEXPORT(OC_DomainLines_Finalise)
+
+    !Argument variables
+    TYPE(OC_DomainLinesType), INTENT(OUT) :: OC_DomainLines !<The OC_DomainLinesType object to finalise.
+    INTEGER(INTG), INTENT(OUT) :: err !<The error code.
+    !Local variables
+
+    ENTERS("OC_DomainLines_Finalise",err,error,*999)
+
+    !Don't destroy the domain lines, just nullify it. It will be destroyed with the decomposition.
+    IF(ASSOCIATED(OC_DomainLines%domainLines)) NULLIFY(OC_DomainLines%domainLines)
+
+    EXITS("OC_DomainLines_Finalise")
+    RETURN
+999 ERRORSEXITS("OC_DomainLines_Finalise",err,error)
+    CALL OC_HandleError(err,error)
+    RETURN
+
+  END SUBROUTINE OC_DomainLines_Finalise
+
+  !
+  !================================================================================================================================
+  !
+
+  !>Initialises a OC_DomainLinesType object.
+  SUBROUTINE OC_DomainLines_Initialise(OC_DomainLines,err)
+    !DLLEXPORT(OC_DomainLines_Initialise)
+
+    !Argument variables
+    TYPE(OC_DomainLinesType), INTENT(OUT) :: OC_DomainLines !<The OC_DomainLinesType object to initialise.
+    INTEGER(INTG), INTENT(OUT) :: err !<The error code.
+    !Local variables
+
+    ENTERS("OC_DomainLines_Initialise",err,error,*999)
+
+    NULLIFY(OC_DomainLines%domainLines)
+
+    EXITS("OC_DomainLines_Initialise")
+    RETURN
+999 ERRORSEXITS("OC_DomainLines_Initialise",err,error)
+    CALL OC_HandleError(err,error)
+    RETURN
+
+  END SUBROUTINE OC_DomainLines_Initialise
+
+  !
+  !================================================================================================================================
+  !
+
+  !>Finalises a OC_DomainNodeType object.
+  SUBROUTINE OC_DomainNode_Finalise(OC_DomainNode,err)
+    !DLLEXPORT(OC_DomainNode_Finalise)
+
+    !Argument variables
+    TYPE(OC_DomainNodeType), INTENT(OUT) :: OC_DomainNode !<The OC_DomainNodeType object to finalise.
+    INTEGER(INTG), INTENT(OUT) :: err !<The error code.
+    !Local variables
+
+    ENTERS("OC_DomainNode_Finalise",err,error,*999)
+
+    !Don't destroy the domain node, just nullify it. It will be destroyed with the decomposition.
+    IF(ASSOCIATED(OC_DomainNode%domainNode)) NULLIFY(OC_DomainNode%domainNode)
+
+    EXITS("OC_DomainNode_Finalise")
+    RETURN
+999 ERRORSEXITS("OC_DomainNode_Finalise",err,error)
+    CALL OC_HandleError(err,error)
+    RETURN
+
+  END SUBROUTINE OC_DomainNode_Finalise
+
+  !
+  !================================================================================================================================
+  !
+
+  !>Initialises a OC_DomainNodeType object.
+  SUBROUTINE OC_DomainNode_Initialise(OC_DomainNode,err)
+    !DLLEXPORT(OC_DomainNode_Initialise)
+
+    !Argument variables
+    TYPE(OC_DomainNodeType), INTENT(OUT) :: OC_DomainNode !<The OC_DomainNodeType object to initialise.
+    INTEGER(INTG), INTENT(OUT) :: err !<The error code.
+    !Local variables
+
+    ENTERS("OC_DomainNode_Initialise",err,error,*999)
+
+    NULLIFY(OC_DomainNode%domainNode)
+
+    EXITS("OC_DomainNode_Initialise")
+    RETURN
+999 ERRORSEXITS("OC_DomainNode_Initialise",err,error)
+    CALL OC_HandleError(err,error)
+    RETURN
+
+  END SUBROUTINE OC_DomainNode_Initialise
+
+  !
+  !================================================================================================================================
+  !
+
+  !>Finalises a OC_DomainNodesType object.
+  SUBROUTINE OC_DomainNodes_Finalise(OC_DomainNodes,err)
+    !DLLEXPORT(OC_DomainNodes_Finalise)
+
+    !Argument variables
+    TYPE(OC_DomainNodesType), INTENT(OUT) :: OC_DomainNodes !<The OC_DomainNodesType object to finalise.
+    INTEGER(INTG), INTENT(OUT) :: err !<The error code.
+    !Local variables
+
+    ENTERS("OC_DomainNodes_Finalise",err,error,*999)
+
+    !Don't destroy the domain nodes, just nullify it. It will be destroyed with the decomposition.
+    IF(ASSOCIATED(OC_DomainNodes%domainNodes)) NULLIFY(OC_DomainNodes%domainNodes)
+
+    EXITS("OC_DomainNodes_Finalise")
+    RETURN
+999 ERRORSEXITS("OC_DomainNodes_Finalise",err,error)
+    CALL OC_HandleError(err,error)
+    RETURN
+
+  END SUBROUTINE OC_DomainNodes_Finalise
+
+  !
+  !================================================================================================================================
+  !
+
+  !>Initialises a OC_DomainNodesType object.
+  SUBROUTINE OC_DomainNodes_Initialise(OC_DomainNodes,err)
+    !DLLEXPORT(OC_DomainNodes_Initialise)
+
+    !Argument variables
+    TYPE(OC_DomainNodesType), INTENT(OUT) :: OC_DomainNodes !<The OC_DomainNodesType object to initialise.
+    INTEGER(INTG), INTENT(OUT) :: err !<The error code.
+    !Local variables
+
+    ENTERS("OC_DomainNodes_Initialise",err,error,*999)
+
+    NULLIFY(OC_DomainNodes%domainNodes)
+
+    EXITS("OC_DomainNodes_Initialise")
+    RETURN
+999 ERRORSEXITS("OC_DomainNodes_Initialise",err,error)
+    CALL OC_HandleError(err,error)
+    RETURN
+
+  END SUBROUTINE OC_DomainNodes_Initialise
+
+  !
+  !================================================================================================================================
+  !
+
+  !>Finalises a OC_DomainTopologyType object.
+  SUBROUTINE OC_DomainTopology_Finalise(OC_DomainTopology,err)
+    !DLLEXPORT(OC_DomainTopology_Finalise)
+
+    !Argument variables
+    TYPE(OC_DomainTopologyType), INTENT(OUT) :: OC_DomainTopology !<The OC_DomainTopologyType object to finalise.
+    INTEGER(INTG), INTENT(OUT) :: err !<The error code.
+    !Local variables
+
+    ENTERS("OC_DomainTopology_Finalise",err,error,*999)
+
+    !Don't destroy the toplogy, just nullify it. It will be destroyed with the decomposition.
+    IF(ASSOCIATED(OC_DomainTopology%domainTopology)) NULLIFY(OC_DomainTopology%domainTopology)
+
+    EXITS("OC_DomainToplogy_Finalise")
+    RETURN
+999 ERRORSEXITS("OC_DomainTopology_Finalise",err,error)
+    CALL OC_HandleError(err,error)
+    RETURN
+
+  END SUBROUTINE OC_DomainTopology_Finalise
+
+  !
+  !================================================================================================================================
+  !
+
+  !>Initialises a OC_DomainTopologyType object.
+  SUBROUTINE OC_DomainTopology_Initialise(OC_DomainTopology,err)
+    !DLLEXPORT(OC_DomainTopology_Initialise)
+
+    !Argument variables
+    TYPE(OC_DomainTopologyType), INTENT(OUT) :: OC_DomainTopology !<The OC_DomainTopologyType object to initialise.
+    INTEGER(INTG), INTENT(OUT) :: err !<The error code.
+    !Local variables
+
+    ENTERS("OC_DomainTopology_Initialise",err,error,*999)
+
+    NULLIFY(OC_DomainTopology%domainTopology)
+
+    EXITS("OC_DomainTopology_Initialise")
+    RETURN
+999 ERRORSEXITS("OC_DomainTopology_Initialise",err,error)
+    CALL OC_HandleError(err,error)
+    RETURN
+
+  END SUBROUTINE OC_DomainTopology_Initialise
 
   !
   !================================================================================================================================
@@ -44422,6 +46009,98 @@ CONTAINS
   !================================================================================================================================
   !
 
+  !>Adds the parameters from the parameter set of a component of a field variable to the paramters of a parameter set of
+  !>a component of another field variable, where both fields are identified by user numbers.
+  SUBROUTINE OC_Field_ParametersToFieldParametersComponentAddNumber(contextUserNumber,fromRegionUserNumber, &
+    & fromFieldUserNumber,fromVariableType,fromParameterSetType,fromComponentNumber,toRegionUserNumber, &
+    & toFieldUserNumber,toVariableType,toParameterSetType,toComponentNumber,err)
+    !DLLEXPORT(OC_Field_ParametersToFieldParametersComponentAddNumber)
+
+    !Argument variables
+    INTEGER(INTG), INTENT(IN) :: contextUserNumber !<The user number of the context which has the regions.
+    INTEGER(INTG), INTENT(IN) :: fromRegionUserNumber !<The user number of the region containing the field to add from
+    INTEGER(INTG), INTENT(IN) :: fromFieldUserNumber !<The field to add from
+    INTEGER(INTG), INTENT(IN) :: fromVariableType !<The field variable type to add from
+    INTEGER(INTG), INTENT(IN) :: fromParameterSetType !<The field parameter set type to add from
+    INTEGER(INTG), INTENT(IN) :: fromComponentNumber !<The field variable component number to add from
+    INTEGER(INTG), INTENT(IN) :: toRegionUserNumber !<The user number of the region containing the field to add to
+    INTEGER(INTG), INTENT(IN) :: toFieldUserNumber !<The field to add to
+    INTEGER(INTG), INTENT(IN) :: toVariableType !<The field variable type to add to
+    INTEGER(INTG), INTENT(IN) :: toParameterSetType !<The parameter set type to add to
+    INTEGER(INTG), INTENT(IN) :: toComponentNumber !<The field variable component to add to
+    INTEGER(INTG), INTENT(OUT) :: err !<The error code
+    !Local variables
+    TYPE(ContextType), POINTER :: context
+    TYPE(FieldType), POINTER :: fromField,toField
+    TYPE(RegionType), POINTER :: fromRegion,toRegion
+    TYPE(RegionsType), POINTER :: regions
+
+    ENTERS("OC_Field_ParametersToFieldParametersComponentAddNumber",err,error,*999)
+
+    NULLIFY(context)
+    NULLIFY(regions)
+    NULLIFY(fromRegion)
+    NULLIFY(toRegion)
+    NULLIFY(fromField)
+    NULLIFY(toField)
+    CALL Context_Get(contexts,contextUserNumber,context,err,error,*999)
+    CALL Context_RegionsGet(context,regions,err,error,*999)
+    CALL Region_Get(regions,fromRegionUserNumber,fromRegion,err,error,*999)
+    CALL Region_FieldGet(fromRegion,fromFieldUserNumber,fromField,err,error,*999)
+    CALL Region_Get(regions,toRegionUserNumber,toRegion,err,error,*999)
+    CALL Region_FieldGet(toRegion,toFieldUserNumber,toField,err,error,*999)
+    CALL Field_ParametersToFieldParametersAdd(fromField,fromVariableType,fromParameterSetType, &
+      & fromComponentNumber,toField,toVariableType,toParameterSetType,toComponentNumber,err,error,*999)
+
+    EXITS("OC_Field_ParametersToFieldParametersComponentAddNumber")
+    RETURN
+999 ERRORS("OC_Field_ParametersToFieldParametersComponentAddNumber",err,error)
+    EXITS("OC_Field_ParametersToFieldParametersComponentAddNumber")
+    CALL OC_HandleError(err,error)
+    RETURN
+
+  END SUBROUTINE OC_Field_ParametersToFieldParametersComponentAddNumber
+
+  !
+  !================================================================================================================================
+  !
+
+  !>Adds the parameters from the parameter set of a component of a field variable to the paramters of a parameter set of
+  !>a component of another field variable, where both fields are objects.
+  SUBROUTINE OC_Field_ParametersToFieldParametersComponentAddObj(fromField,fromVariableType,fromParameterSetType, &
+    & fromComponentNumber,toField,toVariableType,toParameterSetType,toComponentNumber,err)
+    !DLLEXPORT(OC_Field_ParametersToFieldParametersComponentAddObj)
+
+    !Argument variables
+    TYPE(OC_FieldType), INTENT(IN) :: fromField !<The field to add from
+    INTEGER(INTG), INTENT(IN) :: fromVariableType !<The field variable type to add from
+    INTEGER(INTG), INTENT(IN) :: fromParameterSetType !<The field parameter set type to add from
+    INTEGER(INTG), INTENT(IN) :: fromComponentNumber !<The field variable component number to add from
+    TYPE(OC_FieldType), INTENT(IN) :: toField !<The field to add to
+    INTEGER(INTG), INTENT(IN) :: toVariableType !<The field variable type to add to
+    INTEGER(INTG), INTENT(IN) :: toParameterSetType !<The parameter set type to add to
+    INTEGER(INTG), INTENT(IN) :: toComponentNumber !<The field variable component to add to
+    INTEGER(INTG), INTENT(OUT) :: err !<The error code
+    !Local variables
+
+    ENTERS("OC_Field_ParametersToFieldParametersComponentAddObj",err,error,*999)
+
+    CALL Field_ParametersToFieldParametersAdd(fromField%field,fromVariableType,fromParameterSetType, &
+      & fromComponentNumber,toField%field,toVariableType,toParameterSetType,toComponentNumber,err,error,*999)
+
+    EXITS("OC_Field_ParametersToFieldParametersComponentAddObj")
+    RETURN
+999 ERRORS("OC_Field_ParametersToFieldParametersComponentAddObj",err,error)
+    EXITS("OC_Field_ParametersToFieldParametersComponentAddObj")
+    CALL OC_HandleError(err,error)
+    RETURN
+    
+  END SUBROUTINE OC_Field_ParametersToFieldParametersComponentAddObj
+
+  !
+  !================================================================================================================================
+  !
+
   !>Copy the parameters from the parameter set of a component of a field variable to the paramters of a parameter set of
   !>a component of another field variable, where both fields are identified by user numbers.
   SUBROUTINE OC_Field_ParametersToFieldParametersComponentCopyNumber(contextUserNumber,fromRegionUserNumber, &
@@ -52411,6 +54090,228 @@ CONTAINS
   !================================================================================================================================
   !
 
+  !>Returns the adjacent element user number of an element in a decomposition identified by a user number
+  SUBROUTINE OC_Decomposition_ElementAdjacentElementGetNumber(contextUserNumber,regionUserNumber,meshUserNumber, &
+    & decompositionUserNumber,elementUserNumber,adjacentElementXi,adjacentElementIdx,adjacentUserElement,err)
+    !DLLEXPORT(OC_Decomposition_ElementAdjacentElementGetNumber)
+    
+    !Argument variables
+    INTEGER(INTG), INTENT(IN) :: contextUserNumber !<The user number of the context with the region.
+    INTEGER(INTG), INTENT(IN) :: regionUserNumber !<The user number of the region containing the decomposition from which to get the adjacent element from.
+    INTEGER(INTG), INTENT(IN) :: meshUserNumber !<The user number of the mesh from which to get the adjacent element from.
+    INTEGER(INTG), INTENT(IN) :: decompositionUserNumber !<The user number of decomposition from which to get adjacent element number from.
+    INTEGER(INTG), INTENT(IN) :: elementUserNumber !<The user element number to get the adjacent element number for. 
+    INTEGER(INTG), INTENT(IN) :: adjacentElementXi !<The xi coordinate direction to get the adjacent element for. Note that -xiCoordinateDirection gives the adjacent element before the element in the xiCoordinateDirection'th direction and +xiCoordinateDirection gives the adjacent element after the element in the xiCoordinateDirection'th direction. The xiCoordinateDirection=0 index will give the information on the current element.
+    INTEGER(INTG), INTENT(IN) :: adjacentElementIdx !<The adjacent element index to get the adjacent element user number for.
+    INTEGER(INTG), INTENT(OUT) :: adjacentUserElement !<On return, the adjacent element user number in the specified xi coordinate direction. Return 0 if the specified element has no adjacent elements in the specified xi coordinate direction.
+    INTEGER(INTG), INTENT(OUT) :: err !<The error code.
+    !Local variables
+    INTEGER(INTG) :: localElementNumber,adjacentLocalElement
+    TYPE(ContextType), POINTER :: context
+    TYPE(DecompositionType), POINTER :: decomposition
+    TYPE(DecompositionElementsType), POINTER :: decompositionElements
+    TYPE(DecompositionTopologyType), POINTER :: decompositionTopology
+    TYPE(MeshType), POINTER :: mesh
+    TYPE(RegionType), POINTER :: region
+    TYPE(RegionsType), POINTER :: regions
+
+    ENTERS("OC_Decomposition_ElementAdjacentElementGetNumber",err,error,*999)
+
+    NULLIFY(context)
+    NULLIFY(regions)
+    NULLIFY(region)
+    NULLIFY(mesh)
+    NULLIFY(decomposition)
+    NULLIFY(decompositionTopology)
+    NULLIFY(decompositionElements)
+    CALL Context_Get(contexts,contextUserNumber,context,err,error,*999)    
+    CALL Context_RegionsGet(context,regions,err,error,*999)
+    CALL Region_Get(regions,regionUserNumber,region,err,error,*999)
+    CALL Region_MeshGet(region,meshUserNumber,mesh,err,error,*999)
+    CALL Mesh_DecompositionGet(mesh,decompositionUserNumber,decomposition,err,error,*999)
+    CALL Decomposition_DecompositionTopologyGet(decomposition,decompositionTopology,err,error,*999)
+    CALL DecompositionTopology_DecompositionElementsGet(decompositionTopology,decompositionElements,err,error,*999)
+    CALL DecompositionElements_ElementDoesExist(decompositionElements,elementUserNumber,localElementNumber,err,error,*999)
+    CALL DecompositionElements_ElementAdjacentNumberGet(decompositionElements,adjacentElementIdx,adjacentElementXi, &
+      & localElementNumber,adjacentLocalElement,err,error,*999)
+    IF(adjacentLocalElement==0) THEN
+      adjacentUserElement=0
+    ELSE
+      CALL DecompositionElements_ElementUserNumberGet(decompositionElements,adjacentLocalElement,adjacentUserElement, &
+        & err,error,*999)
+    ENDIF
+
+    EXITS("OC_Decomposition_ElementAdjacentElementGetNumber")
+    RETURN
+999 ERRORSEXITS("OC_Decomposition_ElementAdjacentElementGetNumber",err,error)
+    CALL OC_HandleError(err,error)
+    RETURN
+
+  END SUBROUTINE OC_Decomposition_ElementAdjacentElementGetNumber
+
+  !
+  !================================================================================================================================
+  !
+
+  !>Returns the adjacent element user number of an element in a decomposition identified by an object.
+  SUBROUTINE OC_Decomposition_ElementAdjacentElementGetObj(decomposition,elementUserNumber, &
+    & adjacentElementXi,adjacentElementIdx,adjacentUserElement,err)
+    !DLLEXPORT(OC_Decomposition_ElementAdjacentElementGetObj)
+    
+    !Argument variables
+    TYPE(OC_DecompositionType), INTENT(IN) :: decomposition !<The decomposition to get the adjacent element number for.
+    INTEGER(INTG), INTENT(IN) :: elementUserNumber !<The user element number to get the adjacent element number for. 
+    INTEGER(INTG), INTENT(IN) :: adjacentElementXi !<The xi coordinate direction to get the adjacent element for. Note that -xiCoordinateDirection gives the adjacent element before the element in the xiCoordinateDirection'th direction and +xiCoordinateDirection gives the adjacent element after the element in the xiCoordinateDirection'th direction. The xiCoordinateDirection=0 index will give the information on the current element.
+    INTEGER(INTG), INTENT(IN) :: adjacentElementIdx !<The adjacent element index to get the adjacent element user number for.
+    INTEGER(INTG), INTENT(OUT) :: adjacentUserElement !<On return, the adjacent element user number in the specified xi coordinate direction. Return 0 if the specified element has no adjacent elements in the specified xi coordinate direction.
+    INTEGER(INTG), INTENT(OUT) :: err !<The error code.
+    !Local variables
+    INTEGER(INTG) :: localElementNumber,adjacentLocalElement
+    TYPE(DecompositionElementsType), POINTER :: decompositionElements
+    TYPE(DecompositionTopologyType), POINTER :: decompositionTopology
+
+    ENTERS("OC_Decomposition_ElementAdjacentElementGetObj",err,error,*999)
+
+    NULLIFY(decompositionTopology)
+    NULLIFY(decompositionElements)
+    CALL Decomposition_DecompositionTopologyGet(decomposition%decomposition,decompositionTopology,err,error,*999)
+    CALL DecompositionTopology_DecompositionElementsGet(decompositionTopology,decompositionElements,err,error,*999)
+    CALL DecompositionElements_ElementDoesExist(decompositionElements,elementUserNumber,localElementNumber,err,error,*999)
+    CALL DecompositionElements_ElementAdjacentNumberGet(decompositionElements,adjacentElementIdx,adjacentElementXi, &
+      & localElementNumber,adjacentLocalElement,err,error,*999)
+    IF(adjacentLocalElement==0) THEN
+      adjacentUserElement=0
+    ELSE
+      CALL DecompositionElements_ElementUserNumberGet(decompositionElements,adjacentLocalElement,adjacentUserElement, &
+        & err,error,*999)
+    ENDIF
+
+    EXITS("OC_Decomposition_ElementAdjacentElementGetObj")
+    RETURN
+999 ERRORS("OC_Decomposition_ElementAdjacentElementGetObj",err,error)
+    EXITS("OC_Decomposition_ElementAdjacentElementGetObj")
+    CALL OC_HandleError(err,error)
+    RETURN
+
+  END SUBROUTINE OC_Decomposition_ElementAdjacentElementGetObj
+
+  !
+  !================================================================================================================================
+  !
+
+  !>Returns the basis user number of an element in a decomposition identified by a user number
+  SUBROUTINE OC_Decomposition_ElementBasisGetNumber(contextUserNumber,regionUserNumber,meshUserNumber, &
+    & decompositionUserNumber,meshComponentNumber,elementUserNumber,basisUserNumber,err)
+    !DLLEXPORT(OC_Decomposition_ElementBasisGetNumber)
+    
+    !Argument variables
+    INTEGER(INTG), INTENT(IN) :: contextUserNumber !<The user number of the context with the region.
+    INTEGER(INTG), INTENT(IN) :: regionUserNumber !<The user number of the region containing the decomposition from which to get the element basis from.
+    INTEGER(INTG), INTENT(IN) :: meshUserNumber !<The user number of the mesh from which to get the element basis from.
+    INTEGER(INTG), INTENT(IN) :: decompositionUserNumber !<The user number of decomposition from which to get element basis number from.
+    INTEGER(INTG), INTENT(IN) :: meshComponentNumber !<The mesh component number to get the element basis for.
+    INTEGER(INTG), INTENT(IN) :: elementUserNumber !<The user element number to get the adjacent element number for. 
+    INTEGER(INTG), INTENT(OUT) :: basisUserNumber !<On return, the user number of the basis of the element in the decomposition.
+    INTEGER(INTG), INTENT(OUT) :: err !<The error code.
+    !Local variables
+    INTEGER(INTG) :: localElementNumber
+    TYPE(BasisType), POINTER :: basis
+    TYPE(ContextType), POINTER :: context
+    TYPE(DecompositionType), POINTER :: decomposition
+    TYPE(DecompositionElementsType), POINTER :: decompositionElements
+    TYPE(DecompositionTopologyType), POINTER :: decompositionTopology
+    TYPE(DomainType), POINTER :: domain
+    TYPE(DomainElementsType), POINTER :: domainElements
+    TYPE(DomainTopologyType), POINTER :: domainTopology
+    TYPE(MeshType), POINTER :: mesh
+    TYPE(RegionType), POINTER :: region
+    TYPE(RegionsType), POINTER :: regions
+
+    ENTERS("OC_Decomposition_ElementBasisGetNumber",err,error,*999)
+
+    NULLIFY(context)
+    NULLIFY(regions)
+    NULLIFY(region)
+    NULLIFY(mesh)
+    NULLIFY(decomposition)
+    NULLIFY(decompositionTopology)
+    NULLIFY(decompositionElements)
+    NULLIFY(domain)
+    NULLIFY(domainTopology)
+    NULLIFY(domainElements)
+    NULLIFY(basis)
+    CALL Context_Get(contexts,contextUserNumber,context,err,error,*999)    
+    CALL Context_RegionsGet(context,regions,err,error,*999)
+    CALL Region_Get(regions,regionUserNumber,region,err,error,*999)
+    CALL Region_MeshGet(region,meshUserNumber,mesh,err,error,*999)
+    CALL Mesh_DecompositionGet(mesh,decompositionUserNumber,decomposition,err,error,*999)
+    CALL Decomposition_DecompositionTopologyGet(decomposition,decompositionTopology,err,error,*999)
+    CALL DecompositionTopology_DecompositionElementsGet(decompositionTopology,decompositionElements,err,error,*999)
+    CALL DecompositionElements_ElementDoesExist(decompositionElements,elementUserNumber,localElementNumber,err,error,*999)
+    CALL Decomposition_DomainGet(decomposition,meshComponentNumber,domain,err,error,*999)
+    CALL Domain_DomainTopologyGet(domain,domainTopology,err,error,*999)
+    CALL DomainTopology_DomainElementsGet(domainTopology,domainElements,err,error,*999)
+    CALL DomainElements_ElementBasisGet(domainElements,localElementNumber,basis,err,error,*999)
+    CALL Basis_UserNumberGet(basis,basisUserNumber,err,error,*999)
+
+    EXITS("OC_Decomposition_ElementBasisGetNumber")
+    RETURN
+999 ERRORSEXITS("OC_Decomposition_ElementBasisGetNumber",err,error)
+    CALL OC_HandleError(err,error)
+    RETURN
+
+  END SUBROUTINE OC_Decomposition_ElementBasisGetNumber
+
+  !
+  !================================================================================================================================
+  !
+
+  !>Returns the basis user number of an element in a decomposition identified by an object.
+  SUBROUTINE OC_Decomposition_ElementBasisGetObj(decomposition,meshComponentNumber,elementUserNumber,basis,err)
+    !DLLEXPORT(OC_Decomposition_ElementBasisGetObj)
+    
+    !Argument variables
+    TYPE(OC_DecompositionType), INTENT(IN) :: decomposition !<The decomposition to get the  element basis for.
+    INTEGER(INTG), INTENT(IN) :: meshComponentNumber !<The mesh component number to get the element basis for.
+    INTEGER(INTG), INTENT(IN) :: elementUserNumber !<The user element number to get the element basis for.
+    TYPE(OC_BasisType), INTENT(INOUT) :: basis !<On return, the basis of the element in the decomposition.
+    INTEGER(INTG), INTENT(OUT) :: err !<The error code.
+    !Local variables
+    INTEGER(INTG) :: localElementNumber
+    TYPE(DecompositionElementsType), POINTER :: decompositionElements
+    TYPE(DecompositionTopologyType), POINTER :: decompositionTopology
+    TYPE(DomainType), POINTER :: domain
+    TYPE(DomainElementsType), POINTER :: domainElements
+    TYPE(DomainTopologyType), POINTER :: domainTopology
+
+    ENTERS("OC_Decomposition_ElementBasisGetObj",err,error,*999)
+
+    NULLIFY(decompositionTopology)
+    NULLIFY(decompositionElements)
+    NULLIFY(domain)
+    NULLIFY(domainTopology)
+    NULLIFY(domainElements)
+    CALL Decomposition_DecompositionTopologyGet(decomposition%decomposition,decompositionTopology,err,error,*999)
+    CALL DecompositionTopology_DecompositionElementsGet(decompositionTopology,decompositionElements,err,error,*999)
+    CALL DecompositionElements_ElementDoesExist(decompositionElements,elementUserNumber,localElementNumber,err,error,*999)
+    CALL Decomposition_DomainGet(decomposition%decomposition,meshComponentNumber,domain,err,error,*999)
+    CALL Domain_DomainTopologyGet(domain,domainTopology,err,error,*999)
+    CALL DomainTopology_DomainElementsGet(domainTopology,domainElements,err,error,*999)
+    CALL DomainElements_ElementBasisGet(domainElements,localElementNumber,basis%basis,err,error,*999)
+ 
+    EXITS("OC_Decomposition_ElementBasisGetObj")
+    RETURN
+999 ERRORS("OC_Decomposition_ElementBasisGetObj",err,error)
+    EXITS("OC_Decomposition_ElementBasisGetObj")
+    CALL OC_HandleError(err,error)
+    RETURN
+
+  END SUBROUTINE OC_Decomposition_ElementBasisGetObj
+
+  !
+  !================================================================================================================================
+  !
+
   !>Gets the local data point number for data points projected on an element
   SUBROUTINE OC_Decomposition_ElementDataPointLocalNumberGetObj(decomposition,elementUserNumber,dataPointIndex, &
     & dataPointLocalNumber,err)
@@ -52468,35 +54369,6 @@ CONTAINS
     RETURN
 
   END SUBROUTINE OC_Decomposition_ElementDataPointUserNumberGetObj
-
-  !
-  !================================================================================================================================
-  !
-
-  !>Gets the number of data points projected on an element
-  SUBROUTINE OC_Decomposition_NumberOfElementDataPointsGetObj(decomposition,elementUserNumber,numberOfDataPoints,err)
-    !DLLEXPORT(OC_Decomposition_NumberOfElementDataPointsGetObj)
-
-    !Argument variables
-    TYPE(OC_DecompositionType), INTENT(IN) :: decomposition !<The decomposition to finish creating.
-    INTEGER(INTG), INTENT(IN) :: elementUserNumber !<The element number to get the data point for
-    INTEGER(INTG), INTENT(OUT) :: numberOfDataPoints !<The data point local number to return
-    INTEGER(INTG), INTENT(OUT) :: err !<The error code.
-    !Local variables
-
-    ENTERS("OC_Decomposition_NumberOfElementDataPointsGetObj",err,error,*999)
-
-    CALL Decomposition_NumberOfElementDataPointsGet(decomposition%decomposition,elementUserNumber, &
-      & numberOfDataPoints,err,error,*999)
-
-    EXITS("OC_Decomposition_NumberOfElementDataPointsGetObj")
-    RETURN
-999 ERRORS("OC_Decomposition_NumberOfElementDataPointsGetObj",err,error)
-    EXITS("OC_Decomposition_NumberOfElementDataPointsGetObj")
-    CALL OC_HandleError(err,error)
-    RETURN
-
-  END SUBROUTINE OC_Decomposition_NumberOfElementDataPointsGetObj
 
   !
   !================================================================================================================================
@@ -52608,7 +54480,7 @@ CONTAINS
     CALL Region_Get(regions,regionUserNumber,region,err,error,*999)
     CALL Region_MeshGet(region,meshUserNumber,mesh,err,error,*999)
     CALL Mesh_DecompositionGet(mesh,decompositionUserNumber,decomposition,err,error,*999)
-    CALL DECOMPOSITION_DESTROY(decomposition,err,error,*999)
+    CALL Decomposition_Destroy(decomposition,err,error,*999)
 
     EXITS("OC_Decomposition_DestroyNumber")
     RETURN
@@ -52633,7 +54505,7 @@ CONTAINS
 
     ENTERS("OC_Decomposition_DestroyObj",err,error,*999)
 
-    CALL DECOMPOSITION_DESTROY(decomposition%decomposition,err,error,*999)
+    CALL Decomposition_Destroy(decomposition%decomposition,err,error,*999)
 
     EXITS("OC_Decomposition_DestroyObj")
     RETURN
@@ -52642,6 +54514,79 @@ CONTAINS
     RETURN
 
   END SUBROUTINE OC_Decomposition_DestroyObj
+
+  !
+  !================================================================================================================================
+  !
+
+  !>Returns a decomposition domain for a decomposition identified by a user number.
+  SUBROUTINE OC_Decomposition_DomainGetNumber(contextUserNumber,regionUserNumber,meshUserNumber,decompositionUserNumber, &
+    & meshComponentNumber,domain,err)
+    !DLLEXPORT(OC_Decomposition_DomainGetNumber)
+
+    !Argument variables
+    INTEGER(INTG), INTENT(IN) :: contextUserNumber !<The user number of the context with the region.
+    INTEGER(INTG), INTENT(IN) :: regionUserNumber !<The user number of the region containing the mesh to get the decomposition domain for.
+    INTEGER(INTG), INTENT(IN) :: meshUserNumber !<The user number of the mesh to get the decomposition domain for.
+    INTEGER(INTG), INTENT(IN) :: decompositionUserNumber !<The user number of the decomposition to get the domain for.
+    INTEGER(INTG), INTENT(IN) :: meshComponentNumber !<The mesh component number of the domain to get
+    TYPE(OC_DomainType), INTENT(INOUT) :: domain !<On return, the decomposition domain object.
+    INTEGER(INTG), INTENT(OUT) :: err !<The error code.
+    !Local variables
+    TYPE(ContextType), POINTER :: context
+    TYPE(DecompositionType), POINTER :: decomposition
+    TYPE(MeshType), POINTER :: mesh
+    TYPE(RegionType), POINTER :: region
+    TYPE(RegionsType), POINTER :: regions
+
+    ENTERS("OC_Decomposition_DomainGetNumber",err,error,*999)
+
+    NULLIFY(context)
+    NULLIFY(regions)
+    NULLIFY(region)
+    NULLIFY(mesh)
+    NULLIFY(decomposition)
+    CALL Context_Get(contexts,contextUserNumber,context,err,error,*999)    
+    CALL Context_RegionsGet(context,regions,err,error,*999)
+    CALL Region_Get(regions,regionUserNumber,region,err,error,*999)
+    CALL Region_MeshGet(region,meshUserNumber,mesh,err,error,*999)
+    CALL Mesh_DecompositionGet(mesh,decompositionUserNumber,decomposition,err,error,*999)
+    CALL Decomposition_DomainGet(decomposition,meshComponentNumber,domain%domain,err,error,*999)
+
+    EXITS("OC_Decomposition_DomainGetNumber")
+    RETURN
+999 ERRORSEXITS("OC_Decomposition_DomainGetNumber",err,error)
+    CALL OC_HandleError(err,error)
+    RETURN
+
+  END SUBROUTINE OC_Decomposition_DomainGetNumber
+
+  !
+  !================================================================================================================================
+  !
+
+  !>Returns a decomposition domain for a mesh component number for a decomposition identified by an object.
+  SUBROUTINE OC_Decomposition_DomainGetObj(decomposition,meshComponentNumber,domain,err)
+    !DLLEXPORT(OC_Decomposition_DestroyObj)
+
+    !Argument variables
+    TYPE(OC_DecompositionType), INTENT(IN) :: decomposition !<The decomposition to get the domain for.
+    INTEGER(INTG), INTENT(IN) :: meshComponentNumber !<The mesh component to get the domain for.
+    TYPE(OC_DomainType), INTENT(INOUT) :: domain !<On return the specfied domain for the decomposition
+    INTEGER(INTG), INTENT(OUT) :: err !<The error code.
+    !Local variables
+
+    ENTERS("OC_Decomposition_DomainGetObj",err,error,*999)
+
+    CALL Decomposition_DomainGet(decomposition%decomposition,meshComponentNumber,domain%domain,err,error,*999)
+
+    EXITS("OC_Decomposition_DomainGetObj")
+    RETURN
+999 ERRORSEXITS("OC_Decomposition_DomainGetObj",err,error)
+    CALL OC_HandleError(err,error)
+    RETURN
+
+  END SUBROUTINE OC_Decomposition_DomainGetObj
 
   !
   !================================================================================================================================
@@ -52864,6 +54809,539 @@ CONTAINS
   !================================================================================================================================
   !
 
+  !>Returns the node user number for a given local node index in an element in a decomposition component identified by a user number.
+  SUBROUTINE OC_Decomposition_ElementNodeGetNumber(contextUserNumber,regionUserNumber,meshUserNumber,decompositionUserNumber, &
+    & meshComponentNumber,elementUserNumber,localNodeIndex,nodeUserNumber,err)
+    !DLLEXPORT(OC_Decomposition_ElementNodeGetNumber)
+    
+    !Argument variables
+    INTEGER(INTG), INTENT(IN) :: contextUserNumber !<The user number of the context with the region.
+    INTEGER(INTG), INTENT(IN) :: regionUserNumber !<The user number of the region containing the mesh to get the element node for.
+    INTEGER(INTG), INTENT(IN) :: meshUserNumber !<The user number of the mesh to get the element node for.
+    INTEGER(INTG), INTENT(IN) :: decompositionUserNumber !<The user number of the decomposition to get the element node for.
+    INTEGER(INTG), INTENT(IN) :: meshComponentNumber !<The mesh component number of the element to get the node for. 
+    INTEGER(INTG), INTENT(IN) :: elementUserNumber !<The user number of the element to get the node for.
+    INTEGER(INTG), INTENT(IN) :: localNodeIndex !<The local element node index to the node for
+    INTEGER(INTG), INTENT(OUT) :: nodeUserNumber !<On return, the user number of the specified local node in the element.
+    INTEGER(INTG), INTENT(OUT) :: err !<The error code.
+    !Local variables
+    INTEGER(INTG) :: elementLocalNumber,nodeLocalNumber
+    TYPE(ContextType), POINTER :: context
+    TYPE(DecompositionType), POINTER :: decomposition
+    TYPE(DecompositionElementsType), POINTER :: decompositionElements
+    TYPE(DecompositionTopologyType), POINTER :: decompositionTopology
+    TYPE(DomainType), POINTER :: domain
+    TYPE(DomainElementsType), POINTER :: domainElements
+    TYPE(DomainNodesType), POINTER :: domainNodes
+    TYPE(DomainTopologyType), POINTER :: domainTopology
+    TYPE(MeshType), POINTER :: mesh
+    TYPE(RegionType), POINTER :: region
+    TYPE(RegionsType), POINTER :: regions
+
+    ENTERS("OC_Decomposition_ElementNodeGetNumber",err,error,*999)
+
+    NULLIFY(context)
+    NULLIFY(regions)
+    NULLIFY(region)
+    NULLIFY(mesh)
+    NULLIFY(decomposition)
+    NULLIFY(decompositionTopology)
+    NULLIFY(decompositionElements)
+    NULLIFY(domain)
+    NULLIFY(domainTopology)
+    NULLIFY(domainElements)
+    NULLIFY(domainNodes)
+    CALL Context_Get(contexts,contextUserNumber,context,err,error,*999)    
+    CALL Context_RegionsGet(context,regions,err,error,*999)
+    CALL Region_Get(regions,regionUserNumber,region,err,error,*999)
+    CALL Region_MeshGet(region,meshUserNumber,mesh,err,error,*999)
+    CALL Mesh_DecompositionGet(mesh,decompositionUserNumber,decomposition,err,error,*999)
+    CALL Decomposition_DecompositionTopologyGet(decomposition,decompositionTopology,err,error,*999)
+    CALL DecompositionTopology_DecompositionElementsGet(decompositionTopology,decompositionElements,err,error,*999)
+    CALL DecompositionElements_ElementDoesExist(decompositionElements,elementUserNumber,elementLocalNumber,err,error,*999)
+    CALL Decomposition_DomainGet(decomposition,meshComponentNumber,domain,err,error,*999)
+    CALL Domain_DomainTopologyGet(domain,domainTopology,err,error,*999)
+    CALL DomainTopology_DomainElementsGet(domainTopology,domainElements,err,error,*999)
+    CALL DomainTopology_DomainNodesGet(domainTopology,domainNodes,err,error,*999)
+    CALL DomainElements_ElementNodeGet(domainElements,localNodeIndex,elementLocalNumber,nodelocalNumber,err,error,*999)
+    CALL DomainNodes_NodeUserNumberGet(domainNodes,nodeLocalNumber,nodeUserNumber,err,error,*999)
+
+    EXITS("OC_Decomposition_ElementNodeGetNumber")
+    RETURN
+999 ERRORSEXITS("OC_Decomposition_ElementNodeGetNumber",err,error)
+    CALL OC_HandleError(err,error)
+    RETURN
+
+  END SUBROUTINE OC_Decomposition_ElementNodeGetNumber
+
+  !
+  !================================================================================================================================
+  !
+
+  !>Returns the node user number for a given local node index in an element in a decomposition component identified by a user number.
+  SUBROUTINE OC_Decomposition_ElementNodeGetObj(decomposition,meshComponentNumber,elementUserNumber,localNodeIndex, &
+    & nodeUserNumber,err)
+    !DLLEXPORT(OC_Decomposition_ElementNodeGetObj)
+
+    !Argument variables
+    TYPE(OC_DecompositionType), INTENT(IN) :: decomposition !<The decomposition to get the local element node for.
+    INTEGER(INTG), INTENT(IN) :: meshComponentNumber !<The mesh component number of the element to get the node for. 
+    INTEGER(INTG), INTENT(IN) :: elementUserNumber !<The user number of the element to get the node for.
+    INTEGER(INTG), INTENT(IN) :: localNodeIndex !<The local element node index to the node for
+    INTEGER(INTG), INTENT(OUT) :: nodeUserNumber !<On return, the user number of the specified local node in the element.
+    INTEGER(INTG), INTENT(OUT) :: err !<The error code.
+    !Local variables
+    INTEGER(INTG) :: elementLocalNumber,nodeLocalNumber
+    TYPE(DecompositionElementsType), POINTER :: decompositionElements
+    TYPE(DecompositionTopologyType), POINTER :: decompositionTopology
+    TYPE(DomainType), POINTER :: domain
+    TYPE(DomainElementsType), POINTER :: domainElements
+    TYPE(DomainNodesType), POINTER :: domainNodes
+    TYPE(DomainTopologyType), POINTER :: domainTopology
+
+    ENTERS("OC_Decomposition_ElementNodeGetObj",err,error,*999)
+
+    NULLIFY(decompositionTopology)
+    NULLIFY(decompositionElements)
+    NULLIFY(domain)
+    NULLIFY(domainTopology)
+    NULLIFY(domainElements)
+    NULLIFY(domainNodes)
+    CALL Decomposition_DecompositionTopologyGet(decomposition%decomposition,decompositionTopology,err,error,*999)
+    CALL DecompositionTopology_DecompositionElementsGet(decompositionTopology,decompositionElements,err,error,*999)
+    CALL DecompositionElements_ElementDoesExist(decompositionElements,elementUserNumber,elementLocalNumber,err,error,*999)
+    CALL Decomposition_DomainGet(decomposition%decomposition,meshComponentNumber,domain,err,error,*999)
+    CALL Domain_DomainTopologyGet(domain,domainTopology,err,error,*999)
+    CALL DomainTopology_DomainElementsGet(domainTopology,domainElements,err,error,*999)
+    CALL DomainTopology_DomainNodesGet(domainTopology,domainNodes,err,error,*999)
+    CALL DomainElements_ElementNodeGet(domainElements,localNodeIndex,elementLocalNumber,nodeLocalNumber,err,error,*999)
+    CALL DomainNodes_NodeUserNumberGet(domainNodes,nodeLocalNumber,nodeUserNumber,err,error,*999)
+
+    EXITS("OC_Decomposition_ElementNodeGetObj")
+    RETURN
+999 ERRORSEXITS("OC_Decomposition_ElementNodeGetObj",err,error)
+    CALL OC_HandleError(err,error)
+    RETURN
+
+  END SUBROUTINE OC_Decomposition_ElementNodeGetObj
+
+  !
+  !================================================================================================================================
+  !
+
+  !>Returns the element user number for a local element number in a decomposition component identified by a user number.
+  SUBROUTINE OC_Decomposition_ElementNumberGetNumber(contextUserNumber,regionUserNumber,meshUserNumber,decompositionUserNumber, &
+    & elementLocalNumber,elementUserNumber,err)
+    !DLLEXPORT(OC_Decomposition_ElementNumberGetNumber)
+    
+    !Argument variables
+    INTEGER(INTG), INTENT(IN) :: contextUserNumber !<The user number of the context with the region.
+    INTEGER(INTG), INTENT(IN) :: regionUserNumber !<The user number of the region containing the mesh to get the element number for.
+    INTEGER(INTG), INTENT(IN) :: meshUserNumber !<The user number of the mesh to get the element number for.
+    INTEGER(INTG), INTENT(IN) :: decompositionUserNumber !<The user number of the decomposition to get the element number for.
+    INTEGER(INTG), INTENT(IN) :: elementLocalNumber !<The local number of the element to get the user number for.
+    INTEGER(INTG), INTENT(OUT) :: elementUserNumber !<On return, the user number of the specified local element in the decomposition.
+    INTEGER(INTG), INTENT(OUT) :: err !<The error code.
+    !Local variables
+    TYPE(ContextType), POINTER :: context
+    TYPE(DecompositionType), POINTER :: decomposition
+    TYPE(DecompositionElementsType), POINTER :: decompositionElements
+    TYPE(DecompositionTopologyType), POINTER :: decompositionTopology
+    TYPE(MeshType), POINTER :: mesh
+    TYPE(RegionType), POINTER :: region
+    TYPE(RegionsType), POINTER :: regions
+
+    ENTERS("OC_Decomposition_ElementNumberGetNumber",err,error,*999)
+
+    NULLIFY(context)
+    NULLIFY(regions)
+    NULLIFY(region)
+    NULLIFY(mesh)
+    NULLIFY(decomposition)
+    NULLIFY(decompositionTopology)
+    NULLIFY(decompositionElements)
+    CALL Context_Get(contexts,contextUserNumber,context,err,error,*999)    
+    CALL Context_RegionsGet(context,regions,err,error,*999)
+    CALL Region_Get(regions,regionUserNumber,region,err,error,*999)
+    CALL Region_MeshGet(region,meshUserNumber,mesh,err,error,*999)
+    CALL Mesh_DecompositionGet(mesh,decompositionUserNumber,decomposition,err,error,*999)
+    CALL Decomposition_DecompositionTopologyGet(decomposition,decompositionTopology,err,error,*999)
+    CALL DecompositionTopology_DecompositionElementsGet(decompositionTopology,decompositionElements,err,error,*999)
+    CALL DecompositionElements_ElementUserNumberGet(decompositionElements,elementLocalNumber,elementUserNumber,err,error,*999)
+
+    EXITS("OC_Decomposition_ElementNumberGetNumber")
+    RETURN
+999 ERRORSEXITS("OC_Decomposition_ElementNumberGetNumber",err,error)
+    CALL OC_HandleError(err,error)
+    RETURN
+
+  END SUBROUTINE OC_Decomposition_ElementNumberGetNumber
+
+  !
+  !================================================================================================================================
+  !
+
+  !>Returns the element user number for a local element number in a decomposition component identified by a user number.
+  SUBROUTINE OC_Decomposition_ElementNumberGetObj(decomposition,elementLocalNumber,elementUserNumber,err)
+    !DLLEXPORT(OC_Decomposition_ElementNumberGetObj)
+
+    !Argument variables
+    TYPE(OC_DecompositionType), INTENT(IN) :: decomposition !<The decomposition to get the local element node for.
+    INTEGER(INTG), INTENT(IN) :: elementLocalNumber !<The local number of the element to get the user number for.
+    INTEGER(INTG), INTENT(OUT) :: elementUserNumber !<On return, the user number of the specified local element in the decomposition.
+    INTEGER(INTG), INTENT(OUT) :: err !<The error code.
+    !Local variables
+    TYPE(DecompositionElementsType), POINTER :: decompositionElements
+    TYPE(DecompositionTopologyType), POINTER :: decompositionTopology
+ 
+    ENTERS("OC_Decomposition_ElementNodeGetObj",err,error,*999)
+
+    NULLIFY(decompositionTopology)
+    NULLIFY(decompositionElements)
+    CALL Decomposition_DecompositionTopologyGet(decomposition%decomposition,decompositionTopology,err,error,*999)
+    CALL DecompositionTopology_DecompositionElementsGet(decompositionTopology,decompositionElements,err,error,*999)
+    CALL DecompositionElements_ElementUserNumberGet(decompositionElements,elementLocalNumber,elementUserNumber,err,error,*999)
+ 
+    EXITS("OC_Decomposition_ElementNumberGetObj")
+    RETURN
+999 ERRORSEXITS("OC_Decomposition_ElementNumberGetObj",err,error)
+    CALL OC_HandleError(err,error)
+    RETURN
+
+  END SUBROUTINE OC_Decomposition_ElementNumberGetObj
+
+  !
+  !================================================================================================================================
+  !
+
+  !>Returns the number of adjacent elements in a xi direction for an element in a decomposition identified by a user number.
+  SUBROUTINE OC_Decomposition_ElementNumberOfAdjacentGetNumber(contextUserNumber,regionUserNumber,meshUserNumber, &
+    & decompositionUserNumber,elementUserNumber,adjacentElementXi,numberOfAdjacent,err)
+    !DLLEXPORT(OC_Decomposition_ElementNumberOfAdjacentGetNumber)
+    
+    !Argument variables
+    INTEGER(INTG), INTENT(IN) :: contextUserNumber !<The user number of the context with the region.
+    INTEGER(INTG), INTENT(IN) :: regionUserNumber !<The user number of the region containing the mesh.
+    INTEGER(INTG), INTENT(IN) :: meshUserNumber !<The user number of the mesh with the decomposition.
+    INTEGER(INTG), INTENT(IN) :: decompositionUserNumber !<The user number of the decomposition to get the number of adjacent elements for.
+    INTEGER(INTG), INTENT(IN) :: elementUserNumber !<The user element number to get the number of adjacent elements for.
+    INTEGER(INTG), INTENT(IN) :: adjacentElementXi !<The xi coordinate direction to get the adjacent element for. Note that -xiCoordinateDirection gives the adjacent element before the element in the xiCoordinateDirection'th direction and +xiCoordinateDirection gives the adjacent element after the element in the xiCoordinateDirection'th direction. The xiCoordinateDirection=0 index will give the information on the current element.
+   INTEGER(INTG), INTENT(OUT) :: numberOfAdjacent !<On return, the number of adjacent elements in the specified adjacentElementXi direction in the decomposition.
+    INTEGER(INTG), INTENT(OUT) :: err !<The error code.
+    !Local variables
+    INTEGER(INTG) :: elementLocalNumber
+    TYPE(ContextType), POINTER :: context
+    TYPE(DecompositionType), POINTER :: decomposition
+    TYPE(DecompositionElementsType), POINTER :: decompositionElements
+    TYPE(DecompositionTopologyType), POINTER :: decompositionTopology
+    TYPE(MeshType), POINTER :: mesh
+    TYPE(RegionType), POINTER :: region
+    TYPE(RegionsType), POINTER :: regions
+
+    ENTERS("OC_Decomposition_ElementNumberOfAdjacentGetNumber",err,error,*999)
+
+    NULLIFY(context)
+    NULLIFY(regions)
+    NULLIFY(region)
+    NULLIFY(mesh)
+    NULLIFY(decomposition)
+    NULLIFY(decompositionTopology)
+    NULLIFY(decompositionElements)
+    CALL Context_Get(contexts,contextUserNumber,context,err,error,*999)    
+    CALL Context_RegionsGet(context,regions,err,error,*999)
+    CALL Region_Get(regions,regionUserNumber,region,err,error,*999)
+    CALL Region_MeshGet(region,meshUserNumber,mesh,err,error,*999)
+    CALL Mesh_DecompositionGet(mesh,decompositionUserNumber,decomposition,err,error,*999)
+    CALL Decomposition_DecompositionTopologyGet(decomposition,decompositionTopology,err,error,*999)
+    CALL DecompositionTopology_DecompositionElementsGet(decompositionTopology,decompositionElements,err,error,*999)
+    CALL DecompositionElements_ElementDoesExist(decompositionElements,elementUserNumber,elementLocalNumber,err,error,*999)
+    CALL DecompositionElements_ElementNumberAdjacentGet(decompositionElements,adjacentElementXi,elementLocalNumber, &
+      & numberOfAdjacent,err,error,*999)
+    
+    EXITS("OC_Decomposition_ElementNumberOfAdjacentGetNumber")
+    RETURN
+999 ERRORSEXITS("OC_Decomposition_ElementNumberOfAdjacentGetNumber",err,error)
+    CALL OC_HandleError(err,error)
+    RETURN
+
+  END SUBROUTINE OC_Decomposition_ElementNumberOfAdjacentGetNumber
+
+  !
+  !================================================================================================================================
+  !
+
+  !>Returns the number of adjacent elements in a xi direction for an element in a decomposition identified by an object.
+  SUBROUTINE OC_Decomposition_ElementNumberOfAdjacentGetObj(decomposition,elementUserNumber,adjacentElementXi,numberOfAdjacent,err)
+    !DLLEXPORT(OC_Decomposition_NumberOfElementsGetObj)
+    
+    !Argument variables
+    TYPE(OC_DecompositionType), INTENT(IN) :: decomposition !<The decomposition to get the total number of elements for.
+    INTEGER(INTG), INTENT(IN) :: elementUserNumber !<The user element number to get the number of adjacent elements for.
+    INTEGER(INTG), INTENT(IN) :: adjacentElementXi !<The xi coordinate direction to get the adjacent element for. Note that -xiCoordinateDirection gives the adjacent element before the element in the xiCoordinateDirection'th direction and +xiCoordinateDirection gives the adjacent element after the element in the xiCoordinateDirection'th direction. The xiCoordinateDirection=0 index will give the information on the current element.
+    INTEGER(INTG), INTENT(OUT) :: numberOfAdjacent !<On return, the number of adjacent elements in the specified adjacentElementXi direction in the decomposition.
+    INTEGER(INTG), INTENT(OUT) :: err !<The error code.
+    !Local variables
+    INTEGER(INTG) :: elementLocalNumber
+    TYPE(DecompositionElementsType), POINTER :: decompositionElements
+    TYPE(DecompositionTopologyType), POINTER :: decompositionTopology
+
+    ENTERS("OC_Decomposition_ElementNumberOfAdjacentGetObj",err,error,*999)
+ 
+    NULLIFY(decompositionTopology)
+    NULLIFY(decompositionElements)
+    CALL Decomposition_DecompositionTopologyGet(decomposition%decomposition,decompositionTopology,err,error,*999)
+    CALL DecompositionTopology_DecompositionElementsGet(decompositionTopology,decompositionElements,err,error,*999)
+    CALL DecompositionElements_ElementDoesExist(decompositionElements,elementUserNumber,elementLocalNumber,err,error,*999)
+    CALL DecompositionElements_ElementNumberAdjacentGet(decompositionElements,adjacentElementXi,elementLocalNumber, &
+      & numberOfAdjacent,err,error,*999)
+
+    EXITS("OC_Decomposition_ElementNumberOfAdjacentGetObj")
+    RETURN
+999 ERRORSEXITS("OC_Decomposition_ElementNumberOfAdjacentGetObj",err,error)
+    CALL OC_HandleError(err,error)
+    RETURN
+
+  END SUBROUTINE OC_Decomposition_ElementNumberOfAdjacentGetObj
+
+  !
+  !================================================================================================================================
+  !
+
+  !>Gets the number of data points projected on an element
+  SUBROUTINE OC_Decomposition_ElementNumberOfDataPointsGetObj(decomposition,elementUserNumber,numberOfDataPoints,err)
+    !DLLEXPORT(OC_Decomposition_ElementNumberOfDataPointsGetObj)
+
+    !Argument variables
+    TYPE(OC_DecompositionType), INTENT(IN) :: decomposition !<The decomposition to finish creating.
+    INTEGER(INTG), INTENT(IN) :: elementUserNumber !<The element number to get the data point for
+    INTEGER(INTG), INTENT(OUT) :: numberOfDataPoints !<The data point local number to return
+    INTEGER(INTG), INTENT(OUT) :: err !<The error code.
+    !Local variables
+
+    ENTERS("OC_Decomposition_ElementNumberOfDataPointsGetObj",err,error,*999)
+
+    CALL Decomposition_NumberOfElementDataPointsGet(decomposition%decomposition,elementUserNumber, &
+      & numberOfDataPoints,err,error,*999)
+
+    EXITS("OC_Decomposition_ElementNumberOfDataPointsGetObj")
+    RETURN
+999 ERRORS("OC_Decomposition_ElementNumberOfDataPointsGetObj",err,error)
+    EXITS("OC_Decomposition_ElementNumberOfDataPointsGetObj")
+    CALL OC_HandleError(err,error)
+    RETURN
+
+  END SUBROUTINE OC_Decomposition_ElementNumberOfDataPointsGetObj
+
+  !
+  !================================================================================================================================
+  !
+
+  !>Returns whether or not an element is on a boundary in a decomposition identified by a user number
+  SUBROUTINE OC_Decomposition_ElementOnBoundaryGetNumber(contextUserNumber,regionUserNumber,meshUserNumber, &
+    & decompositionUserNumber,elementUserNumber,onBoundary,err)
+    !DLLEXPORT(OC_Decomposition_ElementOnBoundaryGetNumber)
+    
+    !Argument variables
+    INTEGER(INTG), INTENT(IN) :: contextUserNumber !<The user number of the context with the region.
+    INTEGER(INTG), INTENT(IN) :: regionUserNumber !<The user number of the region containing the mesh.
+    INTEGER(INTG), INTENT(IN) :: meshUserNumber !<The user number of the mesh containing the decomposition.
+    INTEGER(INTG), INTENT(IN) :: decompositionUserNumber !<The user number of decomposition from which to get the element boundary status from.
+    INTEGER(INTG), INTENT(IN) :: elementUserNumber !<The user element number to get the boundary status for. 
+    LOGICAL, INTENT(OUT) :: onBoundary !<On return, .TRUE. if the specified element is on the boundary of the mesh, .FALSE. if not.
+    INTEGER(INTG), INTENT(OUT) :: err !<The error code.
+    !Local variables
+    INTEGER(INTG) :: localElementNumber
+    TYPE(ContextType), POINTER :: context
+    TYPE(DecompositionType), POINTER :: decomposition
+    TYPE(DecompositionElementsType), POINTER :: decompositionElements
+    TYPE(DecompositionTopologyType), POINTER :: decompositionTopology
+    TYPE(MeshType), POINTER :: mesh
+    TYPE(RegionType), POINTER :: region
+    TYPE(RegionsType), POINTER :: regions
+
+    ENTERS("OC_Decomposition_ElementOnBoundaryGetNumber",err,error,*999)
+
+    NULLIFY(context)
+    NULLIFY(regions)
+    NULLIFY(region)
+    NULLIFY(mesh)
+    NULLIFY(decomposition)
+    NULLIFY(decompositionTopology)
+    NULLIFY(decompositionElements)
+    CALL Context_Get(contexts,contextUserNumber,context,err,error,*999)    
+    CALL Context_RegionsGet(context,regions,err,error,*999)
+    CALL Region_Get(regions,regionUserNumber,region,err,error,*999)
+    CALL Region_MeshGet(region,meshUserNumber,mesh,err,error,*999)
+    CALL Mesh_DecompositionGet(mesh,decompositionUserNumber,decomposition,err,error,*999)
+    CALL Decomposition_DecompositionTopologyGet(decomposition,decompositionTopology,err,error,*999)
+    CALL DecompositionTopology_DecompositionElementsGet(decompositionTopology,decompositionElements,err,error,*999)
+    CALL DecompositionElements_ElementDoesExist(decompositionElements,elementUserNumber,localElementNumber,err,error,*999)
+    CALL DecompositionElements_ElementBoundaryElementGet(decompositionElements,localElementNumber,onBoundary,err,error,*999)
+
+    EXITS("OC_Decomposition_ElementOnBoundaryGetNumber")
+    RETURN
+999 ERRORSEXITS("OC_Decomposition_ElementOnBoundaryGetNumber",err,error)
+    CALL OC_HandleError(err,error)
+    RETURN
+
+  END SUBROUTINE OC_Decomposition_ElementOnBoundaryGetNumber
+
+  !
+  !================================================================================================================================
+  !
+
+  !>Returns whether or not an element is on a boundary in a decomposition identified by a user number
+  SUBROUTINE OC_Decomposition_ElementOnBoundaryGetObj(decomposition,elementUserNumber,onBoundary,err)
+    !DLLEXPORT(OC_Decomposition_ElementOnBoundaryGetObj)
+    
+    !Argument variables
+    TYPE(OC_DecompositionType), INTENT(IN) :: decomposition !<The decomposition to get the element boundary status for.
+    INTEGER(INTG), INTENT(IN) :: elementUserNumber !<The user element number to get the boundary status for. 
+    LOGICAL, INTENT(OUT) :: onBoundary !<On return, .TRUE. if the specified element is on the boundary of the mesh, .FALSE. if not.
+    INTEGER(INTG), INTENT(OUT) :: err !<The error code.
+    !Local variables
+    INTEGER(INTG) :: localElementNumber
+    TYPE(DecompositionElementsType), POINTER :: decompositionElements
+    TYPE(DecompositionTopologyType), POINTER :: decompositionTopology
+
+    ENTERS("OC_Decomposition_ElementOnBoundaryGetObj",err,error,*999)
+
+    NULLIFY(decompositionTopology)
+    NULLIFY(decompositionElements)
+    CALL Decomposition_DecompositionTopologyGet(decomposition%decomposition,decompositionTopology,err,error,*999)
+    CALL DecompositionTopology_DecompositionElementsGet(decompositionTopology,decompositionElements,err,error,*999)
+    CALL DecompositionElements_ElementDoesExist(decompositionElements,elementUserNumber,localElementNumber,err,error,*999)
+    CALL DecompositionElements_ElementBoundaryElementGet(decompositionElements,localElementNumber,onBoundary,err,error,*999)
+
+    EXITS("OC_Decomposition_ElementOnBoundaryGetObj")
+    RETURN
+999 ERRORS("OC_Decomposition_ElementOnBoundaryGetObj",err,error)
+    EXITS("OC_Decomposition_ElementOnBoundaryGetObj")
+    CALL OC_HandleError(err,error)
+    RETURN
+
+  END SUBROUTINE OC_Decomposition_ElementOnBoundaryGetObj
+
+  !
+  !================================================================================================================================
+  !
+
+  !>Returns the version user number used at a local node derivative in an element in a decomposition identified by a user number.
+  SUBROUTINE OC_Decomposition_ElementVersionGetNumber(contextUserNumber,regionUserNumber,meshUserNumber, &
+    & decompositionUserNumber,meshComponentNumber,elementUserNumber,derivativeIndex,localNodeNumber,versionUserNumber,err)
+    !DLLEXPORT(OC_Decomposition_ElementVersionGetNumber)
+
+    !Argument variables
+    INTEGER(INTG), INTENT(IN) :: contextUserNumber !<The user number of the context with the region.
+    INTEGER(INTG), INTENT(IN) :: regionUserNumber !<The user number of the region containing the mesh.
+    INTEGER(INTG), INTENT(IN) :: meshUserNumber !<The user number of the mesh containing the decomposition.
+    INTEGER(INTG), INTENT(IN) :: decompositionUserNumber !<The user number of the decomposition to get the version number for.
+    INTEGER(INTG), INTENT(IN) :: elementUserNumber !<The user number of the element to get the version number for.
+    INTEGER(INTG), INTENT(IN) :: meshComponentNumber !<The user number of the mesh component containing the node to get the version number for.
+    INTEGER(INTG), INTENT(IN) :: derivativeIndex !<The derivative index at the local node of the element to get the version number for.
+    INTEGER(INTG), INTENT(IN) :: localNodeNumber !<The local node number of the node to get the version number for.
+    INTEGER(INTG), INTENT(OUT) :: versionUserNumber !<On return, the version number used at the local node derivative in the element.
+    INTEGER(INTG), INTENT(OUT) :: err !<The error code.
+    !Local variables
+    INTEGER(INTG) :: localElementNumber
+    TYPE(ContextType), POINTER :: context
+    TYPE(DecompositionType), POINTER :: decomposition
+    TYPE(DecompositionElementsType), POINTER :: decompositionElements
+    TYPE(DecompositionTopologyType), POINTER :: decompositionTopology
+    TYPE(DomainType), POINTER :: domain
+    TYPE(DomainElementsType), POINTER :: domainElements
+    TYPE(DomainTopologyType), POINTER :: domainTopology
+    TYPE(MeshType), POINTER :: mesh
+    TYPE(RegionType), POINTER :: region
+    TYPE(RegionsType), POINTER :: regions
+
+    ENTERS("OC_Decomposition_ElementVersionGetNumber",err,error,*999)
+
+    NULLIFY(context)
+    NULLIFY(regions)
+    NULLIFY(region)
+    NULLIFY(mesh)
+    NULLIFY(decomposition)
+    NULLIFY(decompositionTopology)
+    NULLIFY(decompositionElements)
+    NULLIFY(domain)
+    NULLIFY(domainTopology)
+    NULLIFY(domainElements)
+    CALL Context_Get(contexts,contextUserNumber,context,err,error,*999)    
+    CALL Context_RegionsGet(context,regions,err,error,*999)
+    CALL Region_Get(regions,regionUserNumber,region,err,error,*999)
+    CALL Region_MeshGet(region,meshUserNumber,mesh,err,error,*999)
+    CALL Mesh_DecompositionGet(mesh,decompositionUserNumber,decomposition,err,error,*999)
+    CALL Decomposition_DecompositionTopologyGet(decomposition,decompositionTopology,err,error,*999)
+    CALL DecompositionTopology_DecompositionElementsGet(decompositionTopology,decompositionElements,err,error,*999)
+    CALL DecompositionElements_ElementDoesExist(decompositionElements,elementUserNumber,localElementNumber,err,error,*999)
+    CALL Decomposition_DomainGet(decomposition,meshComponentNumber,domain,err,error,*999)
+    CALL Domain_DomainTopologyGet(domain,domainTopology,err,error,*999)
+    CALL DomainTopology_DomainElementsGet(domainTopology,domainElements,err,error,*999)
+    CALL DomainElements_ElementVersionGet(domainElements,derivativeIndex,localNodeNumber,localElementNumber, &
+      & versionUserNumber,err,error,*999)
+
+    EXITS("OC_Decomposition_ElementVersionGetNumber")
+    RETURN
+999 ERRORSEXITS("OC_Decomposition_ElementVersionGetNumber",err,error)
+    CALL OC_HandleError(err,error)
+    RETURN
+
+  END SUBROUTINE OC_Decomposition_ElementVersionGetNumber
+
+  !
+  !================================================================================================================================
+  !
+
+  !>Returns the version user number used at a local node derivative in an element in a decomposition identified by an object.
+  SUBROUTINE OC_Decomposition_ElementVersionGetObj(decomposition,elementUserNumber,meshComponentNumber,derivativeIndex, &
+    & localNodeNumber,versionUserNumber,err)
+    !DLLEXPORT(OC_Decomposition_ElementVersionGetObj)
+
+    !Argument variables
+    TYPE(OC_DecompositionType), INTENT(IN) :: decomposition !<The decomposition to get the element version for.
+    INTEGER(INTG), INTENT(IN) :: elementUserNumber !<The user number of the element to get the version number for.
+    INTEGER(INTG), INTENT(IN) :: meshComponentNumber !<The user number of the mesh component to get the version number for.
+    INTEGER(INTG), INTENT(IN) :: derivativeIndex !<The index of the derivative of the local node to get the version number for.
+    INTEGER(INTG), INTENT(IN) :: localNodeNumber !<The local node number in the elmeent to get the version number for.
+    INTEGER(INTG), INTENT(OUT) :: versionUserNumber !<On return, the user number version used at the local node derivative in the element of the decomposition mesh component.
+    INTEGER(INTG), INTENT(OUT) :: err !<The error code.
+    !Local variables
+    INTEGER(INTG) :: localElementNumber
+    TYPE(DecompositionElementsType), POINTER :: decompositionElements
+    TYPE(DecompositionTopologyType), POINTER :: decompositionTopology
+    TYPE(DomainType), POINTER :: domain
+    TYPE(DomainElementsType), POINTER :: domainElements
+    TYPE(DomainTopologyType), POINTER :: domainTopology
+
+    ENTERS("OC_Decomposition_ElementVersionGetObj",err,error,*999)
+
+    NULLIFY(domain)
+    NULLIFY(decompositionTopology)
+    NULLIFY(decompositionElements)
+    NULLIFY(domainTopology)
+    NULLIFY(domainElements)
+    CALL Decomposition_DomainGet(decomposition%decomposition,meshComponentNumber,domain,err,error,*999)
+    CALL Decomposition_DecompositionTopologyGet(decomposition%decomposition,decompositionTopology,err,error,*999)
+    CALL DecompositionTopology_DecompositionElementsGet(decompositionTopology,decompositionElements,err,error,*999)
+    CALL DecompositionElements_ElementDoesExist(decompositionElements,elementUserNumber,localElementNumber,err,error,*999)
+    CALL Domain_DomainTopologyGet(domain,domainTopology,err,error,*999)
+    CALL DomainTopology_DomainElementsGet(domainTopology,domainElements,err,error,*999)
+    CALL DomainElements_ElementVersionGet(domainElements,derivativeIndex,localNodeNumber,localElementNumber, &
+      & versionUserNumber,err,error,*999)
+ 
+    EXITS("OC_Decomposition_ElementVersionGetObj")
+    RETURN
+999 ERRORSEXITS("OC_Decomposition_ElementVersionGetObj",err,error)
+    CALL OC_HandleError(err,error)
+    RETURN
+
+  END SUBROUTINE OC_Decomposition_ElementVersionGetObj
+
+  !
+  !================================================================================================================================
+  !
+
   !>Returns the mesh component number used for the decomposition of a mesh for a decomposition identified by a user number.
   SUBROUTINE OC_Decomposition_MeshComponentGetNumber(contextUserNumber,regionUserNumber,meshUserNumber,decompositionUserNumber, &
     & meshComponentNumber,err)
@@ -53001,6 +55479,78 @@ CONTAINS
     RETURN
 
   END SUBROUTINE OC_Decomposition_MeshComponentSetObj
+
+  !
+  !================================================================================================================================
+  !
+
+  !>Returns a decomposition topology for a decomposition identified by a user number.
+  SUBROUTINE OC_Decomposition_TopologyGetNumber(contextUserNumber,regionUserNumber,meshUserNumber,decompositionUserNumber, &
+    & decompositionTopology,err)
+    !DLLEXPORT(OC_Decomposition_TopologyGetNumber)
+
+    !Argument variables
+    INTEGER(INTG), INTENT(IN) :: contextUserNumber !<The user number of the context with the region.
+    INTEGER(INTG), INTENT(IN) :: regionUserNumber !<The user number of the region containing the mesh to get the decomposition topology for.
+    INTEGER(INTG), INTENT(IN) :: meshUserNumber !<The user number of the mesh to get the decomposition topology for.
+    INTEGER(INTG), INTENT(IN) :: decompositionUserNumber !<The user number of the decomposition to get the topology for.
+    TYPE(OC_DecompositionTopologyType), INTENT(OUT) :: decompositionTopology !<On return, the decomposition topology object.
+    INTEGER(INTG), INTENT(OUT) :: err !<The error code.
+    !Local variables
+    TYPE(ContextType), POINTER :: context
+    TYPE(DecompositionType), POINTER :: decomposition
+    TYPE(MeshType), POINTER :: mesh
+    TYPE(RegionType), POINTER :: region
+    TYPE(RegionsType), POINTER :: regions
+
+    ENTERS("OC_Decomposition_TopologyGetNumber",err,error,*999)
+
+    NULLIFY(context)
+    NULLIFY(regions)
+    NULLIFY(region)
+    NULLIFY(mesh)
+    NULLIFY(decomposition)
+    CALL Context_Get(contexts,contextUserNumber,context,err,error,*999)    
+    CALL Context_RegionsGet(context,regions,err,error,*999)
+    CALL Region_Get(regions,regionUserNumber,region,err,error,*999)
+    CALL Region_MeshGet(region,meshUserNumber,mesh,err,error,*999)
+    CALL Mesh_DecompositionGet(mesh,decompositionUserNumber,decomposition,err,error,*999)
+    CALL Decomposition_DecompositionTopologyGet(decomposition,decompositionTopology%decompositionTopology,err,error,*999)
+
+    EXITS("OC_Decomposition_TopologyGetNumber")
+    RETURN
+999 ERRORSEXITS("OC_Decomposition_TopologyGetNumber",err,error)
+    CALL OC_HandleError(err,error)
+    RETURN
+
+  END SUBROUTINE OC_Decomposition_TopologyGetNumber
+
+  !
+  !================================================================================================================================
+  !
+
+  !>Returns a decomposition topology for a mesh component number for a decomposition identified by an object.
+  SUBROUTINE OC_Decomposition_TopologyGetObj(decomposition,decompositionTopology,err)
+    !DLLEXPORT(OC_Decomposition_TopologyGetObj)
+
+    !Argument variables
+    TYPE(OC_DecompositionType), INTENT(IN) :: decomposition !<The decomposition to get the topology for.
+    TYPE(OC_DecompositionTopologyType), INTENT(INOUT) :: decompositionTopology !<On return the specfied topology for the decomposition
+    INTEGER(INTG), INTENT(OUT) :: err !<The error code.
+    !Local variables
+
+    ENTERS("OC_Decomposition_TopologyGetObj",err,error,*999)
+
+    CALL Decomposition_DecompositionTopologyGet(decomposition%decomposition,decompositionTopology%decompositionTopology, &
+      & err,error,*999)
+
+    EXITS("OC_Decomposition_TopologyGetObj")
+    RETURN
+999 ERRORSEXITS("OC_Decomposition_TopologyGetObj",err,error)
+    CALL OC_HandleError(err,error)
+    RETURN
+
+  END SUBROUTINE OC_Decomposition_TopologyGetObj
 
   !
   !================================================================================================================================
@@ -53369,7 +55919,7 @@ CONTAINS
 
   !>Returns the domain for a given node in a decomposition identified by a user number.
   SUBROUTINE OC_Decomposition_NodeDomainGetNumber(contextUserNumber,regionUserNumber,meshUserNumber,decompositionUserNumber, &
-    & nodeUserNumber,meshComponentNumber,domain,err)
+    & meshComponentNumber,nodeUserNumber,domain,err)
     !DLLEXPORT(OC_Decomposition_NodeDomainGetNumber)
 
     !Argument variables
@@ -53377,8 +55927,8 @@ CONTAINS
     INTEGER(INTG), INTENT(IN) :: regionUserNumber !<The user number of the region containing the mesh to get the node domain for.
     INTEGER(INTG), INTENT(IN) :: meshUserNumber !<The user number of the mesh to get the node domain for.
     INTEGER(INTG), INTENT(IN) :: decompositionUserNumber !<The user number of the decomposition to get the node domain for.
-    INTEGER(INTG), INTENT(IN) :: nodeUserNumber !<The user number of the node to get the domain for.
     INTEGER(INTG), INTENT(IN) :: meshComponentNumber !<The user number of the mesh component to get the domain for.
+    INTEGER(INTG), INTENT(IN) :: nodeUserNumber !<The user number of the node to get the domain for.
     INTEGER(INTG), INTENT(OUT) :: domain !<On return, the computation domain of the node.
     INTEGER(INTG), INTENT(OUT) :: err !<The error code.
     !Local variables
@@ -53414,14 +55964,14 @@ CONTAINS
   !================================================================================================================================
   !
 
-  !>Returns the domain for a given node in a decomposition identified by an object. \todo Maybe swap Node and MeshComponent?
-  SUBROUTINE OC_Decomposition_NodeDomainGetObj(decomposition,nodeUserNumber,meshComponentNumber,domain,err)
+  !>Returns the domain for a given node in a decomposition identified by an object.
+  SUBROUTINE OC_Decomposition_NodeDomainGetObj(decomposition,meshComponentNumber,nodeUserNumber,domain,err)
     !DLLEXPORT(OC_Decomposition_NodeDomainGetObj)
 
     !Argument variables
     TYPE(OC_DecompositionType), INTENT(IN) :: decomposition !<The decomposition to get the domain for.
-    INTEGER(INTG), INTENT(IN) :: nodeUserNumber !<The user number of the node to get the domain for.
     INTEGER(INTG), INTENT(IN) :: meshComponentNumber !<The user number of the mesh component to get the domain for.
+    INTEGER(INTG), INTENT(IN) :: nodeUserNumber !<The user number of the node to get the domain for.
     INTEGER(INTG), INTENT(OUT) :: domain !<On return, the computation domain of the node.
     INTEGER(INTG), INTENT(OUT) :: err !<The error code.
     !Local variables
@@ -53438,10 +55988,2158 @@ CONTAINS
 
   END SUBROUTINE OC_Decomposition_NodeDomainGetObj
 
+  !
+  !================================================================================================================================
+  !
+
+  !>Returns the global derivative indes for a given local node derivative in a decomposition mesh component identified by a user number.
+  SUBROUTINE OC_Decomposition_NodeGlobalDerivativeGetNumber(contextUserNumber,regionUserNumber,meshUserNumber, &
+    & decompositionUserNumber,meshComponentNumber,derivativeIndex,nodeUserNumber,globalDerivativeIndex,err)
+    !DLLEXPORT(OC_Decomposition_NodeGlobalDerivativeGetNumber)
+    
+    !Argument variables
+    INTEGER(INTG), INTENT(IN) :: contextUserNumber !<The user number of the context with the region.
+    INTEGER(INTG), INTENT(IN) :: regionUserNumber !<The user number of the region containing the mesh.
+    INTEGER(INTG), INTENT(IN) :: meshUserNumber !<The user number of the mesh containing the decomposition.
+    INTEGER(INTG), INTENT(IN) :: decompositionUserNumber !<The user number of the decomposition to get the node global derivative for.
+    INTEGER(INTG), INTENT(IN) :: meshComponentNumber !<The user number of the mesh component to get the node global derivative for for.
+    INTEGER(INTG), INTENT(IN) :: derivativeIndex !<The local node derivative to get the global derivative for.
+    INTEGER(INTG), INTENT(IN) :: nodeUserNumber !<The user number of the node to get the global derivative for.
+    INTEGER(INTG), INTENT(OUT) :: globalDerivativeIndex !<On return, the global derivative index of the node local derivative.
+    INTEGER(INTG), INTENT(OUT) :: err !<The error code.
+    !Local variables
+    INTEGER(INTG) :: localNodeNumber
+    TYPE(ContextType), POINTER :: context
+    TYPE(DecompositionType), POINTER :: decomposition
+    TYPE(DomainType), POINTER :: domain
+    TYPE(DomainNodesType), POINTER :: domainNodes
+    TYPE(DomainTopologyType), POINTER :: domainTopology
+    TYPE(MeshType), POINTER :: mesh
+    TYPE(RegionType), POINTER :: region
+    TYPE(RegionsType), POINTER :: regions
+
+    ENTERS("OC_Decomposition_NodeGlobalDerivativeGetNumber",err,error,*999)
+
+    NULLIFY(context)
+    NULLIFY(regions)
+    NULLIFY(region)
+    NULLIFY(mesh)
+    NULLIFY(decomposition)
+    NULLIFY(domain)
+    NULLIFY(domainTopology)
+    NULLIFY(domainNodes)
+    CALL Context_Get(contexts,contextUserNumber,context,err,error,*999)    
+    CALL Context_RegionsGet(context,regions,err,error,*999)
+    CALL Region_Get(regions,regionUserNumber,region,err,error,*999)
+    CALL Region_MeshGet(region,meshUserNumber,mesh,err,error,*999)
+    CALL Mesh_DecompositionGet(mesh,decompositionUserNumber,decomposition,err,error,*999)
+    CALL Decomposition_DomainGet(decomposition,meshComponentNumber,domain,err,error,*999)
+    CALL Domain_DomainTopologyGet(domain,domainTopology,err,error,*999)
+    CALL DomainTopology_DomainNodesGet(domainTopology,domainNodes,err,error,*999)
+    CALL DomainNodes_NodeDoesExist(domainNodes,nodeUserNumber,localNodeNumber,err,error,*999)
+    CALL DomainNodes_DerivativeGlobalIndexGet(domainNodes,derivativeIndex,localNodeNumber,globalDerivativeIndex, &
+      & err,error,*999)
+    
+    EXITS("OC_Decomposition_NodeGlobalDerivativeGetNumber")
+    RETURN
+999 ERRORSEXITS("OC_Decomposition_NodeGlobalDerivativeGetNumber",err,error)
+    CALL OC_HandleError(err,error)
+    RETURN
+
+  END SUBROUTINE OC_Decomposition_NodeGlobalDerivativeGetNumber
+
+  !
+  !================================================================================================================================
+  !
+
+  !>Returns the global derivative indes for a given local node derivative in a decomposition mesh component identified by an object.
+  SUBROUTINE OC_Decomposition_NodeGlobalDerivativeGetObj(decomposition,meshComponentNumber,derivativeIndex,nodeUserNumber, &
+    & globalDerivativeIndex,err)
+    !DLLEXPORT(OC_Decomposition_NodeGlobalDerivativeGetObj)
+
+    !Argument variables
+    TYPE(OC_DecompositionType), INTENT(IN) :: decomposition !<The decomposition to get the domain for.
+    INTEGER(INTG), INTENT(IN) :: meshComponentNumber !<The user number of the mesh component to get the node global derivative for for.
+    INTEGER(INTG), INTENT(IN) :: derivativeIndex !<The local node derivative to get the global derivative for.
+    INTEGER(INTG), INTENT(IN) :: nodeUserNumber !<The user number of the node to get the global derivative for.
+    INTEGER(INTG), INTENT(OUT) :: globalDerivativeIndex !<On return, the global derivative index of the node local derivative.
+    INTEGER(INTG), INTENT(OUT) :: err !<The error code.
+    !Local variables
+    INTEGER(INTG) :: localNodeNumber
+    TYPE(DomainType), POINTER :: domain
+    TYPE(DomainNodesType), POINTER :: domainNodes
+    TYPE(DomainTopologyType), POINTER :: domainTopology
+ 
+    ENTERS("OC_Decomposition_NodeGlobalDerivativeGetObj",err,error,*999)
+
+    NULLIFY(domain)
+    NULLIFY(domainTopology)
+    NULLIFY(domainNodes)
+    CALL Decomposition_DomainGet(decomposition%decomposition,meshComponentNumber,domain,err,error,*999)
+    CALL Domain_DomainTopologyGet(domain,domainTopology,err,error,*999)
+    CALL DomainTopology_DomainNodesGet(domainTopology,domainNodes,err,error,*999)
+    CALL DomainNodes_NodeDoesExist(domainNodes,nodeUserNumber,localNodeNumber,err,error,*999)
+    CALL DomainNodes_DerivativeGlobalIndexGet(domainNodes,derivativeIndex,localNodeNumber,globalDerivativeIndex, &
+      & err,error,*999)
+
+    EXITS("OC_Decomposition_NodeGlobalDerivativeGetObj")
+    RETURN
+999 ERRORSEXITS("OC_Decomposition_NodeGlobalDerivativeGetObj",err,error)
+    CALL OC_HandleError(err,error)
+    RETURN
+
+  END SUBROUTINE OC_Decomposition_NodeGlobalDerivativeGetObj
+
+  !
+  !================================================================================================================================
+  !
+
+  !>Returns the node user number for a local node number in a decomposition mesh component identified by a user number.
+  SUBROUTINE OC_Decomposition_NodeNumberGetNumber(contextUserNumber,regionUserNumber,meshUserNumber,decompositionUserNumber, &
+    & meshComponentNumber,nodeLocalNumber,nodeUserNumber,err)
+    !DLLEXPORT(OC_Decomposition_NodeNumberGetNumber)
+    
+    !Argument variables
+    INTEGER(INTG), INTENT(IN) :: contextUserNumber !<The user number of the context with the region.
+    INTEGER(INTG), INTENT(IN) :: regionUserNumber !<The user number of the region containing the mesh.
+    INTEGER(INTG), INTENT(IN) :: meshUserNumber !<The user number of the mesh to get the node number for.
+    INTEGER(INTG), INTENT(IN) :: decompositionUserNumber !<The user number of the decomposition to get the node number for.
+    INTEGER(INTG), INTENT(IN) :: meshComponentNumber !<The mesh component number to get the node number for
+    INTEGER(INTG), INTENT(IN) :: nodeLocalNumber !<The local number of the node to get the user number for.
+    INTEGER(INTG), INTENT(OUT) :: nodeUserNumber !<On return, the user number of the specified local node in the decomposition mesh component.
+    INTEGER(INTG), INTENT(OUT) :: err !<The error code.
+    !Local variables
+    TYPE(ContextType), POINTER :: context
+    TYPE(DecompositionType), POINTER :: decomposition
+    TYPE(DomainType), POINTER :: domain
+    TYPE(DomainNodesType), POINTER :: domainNodes
+    TYPE(DomainTopologyType), POINTER :: domainTopology
+    TYPE(MeshType), POINTER :: mesh
+    TYPE(RegionType), POINTER :: region
+    TYPE(RegionsType), POINTER :: regions
+
+    ENTERS("OC_Decomposition_ElementNumberGetNumber",err,error,*999)
+
+    NULLIFY(context)
+    NULLIFY(regions)
+    NULLIFY(region)
+    NULLIFY(mesh)
+    NULLIFY(decomposition)
+    NULLIFY(domain)
+    NULLIFY(domainTopology)
+    NULLIFY(domainNodes)
+    CALL Context_Get(contexts,contextUserNumber,context,err,error,*999)    
+    CALL Context_RegionsGet(context,regions,err,error,*999)
+    CALL Region_Get(regions,regionUserNumber,region,err,error,*999)
+    CALL Region_MeshGet(region,meshUserNumber,mesh,err,error,*999)
+    CALL Mesh_DecompositionGet(mesh,decompositionUserNumber,decomposition,err,error,*999)
+    CALL Decomposition_DomainGet(decomposition,meshComponentNumber,domain,err,error,*999)
+    CALL Domain_DomainTopologyGet(domain,domainTopology,err,error,*999)
+    CALL DomainTopology_DomainNodesGet(domainTopology,domainNodes,err,error,*999)
+    CALL DomainNodes_NodeUserNumberGet(domainNodes,nodeLocalNumber,nodeUserNumber,err,error,*999)
+
+    EXITS("OC_Decomposition_NodeNumberGetNumber")
+    RETURN
+999 ERRORSEXITS("OC_Decomposition_NodeNumberGetNumber",err,error)
+    CALL OC_HandleError(err,error)
+    RETURN
+
+  END SUBROUTINE OC_Decomposition_NodeNumberGetNumber
+
+  !
+  !================================================================================================================================
+  !
+
+  !>Returns the node user number for a local node number in a decomposition mesh component identified by an object.
+  SUBROUTINE OC_Decomposition_NodeNumberGetObj(decomposition,meshComponentNumber,nodeLocalNumber,nodeUserNumber,err)
+    !DLLEXPORT(OC_Decomposition_NodeNumberGetObj)
+
+    !Argument variables
+    TYPE(OC_DecompositionType), INTENT(IN) :: decomposition !<The decomposition to get the local node user number for.
+    INTEGER(INTG), INTENT(IN) :: meshComponentNumber !<The mesh component number to get the node number for
+    INTEGER(INTG), INTENT(IN) :: nodeLocalNumber !<The local number of the node to get the user number for.
+    INTEGER(INTG), INTENT(OUT) :: nodeUserNumber !<On return, the user number of the specified local node in the decomposition mesh component.
+    INTEGER(INTG), INTENT(OUT) :: err !<The error code.
+    !Local variables
+    TYPE(DomainType), POINTER :: domain
+    TYPE(DomainNodesType), POINTER :: domainNodes
+    TYPE(DomainTopologyType), POINTER :: domainTopology
+   
+    ENTERS("OC_Decomposition_NodeNumberGetObj",err,error,*999)
+
+    NULLIFY(domain)
+    NULLIFY(domainTopology)
+    NULLIFY(domainNodes)
+    CALL Decomposition_DomainGet(decomposition%decomposition,meshComponentNumber,domain,err,error,*999)
+    CALL Domain_DomainTopologyGet(domain,domainTopology,err,error,*999)
+    CALL DomainTopology_DomainNodesGet(domainTopology,domainNodes,err,error,*999)
+    CALL DomainNodes_NodeUserNumberGet(domainNodes,nodeLocalNumber,nodeUserNumber,err,error,*999)
+ 
+    EXITS("OC_Decomposition_NodeNumberGetObj")
+    RETURN
+999 ERRORSEXITS("OC_Decomposition_NodeNumberGetObj",err,error)
+    CALL OC_HandleError(err,error)
+    RETURN
+
+  END SUBROUTINE OC_Decomposition_NodeNumberGetObj
+
+  !
+  !================================================================================================================================
+  !
+
+  !>Returns the number of derivatives at given node in a decomposition mesh component identified by a user number.
+  SUBROUTINE OC_Decomposition_NodeNumberOfDerivativesGetNumber(contextUserNumber,regionUserNumber,meshUserNumber, &
+    & decompositionUserNumber,meshComponentNumber,nodeUserNumber,numberOfDerivatives,err)
+    !DLLEXPORT(OC_Decomposition_NodeNumberOfDerivativesGetNumber)
+
+    !Argument variables
+    INTEGER(INTG), INTENT(IN) :: contextUserNumber !<The user number of the context with the region.
+    INTEGER(INTG), INTENT(IN) :: regionUserNumber !<The user number of the region containing the mesh.
+    INTEGER(INTG), INTENT(IN) :: meshUserNumber !<The user number of the mesh with the decomposition.
+    INTEGER(INTG), INTENT(IN) :: decompositionUserNumber !<The user number of the decomposition to get the node number of derivatives for.
+    INTEGER(INTG), INTENT(IN) :: meshComponentNumber !<The mesh component number to get the node number of derivatives for
+    INTEGER(INTG), INTENT(IN) :: nodeUserNumber !<The user number of the node to get the number of derivatives for.
+    INTEGER(INTG), INTENT(OUT) :: numberOfDerivatives !<On return, the number of derivatives for the node in the decomposition mesh component.
+    INTEGER(INTG), INTENT(OUT) :: err !<The error code.
+    !Local variables
+    INTEGER(INTG) :: localNodeNumber
+    TYPE(ContextType), POINTER :: context
+    TYPE(DecompositionType), POINTER :: decomposition
+    TYPE(DomainType), POINTER :: domain
+    TYPE(DomainNodesType), POINTER :: domainNodes
+    TYPE(DomainTopologyType), POINTER :: domainTopology
+    TYPE(MeshType), POINTER :: mesh
+    TYPE(RegionType), POINTER :: region
+    TYPE(RegionsType), POINTER :: regions
+
+    ENTERS("OC_Decomposition_NodeNumberOfDerivativesGetNumber",err,error,*999)
+
+    NULLIFY(context)
+    NULLIFY(regions)
+    NULLIFY(region)
+    NULLIFY(mesh)
+    NULLIFY(decomposition)
+    NULLIFY(domain)
+    NULLIFY(domainTopology)
+    NULLIFY(domainNodes)
+    CALL Context_Get(contexts,contextUserNumber,context,err,error,*999)    
+    CALL Context_RegionsGet(context,regions,err,error,*999)
+    CALL Region_Get(regions,regionUserNumber,region,err,error,*999)
+    CALL Region_MeshGet(region,meshUserNumber,mesh,err,error,*999)
+    CALL Mesh_DecompositionGet(mesh,decompositionUserNumber,decomposition,err,error,*999)
+    CALL Decomposition_DomainGet(decomposition,meshComponentNumber,domain,err,error,*999)
+    CALL Domain_DomainTopologyGet(domain,domainTopology,err,error,*999)
+    CALL DomainTopology_DomainNodesGet(domainTopology,domainNodes,err,error,*999)
+    CALL DomainNodes_NodeDoesExist(domainNodes,nodeUserNumber,localNodeNumber,err,error,*999)
+    CALL DomainNodes_NodeNumberOfDerivativesGet(domainNodes,localNodeNumber,numberOfDerivatives,err,error,*999)
+
+    EXITS("OC_Decomposition_NodeNumberOfDerivativesGetNumber")
+    RETURN
+999 ERRORSEXITS("OC_Decomposition_NodeNumberOfDerivativesGetNumber",err,error)
+    CALL OC_HandleError(err,error)
+    RETURN
+
+  END SUBROUTINE OC_Decomposition_NodeNumberOfDerivativesGetNumber
+
+  !
+  !================================================================================================================================
+  !
+
+  !>Returns the number of derivatives at given node in a decomposition mesh component identified by a user number.
+  SUBROUTINE OC_Decomposition_NodeNumberOfDerivativesGetObj(decomposition,meshComponentNumber,nodeUserNumber, &
+    & numberOfDerivatives,err)
+    !DLLEXPORT(OC_Decomposition_NodeNumberOfDerivativesGetObj)
+
+    !Argument variables
+    TYPE(OC_DecompositionType), INTENT(IN) :: decomposition !<The decomposition to get the node number of derivatives for.
+    INTEGER(INTG), INTENT(IN) :: meshComponentNumber !<The mesh component number to get the node number of derivatives for
+    INTEGER(INTG), INTENT(IN) :: nodeUserNumber !<The user number of the node to get the number of derivatives for.
+    INTEGER(INTG), INTENT(OUT) :: numberOfDerivatives !<On return, the number of derivatives for the node in the decomposition mesh component.
+    INTEGER(INTG), INTENT(OUT) :: err !<The error code.
+    !Local variables
+    INTEGER(INTG) :: localNodeNumber
+    TYPE(DomainType), POINTER :: domain
+    TYPE(DomainNodesType), POINTER :: domainNodes
+    TYPE(DomainTopologyType), POINTER :: domainTopology
+
+    ENTERS("OC_Decomposition_NodeNumberOfDerivativesGetObj",err,error,*999)
+ 
+    NULLIFY(domain)
+    NULLIFY(domainTopology)
+    NULLIFY(domainNodes)
+    CALL Decomposition_DomainGet(decomposition%decomposition,meshComponentNumber,domain,err,error,*999)
+    CALL Domain_DomainTopologyGet(domain,domainTopology,err,error,*999)
+    CALL DomainTopology_DomainNodesGet(domainTopology,domainNodes,err,error,*999)
+    CALL DomainNodes_NodeDoesExist(domainNodes,nodeUserNumber,localNodeNumber,err,error,*999)
+    CALL DomainNodes_NodeNumberOfDerivativesGet(domainNodes,localNodeNumber,numberOfDerivatives,err,error,*999)
+
+    EXITS("OC_Decomposition_NodeNumberOfDerivativesGetObj")
+    RETURN
+999 ERRORSEXITS("OC_Decomposition_NodeNumberOfDerivativesGetObj",err,error)
+    CALL OC_HandleError(err,error)
+    RETURN
+
+  END SUBROUTINE OC_Decomposition_NodeNumberOfDerivativesGetObj
+
+  !
+  !================================================================================================================================
+  !
+
+  !>Returns the number of elements surrounding a given node in a decomposition identified by a user number.
+  SUBROUTINE OC_Decomposition_NodeNumberOfSurroundingElementsGetNumber(contextUserNumber,regionUserNumber,meshUserNumber, &
+    & decompositionUserNumber,meshComponentNumber,nodeUserNumber,numberOfSurroundingElements,err)
+    !DLLEXPORT(OC_Decomposition_NodeNumberOfSurroundingElementsGetNumber)
+
+    !Argument variables
+    INTEGER(INTG), INTENT(IN) :: contextUserNumber !<The user number of the context with the region.
+    INTEGER(INTG), INTENT(IN) :: regionUserNumber !<The user number of the region containing the mesh to get the node number of surrounding for.
+    INTEGER(INTG), INTENT(IN) :: meshUserNumber !<The user number of the mesh to get the node number of surrounding for.
+    INTEGER(INTG), INTENT(IN) :: decompositionUserNumber !<The user number of the decomposition to get the node number of surrounding for.
+    INTEGER(INTG), INTENT(IN) :: meshComponentNumber !<The user number of the mesh component containing the node for.
+    INTEGER(INTG), INTENT(IN) :: nodeUserNumber !<The user number of the node to get the number of surrounding elements for.
+    INTEGER(INTG), INTENT(OUT) :: numberOfSurroundingElements !<On return, the number of elements surrounding the node.
+    INTEGER(INTG), INTENT(OUT) :: err !<The error code.
+    !Local variables
+    INTEGER(INTG) :: localNodeNumber
+    TYPE(ContextType), POINTER :: context
+    TYPE(DecompositionType), POINTER :: decomposition
+    TYPE(DomainType), POINTER :: domain
+    TYPE(DomainNodesType), POINTER :: domainNodes
+    TYPE(DomainTopologyType), POINTER :: domainTopology
+    TYPE(MeshType), POINTER :: mesh
+    TYPE(RegionType), POINTER :: region
+    TYPE(RegionsType), POINTER :: regions
+
+    ENTERS("OC_Decomposition_NodeNumberOfSurroundingElementsGetNumber",err,error,*999)
+
+    NULLIFY(context)
+    NULLIFY(regions)
+    NULLIFY(region)
+    NULLIFY(mesh)
+    NULLIFY(decomposition)
+    NULLIFY(domain)
+    NULLIFY(domainTopology)
+    NULLIFY(domainNodes)
+    CALL Context_Get(contexts,contextUserNumber,context,err,error,*999)    
+    CALL Context_RegionsGet(context,regions,err,error,*999)
+    CALL Region_Get(regions,regionUserNumber,region,err,error,*999)
+    CALL Region_MeshGet(region,meshUserNumber,mesh,err,error,*999)
+    CALL Mesh_DecompositionGet(mesh,decompositionUserNumber,decomposition,err,error,*999)
+    CALL Decomposition_DomainGet(decomposition,meshComponentNumber,domain,err,error,*999)
+    CALL Domain_DomainTopologyGet(domain,domainTopology,err,error,*999)
+    CALL DomainTopology_DomainNodesGet(domainTopology,domainNodes,err,error,*999)
+    CALL DomainNodes_NodeDoesExist(domainNodes,nodeUserNumber,localNodeNumber,err,error,*999)
+    CALL DomainNodes_NodeNumberOfSurroundingElementsGet(domainNodes,localNodeNumber,numberOfSurroundingElements,err,error,*999)
+
+    EXITS("OC_Decomposition_NodeNumberOfSurroundingElementsGetNumber")
+    RETURN
+999 ERRORSEXITS("OC_Decomposition_NodeNumberOfSurroundingElementsGetNumber",err,error)
+    CALL OC_HandleError(err,error)
+    RETURN
+
+  END SUBROUTINE OC_Decomposition_NodeNumberOfSurroundingElementsGetNumber
+
+  !
+  !================================================================================================================================
+  !
+
+  !>Returns the number of elements surrounding a node in a decomposition identified by an object.
+  SUBROUTINE OC_Decomposition_NodeNumberOfSurroundingElementsGetObj(decomposition,meshComponentNumber,nodeUserNumber, &
+    & numberOfSurroundingElements,err)
+    !DLLEXPORT(OC_Decomposition_NodeNumberOfSurroundingElementsGetObj)
+
+    !Argument variables
+    TYPE(OC_DecompositionType), INTENT(IN) :: decomposition !<The decomposition to get the domain for.
+    INTEGER(INTG), INTENT(IN) :: nodeUserNumber !<The user number of the node to get the domain for.
+    INTEGER(INTG), INTENT(IN) :: meshComponentNumber !<The user number of the mesh component to get the domain for.
+    INTEGER(INTG), INTENT(OUT) :: numberOfSurroundingElements !<On return, the number of elements surrounding the node.
+    INTEGER(INTG), INTENT(OUT) :: err !<The error code.
+    !Local variables
+    INTEGER(INTG) :: localNodeNumber
+    TYPE(DomainType), POINTER :: domain
+    TYPE(DomainNodesType), POINTER :: domainNodes
+    TYPE(DomainTopologyType), POINTER :: domainTopology
+
+    ENTERS("OC_Decomposition_NodeNumberOfSurroundingElementsGetObj",err,error,*999)
+
+ 
+    NULLIFY(domain)
+    NULLIFY(domainTopology)
+    NULLIFY(domainNodes)
+    CALL Decomposition_DomainGet(decomposition%decomposition,meshComponentNumber,domain,err,error,*999)
+    CALL Domain_DomainTopologyGet(domain,domainTopology,err,error,*999)
+    CALL DomainTopology_DomainNodesGet(domainTopology,domainNodes,err,error,*999)
+    CALL DomainNodes_NodeDoesExist(domainNodes,nodeUserNumber,localNodeNumber,err,error,*999)
+    CALL DomainNodes_NodeNumberOfSurroundingElementsGet(domainNodes,localNodeNumber,numberOfSurroundingElements,err,error,*999)
+
+    EXITS("OC_Decomposition_NodeNumberOfSurroundingElementsGetObj")
+    RETURN
+999 ERRORSEXITS("OC_Decomposition_NodeNumberOfSurroundingElementsGetObj",err,error)
+    CALL OC_HandleError(err,error)
+    RETURN
+
+  END SUBROUTINE OC_Decomposition_NodeNumberOfSurroundingElementsGetObj
+
+  !
+  !================================================================================================================================
+  !
+
+  !>Returns the number of versions at given node derivative in a decomposition mesh component identified by a user number.
+  SUBROUTINE OC_Decomposition_NodeNumberOfVersionsGetNumber(contextUserNumber,regionUserNumber,meshUserNumber, &
+    & decompositionUserNumber,meshComponentNumber,derivativeIndex,nodeUserNumber,numberOfVersions,err)
+    !DLLEXPORT(OC_Decomposition_NodeNumberOfVersionsGetNumber)
+
+    !Argument variables
+    INTEGER(INTG), INTENT(IN) :: contextUserNumber !<The user number of the context with the region.
+    INTEGER(INTG), INTENT(IN) :: regionUserNumber !<The user number of the region containing the mesh.
+    INTEGER(INTG), INTENT(IN) :: meshUserNumber !<The user number of the mesh with the decomposition.
+    INTEGER(INTG), INTENT(IN) :: decompositionUserNumber !<The user number of the decomposition to get the node derivative number of versions for.
+    INTEGER(INTG), INTENT(IN) :: meshComponentNumber !<The mesh component number to get the node derivative number of versions for
+    INTEGER(INTG), INTENT(IN) :: derivativeIndex !<The derivative index to get the node derivative number of versions for
+    INTEGER(INTG), INTENT(IN) :: nodeUserNumber !<The user number of the node to get the number of versions for.
+    INTEGER(INTG), INTENT(OUT) :: numberOfVersions !<On return, the number of versions for the node derivative in the decomposition mesh component.
+    INTEGER(INTG), INTENT(OUT) :: err !<The error code.
+    !Local variables
+    INTEGER(INTG) :: localNodeNumber
+    TYPE(ContextType), POINTER :: context
+    TYPE(DecompositionType), POINTER :: decomposition
+    TYPE(DomainType), POINTER :: domain
+    TYPE(DomainNodesType), POINTER :: domainNodes
+    TYPE(DomainTopologyType), POINTER :: domainTopology
+    TYPE(MeshType), POINTER :: mesh
+    TYPE(RegionType), POINTER :: region
+    TYPE(RegionsType), POINTER :: regions
+
+    ENTERS("OC_Decomposition_NodeNumberOfVersionsGetNumber",err,error,*999)
+
+    NULLIFY(context)
+    NULLIFY(regions)
+    NULLIFY(region)
+    NULLIFY(mesh)
+    NULLIFY(decomposition)
+    NULLIFY(domain)
+    NULLIFY(domainTopology)
+    NULLIFY(domainNodes)
+    CALL Context_Get(contexts,contextUserNumber,context,err,error,*999)    
+    CALL Context_RegionsGet(context,regions,err,error,*999)
+    CALL Region_Get(regions,regionUserNumber,region,err,error,*999)
+    CALL Region_MeshGet(region,meshUserNumber,mesh,err,error,*999)
+    CALL Mesh_DecompositionGet(mesh,decompositionUserNumber,decomposition,err,error,*999)
+    CALL Decomposition_DomainGet(decomposition,meshComponentNumber,domain,err,error,*999)
+    CALL Domain_DomainTopologyGet(domain,domainTopology,err,error,*999)
+    CALL DomainTopology_DomainNodesGet(domainTopology,domainNodes,err,error,*999)
+    CALL DomainNodes_NodeDoesExist(domainNodes,nodeUserNumber,localNodeNumber,err,error,*999)
+    CALL DomainNodes_DerivativeNumberOfVersionsGet(domainNodes,derivativeIndex,localNodeNumber,numberOfVersions, &
+      & err,error,*999)
+
+    EXITS("OC_Decomposition_NodeNumberOfVersionsGetNumber")
+    RETURN
+999 ERRORSEXITS("OC_Decomposition_NodeNumberOfVersionsGetNumber",err,error)
+    CALL OC_HandleError(err,error)
+    RETURN
+
+  END SUBROUTINE OC_Decomposition_NodeNumberOfVersionsGetNumber
+
+  !
+  !================================================================================================================================
+  !
+
+  !>Returns the number of versions at given node derivative in a decomposition mesh component identified by a user number.
+  SUBROUTINE OC_Decomposition_NodeNumberOfVersionsGetObj(decomposition,meshComponentNumber,derivativeIndex,nodeUserNumber, &
+    & numberOfVersions,err)
+    !DLLEXPORT(OC_Decomposition_NodeNumberOfVersionsGetObj)
+
+    !Argument variables
+    TYPE(OC_DecompositionType), INTENT(IN) :: decomposition !<The decomposition to get the node derivative number of versions for.
+    INTEGER(INTG), INTENT(IN) :: meshComponentNumber !<The mesh component number to get the node derivative number of versions for
+    INTEGER(INTG), INTENT(IN) :: derivativeIndex !<The derivative index to get the node derivative number of versions for
+    INTEGER(INTG), INTENT(IN) :: nodeUserNumber !<The user number of the node to get the number of versions for.
+    INTEGER(INTG), INTENT(OUT) :: numberOfVersions !<On return, the number of versions for the node derivative in the decomposition mesh component.
+    INTEGER(INTG), INTENT(OUT) :: err !<The error code.
+    !Local variables
+    INTEGER(INTG) :: localNodeNumber
+    TYPE(DomainType), POINTER :: domain
+    TYPE(DomainNodesType), POINTER :: domainNodes
+    TYPE(DomainTopologyType), POINTER :: domainTopology
+
+    ENTERS("OC_Decomposition_NodeNumberOfVersionsGetObj",err,error,*999)
+ 
+    NULLIFY(domain)
+    NULLIFY(domainTopology)
+    NULLIFY(domainNodes)
+    CALL Decomposition_DomainGet(decomposition%decomposition,meshComponentNumber,domain,err,error,*999)
+    CALL Domain_DomainTopologyGet(domain,domainTopology,err,error,*999)
+    CALL DomainTopology_DomainNodesGet(domainTopology,domainNodes,err,error,*999)
+    CALL DomainNodes_NodeDoesExist(domainNodes,nodeUserNumber,localNodeNumber,err,error,*999)
+    CALL DomainNodes_DerivativeNumberOfVersionsGet(domainNodes,derivativeIndex,localNodeNumber,numberOfVersions, &
+      & err,error,*999)
+
+    EXITS("OC_Decomposition_NodeNumberOfVersionsGetObj")
+    RETURN
+999 ERRORSEXITS("OC_Decomposition_NodeNumberOfVersionsGetObj",err,error)
+    CALL OC_HandleError(err,error)
+    RETURN
+    
+
+  END SUBROUTINE OC_Decomposition_NodeNumberOfVersionsGetObj
+
+  !
+  !================================================================================================================================
+  !
+
+  !>Returns the boundary status of a given node in a decomposition mesh component identified by a user number.
+  SUBROUTINE OC_Decomposition_NodeOnBoundaryGetNumber(contextUserNumber,regionUserNumber,meshUserNumber, &
+    & decompositionUserNumber,meshComponentNumber,nodeUserNumber,onBoundary,err)
+    !DLLEXPORT(OC_Decomposition_NodeOnBoundaryGetNumber)
+
+    !Argument variables
+    INTEGER(INTG), INTENT(IN) :: contextUserNumber !<The user number of the context with the region.
+    INTEGER(INTG), INTENT(IN) :: regionUserNumber !<The user number of the region containing the mesh.
+    INTEGER(INTG), INTENT(IN) :: meshUserNumber !<The user number of the mesh with the decomposition.
+    INTEGER(INTG), INTENT(IN) :: decompositionUserNumber !<The user number of the decomposition to get the node boundary status for.
+    INTEGER(INTG), INTENT(IN) :: meshComponentNumber !<The mesh component number to get the node boundary status for
+    INTEGER(INTG), INTENT(IN) :: nodeUserNumber !<The user number of the node to get the boundary status for.
+    LOGICAL, INTENT(OUT) :: onBoundary !<On return, .TRUE. if the specified node is on the boundary of the decomposition mesh component, .FALSE. if not.
+    INTEGER(INTG), INTENT(OUT) :: err !<The error code.
+    !Local variables
+    INTEGER(INTG) :: localNodeNumber
+    TYPE(ContextType), POINTER :: context
+    TYPE(DecompositionType), POINTER :: decomposition
+    TYPE(DomainType), POINTER :: domain
+    TYPE(DomainNodesType), POINTER :: domainNodes
+    TYPE(DomainTopologyType), POINTER :: domainTopology
+    TYPE(MeshType), POINTER :: mesh
+    TYPE(RegionType), POINTER :: region
+    TYPE(RegionsType), POINTER :: regions
+
+    ENTERS("OC_Decomposition_NodeOnBoundaryGetNumber",err,error,*999)
+
+    NULLIFY(context)
+    NULLIFY(regions)
+    NULLIFY(region)
+    NULLIFY(mesh)
+    NULLIFY(decomposition)
+    NULLIFY(domain)
+    NULLIFY(domainTopology)
+    NULLIFY(domainNodes)
+    CALL Context_Get(contexts,contextUserNumber,context,err,error,*999)    
+    CALL Context_RegionsGet(context,regions,err,error,*999)
+    CALL Region_Get(regions,regionUserNumber,region,err,error,*999)
+    CALL Region_MeshGet(region,meshUserNumber,mesh,err,error,*999)
+    CALL Mesh_DecompositionGet(mesh,decompositionUserNumber,decomposition,err,error,*999)
+    CALL Decomposition_DomainGet(decomposition,meshComponentNumber,domain,err,error,*999)
+    CALL Domain_DomainTopologyGet(domain,domainTopology,err,error,*999)
+    CALL DomainTopology_DomainNodesGet(domainTopology,domainNodes,err,error,*999)
+    CALL DomainNodes_NodeDoesExist(domainNodes,nodeUserNumber,localNodeNumber,err,error,*999)
+    CALL DomainNodes_NodeBoundaryNodeGet(domainNodes,localNodeNumber,onBoundary,err,error,*999)
+    
+    EXITS("OC_Decomposition_NodeOnBoundaryGetNumber")
+    RETURN
+999 ERRORSEXITS("OC_Decomposition_NodeOnBoundaryGetNumber",err,error)
+    CALL OC_HandleError(err,error)
+    RETURN
+
+  END SUBROUTINE OC_Decomposition_NodeOnBoundaryGetNumber
+
+  !
+  !================================================================================================================================
+  !
+
+  !>Returns the boundary status of a given node in a decomposition mesh component identified by a user number.
+  SUBROUTINE OC_Decomposition_NodeOnBoundaryGetObj(decomposition,meshComponentNumber,nodeUserNumber, &
+    & onBoundary,err)
+    !DLLEXPORT(OC_Decomposition_NodeOnBoundaryGetObj)
+
+    !Argument variables
+    TYPE(OC_DecompositionType), INTENT(IN) :: decomposition !<The decomposition to get the node boundary status for.
+    INTEGER(INTG), INTENT(IN) :: meshComponentNumber !<The mesh component number to get the node boundary status for
+    INTEGER(INTG), INTENT(IN) :: nodeUserNumber !<The user number of the node to get the boundary status for.
+    LOGICAL, INTENT(OUT) :: onBoundary !<On return, .TRUE. if the specified node is on the boundary of the decomposition mesh component, .FALSE. if not.
+    INTEGER(INTG), INTENT(OUT) :: err !<The error code.
+    !Local variables
+    INTEGER(INTG) :: localNodeNumber
+    TYPE(DomainType), POINTER :: domain
+    TYPE(DomainNodesType), POINTER :: domainNodes
+    TYPE(DomainTopologyType), POINTER :: domainTopology
+
+    ENTERS("OC_Decomposition_NodeOnBoundaryGetObj",err,error,*999)
+ 
+    NULLIFY(domain)
+    NULLIFY(domainTopology)
+    NULLIFY(domainNodes)
+    CALL Decomposition_DomainGet(decomposition%decomposition,meshComponentNumber,domain,err,error,*999)
+    CALL Domain_DomainTopologyGet(domain,domainTopology,err,error,*999)
+    CALL DomainTopology_DomainNodesGet(domainTopology,domainNodes,err,error,*999)
+    CALL DomainNodes_NodeDoesExist(domainNodes,nodeUserNumber,localNodeNumber,err,error,*999)
+    CALL DomainNodes_NodeBoundaryNodeGet(domainNodes,localNodeNumber,onBoundary,err,error,*999)
+
+    EXITS("OC_Decomposition_NodeOnBoundaryGetObj")
+    RETURN
+999 ERRORSEXITS("OC_Decomposition_NodeOnBoundaryGetObj",err,error)
+    CALL OC_HandleError(err,error)
+    RETURN
+
+  END SUBROUTINE OC_Decomposition_NodeOnBoundaryGetObj
+
+  !
+  !================================================================================================================================
+  !
+
+  !>Returns the partial derivative indes for a given local node derivative in a decomposition mesh component identified by a user number.
+  SUBROUTINE OC_Decomposition_NodePartialDerivativeGetNumber(contextUserNumber,regionUserNumber,meshUserNumber, &
+    & decompositionUserNumber,meshComponentNumber,derivativeIndex,nodeUserNumber,partialDerivativeIndex,err)
+    !DLLEXPORT(OC_Decomposition_NodePartialDerivativeGetNumber)
+    
+    !Argument variables
+    INTEGER(INTG), INTENT(IN) :: contextUserNumber !<The user number of the context with the region.
+    INTEGER(INTG), INTENT(IN) :: regionUserNumber !<The user number of the region containing the mesh.
+    INTEGER(INTG), INTENT(IN) :: meshUserNumber !<The user number of the mesh containing the decomposition.
+    INTEGER(INTG), INTENT(IN) :: decompositionUserNumber !<The user number of the decomposition to get the node partial derivative for.
+    INTEGER(INTG), INTENT(IN) :: meshComponentNumber !<The user number of the mesh component to get the node partial derivative for for.
+    INTEGER(INTG), INTENT(IN) :: derivativeIndex !<The local node derivative to get the partial derivative for.
+    INTEGER(INTG), INTENT(IN) :: nodeUserNumber !<The user number of the node to get the partial derivative for.
+    INTEGER(INTG), INTENT(OUT) :: partialDerivativeIndex !<On return, the partial derivative index of the node local derivative.
+    INTEGER(INTG), INTENT(OUT) :: err !<The error code.
+    !Local variables
+    INTEGER(INTG) :: localNodeNumber
+    TYPE(ContextType), POINTER :: context
+    TYPE(DecompositionType), POINTER :: decomposition
+    TYPE(DomainType), POINTER :: domain
+    TYPE(DomainNodesType), POINTER :: domainNodes
+    TYPE(DomainTopologyType), POINTER :: domainTopology
+    TYPE(MeshType), POINTER :: mesh
+    TYPE(RegionType), POINTER :: region
+    TYPE(RegionsType), POINTER :: regions
+
+    ENTERS("OC_Decomposition_NodePartialDerivativeGetNumber",err,error,*999)
+
+    NULLIFY(context)
+    NULLIFY(regions)
+    NULLIFY(region)
+    NULLIFY(mesh)
+    NULLIFY(decomposition)
+    NULLIFY(domain)
+    NULLIFY(domainTopology)
+    NULLIFY(domainNodes)
+    CALL Context_Get(contexts,contextUserNumber,context,err,error,*999)    
+    CALL Context_RegionsGet(context,regions,err,error,*999)
+    CALL Region_Get(regions,regionUserNumber,region,err,error,*999)
+    CALL Region_MeshGet(region,meshUserNumber,mesh,err,error,*999)
+    CALL Mesh_DecompositionGet(mesh,decompositionUserNumber,decomposition,err,error,*999)
+    CALL Decomposition_DomainGet(decomposition,meshComponentNumber,domain,err,error,*999)
+    CALL Domain_DomainTopologyGet(domain,domainTopology,err,error,*999)
+    CALL DomainTopology_DomainNodesGet(domainTopology,domainNodes,err,error,*999)
+    CALL DomainNodes_NodeDoesExist(domainNodes,nodeUserNumber,localNodeNumber,err,error,*999)
+    CALL DomainNodes_DerivativePartialIndexGet(domainNodes,derivativeIndex,localNodeNumber,partialDerivativeIndex, &
+      & err,error,*999)
+
+    EXITS("OC_Decomposition_NodePartialDerivativeGetNumber")
+    RETURN
+999 ERRORSEXITS("OC_Decomposition_NodePartialDerivativeGetNumber",err,error)
+    CALL OC_HandleError(err,error)
+    RETURN
+
+  END SUBROUTINE OC_Decomposition_NodePartialDerivativeGetNumber
+
+  !
+  !================================================================================================================================
+  !
+
+  !>Returns the partial derivative index for a given local node derivative in a decomposition mesh component identified by an object.
+  SUBROUTINE OC_Decomposition_NodePartialDerivativeGetObj(decomposition,meshComponentNumber,derivativeIndex,nodeUserNumber, &
+    & partialDerivativeIndex,err)
+    !DLLEXPORT(OC_Decomposition_NodePartialDerivativeGetObj)
+
+    !Argument variables
+    TYPE(OC_DecompositionType), INTENT(IN) :: decomposition !<The decomposition to get the domain for.
+    INTEGER(INTG), INTENT(IN) :: meshComponentNumber !<The user number of the mesh component to get the node partial derivative for for.
+    INTEGER(INTG), INTENT(IN) :: derivativeIndex !<The local node derivative to get the partial derivative for.
+    INTEGER(INTG), INTENT(IN) :: nodeUserNumber !<The user number of the node to get the partial derivative for.
+    INTEGER(INTG), INTENT(OUT) :: partialDerivativeIndex !<On return, the partial derivative index of the node local derivative.
+    INTEGER(INTG), INTENT(OUT) :: err !<The error code.
+    !Local variables
+    INTEGER(INTG) :: localNodeNumber
+    TYPE(DomainType), POINTER :: domain
+    TYPE(DomainNodesType), POINTER :: domainNodes
+    TYPE(DomainTopologyType), POINTER :: domainTopology
+ 
+    ENTERS("OC_Decomposition_NodePartialDerivativeGetObj",err,error,*999)
+
+    NULLIFY(domain)
+    NULLIFY(domainTopology)
+    NULLIFY(domainNodes)
+    CALL Decomposition_DomainGet(decomposition%decomposition,meshComponentNumber,domain,err,error,*999)
+    CALL Domain_DomainTopologyGet(domain,domainTopology,err,error,*999)
+    CALL DomainTopology_DomainNodesGet(domainTopology,domainNodes,err,error,*999)
+    CALL DomainNodes_NodeDoesExist(domainNodes,nodeUserNumber,localNodeNumber,err,error,*999)
+    CALL DomainNodes_DerivativePartialIndexGet(domainNodes,derivativeIndex,localNodeNumber,partialDerivativeIndex, &
+      & err,error,*999)
+
+    EXITS("OC_Decomposition_NodePartialDerivativeGetObj")
+    RETURN
+999 ERRORSEXITS("OC_Decomposition_NodePartialDerivativeGetObj",err,error)
+    CALL OC_HandleError(err,error)
+    RETURN
+
+  END SUBROUTINE OC_Decomposition_NodePartialDerivativeGetObj
+
+  !
+  !================================================================================================================================
+  !
+
+  !>Returns the user number of an element surrounding a given node in a decomposition identified by a user number.
+  SUBROUTINE OC_Decomposition_NodeSurroundingElementGetNumber(contextUserNumber,regionUserNumber,meshUserNumber, &
+    & decompositionUserNumber,meshComponentNumber,nodeUserNumber,surroundingElementIdx,surroundingElementUserNumber,err)
+    !DLLEXPORT(OC_Decomposition_NodeSurroundingElementGetNumber)
+
+    !Argument variables
+    INTEGER(INTG), INTENT(IN) :: contextUserNumber !<The user number of the context with the region.
+    INTEGER(INTG), INTENT(IN) :: regionUserNumber !<The user number of the region containing the mesh to get the node surrounding element for.
+    INTEGER(INTG), INTENT(IN) :: meshUserNumber !<The user number of the mesh to get the node number of surrounding for.
+    INTEGER(INTG), INTENT(IN) :: decompositionUserNumber !<The user number of the decomposition to get the node number of surrounding for.
+    INTEGER(INTG), INTENT(IN) :: meshComponentNumber !<The user number of the mesh component containing the node for.
+    INTEGER(INTG), INTENT(IN) :: nodeUserNumber !<The user number of the node to get the number of surrounding elements for.
+    INTEGER(INTG), INTENT(IN) :: surroundingElementIdx !<The surrounding element index to get the surrounding element ofr
+    INTEGER(INTG), INTENT(OUT) :: surroundingElementUserNumber !<On return, the element user number that is surrounding the node.
+    INTEGER(INTG), INTENT(OUT) :: err !<The error code.
+    !Local variables
+    INTEGER(INTG) :: localElementNumber,localNodeNumber
+    TYPE(ContextType), POINTER :: context
+    TYPE(DecompositionType), POINTER :: decomposition
+    TYPE(DecompositionElementsType), POINTER :: decompositionElements
+    TYPE(DecompositionTopologyType), POINTER :: decompositionTopology
+    TYPE(DomainType), POINTER :: domain
+    TYPE(DomainNodesType), POINTER :: domainNodes
+    TYPE(DomainTopologyType), POINTER :: domainTopology
+    TYPE(MeshType), POINTER :: mesh
+    TYPE(RegionType), POINTER :: region
+    TYPE(RegionsType), POINTER :: regions
+
+    ENTERS("OC_Decomposition_NodeSurroundingElementGetNumber",err,error,*999)
+
+    NULLIFY(context)
+    NULLIFY(regions)
+    NULLIFY(region)
+    NULLIFY(mesh)
+    NULLIFY(decomposition)
+    NULLIFY(domain)
+    NULLIFY(domainTopology)
+    NULLIFY(domainNodes)
+    CALL Context_Get(contexts,contextUserNumber,context,err,error,*999)    
+    CALL Context_RegionsGet(context,regions,err,error,*999)
+    CALL Region_Get(regions,regionUserNumber,region,err,error,*999)
+    CALL Region_MeshGet(region,meshUserNumber,mesh,err,error,*999)
+    CALL Mesh_DecompositionGet(mesh,decompositionUserNumber,decomposition,err,error,*999)
+    CALL Decomposition_DecompositionTopologyGet(decomposition,decompositionTopology,err,error,*999)
+    CALL DecompositionTopology_DecompositionElementsGet(decompositionTopology,decompositionElements,err,error,*999)
+    CALL Decomposition_DomainGet(decomposition,meshComponentNumber,domain,err,error,*999)
+    CALL Domain_DomainTopologyGet(domain,domainTopology,err,error,*999)
+    CALL DomainTopology_DomainNodesGet(domainTopology,domainNodes,err,error,*999)
+    CALL DomainNodes_NodeDoesExist(domainNodes,nodeUserNumber,localNodeNumber,err,error,*999)
+    CALL DomainNodes_NodeSurroundingElementGet(domainNodes,surroundingElementIdx,localNodeNumber,localElementNumber, &
+      & err,error,*999)
+    CALL DecompositionElements_ElementUserNumberGet(decompositionElements,localElementNumber,surroundingElementUserNumber, &
+      & err,error,*999)
+
+    EXITS("OC_Decomposition_NodeSurroundingElementGetNumber")
+    RETURN
+999 ERRORSEXITS("OC_Decomposition_NodeSurroundingElementGetNumber",err,error)
+    CALL OC_HandleError(err,error)
+    RETURN
+
+  END SUBROUTINE OC_Decomposition_NodeSurroundingElementGetNumber
+
+  !
+  !================================================================================================================================
+  !
+
+  !>Returns the user number of an element surrounding a given node in a decomposition identified by an object. \todo Maybe swap Node and MeshComponent?
+  SUBROUTINE OC_Decomposition_NodeSurroundingElementGetObj(decomposition,meshComponentNumber,nodeUserNumber,surroundingElementIdx, &
+    & surroundingElementUserNumber,err)
+    !DLLEXPORT(OC_Decomposition_NodeSurroundingElementGetObj)
+
+    !Argument variables
+    TYPE(OC_DecompositionType), INTENT(IN) :: decomposition !<The decomposition to get the domain for.
+    INTEGER(INTG), INTENT(IN) :: meshComponentNumber !<The user number of the mesh component to get the domain for.
+    INTEGER(INTG), INTENT(IN) :: nodeUserNumber !<The user number of the node to get the domain for.
+    INTEGER(INTG), INTENT(IN) :: surroundingElementIdx !<The index of the surrounding element to get.
+    INTEGER(INTG), INTENT(OUT) :: surroundingElementUserNumber !<On return, the user number of the element surrounding the node.
+    INTEGER(INTG), INTENT(OUT) :: err !<The error code.
+    !Local variables
+    INTEGER(INTG) :: localElementNumber,localNodeNumber
+    TYPE(DecompositionElementsType), POINTER :: decompositionElements
+    TYPE(DecompositionTopologyType), POINTER :: decompositionTopology
+    TYPE(DomainType), POINTER :: domain
+    TYPE(DomainNodesType), POINTER :: domainNodes
+    TYPE(DomainTopologyType), POINTER :: domainTopology
+
+    ENTERS("OC_Decomposition_NodeSurroundingElementGetObj",err,error,*999)
+
+    NULLIFY(domain)
+    NULLIFY(decompositionTopology)
+    NULLIFY(decompositionElements)
+    NULLIFY(domainTopology)
+    NULLIFY(domainNodes)
+    CALL Decomposition_DomainGet(decomposition%decomposition,meshComponentNumber,domain,err,error,*999)
+    CALL Decomposition_DecompositionTopologyGet(decomposition%decomposition,decompositionTopology,err,error,*999)
+    CALL DecompositionTopology_DecompositionElementsGet(decompositionTopology,decompositionElements,err,error,*999)
+    CALL Domain_DomainTopologyGet(domain,domainTopology,err,error,*999)
+    CALL DomainTopology_DomainNodesGet(domainTopology,domainNodes,err,error,*999)
+    CALL DomainNodes_NodeDoesExist(domainNodes,nodeUserNumber,localNodeNumber,err,error,*999)
+    CALL DomainNodes_NodeSurroundingElementGet(domainNodes,surroundingElementIdx,localNodeNumber,localElementNumber,err,error,*999)
+    CALL DecompositionElements_ElementUserNumberGet(decompositionElements,localElementNumber,surroundingElementUserNumber, &
+      & err,error,*999)
+
+    EXITS("OC_Decomposition_NodeSurroundingElementGetObj")
+    RETURN
+999 ERRORSEXITS("OC_Decomposition_NodeSurroundingElementGetObj",err,error)
+    CALL OC_HandleError(err,error)
+    RETURN
+
+  END SUBROUTINE OC_Decomposition_NodeSurroundingElementGetObj
+
+  !
+  !================================================================================================================================
+  !
+
+  !>Returns the total (local+ghost) number of elements in a decomposition identified by a user number.
+  SUBROUTINE OC_Decomposition_NumberOfElementsGetNumber(contextUserNumber,regionUserNumber,meshUserNumber, &
+    & decompositionUserNumber,numberOfElements,err)
+    !DLLEXPORT(OC_Decomposition_NumberOfElementsGetNumber)
+
+    !Argument variables
+    INTEGER(INTG), INTENT(IN) :: contextUserNumber !<The user number of the context with the region.
+    INTEGER(INTG), INTENT(IN) :: regionUserNumber !<The user number of the region containing the mesh.
+    INTEGER(INTG), INTENT(IN) :: meshUserNumber !<The user number of the mesh with the decomposition.
+    INTEGER(INTG), INTENT(IN) :: decompositionUserNumber !<The user number of the decomposition to get the number of elements for.
+    INTEGER(INTG), INTENT(OUT) :: numberOfElements !<On return, the total (local+ghost) number of elements in the decomposition.
+    INTEGER(INTG), INTENT(OUT) :: err !<The error code.
+    !Local variables
+    TYPE(ContextType), POINTER :: context
+    TYPE(DecompositionType), POINTER :: decomposition
+    TYPE(DecompositionElementsType), POINTER :: decompositionElements
+    TYPE(DecompositionTopologyType), POINTER :: decompositionTopology
+    TYPE(MeshType), POINTER :: mesh
+    TYPE(RegionType), POINTER :: region
+    TYPE(RegionsType), POINTER :: regions
+
+    ENTERS("OC_Decomposition_NumberOfElementsGetNumber",err,error,*999)
+
+    NULLIFY(context)
+    NULLIFY(regions)
+    NULLIFY(region)
+    NULLIFY(mesh)
+    NULLIFY(decomposition)
+    NULLIFY(decompositionTopology)
+    NULLIFY(decompositionElements)
+    CALL Context_Get(contexts,contextUserNumber,context,err,error,*999)    
+    CALL Context_RegionsGet(context,regions,err,error,*999)
+    CALL Region_Get(regions,regionUserNumber,region,err,error,*999)
+    CALL Region_MeshGet(region,meshUserNumber,mesh,err,error,*999)
+    CALL Mesh_DecompositionGet(mesh,decompositionUserNumber,decomposition,err,error,*999)
+    CALL Decomposition_DecompositionTopologyGet(decomposition,decompositionTopology,err,error,*999)
+    CALL DecompositionTopology_DecompositionElementsGet(decompositionTopology,decompositionElements,err,error,*999)
+    CALL DecompositionElements_TotalNumberOfElementsGet(decompositionElements,numberOfElements,err,error,*999)
+    
+    EXITS("OC_Decomposition_NumberOfElementsGetNumber")
+    RETURN
+999 ERRORSEXITS("OC_Decomposition_NumberOfElementsGetNumber",err,error)
+    CALL OC_HandleError(err,error)
+    RETURN
+
+  END SUBROUTINE OC_Decomposition_NumberOfElementsGetNumber
+
+  !
+  !================================================================================================================================
+  !
+
+  !>Returns the total (local+ghost) number of elements in a decomposition identified by an object.
+  SUBROUTINE OC_Decomposition_NumberOfElementsGetObj(decomposition,numberOfElements,err)
+    !DLLEXPORT(OC_Decomposition_NumberOfElementsGetObj)
+    
+    !Argument variables
+    TYPE(OC_DecompositionType), INTENT(IN) :: decomposition !<The decomposition to get the total number of elements for.
+    INTEGER(INTG), INTENT(OUT) :: numberOfElements !<On return, the total (local+ghost) number of elements in the decomposition.
+    INTEGER(INTG), INTENT(OUT) :: err !<The error code.
+    !Local variables
+    TYPE(DecompositionElementsType), POINTER :: decompositionElements
+    TYPE(DecompositionTopologyType), POINTER :: decompositionTopology
+
+    ENTERS("OC_Decomposition_NumberOfElementsGetObj",err,error,*999)
+ 
+    NULLIFY(decompositionTopology)
+    NULLIFY(decompositionElements)
+    CALL Decomposition_DecompositionTopologyGet(decomposition%decomposition,decompositionTopology,err,error,*999)
+    CALL DecompositionTopology_DecompositionElementsGet(decompositionTopology,decompositionElements,err,error,*999)
+    CALL DecompositionElements_TotalNumberOfElementsGet(decompositionElements,numberOfElements,err,error,*999)
+
+    EXITS("OC_Decomposition_NumberOfElementsGetObj")
+    RETURN
+999 ERRORSEXITS("OC_Decomposition_NumberOfElementsGetObj",err,error)
+    CALL OC_HandleError(err,error)
+    RETURN
+
+  END SUBROUTINE OC_Decomposition_NumberOfElementsGetObj
+
+  !
+  !================================================================================================================================
+  !
+
+  !>Returns the number of ghost elements in a decomposition identified by a user number.
+  SUBROUTINE OC_Decomposition_NumberOfGhostElementsGetNumber(contextUserNumber,regionUserNumber,meshUserNumber, &
+    & decompositionUserNumber,numberOfGhostElements,err)
+    !DLLEXPORT(OC_Decomposition_NumberOfGhostElementsGetNumber)
+
+    !Argument variables
+    INTEGER(INTG), INTENT(IN) :: contextUserNumber !<The user number of the context with the region.
+    INTEGER(INTG), INTENT(IN) :: regionUserNumber !<The user number of the region containing the mesh.
+    INTEGER(INTG), INTENT(IN) :: meshUserNumber !<The user number of the mesh with the decomposition.
+    INTEGER(INTG), INTENT(IN) :: decompositionUserNumber !<The user number of the decomposition to get the number of ghost elements for.
+    INTEGER(INTG), INTENT(OUT) :: numberOfGhostElements !<On return, the number of ghost elements in the decomposition.
+    INTEGER(INTG), INTENT(OUT) :: err !<The error code.
+    !Local variables
+    INTEGER(INTG) :: numberOfElements,totalNumberOfElements
+    TYPE(ContextType), POINTER :: context
+    TYPE(DecompositionType), POINTER :: decomposition
+    TYPE(DecompositionElementsType), POINTER :: decompositionElements
+    TYPE(DecompositionTopologyType), POINTER :: decompositionTopology
+    TYPE(MeshType), POINTER :: mesh
+    TYPE(RegionType), POINTER :: region
+    TYPE(RegionsType), POINTER :: regions
+
+    ENTERS("OC_Decomposition_NumberOfGhostElementsGetNumber",err,error,*999)
+
+    NULLIFY(context)
+    NULLIFY(regions)
+    NULLIFY(region)
+    NULLIFY(mesh)
+    NULLIFY(decomposition)
+    NULLIFY(decompositionTopology)
+    NULLIFY(decompositionElements)
+    CALL Context_Get(contexts,contextUserNumber,context,err,error,*999)    
+    CALL Context_RegionsGet(context,regions,err,error,*999)
+    CALL Region_Get(regions,regionUserNumber,region,err,error,*999)
+    CALL Region_MeshGet(region,meshUserNumber,mesh,err,error,*999)
+    CALL Mesh_DecompositionGet(mesh,decompositionUserNumber,decomposition,err,error,*999)
+    CALL Decomposition_DecompositionTopologyGet(decomposition,decompositionTopology,err,error,*999)
+    CALL DecompositionTopology_DecompositionElementsGet(decompositionTopology,decompositionElements,err,error,*999)
+    CALL DecompositionElements_TotalNumberOfElementsGet(decompositionElements,totalNumberOfElements,err,error,*999)
+    CALL DecompositionElements_NumberOfElementsGet(decompositionElements,numberOfElements,err,error,*999)
+    numberOfGhostElements=totalNumberOfElements-numberOfElements
+    
+    EXITS("OC_Decomposition_NumberOfGhostElementsGetNumber")
+    RETURN
+999 ERRORSEXITS("OC_Decomposition_NumberOfGhostElementsGetNumber",err,error)
+    CALL OC_HandleError(err,error)
+    RETURN
+
+  END SUBROUTINE OC_Decomposition_NumberOfGhostElementsGetNumber
+
+  !
+  !================================================================================================================================
+  !
+
+  !>Returns the number of ghost elements in a decomposition identified by an object.
+  SUBROUTINE OC_Decomposition_NumberOfGhostElementsGetObj(decomposition,numberOfGhostElements,err)
+    !DLLEXPORT(OC_Decomposition_NumberOfGhostElementsGetObj)
+    
+    !Argument variables
+    TYPE(OC_DecompositionType), INTENT(IN) :: decomposition !<The decomposition to get the number of ghost elements for.
+    INTEGER(INTG), INTENT(OUT) :: numberOfGhostElements !<On return, the number of ghost elements in the decomposition.
+    INTEGER(INTG), INTENT(OUT) :: err !<The error code.
+    !Local variables
+    INTEGER(INTG) :: numberOfElements,totalNumberOfElements
+    TYPE(DecompositionElementsType), POINTER :: decompositionElements
+    TYPE(DecompositionTopologyType), POINTER :: decompositionTopology
+    
+    ENTERS("OC_Decomposition_NumberOfGhostElementsGetObj",err,error,*999)
+ 
+    NULLIFY(decompositionTopology)
+    NULLIFY(decompositionElements)
+    CALL Decomposition_DecompositionTopologyGet(decomposition%decomposition,decompositionTopology,err,error,*999)
+    CALL DecompositionTopology_DecompositionElementsGet(decompositionTopology,decompositionElements,err,error,*999)
+    CALL DecompositionElements_TotalNumberOfElementsGet(decompositionElements,totalNumberOfElements,err,error,*999)
+    CALL DecompositionElements_NumberOfElementsGet(decompositionElements,numberOfElements,err,error,*999)
+    numberOfGhostElements=totalNumberOfElements-numberOfElements
+
+    EXITS("OC_Decomposition_NumberOfGhostElementsGetObj")
+    RETURN
+999 ERRORSEXITS("OC_Decomposition_NumberOfGhostElementsGetObj",err,error)
+    CALL OC_HandleError(err,error)
+    RETURN
+
+  END SUBROUTINE OC_Decomposition_NumberOfGhostElementsGetObj
+
+  !
+  !================================================================================================================================
+  !
+
+  !>Returns the number of ghost nodes in a decomposition mesh component identified by a user number.
+  SUBROUTINE OC_Decomposition_NumberOfGhostNodesGetNumber(contextUserNumber,regionUserNumber,meshUserNumber, &
+    & decompositionUserNumber,meshComponentNumber,numberOfGhostNodes,err)
+    !DLLEXPORT(OC_Decomposition_NumberOfGhostNodesGetNumber)
+
+    !Argument variables
+    INTEGER(INTG), INTENT(IN) :: contextUserNumber !<The user number of the context with the region.
+    INTEGER(INTG), INTENT(IN) :: regionUserNumber !<The user number of the region containing the mesh.
+    INTEGER(INTG), INTENT(IN) :: meshUserNumber !<The user number of the mesh with the decomposition.
+    INTEGER(INTG), INTENT(IN) :: decompositionUserNumber !<The user number of the decomposition to get the number of ghost nodes for.
+    INTEGER(INTG), INTENT(IN) :: meshComponentNumber !<The mesh component number of the decomposition to get the number of ghost nodes for.
+    INTEGER(INTG), INTENT(OUT) :: numberOfGhostNodes !<On return, the number of ghost nodes in the decomposition mesh component
+    INTEGER(INTG), INTENT(OUT) :: err !<The error code.
+    !Local variables
+    INTEGER(INTG) :: numberOfNodes,totalNumberOfNodes
+    TYPE(ContextType), POINTER :: context
+    TYPE(DecompositionType), POINTER :: decomposition
+    TYPE(DomainType), POINTER :: domain
+    TYPE(DomainNodesType), POINTER :: domainNodes
+    TYPE(DomainTopologyType), POINTER :: domainTopology
+    TYPE(MeshType), POINTER :: mesh
+    TYPE(RegionType), POINTER :: region
+    TYPE(RegionsType), POINTER :: regions
+
+    ENTERS("OC_Decomposition_NumberOfGhostNodesGetNumber",err,error,*999)
+
+    NULLIFY(context)
+    NULLIFY(regions)
+    NULLIFY(region)
+    NULLIFY(mesh)
+    NULLIFY(decomposition)
+    NULLIFY(domain)
+    NULLIFY(domainTopology)
+    NULLIFY(domainNodes)
+    CALL Context_Get(contexts,contextUserNumber,context,err,error,*999)    
+    CALL Context_RegionsGet(context,regions,err,error,*999)
+    CALL Region_Get(regions,regionUserNumber,region,err,error,*999)
+    CALL Region_MeshGet(region,meshUserNumber,mesh,err,error,*999)
+    CALL Mesh_DecompositionGet(mesh,decompositionUserNumber,decomposition,err,error,*999)
+    CALL Decomposition_DomainGet(decomposition,meshComponentNumber,domain,err,error,*999)
+    CALL Domain_DomainTopologyGet(domain,domainTopology,err,error,*999)
+    CALL DomainTopology_DomainNodesGet(domainTopology,domainNodes,err,error,*999)
+    CALL DomainNodes_TotalNumberOfNodesGet(domainNodes,totalNumberOfNodes,err,error,*999)
+    CALL DomainNodes_NumberOfNodesGet(domainNodes,numberOfNodes,err,error,*999)
+    numberOfGhostNodes=totalNumberOfNodes-numberOfNodes
+    
+    EXITS("OC_Decomposition_NumberOfGhostNodesGetNumber")
+    RETURN
+999 ERRORSEXITS("OC_Decomposition_NumberOfGhostNodesGetNumber",err,error)
+    CALL OC_HandleError(err,error)
+    RETURN
+
+  END SUBROUTINE OC_Decomposition_NumberOfGhostNodesGetNumber
+
+  !
+  !================================================================================================================================
+  !
+
+  !>Returns the number of ghost nodes in a decomposition mesh component identified by an object.
+  SUBROUTINE OC_Decomposition_NumberOfGhostNodesGetObj(decomposition,meshComponentNumber,numberOfGhostNodes,err)
+    !DLLEXPORT(OC_Decomposition_NumberOfGhostNodesGetObj)
+    
+    !Argument variables
+    TYPE(OC_DecompositionType), INTENT(IN) :: decomposition !<The decomposition to get the number of ghost nodes for.
+    INTEGER(INTG), INTENT(IN) :: meshComponentNumber !<The mesh component number of the decomposition to get the number of ghost nodes for.
+    INTEGER(INTG), INTENT(OUT) :: numberOfGhostNodes !<On return, the number of ghost nodes in the decomposition.
+    INTEGER(INTG), INTENT(OUT) :: err !<The error code.
+    !Local variables
+    INTEGER(INTG) :: numberOfNodes,totalNumberOfNodes
+    TYPE(DomainType), POINTER :: domain
+    TYPE(DomainNodesType), POINTER :: domainNodes
+    TYPE(DomainTopologyType), POINTER :: domainTopology
+
+    ENTERS("OC_Decomposition_NumberOfGhostNodesGetObj",err,error,*999)
+
+    NULLIFY(domain)
+    NULLIFY(domainTopology)
+    NULLIFY(domainNodes)
+    CALL Decomposition_DomainGet(decomposition%decomposition,meshComponentNumber,domain,err,error,*999)
+    CALL Domain_DomainTopologyGet(domain,domainTopology,err,error,*999)
+    CALL DomainTopology_DomainNodesGet(domainTopology,domainNodes,err,error,*999)
+    CALL DomainNodes_TotalNumberOfNodesGet(domainNodes,totalNumberOfNodes,err,error,*999)
+    CALL DomainNodes_NumberOfNodesGet(domainNodes,numberOfNodes,err,error,*999)
+    numberOfGhostNodes=totalNumberOfNodes-numberOfNodes
+
+    EXITS("OC_Decomposition_NumberOfGhostNodesGetObj")
+    RETURN
+999 ERRORSEXITS("OC_Decomposition_NumberOfGhostNodesGetObj",err,error)
+    CALL OC_HandleError(err,error)
+    RETURN
+
+  END SUBROUTINE OC_Decomposition_NumberOfGhostNodesGetObj
+
+  !
+  !================================================================================================================================
+  !
+
+  !>Returns the number of local elements in a decomposition identified by a user number.
+  SUBROUTINE OC_Decomposition_NumberOfLocalElementsGetNumber(contextUserNumber,regionUserNumber,meshUserNumber, &
+    & decompositionUserNumber,numberOfLocalElements,err)
+    !DLLEXPORT(OC_Decomposition_NumberOfLocalElementsGetNumber)
+
+    !Argument variables
+    INTEGER(INTG), INTENT(IN) :: contextUserNumber !<The user number of the context with the region.
+    INTEGER(INTG), INTENT(IN) :: regionUserNumber !<The user number of the region containing the mesh.
+    INTEGER(INTG), INTENT(IN) :: meshUserNumber !<The user number of the mesh with the decomposition.
+    INTEGER(INTG), INTENT(IN) :: decompositionUserNumber !<The user number of the decomposition to get the number of local elements for.
+    INTEGER(INTG), INTENT(OUT) :: numberOfLocalElements !<On return, the number of local elements in the decomposition.
+    INTEGER(INTG), INTENT(OUT) :: err !<The error code.
+    !Local variables
+    TYPE(ContextType), POINTER :: context
+    TYPE(DecompositionType), POINTER :: decomposition
+    TYPE(DecompositionElementsType), POINTER :: decompositionElements
+    TYPE(DecompositionTopologyType), POINTER :: decompositionTopology
+    TYPE(MeshType), POINTER :: mesh
+    TYPE(RegionType), POINTER :: region
+    TYPE(RegionsType), POINTER :: regions
+
+    ENTERS("OC_Decomposition_NumberOfLocalElementsGetNumber",err,error,*999)
+
+    NULLIFY(context)
+    NULLIFY(regions)
+    NULLIFY(region)
+    NULLIFY(mesh)
+    NULLIFY(decomposition)
+    NULLIFY(decompositionTopology)
+    NULLIFY(decompositionElements)
+    CALL Context_Get(contexts,contextUserNumber,context,err,error,*999)    
+    CALL Context_RegionsGet(context,regions,err,error,*999)
+    CALL Region_Get(regions,regionUserNumber,region,err,error,*999)
+    CALL Region_MeshGet(region,meshUserNumber,mesh,err,error,*999)
+    CALL Mesh_DecompositionGet(mesh,decompositionUserNumber,decomposition,err,error,*999)
+    CALL Decomposition_DecompositionTopologyGet(decomposition,decompositionTopology,err,error,*999)
+    CALL DecompositionTopology_DecompositionElementsGet(decompositionTopology,decompositionElements,err,error,*999)
+    CALL DecompositionElements_NumberOfElementsGet(decompositionElements,numberOfLocalElements,err,error,*999)
+    
+    EXITS("OC_Decomposition_NumberOfLocalElementsGetNumber")
+    RETURN
+999 ERRORSEXITS("OC_Decomposition_NumberOfLocalElementsGetNumber",err,error)
+    CALL OC_HandleError(err,error)
+    RETURN
+
+  END SUBROUTINE OC_Decomposition_NumberOfLocalElementsGetNumber
+
+  !
+  !================================================================================================================================
+  !
+
+  !>Returns the number of local elements in a decomposition identified by an object.
+  SUBROUTINE OC_Decomposition_NumberOfLocalElementsGetObj(decomposition,numberOfLocalElements,err)
+    !DLLEXPORT(OC_Decomposition_NumberOfLocalElementsGetObj)
+    
+    !Argument variables
+    TYPE(OC_DecompositionType), INTENT(IN) :: decomposition !<The decomposition to get the number of ghost elements for.
+    INTEGER(INTG), INTENT(OUT) :: numberOfLocalElements !<On return, the number of local elements in the decomposition.
+    INTEGER(INTG), INTENT(OUT) :: err !<The error code.
+    !Local variables
+    TYPE(DecompositionElementsType), POINTER :: decompositionElements
+    TYPE(DecompositionTopologyType), POINTER :: decompositionTopology
+    
+    ENTERS("OC_Decomposition_NumberOfLocalElementsGetObj",err,error,*999)
+ 
+    NULLIFY(decompositionTopology)
+    NULLIFY(decompositionElements)
+    CALL Decomposition_DecompositionTopologyGet(decomposition%decomposition,decompositionTopology,err,error,*999)
+    CALL DecompositionTopology_DecompositionElementsGet(decompositionTopology,decompositionElements,err,error,*999)
+    CALL DecompositionElements_NumberOfElementsGet(decompositionElements,numberOfLocalElements,err,error,*999)
+
+    EXITS("OC_Decomposition_NumberOfLocalElementsGetObj")
+    RETURN
+999 ERRORSEXITS("OC_Decomposition_NumberOfLocalElementsGetObj",err,error)
+    CALL OC_HandleError(err,error)
+    RETURN
+
+  END SUBROUTINE OC_Decomposition_NumberOfLocalElementsGetObj
+
+  !
+  !================================================================================================================================
+  !
+
+  !>Returns the number of local nodes in a decomposition mesh component identified by a user number.
+  SUBROUTINE OC_Decomposition_NumberOfLocalNodesGetNumber(contextUserNumber,regionUserNumber,meshUserNumber, &
+    & decompositionUserNumber,meshComponentNumber,numberOfLocalNodes,err)
+    !DLLEXPORT(OC_Decomposition_NumberOfLocalNodesGetNumber)
+
+    !Argument variables
+    INTEGER(INTG), INTENT(IN) :: contextUserNumber !<The user number of the context with the region.
+    INTEGER(INTG), INTENT(IN) :: regionUserNumber !<The user number of the region containing the mesh.
+    INTEGER(INTG), INTENT(IN) :: meshUserNumber !<The user number of the mesh with the decomposition.
+    INTEGER(INTG), INTENT(IN) :: decompositionUserNumber !<The user number of the decomposition to get the number of local nodes for.
+    INTEGER(INTG), INTENT(IN) :: meshComponentNumber !<The mesh component number of the decomposition to get the number of local nodes for.
+    INTEGER(INTG), INTENT(OUT) :: numberOfLocalNodes !<On return, the number of local nodes in the decomposition mesh component
+    INTEGER(INTG), INTENT(OUT) :: err !<The error code.
+    !Local variables
+    TYPE(ContextType), POINTER :: context
+    TYPE(DecompositionType), POINTER :: decomposition
+    TYPE(DomainType), POINTER :: domain
+    TYPE(DomainNodesType), POINTER :: domainNodes
+    TYPE(DomainTopologyType), POINTER :: domainTopology
+    TYPE(MeshType), POINTER :: mesh
+    TYPE(RegionType), POINTER :: region
+    TYPE(RegionsType), POINTER :: regions
+
+    ENTERS("OC_Decomposition_NumberOfLocalNodesGetNumber",err,error,*999)
+
+    NULLIFY(context)
+    NULLIFY(regions)
+    NULLIFY(region)
+    NULLIFY(mesh)
+    NULLIFY(decomposition)
+    NULLIFY(domain)
+    NULLIFY(domainTopology)
+    NULLIFY(domainNodes)
+    CALL Context_Get(contexts,contextUserNumber,context,err,error,*999)    
+    CALL Context_RegionsGet(context,regions,err,error,*999)
+    CALL Region_Get(regions,regionUserNumber,region,err,error,*999)
+    CALL Region_MeshGet(region,meshUserNumber,mesh,err,error,*999)
+    CALL Mesh_DecompositionGet(mesh,decompositionUserNumber,decomposition,err,error,*999)
+    CALL Decomposition_DomainGet(decomposition,meshComponentNumber,domain,err,error,*999)
+    CALL Domain_DomainTopologyGet(domain,domainTopology,err,error,*999)
+    CALL DomainTopology_DomainNodesGet(domainTopology,domainNodes,err,error,*999)
+    CALL DomainNodes_NumberOfNodesGet(domainNodes,numberOfLocalNodes,err,error,*999)
+    
+    EXITS("OC_Decomposition_NumberOfLocalNodesGetNumber")
+    RETURN
+999 ERRORSEXITS("OC_Decomposition_NumberOfLocalNodesGetNumber",err,error)
+    CALL OC_HandleError(err,error)
+    RETURN
+
+  END SUBROUTINE OC_Decomposition_NumberOfLocalNodesGetNumber
+
+  !
+  !================================================================================================================================
+  !
+
+  !>Returns the number of local nodes in a decomposition mesh component identified by an object.
+  SUBROUTINE OC_Decomposition_NumberOfLocalNodesGetObj(decomposition,meshComponentNumber,numberOfLocalNodes,err)
+    !DLLEXPORT(OC_Decomposition_NumberOfLocalNodesGetObj)
+    
+    !Argument variables
+    TYPE(OC_DecompositionType), INTENT(IN) :: decomposition !<The decomposition to get the number of local nodes for.
+    INTEGER(INTG), INTENT(IN) :: meshComponentNumber !<The mesh component number of the decomposition to get the number of local nodes for.
+    INTEGER(INTG), INTENT(OUT) :: numberOfLocalNodes !<On return, the number of local nodes in the decomposition.
+    INTEGER(INTG), INTENT(OUT) :: err !<The error code.
+    !Local variables
+    TYPE(DomainType), POINTER :: domain
+    TYPE(DomainNodesType), POINTER :: domainNodes
+    TYPE(DomainTopologyType), POINTER :: domainTopology
+
+    ENTERS("OC_Decomposition_NumberOfLocalNodesGetObj",err,error,*999)
+
+    NULLIFY(domain)
+    NULLIFY(domainTopology)
+    NULLIFY(domainNodes)
+    CALL Decomposition_DomainGet(decomposition%decomposition,meshComponentNumber,domain,err,error,*999)
+    CALL Domain_DomainTopologyGet(domain,domainTopology,err,error,*999)
+    CALL DomainTopology_DomainNodesGet(domainTopology,domainNodes,err,error,*999)
+    CALL DomainNodes_NumberOfNodesGet(domainNodes,numberOfLocalNodes,err,error,*999)
+
+    EXITS("OC_Decomposition_NumberOfLocalNodesGetObj")
+    RETURN
+999 ERRORSEXITS("OC_Decomposition_NumberOfLocalNodesGetObj",err,error)
+    CALL OC_HandleError(err,error)
+    RETURN
+
+  END SUBROUTINE OC_Decomposition_NumberOfLocalNodesGetObj
+
+  !
+  !================================================================================================================================
+  !
+
+  !>Returns the total (local+ghost) number of nodes in a decomposition mesh component identified by a user number.
+  SUBROUTINE OC_Decomposition_NumberOfNodesGetNumber(contextUserNumber,regionUserNumber,meshUserNumber, &
+    & decompositionUserNumber,meshComponentNumber,numberOfNodes,err)
+    !DLLEXPORT(OC_Decomposition_NumberOfNodesGetNumber)
+
+    !Argument variables
+    INTEGER(INTG), INTENT(IN) :: contextUserNumber !<The user number of the context with the region.
+    INTEGER(INTG), INTENT(IN) :: regionUserNumber !<The user number of the region containing the mesh.
+    INTEGER(INTG), INTENT(IN) :: meshUserNumber !<The user number of the mesh with the decomposition.
+    INTEGER(INTG), INTENT(IN) :: decompositionUserNumber !<The user number of the decomposition to get the number of nodes for.
+    INTEGER(INTG), INTENT(IN) :: meshComponentNumber !<The mesh component number of the decomposition to get the number of nodes for.
+    INTEGER(INTG), INTENT(OUT) :: numberOfNodes !<On return, the total (local+ghost) number of nodes in the decomposition mesh component
+    INTEGER(INTG), INTENT(OUT) :: err !<The error code.
+    !Local variables
+    TYPE(ContextType), POINTER :: context
+    TYPE(DecompositionType), POINTER :: decomposition
+    TYPE(DomainType), POINTER :: domain
+    TYPE(DomainNodesType), POINTER :: domainNodes
+    TYPE(DomainTopologyType), POINTER :: domainTopology
+    TYPE(MeshType), POINTER :: mesh
+    TYPE(RegionType), POINTER :: region
+    TYPE(RegionsType), POINTER :: regions
+
+    ENTERS("OC_Decomposition_NumberOfNodesGetNumber",err,error,*999)
+
+    NULLIFY(context)
+    NULLIFY(regions)
+    NULLIFY(region)
+    NULLIFY(mesh)
+    NULLIFY(decomposition)
+    NULLIFY(domain)
+    NULLIFY(domainTopology)
+    NULLIFY(domainNodes)
+    CALL Context_Get(contexts,contextUserNumber,context,err,error,*999)    
+    CALL Context_RegionsGet(context,regions,err,error,*999)
+    CALL Region_Get(regions,regionUserNumber,region,err,error,*999)
+    CALL Region_MeshGet(region,meshUserNumber,mesh,err,error,*999)
+    CALL Mesh_DecompositionGet(mesh,decompositionUserNumber,decomposition,err,error,*999)
+    CALL Decomposition_DomainGet(decomposition,meshComponentNumber,domain,err,error,*999)
+    CALL Domain_DomainTopologyGet(domain,domainTopology,err,error,*999)
+    CALL DomainNodes_TotalNumberOfNodesGet(domainNodes,numberOfNodes,err,error,*999)
+    
+    EXITS("OC_Decomposition_NumberOfNodesGetNumber")
+    RETURN
+999 ERRORSEXITS("OC_Decomposition_NumberOfNodesGetNumber",err,error)
+    CALL OC_HandleError(err,error)
+    RETURN
+
+  END SUBROUTINE OC_Decomposition_NumberOfNodesGetNumber
+
+  !
+  !================================================================================================================================
+  !
+
+  !>Returns the total (local+ghost) number of nodes in a decomposition mesh component identified by an object.
+  SUBROUTINE OC_Decomposition_NumberOfNodesGetObj(decomposition,meshComponentNumber,numberOfNodes,err)
+    !DLLEXPORT(OC_Decomposition_NumberOfNodesGetObj)
+    
+    !Argument variables
+    TYPE(OC_DecompositionType), INTENT(IN) :: decomposition !<The decomposition to get the number of nodes for.
+    INTEGER(INTG), INTENT(IN) :: meshComponentNumber !<The mesh component number of the decomposition to get the number of nodes for.
+    INTEGER(INTG), INTENT(OUT) :: numberOfNodes !<On return, the total (local+ghost) number of nodes in the decomposition mesh component.
+    INTEGER(INTG), INTENT(OUT) :: err !<The error code.
+    !Local variables
+    TYPE(DomainType), POINTER :: domain
+    TYPE(DomainNodesType), POINTER :: domainNodes
+    TYPE(DomainTopologyType), POINTER :: domainTopology
+
+    ENTERS("OC_Decomposition_NumberOfNodesGetObj",err,error,*999)
+
+    NULLIFY(domain)
+    NULLIFY(domainTopology)
+    NULLIFY(domainNodes)
+    CALL Decomposition_DomainGet(decomposition%decomposition,meshComponentNumber,domain,err,error,*999)
+    CALL Domain_DomainTopologyGet(domain,domainTopology,err,error,*999)
+    CALL DomainTopology_DomainNodesGet(domainTopology,domainNodes,err,error,*999)
+    CALL DomainNodes_TotalNumberOfNodesGet(domainNodes,numberOfNodes,err,error,*999)
+    
+    EXITS("OC_Decomposition_NumberOfNodesGetObj")
+    RETURN
+999 ERRORSEXITS("OC_Decomposition_NumberOfNodesGetObj",err,error)
+    CALL OC_HandleError(err,error)
+    RETURN
+    
+  END SUBROUTINE OC_Decomposition_NumberOfNodesGetObj
 
 !!==================================================================================================================================
 !!
-!! MESH_ROUTINES
+!! Decomposition Element Routines
+!!
+!!==================================================================================================================================
+ 
+  !>Returns a decomposition element for a decomposition elements identified by an object.
+  SUBROUTINE OC_DecompositionElements_ElementGetObj(decompositionElements,userElementNumber,decompositionElement,err)
+    !DLLEXPORT(OC_DecompositionElements_ElementGetObj)
+
+    !Argument variables
+    TYPE(OC_DecompositionElementsType), INTENT(IN) :: decompositionElements !<The decomposition elements to get the element for
+    INTEGER(INTG), INTENT(IN) :: userElementNumber !<The user element number to get
+    TYPE(OC_DecompositionElementType), INTENT(INOUT) :: decompositionElement !<On return, the decomposition specified decomposition element
+    INTEGER(INTG), INTENT(OUT) :: err !<The error code.
+    !Local variables
+    INTEGER(INTG) :: localElementNumber
+
+    ENTERS("OC_DecompositionElements_ElementGetObj",err,error,*999)
+
+    !Given that the decomposition elements are "read only" always nullify? or rely on user? For now, rely on user.
+    !NULLIFY(decompositionElement%decompositionElement)
+    CALL DecompositionElements_ElementDoesExist(decompositionElements%decompositionElements,userElementNumber,localElementNumber, &
+      & err,error,*999)
+    CALL DecompositionElements_ElementGet(decompositionElements%decompositionElements,localElementNumber,&
+      & decompositionElement%decompositionElement,err,error,*999)
+
+    EXITS("OC_DecompositionElements_ElementGetObj")
+    RETURN
+999 ERRORSEXITS("OC_DecompositionElements_ElementGetObj",err,error)
+    CALL OC_HandleError(err,error)
+    RETURN
+
+  END SUBROUTINE OC_DecompositionElements_ElementGetObj
+
+!!==================================================================================================================================
+!!
+!! Decomposition Face Routines
+!!
+!!==================================================================================================================================
+ 
+
+!!==================================================================================================================================
+!!
+!! Decomposition Line Routines
+!!
+!!==================================================================================================================================
+ 
+
+!!==================================================================================================================================
+!!
+!! Decomposition Topology Routines
+!!
+!!==================================================================================================================================
+
+  !>Returns a decomposition topology elements for a decomposition topology identified by a user number.
+  SUBROUTINE OC_DecompositionTopology_ElementsGetNumber(contextUserNumber,regionUserNumber,meshUserNumber,decompositionUserNumber, &
+    & decompositionElements,err)
+    !DLLEXPORT(OC_DecompositionTopology_ElementsGetNumber)
+
+    !Argument variables
+    INTEGER(INTG), INTENT(IN) :: contextUserNumber !<The user number of the context with the region.
+    INTEGER(INTG), INTENT(IN) :: regionUserNumber !<The user number of the region containing the mesh to get the decomposition topology elements for.
+    INTEGER(INTG), INTENT(IN) :: meshUserNumber !<The user number of the mesh to get the decomposition topology elements for.
+    INTEGER(INTG), INTENT(IN) :: decompositionUserNumber !<The user number of the decomposition to get the topology elements for.
+    TYPE(OC_DecompositionElementsType), INTENT(OUT) :: decompositionElements !<On return, the decomposition elements object.
+    INTEGER(INTG), INTENT(OUT) :: err !<The error code.
+    !Local variables
+    TYPE(ContextType), POINTER :: context
+    TYPE(DecompositionType), POINTER :: decomposition
+    TYPE(DecompositionTopologyType), POINTER :: decompositionTopology
+    TYPE(MeshType), POINTER :: mesh
+    TYPE(RegionType), POINTER :: region
+    TYPE(RegionsType), POINTER :: regions
+
+    ENTERS("OC_DecompositionTopology_ElementsGetNumber",err,error,*999)
+
+    NULLIFY(context)
+    NULLIFY(regions)
+    NULLIFY(region)
+    NULLIFY(mesh)
+    NULLIFY(decomposition)
+    NULLIFY(decompositionTopology)
+    CALL Context_Get(contexts,contextUserNumber,context,err,error,*999)    
+    CALL Context_RegionsGet(context,regions,err,error,*999)
+    CALL Region_Get(regions,regionUserNumber,region,err,error,*999)
+    CALL Region_MeshGet(region,meshUserNumber,mesh,err,error,*999)
+    CALL Mesh_DecompositionGet(mesh,decompositionUserNumber,decomposition,err,error,*999)
+    CALL Decomposition_DecompositionTopologyGet(decomposition,decompositionTopology,err,error,*999)
+    CALL DecompositionTopology_DecompositionElementsGet(decompositionTopology,decompositionElements%decompositionElements, &
+      & err,error,*999)
+
+    EXITS("OC_DecompositionTopology_ElementsGetNumber")
+    RETURN
+999 ERRORSEXITS("OC_DecompositionTopology_ElementsGetNumber",err,error)
+    CALL OC_HandleError(err,error)
+    RETURN
+
+  END SUBROUTINE OC_DecompositionTopology_ElementsGetNumber
+
+  !
+  !================================================================================================================================
+  !
+
+  !>Returns a decomposition topology elements for a decomposition topology identified by an object.
+  SUBROUTINE OC_DecompositionTopology_ElementsGetObj(decompositionTopology,decompositionElements,err)
+    !DLLEXPORT(OC_DecompositionTopology_ElementsGetObj)
+
+    !Argument variables
+    TYPE(OC_DecompositionTopologyType), INTENT(IN) :: decompositionTopology !<The decomposition topology to get the elements for.
+    TYPE(OC_DecompositionElementsType), INTENT(INOUT) :: decompositionElements !<On return the specfied decomposition elements for the decomposition topology
+    INTEGER(INTG), INTENT(OUT) :: err !<The error code.
+    !Local variables
+
+    ENTERS("OC_DecompositionTopology_ElementsGetObj",err,error,*999)
+
+    CALL DecompositionTopology_DecompositionElementsGet(decompositionTopology%decompositionTopology, &
+      & decompositionElements%decompositionElements,err,error,*999)
+
+    EXITS("OC_DecompositionTopology_ElementsGetObj")
+    RETURN
+999 ERRORSEXITS("OC_DecompositionTopology_ElementsGetObj",err,error)
+    CALL OC_HandleError(err,error)
+    RETURN
+
+  END SUBROUTINE OC_DecompositionTopology_ElementsGetObj
+
+  !
+  !================================================================================================================================
+  !
+
+  !>Returns a decomposition topology faces for a decomposition topology identified by a user number.
+  SUBROUTINE OC_DecompositionTopology_FacesGetNumber(contextUserNumber,regionUserNumber,meshUserNumber,decompositionUserNumber, &
+    & decompositionFaces,err)
+    !DLLEXPORT(OC_DecompositionTopology_FacesGetNumber)
+
+    !Argument variables
+    INTEGER(INTG), INTENT(IN) :: contextUserNumber !<The user number of the context with the region.
+    INTEGER(INTG), INTENT(IN) :: regionUserNumber !<The user number of the region containing the mesh to get the decomposition topology faces for.
+    INTEGER(INTG), INTENT(IN) :: meshUserNumber !<The user number of the mesh to get the decomposition topology faces for.
+    INTEGER(INTG), INTENT(IN) :: decompositionUserNumber !<The user number of the decomposition to get the topology faces for.
+    TYPE(OC_DecompositionFacesType), INTENT(OUT) :: decompositionFaces !<On return, the decomposition faces object.
+    INTEGER(INTG), INTENT(OUT) :: err !<The error code.
+    !Local variables
+    TYPE(ContextType), POINTER :: context
+    TYPE(DecompositionType), POINTER :: decomposition
+    TYPE(DecompositionTopologyType), POINTER :: decompositionTopology
+    TYPE(MeshType), POINTER :: mesh
+    TYPE(RegionType), POINTER :: region
+    TYPE(RegionsType), POINTER :: regions
+
+    ENTERS("OC_DecompositionTopology_FacesGetNumber",err,error,*999)
+
+    NULLIFY(context)
+    NULLIFY(regions)
+    NULLIFY(region)
+    NULLIFY(mesh)
+    NULLIFY(decomposition)
+    NULLIFY(decompositionTopology)
+    CALL Context_Get(contexts,contextUserNumber,context,err,error,*999)    
+    CALL Context_RegionsGet(context,regions,err,error,*999)
+    CALL Region_Get(regions,regionUserNumber,region,err,error,*999)
+    CALL Region_MeshGet(region,meshUserNumber,mesh,err,error,*999)
+    CALL Mesh_DecompositionGet(mesh,decompositionUserNumber,decomposition,err,error,*999)
+    CALL Decomposition_DecompositionTopologyGet(decomposition,decompositionTopology,err,error,*999)
+    CALL DecompositionTopology_DecompositionFacesGet(decompositionTopology,decompositionFaces%decompositionFaces, &
+      & err,error,*999)
+
+    EXITS("OC_DecompositionTopology_FacesGetNumber")
+    RETURN
+999 ERRORSEXITS("OC_DecompositionTopology_FacesGetNumber",err,error)
+    CALL OC_HandleError(err,error)
+    RETURN
+
+  END SUBROUTINE OC_DecompositionTopology_FacesGetNumber
+
+  !
+  !================================================================================================================================
+  !
+
+  !>Returns a decomposition topology faces for a decomposition topology identified by an object.
+  SUBROUTINE OC_DecompositionTopology_FacesGetObj(decompositionTopology,decompositionFaces,err)
+    !DLLEXPORT(OC_DecompositionTopology_FacesGetObj)
+
+    !Argument variables
+    TYPE(OC_DecompositionTopologyType), INTENT(IN) :: decompositionTopology !<The decomposition topology to get the faces for.
+    TYPE(OC_DecompositionFacesType), INTENT(INOUT) :: decompositionFaces !<On return the specfied decomposition faces for the decomposition topology
+    INTEGER(INTG), INTENT(OUT) :: err !<The error code.
+    !Local variables
+
+    ENTERS("OC_DecompositionTopology_FacesGetObj",err,error,*999)
+
+    CALL DecompositionTopology_DecompositionFacesGet(decompositionTopology%decompositionTopology, &
+      & decompositionFaces%decompositionFaces,err,error,*999)
+
+    EXITS("OC_DecompositionTopology_FacesGetObj")
+    RETURN
+999 ERRORSEXITS("OC_DecompositionTopology_FacesGetObj",err,error)
+    CALL OC_HandleError(err,error)
+    RETURN
+
+  END SUBROUTINE OC_DecompositionTopology_FacesGetObj
+
+  !
+  !================================================================================================================================
+  !
+
+  !>Returns a decomposition topology lines for a decomposition topology identified by a user number.
+  SUBROUTINE OC_DecompositionTopology_LinesGetNumber(contextUserNumber,regionUserNumber,meshUserNumber,decompositionUserNumber, &
+    & decompositionLines,err)
+    !DLLEXPORT(OC_DecompositionTopology_LinesGetNumber)
+
+    !Argument variables
+    INTEGER(INTG), INTENT(IN) :: contextUserNumber !<The user number of the context with the region.
+    INTEGER(INTG), INTENT(IN) :: regionUserNumber !<The user number of the region containing the mesh to get the decomposition topology lines for.
+    INTEGER(INTG), INTENT(IN) :: meshUserNumber !<The user number of the mesh to get the decomposition topology lines for.
+    INTEGER(INTG), INTENT(IN) :: decompositionUserNumber !<The user number of the decomposition to get the topology lines for.
+    TYPE(OC_DecompositionLinesType), INTENT(OUT) :: decompositionLines !<On return, the decomposition lines object.
+    INTEGER(INTG), INTENT(OUT) :: err !<The error code.
+    !Local variables
+    TYPE(ContextType), POINTER :: context
+    TYPE(DecompositionType), POINTER :: decomposition
+    TYPE(DecompositionTopologyType), POINTER :: decompositionTopology
+    TYPE(MeshType), POINTER :: mesh
+    TYPE(RegionType), POINTER :: region
+    TYPE(RegionsType), POINTER :: regions
+
+    ENTERS("OC_DecompositionTopology_LinesGetNumber",err,error,*999)
+
+    NULLIFY(context)
+    NULLIFY(regions)
+    NULLIFY(region)
+    NULLIFY(mesh)
+    NULLIFY(decomposition)
+    NULLIFY(decompositionTopology)
+    CALL Context_Get(contexts,contextUserNumber,context,err,error,*999)    
+    CALL Context_RegionsGet(context,regions,err,error,*999)
+    CALL Region_Get(regions,regionUserNumber,region,err,error,*999)
+    CALL Region_MeshGet(region,meshUserNumber,mesh,err,error,*999)
+    CALL Mesh_DecompositionGet(mesh,decompositionUserNumber,decomposition,err,error,*999)
+    CALL Decomposition_DecompositionTopologyGet(decomposition,decompositionTopology,err,error,*999)
+    CALL DecompositionTopology_DecompositionLinesGet(decompositionTopology,decompositionLines%decompositionLines, &
+      & err,error,*999)
+
+    EXITS("OC_DecompositionTopology_LinesGetNumber")
+    RETURN
+999 ERRORSEXITS("OC_DecompositionTopology_LinesGetNumber",err,error)
+    CALL OC_HandleError(err,error)
+    RETURN
+
+  END SUBROUTINE OC_DecompositionTopology_LinesGetNumber
+
+  !
+  !================================================================================================================================
+  !
+
+  !>Returns a decomposition topology lines for a decomposition topology identified by an object.
+  SUBROUTINE OC_DecompositionTopology_LinesGetObj(decompositionTopology,decompositionLines,err)
+    !DLLEXPORT(OC_DecompositionTopology_LinesGetObj)
+
+    !Argument variables
+    TYPE(OC_DecompositionTopologyType), INTENT(IN) :: decompositionTopology !<The decomposition topology to get the lines for.
+    TYPE(OC_DecompositionLinesType), INTENT(INOUT) :: decompositionLines !<On return the specfied decomposition lines for the decomposition topology
+    INTEGER(INTG), INTENT(OUT) :: err !<The error code.
+    !Local variables
+
+    ENTERS("OC_DecompositionTopology_LinesGetObj",err,error,*999)
+
+    CALL DecompositionTopology_DecompositionLinesGet(decompositionTopology%decompositionTopology, &
+      & decompositionLines%decompositionLines,err,error,*999)
+
+    EXITS("OC_DecompositionTopology_LinesGetObj")
+    RETURN
+999 ERRORSEXITS("OC_DecompositionTopology_LinesGetObj",err,error)
+    CALL OC_HandleError(err,error)
+    RETURN
+
+  END SUBROUTINE OC_DecompositionTopology_LinesGetObj
+
+
+!!==================================================================================================================================
+!!
+!! Domain Routines
+!!
+!!==================================================================================================================================
+
+  !>Returns a domain topology for a decomposition domain identified by a user number.
+  SUBROUTINE OC_Domain_TopologyGetNumber(contextUserNumber,regionUserNumber,meshUserNumber,decompositionUserNumber, &
+    & meshComponentNumber,domainTopology,err)
+    !DLLEXPORT(OC_Domain_TopologyGetNumber)
+
+    !Argument variables
+    INTEGER(INTG), INTENT(IN) :: contextUserNumber !<The user number of the context with the region.
+    INTEGER(INTG), INTENT(IN) :: regionUserNumber !<The user number of the region containing the mesh to get the domain topology for.
+    INTEGER(INTG), INTENT(IN) :: meshUserNumber !<The user number of the mesh to get the domain topology for.
+    INTEGER(INTG), INTENT(IN) :: decompositionUserNumber !<The user number of the decomposition to get the domain topology for.
+    INTEGER(INTG), INTENT(IN) :: meshComponentNumber !<The mesh component number to get the domain topology
+    TYPE(OC_DomainTopologyType), INTENT(OUT) :: domainTopology !<On return, the domain topology object.
+    INTEGER(INTG), INTENT(OUT) :: err !<The error code.
+    !Local variables
+    TYPE(ContextType), POINTER :: context
+    TYPE(DecompositionType), POINTER :: decomposition
+    TYPE(DomainType), POINTER :: domain
+    TYPE(MeshType), POINTER :: mesh
+    TYPE(RegionType), POINTER :: region
+    TYPE(RegionsType), POINTER :: regions
+
+    ENTERS("OC_Domain_TopologyGetNumber",err,error,*999)
+
+    NULLIFY(context)
+    NULLIFY(regions)
+    NULLIFY(region)
+    NULLIFY(mesh)
+    NULLIFY(decomposition)
+    NULLIFY(domain)
+    CALL Context_Get(contexts,contextUserNumber,context,err,error,*999)    
+    CALL Context_RegionsGet(context,regions,err,error,*999)
+    CALL Region_Get(regions,regionUserNumber,region,err,error,*999)
+    CALL Region_MeshGet(region,meshUserNumber,mesh,err,error,*999)
+    CALL Mesh_DecompositionGet(mesh,decompositionUserNumber,decomposition,err,error,*999)
+    CALL Decomposition_DomainGet(decomposition,meshComponentNumber,domain,err,error,*999)    
+    CALL Domain_DomainTopologyGet(domain,domainTopology%domainTopology,err,error,*999)
+
+    EXITS("OC_Domain_TopologyGetNumber")
+    RETURN
+999 ERRORSEXITS("OC_Domain_TopologyGetNumber",err,error)
+    CALL OC_HandleError(err,error)
+    RETURN
+
+  END SUBROUTINE OC_Domain_TopologyGetNumber
+
+  !
+  !================================================================================================================================
+  !
+
+  !>Returns a domain topology for a domain identified by an object.
+  SUBROUTINE OC_Domain_TopologyGetObj(domain,domainTopology,err)
+    !DLLEXPORT(OC_Domain_TopologyGetObj)
+
+    !Argument variables
+    TYPE(OC_DomainType), INTENT(IN) :: domain !<The domain to get the topology for.
+    TYPE(OC_DomainTopologyType), INTENT(INOUT) :: domainTopology !<On return the specfied topology for the domain
+    INTEGER(INTG), INTENT(OUT) :: err !<The error code.
+    !Local variables
+
+    ENTERS("OC_Domain_TopologyGetObj",err,error,*999)
+
+    CALL Domain_DomainTopologyGet(domain%domain,domainTopology%domainTopology,err,error,*999)
+
+    EXITS("OC_Domain_TopologyGetObj")
+    RETURN
+999 ERRORSEXITS("OC_Domain_TopologyGetObj",err,error)
+    CALL OC_HandleError(err,error)
+    RETURN
+
+  END SUBROUTINE OC_Domain_TopologyGetObj
+
+
+!!==================================================================================================================================
+!!
+!! Domain Element Routines
+!!
+!!==================================================================================================================================
+ 
+  !>Returns a domain element for a domain elements identified by an object.
+  SUBROUTINE OC_DomainElements_ElementGetObj(domainElements,userElementNumber,domainElement,err)
+    !DLLEXPORT(OC_DomainElements_ElementGetObj)
+
+    !Argument variables
+    TYPE(OC_DomainElementsType), INTENT(IN) :: domainElements !<The domain elements to get the element for
+    INTEGER(INTG), INTENT(IN) :: userElementNumber !<The user element number to get
+    TYPE(OC_DomainElementType), INTENT(INOUT) :: domainElement !<On return, the specified domain element
+    INTEGER(INTG), INTENT(OUT) :: err !<The error code.
+    !Local variables
+    INTEGER(INTG) :: localElementNumber
+
+    ENTERS("OC_DomainElements_ElementGetObj",err,error,*999)
+
+    !Given that the domain elements are "read only" always nullify? or rely on user? For now, rely on user.
+    !NULLIFY(domainElement%domainElement)
+    CALL DomainElements_ElementDoesExist(domainElements%domainElements,userElementNumber,localElementNumber,err,error,*999)
+    CALL DomainElements_ElementGet(domainElements%domainElements,localElementNumber,domainElement%domainElement,err,error,*999)
+
+    EXITS("OC_DomainElements_ElementGetObj")
+    RETURN
+999 ERRORSEXITS("OC_DomainElements_ElementGetObj",err,error)
+    CALL OC_HandleError(err,error)
+    RETURN
+
+  END SUBROUTINE OC_DomainElements_ElementGetObj
+
+!!==================================================================================================================================
+!!
+!! Domain Face Routines
+!!
+!!==================================================================================================================================
+ 
+
+!!==================================================================================================================================
+!!
+!! Domain Line Routines
+!!
+!!==================================================================================================================================
+ 
+
+!!==================================================================================================================================
+!!
+!! Domain Node Routines
+!!
+!!==================================================================================================================================
+ 
+  !>Returns a domain node for a domain nodes identified by an object.
+  SUBROUTINE OC_DomainNodes_NodeGetObj(domainNodes,userNodeNumber,domainNode,err)
+    !DLLEXPORT(OC_DomainNodes_NodeGetObj)
+
+    !Argument variables
+    TYPE(OC_DomainNodesType), INTENT(IN) :: domainNodes !<The domain nodes to get the node for
+    INTEGER(INTG), INTENT(IN) :: userNodeNumber !<The user node number to get
+    TYPE(OC_DomainNodeType), INTENT(INOUT) :: domainNode !<On return, the specified domain node
+    INTEGER(INTG), INTENT(OUT) :: err !<The error code.
+    !Local variables
+    INTEGER(INTG) :: localNodeNumber
+
+    ENTERS("OC_DomainNodes_NodeGetObj",err,error,*999)
+
+    !Given that the domain nodes are "read only" always nullify? or rely on user? For now, rely on user.
+    !NULLIFY(domainNode%domainNode)
+    CALL DomainNodes_NodeDoesExist(domainNodes%domainNodes,userNodeNumber,localNodeNumber,err,error,*999)
+    CALL DomainNodes_NodeGet(domainNodes%domainNodes,localNodeNumber,domainNode%domainNode,err,error,*999)
+
+    EXITS("OC_DomainNodes_NodeGetObj")
+    RETURN
+999 ERRORSEXITS("OC_DomainNodes_NodeGetObj",err,error)
+    CALL OC_HandleError(err,error)
+    RETURN
+    
+  END SUBROUTINE OC_DomainNodes_NodeGetObj
+  
+  !
+  !================================================================================================================================
+  !
+
+  !>Returns the number of elements surrounding a domain nodes identified by an object.
+  SUBROUTINE OC_DomainNode_NumberOfSurroundingElementsGetObj(domainNode,numberOfSurroundingElements,err)
+    !DLLEXPORT(OC_DomainNode_NumberOfSurroundingElementsGetObj)
+
+    !Argument variables
+    TYPE(OC_DomainNodeType), INTENT(IN) :: domainNode !<The domain node to get the number of surrounding elements for
+    INTEGER(INTG), INTENT(OUT) :: numberOfSurroundingElements !<On return, the number of elements surrounding the node
+    INTEGER(INTG), INTENT(OUT) :: err !<The error code.
+    !Local variables
+ 
+    ENTERS("OC_DomainNode_NumberOfSurroundingElementsGetObj",err,error,*999)
+    
+    CALL DomainNode_NumberOfSurroundingElementsGet(domainNode%domainNode,numberOfSurroundingElements,err,error,*999)
+    
+    EXITS("OC_DomainNode_NumberOfSurroundingElementsGetObj")
+    RETURN
+999 ERRORSEXITS("OC_DomainNode_NumberOfSurroundingElementsGetObj",err,error)
+    CALL OC_HandleError(err,error)
+    RETURN
+    
+  END SUBROUTINE OC_DomainNode_NumberOfSurroundingElementsGetObj
+  
+  !
+  !================================================================================================================================
+  !
+
+  !>Returns the user number of an element surrounding a domain nodes identified by an object.
+  SUBROUTINE OC_DomainNode_SurroundingElementGetObj(domainNode,surroundingElementIdx,surroundingElementUserNumber,err)
+    !DLLEXPORT(OC_DomainNode_SurroundingElementGetObj)
+
+    !Argument variables
+    TYPE(OC_DomainNodeType), INTENT(IN) :: domainNode !<The domain node to get the number of surrounding element for
+    INTEGER(INTG), INTENT(IN) :: surroundingElementIdx !<The surrounding element index
+    INTEGER(INTG), INTENT(OUT) :: surroundingElementUserNumber !<On return, the number of elements surrounding the node
+    INTEGER(INTG), INTENT(OUT) :: err !<The error code.
+    !Local variables
+ 
+    ENTERS("OC_DomainNode_SurroundingElementGetObj",err,error,*999)
+
+    surroundingElementUserNumber=0
+    
+    EXITS("OC_DomainNode_SurroundingElementGetObj")
+    RETURN
+999 ERRORSEXITS("OC_DomainNode_SurroundingElementGetObj",err,error)
+    CALL OC_HandleError(err,error)
+    RETURN
+    
+  END SUBROUTINE OC_DomainNode_SurroundingElementGetObj
+  
+!!==================================================================================================================================
+!!
+!! Domain Topology Routines
+!!
+!!==================================================================================================================================
+ 
+  !>Returns a domain topology elements for a domain topology identified by a user number.
+  SUBROUTINE OC_DomainTopology_ElementsGetNumber(contextUserNumber,regionUserNumber,meshUserNumber,decompositionUserNumber, &
+    & meshComponentNumber,domainElements,err)
+    !DLLEXPORT(OC_DomainTopology_ElementsGetNumber)
+
+    !Argument variables
+    INTEGER(INTG), INTENT(IN) :: contextUserNumber !<The user number of the context with the region.
+    INTEGER(INTG), INTENT(IN) :: regionUserNumber !<The user number of the region containing the mesh to get the domain topology elements for.
+    INTEGER(INTG), INTENT(IN) :: meshUserNumber !<The user number of the mesh to get the domain topology elements for.
+    INTEGER(INTG), INTENT(IN) :: decompositionUserNumber !<The user number of the decomposition to get the topology elements for.
+    INTEGER(INTG), INTENT(IN) :: meshComponentNumber !<The mesh component number of the domain to get the topology elements for.
+    TYPE(OC_DomainElementsType), INTENT(INOUT) :: domainElements !<On return, the domain elements object.
+    INTEGER(INTG), INTENT(OUT) :: err !<The error code.
+    !Local variables
+    TYPE(ContextType), POINTER :: context
+    TYPE(DecompositionType), POINTER :: decomposition
+    TYPE(DomainType), POINTER :: domain
+    TYPE(DomainTopologyType), POINTER :: domainTopology
+    TYPE(MeshType), POINTER :: mesh
+    TYPE(RegionType), POINTER :: region
+    TYPE(RegionsType), POINTER :: regions
+
+    ENTERS("OC_DomainTopology_ElementsGetNumber",err,error,*999)
+
+    NULLIFY(context)
+    NULLIFY(regions)
+    NULLIFY(region)
+    NULLIFY(mesh)
+    NULLIFY(decomposition)
+    NULLIFY(domain)
+    NULLIFY(domainTopology)
+    CALL Context_Get(contexts,contextUserNumber,context,err,error,*999)    
+    CALL Context_RegionsGet(context,regions,err,error,*999)
+    CALL Region_Get(regions,regionUserNumber,region,err,error,*999)
+    CALL Region_MeshGet(region,meshUserNumber,mesh,err,error,*999)
+    CALL Mesh_DecompositionGet(mesh,decompositionUserNumber,decomposition,err,error,*999)
+    CALL Decomposition_DomainGet(decomposition,meshComponentNumber,domain,err,error,*999)
+    CALL Domain_DomainTopologyGet(domain,domainTopology,err,error,*999)
+    CALL DomainTopology_DomainElementsGet(domainTopology,domainElements%domainElements,err,error,*999)
+
+    EXITS("OC_DomainTopology_ElementsGetNumber")
+    RETURN
+999 ERRORSEXITS("OC_DomainTopology_ElementsGetNumber",err,error)
+    CALL OC_HandleError(err,error)
+    RETURN
+
+  END SUBROUTINE OC_DomainTopology_ElementsGetNumber
+
+  !
+  !================================================================================================================================
+  !
+
+  !>Returns a domain topology elements for a domain topology identified by an object.
+  SUBROUTINE OC_DomainTopology_ElementsGetObj(domainTopology,domainElements,err)
+    !DLLEXPORT(OC_DomainTopology_ElementsGetObj)
+
+    !Argument variables
+    TYPE(OC_DomainTopologyType), INTENT(IN) :: domainTopology !<The domain topology to get the elements for.
+    TYPE(OC_DomainElementsType), INTENT(INOUT) :: domainElements !<On return the specfied domain elements for the domain topology
+    INTEGER(INTG), INTENT(OUT) :: err !<The error code.
+    !Local variables
+
+    ENTERS("OC_DomainTopology_ElementsGetObj",err,error,*999)
+
+    CALL DomainTopology_DomainElementsGet(domainTopology%domainTopology,domainElements%domainElements,err,error,*999)
+
+    EXITS("OC_DomainTopology_ElementsGetObj")
+    RETURN
+999 ERRORSEXITS("OC_DomainTopology_ElementsGetObj",err,error)
+    CALL OC_HandleError(err,error)
+    RETURN
+
+  END SUBROUTINE OC_DomainTopology_ElementsGetObj
+
+  !
+  !================================================================================================================================
+  !
+
+  !>Returns a domain topology faces for a domain topology identified by a user number.
+  SUBROUTINE OC_DomainTopology_FacesGetNumber(contextUserNumber,regionUserNumber,meshUserNumber,decompositionUserNumber, &
+    & meshComponentNumber,domainFaces,err)
+    !DLLEXPORT(OC_DomainTopology_FacesGetNumber)
+
+    !Argument variables
+    INTEGER(INTG), INTENT(IN) :: contextUserNumber !<The user number of the context with the region.
+    INTEGER(INTG), INTENT(IN) :: regionUserNumber !<The user number of the region containing the mesh to get the domain topology faces for.
+    INTEGER(INTG), INTENT(IN) :: meshUserNumber !<The user number of the mesh to get the domain topology faces for.
+    INTEGER(INTG), INTENT(IN) :: decompositionUserNumber !<The user number of the decomposition to get the topology faces for.
+    INTEGER(INTG), INTENT(IN) :: meshComponentNumber !<The mesh component number to get the domain topology faces for
+    TYPE(OC_DomainFacesType), INTENT(OUT) :: domainFaces !<On return, the domain faces object.
+    INTEGER(INTG), INTENT(OUT) :: err !<The error code.
+    !Local variables
+    TYPE(ContextType), POINTER :: context
+    TYPE(DecompositionType), POINTER :: decomposition
+    TYPE(DomainType), POINTER :: domain
+    TYPE(DomainTopologyType), POINTER :: domainTopology
+    TYPE(MeshType), POINTER :: mesh
+    TYPE(RegionType), POINTER :: region
+    TYPE(RegionsType), POINTER :: regions
+
+    ENTERS("OC_DomainTopology_FacesGetNumber",err,error,*999)
+
+    NULLIFY(context)
+    NULLIFY(regions)
+    NULLIFY(region)
+    NULLIFY(mesh)
+    NULLIFY(decomposition)
+    NULLIFY(domain)
+    NULLIFY(domainTopology)
+    CALL Context_Get(contexts,contextUserNumber,context,err,error,*999)    
+    CALL Context_RegionsGet(context,regions,err,error,*999)
+    CALL Region_Get(regions,regionUserNumber,region,err,error,*999)
+    CALL Region_MeshGet(region,meshUserNumber,mesh,err,error,*999)
+    CALL Mesh_DecompositionGet(mesh,decompositionUserNumber,decomposition,err,error,*999)
+    CALL Decomposition_DomainGet(decomposition,meshComponentNumber,domain,err,error,*999)
+    CALL Domain_DomainTopologyGet(domain,domainTopology,err,error,*999)
+    CALL DomainTopology_DomainFacesGet(domainTopology,domainFaces%domainFaces,err,error,*999)
+
+    EXITS("OC_DomainTopology_FacesGetNumber")
+    RETURN
+999 ERRORSEXITS("OC_DomainTopology_FacesGetNumber",err,error)
+    CALL OC_HandleError(err,error)
+    RETURN
+
+  END SUBROUTINE OC_DomainTopology_FacesGetNumber
+
+  !
+  !================================================================================================================================
+  !
+
+  !>Returns a domain topology faces for a domain topology identified by an object.
+  SUBROUTINE OC_DomainTopology_FacesGetObj(domainTopology,domainFaces,err)
+    !DLLEXPORT(OC_DomainTopology_FacesGetObj)
+
+    !Argument variables
+    TYPE(OC_DomainTopologyType), INTENT(IN) :: domainTopology !<The domain topology to get the faces for.
+    TYPE(OC_DomainFacesType), INTENT(INOUT) :: domainFaces !<On return the specfied domain faces for the domain topology
+    INTEGER(INTG), INTENT(OUT) :: err !<The error code.
+    !Local variables
+
+    ENTERS("OC_DomainTopology_FacesGetObj",err,error,*999)
+
+    CALL DomainTopology_DomainFacesGet(domainTopology%domainTopology,domainFaces%domainFaces,err,error,*999)
+
+    EXITS("OC_DomainTopology_FacesGetObj")
+    RETURN
+999 ERRORSEXITS("OC_DomainTopology_FacesGetObj",err,error)
+    CALL OC_HandleError(err,error)
+    RETURN
+
+  END SUBROUTINE OC_DomainTopology_FacesGetObj
+
+  !
+  !================================================================================================================================
+  !
+
+  !>Returns a domain topology lines for a domain topology identified by a user number.
+  SUBROUTINE OC_DomainTopology_LinesGetNumber(contextUserNumber,regionUserNumber,meshUserNumber,decompositionUserNumber, &
+    & meshComponentNumber,domainLines,err)
+    !DLLEXPORT(OC_DomainTopology_LinesGetNumber)
+
+    !Argument variables
+    INTEGER(INTG), INTENT(IN) :: contextUserNumber !<The user number of the context with the region.
+    INTEGER(INTG), INTENT(IN) :: regionUserNumber !<The user number of the region containing the mesh to get the domain topology lines for.
+    INTEGER(INTG), INTENT(IN) :: meshUserNumber !<The user number of the mesh to get the domain topology lines for.
+    INTEGER(INTG), INTENT(IN) :: decompositionUserNumber !<The user number of the decomposition to get the domain topology lines for.
+    INTEGER(INTG), INTENT(IN) :: meshComponentNumber !<The mesh component number to get the domain topology lines for.
+    TYPE(OC_DomainLinesType), INTENT(OUT) :: domainLines !<On return, the domain lines object.
+    INTEGER(INTG), INTENT(OUT) :: err !<The error code.
+    !Local variables
+    TYPE(ContextType), POINTER :: context
+    TYPE(DecompositionType), POINTER :: decomposition
+    TYPE(DomainType), POINTER :: domain
+    TYPE(DomainTopologyType), POINTER :: domainTopology
+    TYPE(MeshType), POINTER :: mesh
+    TYPE(RegionType), POINTER :: region
+    TYPE(RegionsType), POINTER :: regions
+
+    ENTERS("OC_DomainTopology_LinesGetNumber",err,error,*999)
+
+    NULLIFY(context)
+    NULLIFY(regions)
+    NULLIFY(region)
+    NULLIFY(mesh)
+    NULLIFY(decomposition)
+    NULLIFY(domain)
+    NULLIFY(domainTopology)
+    CALL Context_Get(contexts,contextUserNumber,context,err,error,*999)    
+    CALL Context_RegionsGet(context,regions,err,error,*999)
+    CALL Region_Get(regions,regionUserNumber,region,err,error,*999)
+    CALL Region_MeshGet(region,meshUserNumber,mesh,err,error,*999)
+    CALL Mesh_DecompositionGet(mesh,decompositionUserNumber,decomposition,err,error,*999)
+    CALL Decomposition_DomainGet(decomposition,meshComponentNumber,domain,err,error,*999)
+    CALL Domain_DomainTopologyGet(domain,domainTopology,err,error,*999)
+    CALL DomainTopology_DomainLinesGet(domainTopology,domainLines%domainLines,err,error,*999)
+
+    EXITS("OC_DomainTopology_LinesGetNumber")
+    RETURN
+999 ERRORSEXITS("OC_DomainTopology_LinesGetNumber",err,error)
+    CALL OC_HandleError(err,error)
+    RETURN
+
+  END SUBROUTINE OC_DomainTopology_LinesGetNumber
+
+  !
+  !================================================================================================================================
+  !
+
+  !>Returns a domain topology lines for a domain topology identified by an object.
+  SUBROUTINE OC_DomainTopology_LinesGetObj(domainTopology,domainLines,err)
+    !DLLEXPORT(OC_DomainTopology_LinesGetObj)
+
+    !Argument variables
+    TYPE(OC_DomainTopologyType), INTENT(IN) :: domainTopology !<The domain topology to get the lines for.
+    TYPE(OC_DomainLinesType), INTENT(INOUT) :: domainLines !<On return the specfied domain lines for the domain topology
+    INTEGER(INTG), INTENT(OUT) :: err !<The error code.
+    !Local variables
+
+    ENTERS("OC_DomainTopology_LinesGetObj",err,error,*999)
+
+    CALL DomainTopology_DomainLinesGet(domainTopology%domainTopology,domainLines%domainLines,err,error,*999)
+
+    EXITS("OC_DomainTopology_LinesGetObj")
+    RETURN
+999 ERRORSEXITS("OC_DomainTopology_LinesGetObj",err,error)
+    CALL OC_HandleError(err,error)
+    RETURN
+
+  END SUBROUTINE OC_DomainTopology_LinesGetObj
+
+  !
+  !================================================================================================================================
+  !
+
+  !>Returns a domain topology nodes for a domain topology identified by a user number.
+  SUBROUTINE OC_DomainTopology_NodesGetNumber(contextUserNumber,regionUserNumber,meshUserNumber,decompositionUserNumber, &
+    & meshComponentNumber,domainNodes,err)
+    !DLLEXPORT(OC_DomainTopology_NodesGetNumber)
+
+    !Argument variables
+    INTEGER(INTG), INTENT(IN) :: contextUserNumber !<The user number of the context with the region.
+    INTEGER(INTG), INTENT(IN) :: regionUserNumber !<The user number of the region containing the mesh to get the domain topology nodes for.
+    INTEGER(INTG), INTENT(IN) :: meshUserNumber !<The user number of the mesh to get the domain topology nodes for.
+    INTEGER(INTG), INTENT(IN) :: decompositionUserNumber !<The user number of the decomposition to get the domain topology nodes for.
+    INTEGER(INTG), INTENT(IN) :: meshComponentNumber !<The mesh component number to get the domain topology nodes for.
+    TYPE(OC_DomainNodesType), INTENT(OUT) :: domainNodes !<On return, the domain nodes object.
+    INTEGER(INTG), INTENT(OUT) :: err !<The error code.
+    !Local variables
+    TYPE(ContextType), POINTER :: context
+    TYPE(DecompositionType), POINTER :: decomposition
+    TYPE(DomainType), POINTER :: domain
+    TYPE(DomainTopologyType), POINTER :: domainTopology
+    TYPE(MeshType), POINTER :: mesh
+    TYPE(RegionType), POINTER :: region
+    TYPE(RegionsType), POINTER :: regions
+
+    ENTERS("OC_DomainTopology_NodesGetNumber",err,error,*999)
+
+    NULLIFY(context)
+    NULLIFY(regions)
+    NULLIFY(region)
+    NULLIFY(mesh)
+    NULLIFY(decomposition)
+    NULLIFY(domain)
+    NULLIFY(domainTopology)
+    CALL Context_Get(contexts,contextUserNumber,context,err,error,*999)    
+    CALL Context_RegionsGet(context,regions,err,error,*999)
+    CALL Region_Get(regions,regionUserNumber,region,err,error,*999)
+    CALL Region_MeshGet(region,meshUserNumber,mesh,err,error,*999)
+    CALL Mesh_DecompositionGet(mesh,decompositionUserNumber,decomposition,err,error,*999)
+    CALL Decomposition_DomainGet(decomposition,meshComponentNumber,domain,err,error,*999)
+    CALL Domain_DomainTopologyGet(domain,domainTopology,err,error,*999)
+    CALL DomainTopology_DomainNodesGet(domainTopology,domainNodes%domainNodes,err,error,*999)
+
+    EXITS("OC_DomainTopology_NodesGetNumber")
+    RETURN
+999 ERRORSEXITS("OC_DomainTopology_NodesGetNumber",err,error)
+    CALL OC_HandleError(err,error)
+    RETURN
+
+  END SUBROUTINE OC_DomainTopology_NodesGetNumber
+
+  !
+  !================================================================================================================================
+  !
+
+  !>Returns a domain topology nodes for a domain topology identified by an object.
+  SUBROUTINE OC_DomainTopology_NodesGetObj(domainTopology,domainNodes,err)
+    !DLLEXPORT(OC_DomainTopology_NodesGetObj)
+
+    !Argument variables
+    TYPE(OC_DomainTopologyType), INTENT(IN) :: domainTopology !<The domain topology to get the nodes for.
+    TYPE(OC_DomainNodesType), INTENT(INOUT) :: domainNodes !<On return the specfied domain nodes for the domain topology
+    INTEGER(INTG), INTENT(OUT) :: err !<The error code.
+    !Local variables
+
+    ENTERS("OC_DomainTopology_NodesGetObj",err,error,*999)
+
+    CALL DomainTopology_DomainNodesGet(domainTopology%domainTopology,domainNodes%domainNodes,err,error,*999)
+
+    EXITS("OC_DomainTopology_NodesGetObj")
+    RETURN
+999 ERRORSEXITS("OC_DomainTopology_NodesGetObj",err,error)
+    CALL OC_HandleError(err,error)
+    RETURN
+
+  END SUBROUTINE OC_DomainTopology_NodesGetObj
+
+
+!!==================================================================================================================================
+!!
+!! MeshRoutines
 !!
 !!==================================================================================================================================
 

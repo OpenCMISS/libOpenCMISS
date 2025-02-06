@@ -374,6 +374,7 @@ CONTAINS
         newEquations(equationIdx)%hasTemporalAnalytic=controlLoopEquations%equations(equationIdx)%hasTemporalAnalytic
       ENDDO !equationIdx
       !Add in the equations set and it's information
+      NULLIFY(equationsSetAnalytic)
       CALL EquationsSet_AnalyticExists(equationsSet,equationsSetAnalytic,err,error,*999)
       IF(ASSOCIATED(equationsSetAnalytic)) THEN
         hasAnalytic=.TRUE.

@@ -103,6 +103,7 @@ MODULE Constants
   !>@{ 
   INTEGER(INTG), PARAMETER :: BIG_ENDIAN_NUMBER=1 !<Big endian number type \see Constants_EndianTypes,Constants
   INTEGER(INTG), PARAMETER :: LITTLE_ENDIAN_NUMBER=2 !<Little endian number type \see Constants_EndianTypes,Constants
+  LOGICAL, PARAMETER :: IS_BIG_ENDIAN = IACHAR( C=TRANSFER(SOURCE=1,MOLD="a") ) == 0
   !>@}
 
   !> \addtogroup Constants_CharacterFormatTypes OpenCMISS::Constants::CharacterFormatTypes
@@ -313,6 +314,20 @@ MODULE Constants
   INTEGER(INTG) :: OTHER_XI_ORIENTATIONS3(3,3) = RESHAPE([0,-1,1,1,0,-1,-1,1,0],[3,3]) !<OTHER_XI_ORIENTATIONSS3(ni,nii) gives the orientation of the given two xi directions. Is equal to leviCivita(ni,nii,OTHER_XI_DIRECTIONS3(ni,nii,2)) where leviCivita is the Levi-Civita or alternating symbol
   !>
 
+  !Other directions for geometric coordinates
+  !>
+  INTEGER(INTG), PARAMETER :: NUMBER_OTHER_DIRECTIONS(3) = [0,1,2] !<NUMBER_OTHER_DIRECTIONS(numberOfDimensions). The number of other directions for numberOfDimensions dimensions
+  INTEGER(INTG), PARAMETER :: OTHER_DIRECTIONS1(1) = [ 0 ] !<OTHER_DIRECTIONS1(coordIdx) gives the other coordinate direction for direction coordinateIdx for a one dimensional space.
+  INTEGER(INTG), PARAMETER :: OTHER_DIRECTIONS2(2,1) = RESHAPE([ 2,1 ],[2,1]) !<OTHER_DIRECTIONS2(coordIdx,otherDirectionIdx) gives the otherDirectionIdx'th other coordinate direction for direction coordinateIdx for a two dimensional space.
+  !>
+  INTEGER(INTG), PARAMETER :: OTHER_DIRECTIONS3(3,2) = RESHAPE([ 3,3,2,2,1,1 ],[3,2]) !<OTHER_DIRECTIONS3(coordinateIdx,otherDirectionIdx) gives the otherDirectionIdx'th other coordinate direction for direction coordinateIdx for a three dimensional space.
+  INTEGER(INTG), PARAMETER :: OTHER_DIRECTIONS(3,2,3) = RESHAPE([ 0,0,0,0,0,0,2,1,0,0,0,0,3,3,2,2,1,1 ],[3,2,3]) !<OTHER_DIRECTIONS(coordinateIdx,otherDirectionIdx,numberOfDimensions).
+
+  INTEGER(INTG), PARAMETER :: OTHER_DIRECTION(3,3,3) = RESHAPE([ 0,0,0,0,0,0,0,0,0,2,1,0,0,0,0,0,0,0,0,3,2,3,0,1,2,1,0 ],[3,3,3]) !<OTHER_DIRECTION(coordinateIdx1,coordinateIdx2,numberOfDimensions)
+  !>
+
+  
+
   !> \addtogroup Constants_ElementNormalXiDirections OpenCMISS::Constants::ElementNormalXiDirections
   !> \brief Xi normal directions
   !> \see Constants
@@ -350,6 +365,22 @@ MODULE Constants
   INTEGER(INTG), PARAMETER :: TENSOR_TO_VOIGT(3,3,3)=RESHAPE([1,0,0,0,0,0,0,0,0,1,3,0,3,2,0,0,0,0,1,6,5,6,2,4,5,4,3],[3,3,3]) !<TENSOR_TO_VOIGT(i,j,numberOfDimensions) converts a pair of (i,j) of a symmetric tensor to Voigt index (a) for a rank 2 tensor with numberOfDimensions dimensions.
   INTEGER(INTG), PARAMETER :: VOIGT_TO_TENSOR(2,6,3)= &
     & RESHAPE([1,1,0,0,0,0,0,0,0,0,0,0,1,1,2,2,1,2,0,0,0,0,0,0,1,1,2,2,3,3,2,3,1,3,1,2],[2,6,3]) !<VOIGT_TO_TENSOR(k,a,numberOfDimensions). Converts a Voigt index (a) to a pair (k=1,k=2) of rank 2 symeetric tensor indices in numberOfDimensions dimensions. 
+  !>@}
+
+  !> \addtogroup Constants_ComponentTensorIndices OpenCMISS::Constants::ComponentTensorIndices
+  !> \brief The indices for converting back and forth between component indices and rank 2 tensor indices.
+  !> \see Constants
+  !>@{ 
+  INTEGER(INTG), PARAMETER :: NUMBER_OF_TENSOR_TWO(3)=[1,4,9] !<NUMBER_OF_TENSOR_TWO(numberOfDimensions). The number of components for a rank 2 tensor with numberOfDimensions dimensions.
+  INTEGER(INTG), PARAMETER :: TENSOR_TWO_TO_COMPONENT1(1,1)=1 !<TENSOR_TWO_TO_COMPONENT1(i,j) converts a pair (i,j) of rank 2 tensor indices to component index (a) in 1 dimension.
+  INTEGER(INTG), PARAMETER :: COMPONENT_TO_TENSOR_TWO1(2,1)=RESHAPE([1,1],[2,1]) !<COMPONENT_TO_TENSOR_TWO1(k,a) converts a component index (a) to a pair (k=1,k=2) indices of a rank 2 tensor in 1 dimension.
+  INTEGER(INTG), PARAMETER :: TENSOR_TWO_TO_COMPONENT2(2,2)=RESHAPE([1,2,3,4],[2,2]) !<TENSOR_TWO_TO_COMPONENT2(i,j) converts a pair (i,j) of rank 2 tensor indices to component index (a) in 2 dimensions.
+  INTEGER(INTG), PARAMETER :: COMPONENT_TO_TENSOR_TWO2(2,4)=RESHAPE([1,1,2,1,1,2,2,2],[2,4]) !<COMPONENT_TO_TENSOR_TWO2(k,a) converts a component index (a) to a pair (k=1,k=2) of rank 2 tensor indices in 2 dimensions.
+  INTEGER(INTG), PARAMETER :: TENSOR_TWO_TO_COMPONENT3(3,3)=RESHAPE([1,2,3,4,5,6,7,8,9],[3,3]) !<TENSOR_TWO_TO_COMPONENT3(i,j) converts a pair (i,j) of rank 2 tensor indices to component index (a) in 3 dimensions.
+  INTEGER(INTG), PARAMETER :: COMPONENT_TO_TENSOR_TWO3(2,9)=RESHAPE([1,1,2,1,3,1,1,2,2,2,3,2,1,3,2,3,3,3],[2,9]) !<COMPONENT_TO_TENSOR_TWO3(k,a) converts a component index (a) to a pair (k=1,k=2) of rank 2 tensor indices in 3 dimensions.
+  INTEGER(INTG), PARAMETER :: TENSOR_TWO_TO_COMPONENT(3,3,3)=RESHAPE([1,0,0,0,0,0,0,0,0,1,2,0,3,4,0,0,0,0,1,2,3,4,5,6,7,8,9],[3,3,3]) !<TENSOR_TWO_TO_COMPONENT(i,j,numberOfDimensions) converts a pair of (i,j) of a tensor to component index (a) for a rank 2 tensor with numberOfDimensions dimensions.
+  INTEGER(INTG), PARAMETER :: COMPONENT_TO_TENSOR_TWO(2,9,3)=RESHAPE([1,1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0, &
+    & 1,1,2,1,1,2,2,2,0,0,0,0,0,0,0,0,0,0,1,1,2,1,3,1,1,2,2,2,3,2,1,3,2,3,2,3],[2,9,3]) !<COMPONENT_TO_TENSOR_TWO(k,a,numberOfDimensions). Converts a component index (a) to a pair (k=1,k=2) of rank 2 tensor indices in numberOfDimensions dimensions.  
   !>@}
 
 END MODULE Constants 

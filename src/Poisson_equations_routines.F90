@@ -2009,6 +2009,7 @@ CONTAINS
         
         SELECT CASE(esSpecification(3))
         CASE(EQUATIONS_SET_GENERALISED_POISSON_SUBTYPE,EQUATIONS_SET_LINEAR_SOURCE_POISSON_SUBTYPE)
+          sourceValue=0.0_DP
           IF(updateSource) THEN
             CALL Field_InterpolateGauss(NO_PART_DERIV,BASIS_DEFAULT_QUADRATURE_SCHEME,gaussPointIdx,sourceInterpPoint, &
               & err,error,*999)
@@ -2017,14 +2018,15 @@ CONTAINS
           !Calculate conductivity tensor
           IF(ASSOCIATED(fibreField)) &
             & CALL Field_InterpolateGauss(NO_PART_DERIV,BASIS_DEFAULT_QUADRATURE_SCHEME,gaussPointIdx,fibreInterpPoint, &
-            & err,error,*999)  
+            & err,error,*999)
+          aParam=0.0_DP
           IF(esSpecification(3)==EQUATIONS_SET_LINEAR_SOURCE_POISSON_SUBTYPE) THEN
             aParam=materialsInterpPoint%values(1,NO_PART_DERIV)
-            CALL CoordinateSystem_MaterialTransformTensor([TENSOR_CONTRAVARIANT_INDEX,TENSOR_COVARIANT_INDEX], &
+            CALL CoordinateSystem_MaterialNuToXTransformTensor([TENSOR_CONTRAVARIANT_INDEX,TENSOR_COVARIANT_INDEX], &
               & geometricInterpPointMetrics,fibreInterpPoint, &
               & materialsInterpPoint%values(1:NUMBER_OF_VOIGT(numberOfDimensions),NO_PART_DERIV),conductivity,err,error,*999)
           ELSE
-            CALL CoordinateSystem_MaterialTransformTensor([TENSOR_CONTRAVARIANT_INDEX,TENSOR_COVARIANT_INDEX], &
+            CALL CoordinateSystem_MaterialNuToXTransformTensor([TENSOR_CONTRAVARIANT_INDEX,TENSOR_COVARIANT_INDEX], &
               & geometricInterpPointMetrics,fibreInterpPoint, &
               & materialsInterpPoint%values(2:1+NUMBER_OF_VOIGT(numberOfDimensions),NO_PART_DERIV),conductivity,err,error,*999)
           ENDIF
@@ -2071,10 +2073,10 @@ CONTAINS
           IF(ASSOCIATED(fibreField)) &
             & CALL Field_InterpolateGauss(NO_PART_DERIV,BASIS_DEFAULT_QUADRATURE_SCHEME,gaussPointIdx,fibreInterpPoint, &
             & err,error,*999)
-          CALL CoordinateSystem_MaterialTransformTensor([TENSOR_CONTRAVARIANT_INDEX,TENSOR_COVARIANT_INDEX], &
+          CALL CoordinateSystem_MaterialNuToXTransformTensor([TENSOR_CONTRAVARIANT_INDEX,TENSOR_COVARIANT_INDEX], &
             & geometricInterpPointMetrics,fibreInterpPoint, &
             & materialsInterpPoint%values(1:NUMBER_OF_VOIGT(numberOfDimensions),NO_PART_DERIV),intraConductivity,err,error,*999)
-          CALL CoordinateSystem_MaterialTransformTensor([TENSOR_CONTRAVARIANT_INDEX,TENSOR_COVARIANT_INDEX], &
+          CALL CoordinateSystem_MaterialNuToXTransformTensor([TENSOR_CONTRAVARIANT_INDEX,TENSOR_COVARIANT_INDEX], &
             & geometricInterpPointMetrics,fibreInterpPoint, &
             & materialsInterpPoint%values(NUMBER_OF_VOIGT(numberOfDimensions)+1: &
             & 2*NUMBER_OF_VOIGT(numberOfDimensions),NO_PART_DERIV),extraConductivity,err,error,*999)
@@ -2247,6 +2249,7 @@ CONTAINS
 !!TODO eventually handle this as an additional linear matrix that is not mapped to the sovler matrix. 
                 !Loop over field components
                 columnElementDOFIdx=0
+                SUM=0.0_DP
                 !Loop over element columns
                 DO columnComponentIdx=1,numberOfColsComponents
                   DO columnElementParameterIdx=1,numberOfColumnElementParameters(columnComponentIdx)
@@ -2599,6 +2602,7 @@ CONTAINS
                 columnElementDOFIdx=columnElementDOFIdx+1
                 CALL BasisQuadratureScheme_GaussBasisFunctionGet(columnQuadratureScheme(columnComponentIdx)%ptr, &
                   & columnElementParameterIdx,NO_PART_DERIV,gaussPointIdx,columnPhi,err,error,*999)
+                jacobianValue=0.0_DP
                 SELECT CASE(esSpecification(3))
                 CASE(EQUATIONS_SET_QUADRATIC_SOURCE_POISSON_SUBTYPE)
                   jacobianValue=2.0_DP*bParam*rowPhi*columnPhi*uValue
@@ -2947,10 +2951,14 @@ CONTAINS
         CALL Field_InterpolateGauss(FIRST_PART_DERIV,BASIS_DEFAULT_QUADRATURE_SCHEME,gaussPointIdx,geometricInterpPoint, &
           & err,error,*999)
         CALL Field_InterpolatedPointMetricsCalculate(numberOfXi,geometricInterpPointMetrics,err,error,*999)
-        CALL Field_InterpolateGauss(NO_PART_DERIV,BASIS_DEFAULT_QUADRATURE_SCHEME,gaussPointIdx,dependentInterpPoint,err,error,*999)
-        CALL Field_InterpolateGauss(NO_PART_DERIV,BASIS_DEFAULT_QUADRATURE_SCHEME,gaussPointIdx,materialsInterpPoint,err,error,*999)
+        CALL Field_InterpolateGauss(NO_PART_DERIV,BASIS_DEFAULT_QUADRATURE_SCHEME,gaussPointIdx,dependentInterpPoint, &
+          & err,error,*999)
+        CALL Field_InterpolateGauss(NO_PART_DERIV,BASIS_DEFAULT_QUADRATURE_SCHEME,gaussPointIdx,materialsInterpPoint, &
+          & err,error,*999)
         IF(ASSOCIATED(fibreField)) &
-          & CALL Field_InterpolateGauss(NO_PART_DERIV,BASIS_DEFAULT_QUADRATURE_SCHEME,gaussPointIdx,fibreInterpPoint,err,error,*999)
+          & CALL Field_InterpolateGauss(NO_PART_DERIV,BASIS_DEFAULT_QUADRATURE_SCHEME,gaussPointIdx,fibreInterpPoint, &
+          & err,error,*999)
+        sourceValue=0.0_DP
         IF(ASSOCIATED(sourceField)) THEN
           CALL Field_InterpolateGauss(NO_PART_DERIV,BASIS_DEFAULT_QUADRATURE_SCHEME,gaussPointIdx,sourceInterpPoint,err,error,*999)
           sourceValue=sourceInterpPoint%values(1,NO_PART_DERIV)
@@ -2960,7 +2968,7 @@ CONTAINS
         aParam=materialsInterpPoint%values(1,NO_PART_DERIV)
         bParam=materialsInterpPoint%values(2,NO_PART_DERIV)
         
-        CALL CoordinateSystem_MaterialTransformTensor([TENSOR_CONTRAVARIANT_INDEX,TENSOR_COVARIANT_INDEX], &
+        CALL CoordinateSystem_MaterialNuToXTransformTensor([TENSOR_CONTRAVARIANT_INDEX,TENSOR_COVARIANT_INDEX], &
           & geometricInterpPointMetrics,fibreInterpPoint, &
           & materialsInterpPoint%values(3:2+NUMBER_OF_VOIGT(numberOfDimensions),NO_PART_DERIV),conductivity,err,error,*999)        
         
@@ -3140,7 +3148,7 @@ CONTAINS
     CALL Solver_ControlLoopGet(solver,controlLoop,err,error,*999)
     NULLIFY(problem)
     CALL ControlLoop_ProblemGet(controlLoop,problem,err,error,*999)
-7    CALL Problem_SpecificationGet(problem,3,pSpecification,err,error,*999)
+    CALL Problem_SpecificationGet(problem,3,pSpecification,err,error,*999)
   
     SELECT CASE(pSpecification(3))
     CASE(PROBLEM_EXTRACELLULAR_BIDOMAIN_POISSON_SUBTYPE)
@@ -3190,6 +3198,7 @@ CONTAINS
         ENDIF
       ENDIF
     CASE(PROBLEM_FITTED_PRESSURE_POISSON_SUBTYPE)
+      CALL ControlLoop_OutputTypeGet(controlLoop,outputType,err,error,*999)
       CALL Solver_GlobalNumberGet(solver,solverGlobalNumber,err,error,*999)
       !Pre solve for the linear solver: fitting problem
       IF(solverGlobalNumber==1) THEN

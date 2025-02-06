@@ -573,7 +573,7 @@ CONTAINS
           CALL WriteString(DIAGNOSTIC_OUTPUT_TYPE,"",err,error,*999)
           CALL WriteStringValue(DIAGNOSTIC_OUTPUT_TYPE,"Time control loop iteration: ",timeLoop%iterationNumber, &
             & err,error,*999)
-          CALL WriteStringValue(GENERAL_OUTPUT_TYPE,"  Total number of iterations: ",timeLoop%numberOfIterations, &
+          CALL WriteStringValue(DIAGNOSTIC_OUTPUT_TYPE,"  Total number of iterations: ",timeLoop%numberOfIterations, &
             & err,error,*999)
           CALL WriteStringValue(DIAGNOSTIC_OUTPUT_TYPE,"  Current time   = ",timeLoop%currentTime,err,error,*999)
           CALL WriteStringValue(DIAGNOSTIC_OUTPUT_TYPE,"  Stop time      = ",timeLoop%stopTime,err,error,*999)
@@ -2680,7 +2680,7 @@ CONTAINS
     INTEGER(INTG) :: inputIterationNumber,iterationNumber,outputIterationNumber,solverDegree,solverEquationsLinearity, &
       & solverEquationsTimeDependence,solverOrder,solveType
     REAL(DP) :: currentTime,startTime,stopTime,timeIncrement
-    LOGICAL :: initSolver,nonlinear,setup,setupFinished,solverInitialised
+    LOGICAL :: initSolver,nonlinear,setupFinished,solverInitialised
     TYPE(ControlLoopType), POINTER :: controlLoop
     TYPE(DistributedVectorType), POINTER :: solverVector
     TYPE(DynamicSolverType), POINTER :: dynamicSolver
@@ -3040,6 +3040,7 @@ CONTAINS
       IF(.NOT.ASSOCIATED(solver)) CALL FlagError("Solver is not associated.",err,error,*999)
       NULLIFY(controlLoop)
       CALL Solver_ControlLoopGet(solver,controlLoop,err,error,*999)
+      iterationNumber=1
       SELECT CASE(controlLoop%loopType)
       CASE(CONTROL_SIMPLE_TYPE)
         NULLIFY(simpleLoop)
@@ -3204,6 +3205,7 @@ CONTAINS
           CALL Problem_SolverNewtonFieldsOutput(solver,iterationNumber,err,error,*999)
         ENDIF
       CASE(PROBLEM_LINEAR_ELASTICITY_CONTACT_TYPE,PROBLEM_FINITE_ELASTICITY_CONTACT_TYPE)
+        reproject=.FALSE.
         SELECT CASE(problem%specification(3))
         CASE(PROBLEM_LE_CONTACT_TRANSFORM_SUBTYPE,PROBLEM_FE_CONTACT_TRANSFORM_SUBTYPE) !Reproject at iteration 0 before the nonlinear solve to update xi location since the field is transformed.
           IF(iterationNumber==0) THEN

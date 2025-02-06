@@ -1436,13 +1436,13 @@ CONTAINS
         
     !current code assumes same order in each direction
     numberOfGauss1=MAX(CEILING((order+1.0_DP)/2.0_DP),1)
+    numberOfGauss2=1
+    numberOfGauss3=1
     SELECT CASE(numberOfXi)
     CASE(1)
-      numberOfGauss2=1
-      numberOfGauss3=1
+      !Do nothing
     CASE(2)
       numberOfGauss2=numberOfGauss1
-      numberOfGauss3=1
     CASE(3)
       numberOfGauss2=numberOfGauss1
       numberOfGauss3=numberOfGauss1
@@ -3312,15 +3312,15 @@ CONTAINS
           & positions(1:basis%quadrature%numberOfGaussXi(xiIdx),xiIdx), &
           & weights(1:basis%quadrature%numberOfGaussXi(xiIdx),xiIdx),err,error,*999)
       ENDDO !xiIdx
+      numberOfGauss1=1
+      numberOfGauss2=1
+      numberOfGauss3=1
       SELECT CASE(basis%numberOfXi)
       CASE(1)
         numberOfGauss1=basis%quadrature%numberOfGaussXi(1)
-        numberOfGauss2=1
-        numberOfGauss3=1
       CASE(2)
         numberOfGauss1=basis%quadrature%numberOfGaussXi(1)
         numberOfGauss2=basis%quadrature%numberOfGaussXi(2)
-        numberOfGauss3=1
       CASE(3)
         numberOfGauss1=basis%quadrature%numberOfGaussXi(1)
         numberOfGauss2=basis%quadrature%numberOfGaussXi(2)
@@ -3558,7 +3558,7 @@ CONTAINS
             CALL WriteStringVector(DIAGNOSTIC_OUTPUT_TYPE,1,1,basis%numberOfXiCoordinates,3,3, &
               & scheme%gaussPositions(:,gaussPointIdx), &
               & '("          position(xiIdx)   :",3(X,F12.4))','(26X,3(X,F12.4))',err,error,*999)
-            CALL WriteStringFmtValue(DIAGNOSTIC_OUTPUT_TYPE,"          WEIGHT         : ",scheme%gaussWeights(gaussPointIdx), &
+            CALL WriteStringFmtValue(DIAGNOSTIC_OUTPUT_TYPE,"          Weight            : ",scheme%gaussWeights(gaussPointIdx), &
               & "(F12.4)",err,error,*999)
           ENDDO !gaussPointIdx          
         ENDIF
@@ -3571,7 +3571,7 @@ CONTAINS
                 & err,error,*999)
               CALL WriteStringVector(DIAGNOSTIC_OUTPUT_TYPE,1,1,basis%numberOfElementParameters,4,4, &
                 & scheme%gaussBasisFunctions(:,partialDerivativeIdx,gaussPointIdx), &
-                & '("          BASIS FNS(elementParameterIdx)  :",4(X,F12.4))','(26X,4(X,F12.4))',err,error,*999)
+                & '("          Basis Fns(elementParameterIdx) : ",4(X,F12.4))','(43X,4(X,F12.4))',err,error,*999)
             ENDDO !partialDerivativeIdx
           ENDDO !gaussPointIdx
         ENDIF
@@ -3772,7 +3772,7 @@ CONTAINS
       END SELECT
       basis%quadrature%numberOfGaussXi=basis%quadrature%gaussOrder
     CASE DEFAULT
-      localError="Basis type value "//TRIM(NumberToVString(basis%interpolationXi(xiIdx),"*",err,error))// &
+      localError="Basis type value "//TRIM(NumberToVString(basis%type,"*",err,error))// &
         & " is invalid or not implemented."
       CALL FlagError(localError,err,error,*999)
     END SELECT
@@ -4002,6 +4002,7 @@ CONTAINS
     IF(err/=0) CALL FlagError("Could not allocate the basis number of nodes xic array.",err,error,*999)
     basis%degenerate=.FALSE.
     basis%numberOfCollapsedXi=0
+    maximumNumberOfNodes=0
     SELECT CASE(basis%numberOfXi)
     CASE(1)
       basis%numberOfPartialDerivatives=3

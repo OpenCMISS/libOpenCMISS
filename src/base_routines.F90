@@ -988,6 +988,14 @@ CONTAINS
         CALL FlagError("Invalid diagnostic level.",err,error,*999)
       END SELECT
     ENDDO !i
+    IF(diagAllSubroutines) THEN
+      !Set diagnostics on here if all as we may have WITH_DIAGNOSTICS OFF and never go to Enters/Exits
+      diagnostics1=diagnosticsLevel1
+      diagnostics2=diagnosticsLevel2
+      diagnostics3=diagnosticsLevel3
+      diagnostics4=diagnosticsLevel4
+      diagnostics5=diagnosticsLevel5
+    ENDIF
     diagnostics=.TRUE.
     diagOrTiming=.TRUE.
 
@@ -1013,6 +1021,11 @@ CONTAINS
     diagnosticsLevel3=.FALSE.
     diagnosticsLevel4=.FALSE.
     diagnosticsLevel5=.FALSE.
+    diagnostics1=.FALSE.
+    diagnostics2=.FALSE.
+    diagnostics3=.FALSE.
+    diagnostics4=.FALSE.
+    diagnostics5=.FALSE.
     diagnostics=.FALSE.
     diagOrTiming=timing
     ERRORSEXITS("DiagnosticsSetOn",err,error)
@@ -1145,10 +1158,12 @@ CONTAINS
     INTEGER(INTG), INTENT(OUT) :: err !<The error code
     TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
     !Local variables
+#ifdef WITH_DIAGNOSTICS    
     INTEGER(INTG) :: i
     CHARACTER(LEN=MAXSTRLEN) :: filename
     TYPE(RoutineListItemType), POINTER :: nextRoutine,previousRoutine,routine
- 
+#endif
+    
     ENTERS("TimingSetOn",err,error,*999)
 
 #ifndef WITH_DIAGNOSTICS

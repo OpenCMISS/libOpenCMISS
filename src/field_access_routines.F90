@@ -513,6 +513,8 @@ MODULE FieldAccessRoutines
   
   PUBLIC FieldVariable_AssertComponentNumberOK
 
+  PUBLIC FieldVariable_AssertOneDomain
+
   PUBLIC FieldVariable_ComponentDOFGetConstant
 
   PUBLIC FieldVariable_ComponentDOFGetUserDataPoint
@@ -543,6 +545,8 @@ MODULE FieldAccessRoutines
 
   PUBLIC FieldVariable_DataTypeGet
 
+  PUBLIC FieldVariable_DecompositionGet
+
   PUBLIC FieldVariable_DimensionCheck
 
   PUBLIC FieldVariable_DimensionGet
@@ -570,6 +574,14 @@ MODULE FieldAccessRoutines
   PUBLIC FieldVariable_DomainMappingGet
 
   PUBLIC FieldVariable_FieldGet
+
+  PUBLIC FieldVariable_FieldVariableAssertOneDomain
+
+  PUBLIC FieldVariable_FieldVariableAssertSameDecomposition
+
+  PUBLIC FieldVariable_FieldVariableAssertSameDomains
+
+  PUBLIC FieldVariable_FieldVariableAssertSameRegion
 
   PUBLIC FieldVariable_ConstantDOFGet
   
@@ -607,9 +619,15 @@ MODULE FieldAccessRoutines
 
   PUBLIC FieldVariable_ParameterSetGet
 
+  PUBLIC FieldVariable_RegionGet
+
   PUBLIC FieldVariable_TotalNumberOfDOFsGet
 
   PUBLIC FieldVariable_VariableTypeGet
+
+  PUBLIC Fields_FieldIndexGet
+
+  PUBLIC Fields_NumberOfFieldsGet
   
   PUBLIC Fields_RegionGet
 
@@ -1159,7 +1177,9 @@ CONTAINS
     INTEGER(INTG), INTENT(OUT) :: err !<The error code
     TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
     !Local Variables
+#ifdef WITH_POSTCHECKS  
     TYPE(VARYING_STRING) :: localError
+#endif    
  
     ENTERS("Field_CreateValuesCacheGet",err,error,*998)
 
@@ -1180,7 +1200,9 @@ CONTAINS
     
     EXITS("Field_CreateValuesCacheGet")
     RETURN
+#ifdef WITH_CHECKS    
 999 NULLIFY(createValuesCache)
+#endif    
 998 ERRORSEXITS("Field_CreateValuesCacheGet",err,error)
     RETURN 1
     
@@ -1200,8 +1222,10 @@ CONTAINS
     INTEGER(INTG), INTENT(OUT) :: err !<The error code
     TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
     !Local Variables
+#ifdef WITH_POSTCHECKS    
     TYPE(VARYING_STRING) :: localError
- 
+#endif
+    
     ENTERS("Field_DataProjectionGet",err,error,*998)
 
 #ifdef WITH_PRECHECKS    
@@ -1221,7 +1245,9 @@ CONTAINS
     
     EXITS("Field_DataProjectionGet")
     RETURN
+#ifdef WITH_CHECKS    
 999 NULLIFY(dataProjection)
+#endif    
 998 ERRORSEXITS("Field_DataProjectionGet",err,error)
     RETURN 1
     
@@ -1577,7 +1603,9 @@ CONTAINS
 
     EXITS("Field_FieldsGet")
     RETURN
+#ifdef WITH_CHECKS    
 999 NULLIFY(fields)
+#endif    
 998 ERRORSEXITS("Field_FieldsGet",err,error)
     RETURN 1
     
@@ -1608,7 +1636,9 @@ CONTAINS
 
     EXITS("Field_GeometricFieldExists")
     RETURN
+#ifdef WITH_PRECHECKS    
 999 NULLIFY(geometricField)
+#endif    
 998 ERRORSEXITS("Field_GeometricFieldExists",err,error)
     RETURN 1
     
@@ -1650,7 +1680,9 @@ CONTAINS
 
     EXITS("Field_GeometricFieldGet")
     RETURN
+#ifdef WITH_CHECKS    
 999 NULLIFY(geometricField)
+#endif    
 998 ERRORSEXITS("Field_GeometricFieldGet",err,error)
     RETURN 1
     
@@ -1753,7 +1785,9 @@ CONTAINS
 
     EXITS("Field_GeometricParametersGet")
     RETURN
+#ifdef WITH_CHECKS    
 999 NULLIFY(geometricParameters)
+#endif    
 998 ERRORSEXITS("Field_GeometricParametersGet",err,error)
     RETURN 1
     
@@ -1873,7 +1907,9 @@ CONTAINS
  
     EXITS("Field_InterfaceGet")
     RETURN
-999 NULLIFY(interface)
+#ifdef WITH_CHECKS    
+999 NULLIFY(INTERFACE)
+#endif    
 998 ERRORSEXITS("Field_InterfaceGet",err,error)
     RETURN 1
     
@@ -2193,7 +2229,7 @@ CONTAINS
   !================================================================================================================================
   !
 
-  !>Checks the number of variables for a field.
+  !>Checks that the number of variables for a field is at least the specified number of variables.
   SUBROUTINE Field_NumberOfVariablesCheck(field,numberOfVariables,err,error,*)
 
     !Argument variables
@@ -2207,11 +2243,11 @@ CONTAINS
     ENTERS("Field_NumberOfVariablesCheck",err,error,*999)
 
     CALL Field_AssertIsFinished(field,err,error,*999)
-    IF(field%numberOfVariables/=numberOfVariables) THEN
+    IF(field%numberOfVariables<numberOfVariables) THEN
       localError="Invalid number of variables. The number of variables for field number "// &
         & TRIM(NumberToVString(field%userNumber,"*",err,error))//" is "// &
         & TRIM(NumberToVString(field%numberOfVariables,"*",err,error))// &
-        & " which does correspond to the specified number of variables of "// &
+        & " which does correspond to the required number of variables of "// &
         & TRIM(NumberToVString(numberOfVariables,"*",err,error))//"."
       CALL FlagError(localError,err,error,*999)
     ENDIF
@@ -2425,7 +2461,9 @@ CONTAINS
     
     EXITS("Field_ScaleFactorsVectorGet")
     RETURN
+#ifdef WITH_CHECKS    
 999 NULLIFY(scaleFactorsVector)
+#endif    
 998 ERRORSEXITS("Field_ScaleFactorsVectorGet",err,error)
     RETURN 1
     
@@ -2715,7 +2753,9 @@ CONTAINS
       
     EXITS("Field_UserNumberFindGeneric")
     RETURN
+#ifdef WITH_PRECHECKS    
 999 NULLIFY(field)
+#endif    
 998 ERRORSEXITS("Field_UserNumberFindGeneric",err,error)
     RETURN 1
     
@@ -3026,7 +3066,9 @@ CONTAINS
 
     EXITS("FieldInterpolatedPoint_InterpolationParametersGet")
     RETURN
+#ifdef WITH_CHECKS    
 999 NULLIFY(interpolationParameters)
+#endif    
 998 ERRORS("FieldInterpolatedPoint_InterpolationParametersGet",err,error)
     EXITS("FieldInterpolatedPoint_InterpolationParametersGet")
     RETURN 1
@@ -3064,7 +3106,9 @@ CONTAINS
 
     EXITS("FieldInterpolatedPointMetrics_InterpolatedPointGet")
     RETURN
+#ifdef WITH_CHECKS    
 999 NULLIFY(interpolatedPoint)
+#endif    
 998 ERRORS("FieldInterpolatedPointMetrics_InterpolatedPointGet",err,error)
     EXITS("FieldInterpolatedPointMetrics_InterpolatedPointGet")
     RETURN 1
@@ -3194,7 +3238,9 @@ CONTAINS
 
     EXITS("FieldInterpolationParameters_FieldGet")
     RETURN
+#ifdef WITH_CHECKS    
 999 NULLIFY(field)
+#endif    
 998 ERRORS("FieldInterpolationParameters_FieldGet",err,error)
     EXITS("FieldInterpolationParameters_FieldGet")
     RETURN 1
@@ -3231,7 +3277,9 @@ CONTAINS
 
     EXITS("FieldInterpolationParameters_FieldVariableGet")
     RETURN
+#ifdef WITH_CHECKS    
 999 NULLIFY(fieldVariable)
+#endif    
 998 ERRORS("FieldInterpolationParameters_FieldVariableGet",err,error)
     EXITS("FieldInterpolationParameters_FieldVariableGet")
     RETURN 1
@@ -3268,7 +3316,9 @@ CONTAINS
     
     EXITS("FieldParameterSet_ParametersGet")
     RETURN
+#ifdef WITH_CHECKS    
 999 NULLIFY(parameters)
+#endif    
 998 ERRORSEXITS("FieldParameterSet_ParametersGet",err,error)
     RETURN 1
     
@@ -3304,7 +3354,9 @@ CONTAINS
 
     EXITS("FieldPhysicalPoint_FieldInterpolatedPointGet")
     RETURN
+#ifdef WITH_CHECKS    
 999 NULLIFY(fieldInterpolatedPoint)
+#endif    
 998 ERRORS("FieldPhysicalPoint_FieldInterpolatedPointGet",err,error)
     EXITS("FieldPhysicalPoint_FieldInterpolatedPointGet")
     RETURN 1
@@ -3341,7 +3393,9 @@ CONTAINS
 
     EXITS("FieldPhysicalPoint_GeometricInterpolatedPointGet")
     RETURN
+#ifdef WITH_CHECKS    
 999 NULLIFY(geometricInterpolatedPoint)
+#endif    
 998 ERRORS("FieldPhysicalPoint_GeometricInterpolatedPointGet",err,error)
     EXITS("FieldPhysicalPoint_GeometricInterpolatedPointGet")
     RETURN 1
@@ -3569,7 +3623,9 @@ CONTAINS
 
     EXITS("Field_VariableExists")
     RETURN
+#ifdef WITH_PRECHECKS    
 999 NULLIFY(fieldVariable)
+#endif    
 998 ERRORSEXITS("Field_VariableExists",err,error)
     RETURN 1
     
@@ -3618,7 +3674,9 @@ CONTAINS
 
     EXITS("Field_VariableGet")
     RETURN
+#ifdef WITH_CHECKS    
 999 NULLIFY(fieldVariable)
+#endif    
 998 ERRORSEXITS("Field_VariableGet",err,error)
     RETURN 1
     
@@ -3670,7 +3728,9 @@ CONTAINS
 
     EXITS("Field_VariableIndexGet")
     RETURN
+#ifdef WITH_CHECKS    
 999 NULLIFY(fieldVariable)
+#endif    
 998 ERRORSEXITS("Field_VariableIndexGet",err,error)
     RETURN 1
     
@@ -3745,7 +3805,7 @@ CONTAINS
   !================================================================================================================================
   !
 
-  !>Checks the field variable types for a field.
+  !>Checks that the field variable contains the specified variables types.
   SUBROUTINE Field_VariableTypesCheck1(field,variableTypes,err,error,*)
 
     !Argument variables
@@ -3754,40 +3814,49 @@ CONTAINS
     INTEGER(INTG), INTENT(OUT) :: err !<The error code
     TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
     !Local Variables
-    INTEGER(INTG) :: variableIdx
+    INTEGER(INTG) :: variableIdx,fieldVariableIdx
+    LOGICAL :: found
     TYPE(VARYING_STRING) :: localError
 
     ENTERS("Field_VariableTypesCheck1",err,error,*999)
 
     CALL Field_AssertIsFinished(field,err,error,*999)
 #ifdef WITH_PRECHECKS    
-    IF(SIZE(variableTypes,1)<field%numberOfVariables) THEN
-      localError="Invalid variable types. The size of the specified variable types array is "// &
-        & TRIM(NumberToVString(SIZE(variableTypes,1),"*",err,error))//" and it must be >= "// &
-        & TRIM(NumberToVString(field%numberOfVariables,"*",err,error))//"."
+    IF(SIZE(variableTypes,1)>field%numberOfVariables) THEN
+      localError="Invalid field variable types. The number of the field variables is "// &
+        & TRIM(NumberToVString(field%numberOfVariables,"*",err,error))// &
+        & " and the size of the check variable types array is "// &
+        & TRIM(NumberToVString(SIZE(variableTypes,1),"*",err,error))//"."
       CALL FlagError(localError,err,error,*999)
     ENDIF
 #endif    
-    DO variableIdx=1,field%numberOfVariables
+    checkVariableLoop: DO variableIdx=1,SIZE(variableTypes,1)
 #ifdef WITH_PRECHECKS      
       IF(variableTypes(variableIdx)<1.OR.variableTypes(variableIdx)>FIELD_NUMBER_OF_VARIABLE_TYPES) THEN
         localError="The specified variable type of "//TRIM(NumberToVString(variableTypes(variableIdx),"*",err,error))// &
           & " at position number "//TRIM(NumberToVString(variableIdx,"*",err,error))// &
-          & " is invalid. The variable type must be >= 1 and <= "// &
+          & " to check is invalid. The variable type must be >= 1 and <= "// &
           & TRIM(NumberToVString(FIELD_NUMBER_OF_VARIABLE_TYPES,"*",err,error))//"."
         CALL FlagError(localError,err,error,*999)
       ENDIF
-#endif      
-      IF(field%variables(variableIdx)%variableType/=variableTypes(variableIdx)) THEN
-        localError="Invalid variable type. The variable type for variable index number "// &
-          & TRIM(NumberToVString(variableIdx,"*",err,error))//" of field number "// &
-          & TRIM(NumberToVString(field%userNumber,"*",err,error))//" is "// &
-          & TRIM(NumberToVString(field%variables(variableIdx)%variableType,"*",err,error))// &
-          & " which is does correspond to the specified variable_type of "// &
-          & TRIM(NumberToVString(variableTypes(variableIdx),"*",err,error))//"."
+#endif
+      !Try and find the variable type in the field
+      found=.FALSE.
+      fieldVariableLoop: DO fieldVariableIdx=1,field%numberOfVariables
+        IF(field%variables(fieldVariableIdx)%variableType==variableTypes(variableIdx)) THEN
+          found=.TRUE.
+          EXIT fieldVariableLoop
+        ENDIF
+      ENDDO fieldVariableLoop !fieldVariableIdx
+      IF(.NOT.found) THEN
+        localError="Field variable type not found. The variable type of "// &
+          & TRIM(NumberToVString(variableTypes(variableIdx),"*",err,error))// &
+          & " at check variable index number "// &
+          & TRIM(NumberToVString(variableIdx,"*",err,error))//" could not be found in field number "// &
+          & TRIM(NumberToVString(field%userNumber,"*",err,error))//"."
         CALL FlagError(localError,err,error,*999)
       ENDIF
-    ENDDO !variableIdx
+    ENDDO checkVariableLoop !variableIdx
 
     EXITS("Field_VariableTypesCheck1")
     RETURN
@@ -3863,6 +3932,84 @@ CONTAINS
     RETURN 1
     
   END SUBROUTINE Field_VariableTypesGet1
+
+  !
+  !================================================================================================================================
+  !
+
+  !>Asserts that all components of a field variable have the same domain
+  SUBROUTINE FieldVariable_AssertOneDomain(fieldVariable,startComponent,endComponent,err,error,*)
+
+    !Argument variables
+    TYPE(FieldVariableType), POINTER :: fieldVariable !<A pointer to field variableto  assert if the components have the same domain.
+    INTEGER(INTG), INTENT(IN) :: startComponent !<The start component number to check
+    INTEGER(INTG), INTENT(IN) :: endComponent !<The end component number to check
+    INTEGER(INTG), INTENT(OUT) :: err !<The error code
+    TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
+    !Local Variables
+    INTEGER(INTG) :: componentIdx
+    TYPE(DomainType), POINTER :: checkDomain
+    TYPE(VARYING_STRING) :: localError
+
+    ENTERS("FieldVariable_AssertOneDomain",err,error,*999)
+
+#ifdef WITH_PRECHECKS    
+    IF(.NOT.ASSOCIATED(fieldVariable)) CALL FlagError("Field variable  is not associated.",err,error,*999)
+    IF(startComponent<1.OR.startComponent>fieldVariable%numberOfComponents) THEN
+      localError="The specified start component of "//TRIM(NumberToVString(startComponent,"*",err,error))// &
+        & " is invalid for field variable type "//TRIM(NumberToVString(fieldVariable%variableType,"*",err,error))
+      IF(ASSOCIATED(fieldVariable%field)) localError=localError// &
+        & " of field number "//TRIM(NumberToVString(fieldVariable%field%userNumber,"*",err,error))
+      localError=localError//". The start component should be >= 1 and <= "// &
+        & TRIM(NumberToVString(fieldVariable%numberOfComponents,"*",err,error))//"."
+      CALL FlagError(localError,err,error,*999)
+    ENDIF
+    IF(endComponent<1.OR.endComponent>fieldVariable%numberOfComponents) THEN
+      localError="The specified end component of "//TRIM(NumberToVString(endComponent,"*",err,error))// &
+        & " is invalid for field variable type "//TRIM(NumberToVString(fieldVariable%variableType,"*",err,error))
+      IF(ASSOCIATED(fieldVariable%field)) localError=localError// &
+        & " of field number "//TRIM(NumberToVString(fieldVariable%field%userNumber,"*",err,error))
+      localError=localError//". The end component should be >= 1 and <= "// &
+        & TRIM(NumberToVString(fieldVariable%numberOfComponents,"*",err,error))//"."
+      CALL FlagError(localError,err,error,*999)
+    ENDIF
+    IF(.NOT.ALLOCATED(fieldVariable%components)) THEN
+      localError="The components array is not allocated for field variable type "// &
+        & TRIM(NumberToVString(fieldVariable%variableType,"*",err,error))
+      IF(ASSOCIATED(fieldVariable%field)) localError=localError// &
+        & " of field number "//TRIM(NumberToVString(fieldVariable%field%userNumber,"*",err,error))
+      localError=localError//"."
+      CALL FlagError(localError,err,error,*999)
+    ENDIF
+#endif    
+
+    checkDomain=>fieldVariable%components(startComponent)%domain
+    IF(.NOT.ASSOCIATED(checkDomain)) THEN
+      localError="The domain for component number "//TRIM(NumberToVString(startComponent,"*",err,error))// &
+        & " of variable type "//TRIM(NumberToVString(fieldVariable%variableType,"*",err,error))
+      IF(ASSOCIATED(fieldVariable%field)) localError=localError// &
+        & " of field number "//TRIM(NumberToVString(fieldVariable%field%userNumber,"*",err,error))
+      localError=localError//" is not associated."
+      CALL FlagError(localError,err,error,*999)
+    ENDIF
+    DO componentIdx=startComponent+1,endComponent     
+      IF(.NOT.ASSOCIATED(fieldVariable%components(componentIdx)%domain,checkDomain)) THEN
+        localError="The domain for component number "//TRIM(NumberToVString(componentIdx,"*",err,error))// &
+          & " of variable type "//TRIM(NumberToVString(fieldVariable%variableType,"*",err,error))
+        IF(ASSOCIATED(fieldVariable%field)) localError=localError// &
+          & " of field number "//TRIM(NumberToVString(fieldVariable%field%userNumber,"*",err,error))
+        localError=localError//" does not match the domain for component number "// &
+          & TRIM(NumberToVString(startComponent,"*",err,error))//" of the field variable."
+        CALL FlagError(localError,err,error,*999)          
+      ENDIF
+    ENDDO !componentIdx
+    
+    EXITS("FieldVariable_AssertOneDomain")
+    RETURN
+999 ERRORSEXITS("FieldVariable_AssertOneDomain",err,error)
+    RETURN 1
+    
+  END SUBROUTINE FieldVariable_AssertOneDomain
 
   !
   !================================================================================================================================
@@ -4059,7 +4206,9 @@ CONTAINS
  
     EXITS("FieldVariable_ComponentDomainGet")
     RETURN
+#ifdef WITH_CHECKS    
 999 NULLIFY(domain)
+#endif    
 998 ERRORSEXITS("FieldVariable_ComponentDomainGet",err,error)
     RETURN 1
     
@@ -4699,6 +4848,54 @@ CONTAINS
   !================================================================================================================================
   !
 
+  !>Gets a decomposition from a field variable.
+  SUBROUTINE FieldVariable_DecompositionGet(fieldVariable,decomposition,err,error,*)
+
+    !Argument variables
+    TYPE(FieldVariableType), POINTER :: fieldVariable !<The field variable to get the decomposition for.
+    TYPE(DecompositionType), POINTER :: decomposition !<On exit, a pointer to the decomposition for the field variable. Must not be associated on entry.
+    INTEGER(INTG), INTENT(OUT) :: err !<The error code
+    TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
+    !Local Variables
+#ifdef WITH_POSTCHECKS    
+    TYPE(VARYING_STRING) :: localError
+#endif    
+ 
+    ENTERS("FieldVariable_DecompositionGet",err,error,*999)
+
+#ifdef WITH_PRECHECKS    
+    !Check input arguments
+    IF(.NOT.ASSOCIATED(fieldVariable)) CALL FlagError("Field variable is not associated.",err,error,*999)
+    IF(ASSOCIATED(decomposition)) CALL FlagError("Decomposition is already associated.",err,error,*999)
+    IF(.NOT.ASSOCIATED(fieldVariable%field)) CALL FlagError("Field variable field is not associated.",err,error,*999)
+#endif    
+
+    !Get the field variable decomposition
+    decomposition=>fieldVariable%field%decomposition
+
+#ifdef WITH_POSTCHECKS    
+    !Check field variable decomposition is associated.
+    IF(.NOT.ASSOCIATED(decomposition)) THEN
+      localError="Field variable decomposition is not associated for field variable type "// &
+        & TRIM(NumberToVString(fieldVariable%variableType,"*",err,error))
+      IF(ASSOCIATED(fieldVariable%field)) localError=localError//" of field number "// &
+        & TRIM(NumberToVString(fieldVariable%field%userNumber,"*",err,error))
+      localError=localError//"."
+      CALL FlagError(localError,err,error,*999)
+    ENDIF
+#endif    
+    
+    EXITS("FieldVariable_DecompositionGet")
+    RETURN
+999 ERRORSEXITS("FieldVariable_DecompositionGet",err,error)
+    RETURN 1
+    
+  END SUBROUTINE FieldVariable_DecompositionGet
+
+  !
+  !================================================================================================================================
+  !
+
   !>Checks the dimension for a field variable.
   SUBROUTINE FieldVariable_DimensionCheck(fieldVariable,dimensionType,err,error,*)
 
@@ -5320,7 +5517,9 @@ CONTAINS
 
     EXITS("FieldVariable_DomainGet")
     RETURN
+#ifdef WITH_CHECKS    
 999 NULLIFY(domain)
+#endif    
 998 ERRORSEXITS("FieldVariable_DomainGet",err,error)
     RETURN 1
     
@@ -5365,7 +5564,9 @@ CONTAINS
       
     EXITS("FieldVariable_DomainMappingGet")
     RETURN
+#ifdef WITH_CHECKS    
 999 NULLIFY(domainMapping)
+#endif    
 998 ERRORSEXITS("FieldVariable_DomainMappingGet",err,error)
     RETURN 1
     
@@ -7027,11 +7228,432 @@ CONTAINS
 
     EXITS("FieldVariable_FieldGet")
     RETURN
+#ifdef WITH_CHECKS    
 999 NULLIFY(field)
+#endif    
 998 ERRORSEXITS("FieldVariable_FieldGet",err,error)
     RETURN 1
     
   END SUBROUTINE FieldVariable_FieldGet
+
+  !
+  !================================================================================================================================
+  !
+
+  !>Asserts that all components of two variables have the same domain
+  SUBROUTINE FieldVariable_FieldVariableAssertOneDomain(fieldVariable1,fieldVariable2,startComponent,endComponent,err,error,*)
+
+    !Argument variables
+    TYPE(FieldVariableType), POINTER :: fieldVariable1 !<A pointer to field variable 1 to assert if it is in the same domain as the other field variable.
+    TYPE(FieldVariableType), POINTER :: fieldVariable2 !<A pointer to field variable 2 to assert if it is in the same domain as the other field variable.
+    INTEGER(INTG), INTENT(IN) :: startComponent !<The start component number to check
+    INTEGER(INTG), INTENT(IN) :: endComponent !<The end component number to check
+    INTEGER(INTG), INTENT(OUT) :: err !<The error code
+    TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
+    !Local Variables
+    INTEGER(INTG) :: componentIdx
+    TYPE(DomainType), POINTER :: checkDomain
+    TYPE(VARYING_STRING) :: localError
+
+    ENTERS("FieldVariable_FieldVariableAssertOneDomain",err,error,*999)
+
+#ifdef WITH_PRECHECKS    
+    IF(.NOT.ASSOCIATED(fieldVariable1)) CALL FlagError("Field variable 1 is not associated.",err,error,*999)
+    IF(.NOT.ASSOCIATED(fieldVariable2)) CALL FlagError("Field variable 2 is not associated.",err,error,*999)
+    IF(startComponent<1.OR.startComponent>fieldVariable1%numberOfComponents) THEN
+      localError="The specified start component of "//TRIM(NumberToVString(startComponent,"*",err,error))// &
+        & " is invalid for field variable type "//TRIM(NumberToVString(fieldVariable1%variableType,"*",err,error))
+      IF(ASSOCIATED(fieldVariable1%field)) localError=localError// &
+        & " of field number "//TRIM(NumberToVString(fieldVariable1%field%userNumber,"*",err,error))
+      localError=localError//". The start component should be >= 1 and <= "// &
+        & TRIM(NumberToVString(fieldVariable1%numberOfComponents,"*",err,error))//"."
+      CALL FlagError(localError,err,error,*999)
+    ENDIF
+    IF(endComponent<1.OR.endComponent>fieldVariable1%numberOfComponents) THEN
+      localError="The specified end component of "//TRIM(NumberToVString(endComponent,"*",err,error))// &
+        & " is invalid for field variable type "//TRIM(NumberToVString(fieldVariable1%variableType,"*",err,error))
+      IF(ASSOCIATED(fieldVariable1%field)) localError=localError// &
+        & " of field number "//TRIM(NumberToVString(fieldVariable1%field%userNumber,"*",err,error))
+      localError=localError//". The end component should be >= 1 and <= "// &
+        & TRIM(NumberToVString(fieldVariable1%numberOfComponents,"*",err,error))//"."
+      CALL FlagError(localError,err,error,*999)
+    ENDIF
+    IF(startComponent<1.OR.startComponent>fieldVariable2%numberOfComponents) THEN
+      localError="The specified start component of "//TRIM(NumberToVString(startComponent,"*",err,error))// &
+        & " is invalid for field variable type "//TRIM(NumberToVString(fieldVariable2%variableType,"*",err,error))
+      IF(ASSOCIATED(fieldVariable2%field)) localError=localError// &
+        & " of field number "//TRIM(NumberToVString(fieldVariable2%field%userNumber,"*",err,error))
+      localError=localError//". The start component should be >= 1 and <= "// &
+        & TRIM(NumberToVString(fieldVariable2%numberOfComponents,"*",err,error))//"."
+      CALL FlagError(localError,err,error,*999)
+    ENDIF
+    IF(endComponent<1.OR.endComponent>fieldVariable2%numberOfComponents) THEN
+      localError="The specified end component of "//TRIM(NumberToVString(endComponent,"*",err,error))// &
+        & " is invalid for field variable type "//TRIM(NumberToVString(fieldVariable2%variableType,"*",err,error))
+      IF(ASSOCIATED(fieldVariable2%field)) localError=localError// &
+        & " of field number "//TRIM(NumberToVString(fieldVariable2%field%userNumber,"*",err,error))
+      localError=localError//". The end component should be >= 1 and <= "// &
+        & TRIM(NumberToVString(fieldVariable2%numberOfComponents,"*",err,error))//"."
+      CALL FlagError(localError,err,error,*999)
+    ENDIF
+    IF(.NOT.ALLOCATED(fieldVariable1%components)) THEN
+      localError="The components array is not allocated for field variable type "// &
+        & TRIM(NumberToVString(fieldVariable1%variableType,"*",err,error))
+      IF(ASSOCIATED(fieldVariable1%field)) localError=localError// &
+        & " of field number "//TRIM(NumberToVString(fieldVariable1%field%userNumber,"*",err,error))
+      localError=localError//"."
+      CALL FlagError(localError,err,error,*999)
+    ENDIF
+    IF(.NOT.ALLOCATED(fieldVariable2%components)) THEN
+      localError="The components array is not allocated for field variable type "// &
+        & TRIM(NumberToVString(fieldVariable2%variableType,"*",err,error))
+      IF(ASSOCIATED(fieldVariable2%field)) localError=localError// &
+        & " of field number "//TRIM(NumberToVString(fieldVariable2%field%userNumber,"*",err,error))
+      localError=localError//"."
+      CALL FlagError(localError,err,error,*999)
+    ENDIF
+#endif    
+
+    checkDomain=>fieldVariable1%components(startComponent)%domain
+    IF(.NOT.ASSOCIATED(checkDomain)) THEN
+      localError="The domain for component number "//TRIM(NumberToVString(startComponent,"*",err,error))// &
+        & " of variable type "//TRIM(NumberToVString(fieldVariable1%variableType,"*",err,error))
+      IF(ASSOCIATED(fieldVariable1%field)) localError=localError// &
+        & " of field number "//TRIM(NumberToVString(fieldVariable1%field%userNumber,"*",err,error))
+      localError=localError//" is not associated."
+      CALL FlagError(localError,err,error,*999)
+    ENDIF
+    DO componentIdx=startComponent,endComponent     
+      IF(.NOT.ASSOCIATED(fieldVariable1%components(componentIdx)%domain,checkDomain)) THEN
+        localError="The domain for component number "//TRIM(NumberToVString(componentIdx,"*",err,error))// &
+          & " of variable type "//TRIM(NumberToVString(fieldVariable1%variableType,"*",err,error))
+        IF(ASSOCIATED(fieldVariable1%field)) localError=localError// &
+          & " of field number "//TRIM(NumberToVString(fieldVariable1%field%userNumber,"*",err,error))
+        localError=localError//" does not match the domain for component number "// &
+          & TRIM(NumberToVString(startComponent,"*",err,error))//" of variable type "// &
+          & TRIM(NumberToVString(fieldVariable1%variableType,"*",err,error))
+        IF(ASSOCIATED(fieldVariable1%field)) localError=localError// &
+          & " of field number "//TRIM(NumberToVString(fieldVariable1%field%userNumber,"*",err,error))
+        localError=localError//"."
+        CALL FlagError(localError,err,error,*999)          
+      ENDIF
+      IF(.NOT.ASSOCIATED(fieldVariable2%components(componentIdx)%domain,checkDomain)) THEN
+        localError="The domain for component number "//TRIM(NumberToVString(componentIdx,"*",err,error))// &
+          & " of variable type "//TRIM(NumberToVString(fieldVariable2%variableType,"*",err,error))
+        IF(ASSOCIATED(fieldVariable2%field)) localError=localError// &
+          & " of field number "//TRIM(NumberToVString(fieldVariable2%field%userNumber,"*",err,error))
+        localError=localError//" does not match the domain for component number "// &
+          & TRIM(NumberToVString(startComponent,"*",err,error))//" of variable type "// &
+          & TRIM(NumberToVString(fieldVariable1%variableType,"*",err,error))
+        IF(ASSOCIATED(fieldVariable1%field)) localError=localError// &
+          & " of field number "//TRIM(NumberToVString(fieldVariable1%field%userNumber,"*",err,error))
+        localError=localError//"."
+        CALL FlagError(localError,err,error,*999)          
+      ENDIF
+    ENDDO !componentIdx
+ 
+    EXITS("FieldVariable_FieldVariableAssertOneDomain")
+    RETURN
+999 ERRORSEXITS("FieldVariable_FieldVariableAssertOneDomain",err,error)
+    RETURN 1
+    
+  END SUBROUTINE FieldVariable_FieldVariableAssertOneDomain
+
+  !
+  !================================================================================================================================
+  !
+
+  !>Asserts that two variables have the same decomposition
+  SUBROUTINE FieldVariable_FieldVariableAssertSameDecomposition(fieldVariable1,fieldVariable2,err,error,*)
+
+    !Argument variables
+    TYPE(FieldVariableType), POINTER :: fieldVariable1 !<A pointer to field variable 1 to assert if it is in the same decomposition as the other field variable.
+    TYPE(FieldVariableType), POINTER :: fieldVariable2 !<A pointer to field variable 2 to assert if it is in the same decoposition as the other field variable.
+    INTEGER(INTG), INTENT(OUT) :: err !<The error code
+    TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
+    !Local Variables
+    TYPE(VARYING_STRING) :: localError
+
+    ENTERS("FieldVariable_FieldVariableAssertSameDecomposition",err,error,*999)
+
+#ifdef WITH_PRECHECKS    
+    IF(.NOT.ASSOCIATED(fieldVariable1)) CALL FlagError("Field variable 1 is not associated.",err,error,*999)
+    IF(.NOT.ASSOCIATED(fieldVariable2)) CALL FlagError("Field variable 2 is not associated.",err,error,*999)
+    IF(.NOT.ASSOCIATED(fieldVariable1%field)) CALL FlagError("Field variable 1 field is not associated.",err,error,*999)
+    IF(.NOT.ASSOCIATED(fieldVariable2%field)) CALL FlagError("Field variable 2 field is not associated.",err,error,*999)
+#endif    
+
+    IF(ASSOCIATED(fieldVariable1%field%decomposition)) THEN
+      IF(ASSOCIATED(fieldVariable2%field%decomposition)) THEN
+        IF(.NOT.ASSOCIATED(fieldVariable1%field%decomposition,fieldVariable2%field%decomposition)) THEN
+          localError="The field variables have different decomposition. Field variable type "// &
+            & TRIM(NumberToVString(fieldVariable1%variableType,"*",err,error))// &
+            & " of field number "//TRIM(NumberToVString(fieldVariable1%field%userNumber,"*",err,error))//&
+            & " uses decomposition number "//TRIM(NumberToVString(fieldVariable1%field%decomposition%userNumber,"*",err,error))// &
+            & " but field variable type "//TRIM(NumberToVString(fieldVariable2%variableType,"*",err,error))// &
+            & " of field number "//TRIM(NumberToVString(fieldVariable2%field%userNumber,"*",err,error))// &
+            & " uses decomposition number "// &
+            & TRIM(NumberToVString(fieldVariable2%field%decomposition%userNumber,"*",err,error))//"."
+          CALL FlagError(localError,err,error,*999)          
+        ENDIF
+      ELSE
+        localError="The decomposition for field variable type "// &
+          & TRIM(NumberToVString(fieldVariable2%variableType,"*",err,error))//" of field number "// &
+          & TRIM(NumberToVString(fieldVariable2%field%userNumber,"*",err,error))//" is not associated."
+        CALL FlagError(localError,err,error,*999)
+      ENDIF
+    ELSE
+      localError="The decomposition for field variable type "// &
+        & TRIM(NumberToVString(fieldVariable1%variableType,"*",err,error))//" of field number "// &
+        & TRIM(NumberToVString(fieldVariable1%field%userNumber,"*",err,error))//" is not associated."
+      CALL FlagError(localError,err,error,*999)
+    ENDIF
+
+    EXITS("FieldVariable_FieldVariableAssertSameDecomposition")
+    RETURN
+999 ERRORSEXITS("FieldVariable_FieldVariableAssertSameDecomposition",err,error)
+    RETURN 1
+    
+  END SUBROUTINE FieldVariable_FieldVariableAssertSameDecomposition
+
+  !
+  !================================================================================================================================
+  !
+
+  !>Asserts that two variables have the same domains for the given components
+  SUBROUTINE FieldVariable_FieldVariableAssertSameDomains(fieldVariable1,fieldVariable2,startComponent,endComponent,err,error,*)
+
+    !Argument variables
+    TYPE(FieldVariableType), POINTER :: fieldVariable1 !<A pointer to field variable 1 to assert if it is in the same domains as the other field variable.
+    TYPE(FieldVariableType), POINTER :: fieldVariable2 !<A pointer to field variable 2 to assert if it is in the same domains as the other field variable.
+    INTEGER(INTG), INTENT(IN) :: startComponent !<The start component number to check
+    INTEGER(INTG), INTENT(IN) :: endComponent !<The end component number to check
+    INTEGER(INTG), INTENT(OUT) :: err !<The error code
+    TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
+    !Local Variables
+    INTEGER(INTG) :: componentIdx
+    TYPE(VARYING_STRING) :: localError
+
+    ENTERS("FieldVariable_FieldVariableAssertSameDomains",err,error,*999)
+
+#ifdef WITH_PRECHECKS    
+    IF(.NOT.ASSOCIATED(fieldVariable1)) CALL FlagError("Field variable 1 is not associated.",err,error,*999)
+    IF(.NOT.ASSOCIATED(fieldVariable2)) CALL FlagError("Field variable 2 is not associated.",err,error,*999)
+    IF(startComponent<1.OR.startComponent>fieldVariable1%numberOfComponents) THEN
+      localError="The specified start component of "//TRIM(NumberToVString(startComponent,"*",err,error))// &
+        & " is invalid for field variable type "//TRIM(NumberToVString(fieldVariable1%variableType,"*",err,error))
+      IF(ASSOCIATED(fieldVariable1%field)) localError=localError// &
+        & " of field number "//TRIM(NumberToVString(fieldVariable1%field%userNumber,"*",err,error))
+      localError=localError//". The start component should be >= 1 and <= "// &
+        & TRIM(NumberToVString(fieldVariable1%numberOfComponents,"*",err,error))//"."
+      CALL FlagError(localError,err,error,*999)
+    ENDIF
+    IF(startComponent<1.OR.startComponent>fieldVariable2%numberOfComponents) THEN
+      localError="The specified start component of "//TRIM(NumberToVString(startComponent,"*",err,error))// &
+        & " is invalid for field variable type "//TRIM(NumberToVString(fieldVariable2%variableType,"*",err,error))
+      IF(ASSOCIATED(fieldVariable2%field)) localError=localError// &
+        & " of field number "//TRIM(NumberToVString(fieldVariable2%field%userNumber,"*",err,error))
+      localError=localError//". The start component should be >= 1 and <= "// &
+        & TRIM(NumberToVString(fieldVariable2%numberOfComponents,"*",err,error))//"."
+      CALL FlagError(localError,err,error,*999)
+    ENDIF
+    IF(endComponent<1.OR.endComponent>fieldVariable1%numberOfComponents) THEN
+      localError="The specified end component of "//TRIM(NumberToVString(endComponent,"*",err,error))// &
+        & " is invalid for field variable type "//TRIM(NumberToVString(fieldVariable1%variableType,"*",err,error))
+      IF(ASSOCIATED(fieldVariable1%field)) localError=localError// &
+        & " of field number "//TRIM(NumberToVString(fieldVariable1%field%userNumber,"*",err,error))
+      localError=localError//". The end component should be >= 1 and <= "// &
+        & TRIM(NumberToVString(fieldVariable1%numberOfComponents,"*",err,error))//"."
+      CALL FlagError(localError,err,error,*999)
+    ENDIF
+    IF(endComponent<1.OR.endComponent>fieldVariable2%numberOfComponents) THEN
+      localError="The specified end component of "//TRIM(NumberToVString(endComponent,"*",err,error))// &
+        & " is invalid for field variable type "//TRIM(NumberToVString(fieldVariable2%variableType,"*",err,error))
+      IF(ASSOCIATED(fieldVariable2%field)) localError=localError// &
+        & " of field number "//TRIM(NumberToVString(fieldVariable2%field%userNumber,"*",err,error))
+      localError=localError//". The end component should be >= 1 and <= "// &
+        & TRIM(NumberToVString(fieldVariable2%numberOfComponents,"*",err,error))//"."
+      CALL FlagError(localError,err,error,*999)
+    ENDIF
+    IF(.NOT.ALLOCATED(fieldVariable1%components)) THEN
+      localError="The components array is not allocated for field variable type "// &
+        & TRIM(NumberToVString(fieldVariable1%variableType,"*",err,error))
+      IF(ASSOCIATED(fieldVariable1%field)) localError=localError// &
+        & " of field number "//TRIM(NumberToVString(fieldVariable1%field%userNumber,"*",err,error))
+      localError=localError//"."
+      CALL FlagError(localError,err,error,*999)
+    ENDIF
+    IF(.NOT.ALLOCATED(fieldVariable2%components)) THEN
+      localError="The components array is not allocated for field variable type "// &
+        & TRIM(NumberToVString(fieldVariable2%variableType,"*",err,error))
+      IF(ASSOCIATED(fieldVariable2%field)) localError=localError// &
+        & " of field number "//TRIM(NumberToVString(fieldVariable2%field%userNumber,"*",err,error))
+      localError=localError//"."
+      CALL FlagError(localError,err,error,*999)
+    ENDIF
+#endif    
+
+    DO componentIdx=startComponent,endComponent     
+      IF(.NOT.ASSOCIATED(fieldVariable1%components(componentIdx)%domain, &
+        & fieldVariable2%components(componentIdx)%domain)) THEN
+        localError="The domain for component number "//TRIM(NumberToVString(componentIdx,"*",err,error))// &
+          & " of variable type "//TRIM(NumberToVString(fieldVariable1%variableType,"*",err,error))
+        IF(ASSOCIATED(fieldVariable1%field)) localError=localError// &
+          & " of field number "//TRIM(NumberToVString(fieldVariable1%field%userNumber,"*",err,error))
+        localError=localError//" does not match the domain for component number "// &
+          & TRIM(NumberToVString(componentIdx,"*",err,error))//" of variable type "// &
+          & TRIM(NumberToVString(fieldVariable2%variableType,"*",err,error))
+        IF(ASSOCIATED(fieldVariable2%field)) localError=localError// &
+          & " of field number "//TRIM(NumberToVString(fieldVariable2%field%userNumber,"*",err,error))
+        localError=localError//"."
+        CALL FlagError(localError,err,error,*999)          
+      ENDIF
+    ENDDO !componentIdx
+ 
+    EXITS("FieldVariable_FieldVariableAssertSameDomains")
+    RETURN
+999 ERRORSEXITS("FieldVariable_FieldVariableAssertSameDomains",err,error)
+    RETURN 1
+    
+  END SUBROUTINE FieldVariable_FieldVariableAssertSameDomains
+
+  !
+  !================================================================================================================================
+  !
+
+  !>Asserts that two variables belong to the same region (accounting for interfaces etc.)
+  SUBROUTINE FieldVariable_FieldVariableAssertSameRegion(fieldVariable1,fieldVariable2,err,error,*)
+
+    !Argument variables
+    TYPE(FieldVariableType), POINTER :: fieldVariable1 !<A pointer to field variable 1 to assert if it is in the same region as the check field variable.
+    TYPE(FieldVariableType), POINTER :: fieldVariable2 !<A pointer to field variable 2 to assert if it is in the same region as the check field variable.
+    INTEGER(INTG), INTENT(OUT) :: err !<The error code
+    TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
+    !Local Variables
+    TYPE(VARYING_STRING) :: localError
+
+    ENTERS("FieldVariable_FieldVariableAssertSameRegion",err,error,*999)
+
+#ifdef WITH_PRECHECKS    
+    IF(.NOT.ASSOCIATED(fieldVariable1)) CALL FlagError("Field variable 1 is not associated.",err,error,*999)
+    IF(.NOT.ASSOCIATED(fieldVariable2)) CALL FlagError("Field variable 2 is not associated.",err,error,*999)
+    IF(.NOT.ASSOCIATED(fieldVariable1%field)) CALL FlagError("Field variable 1 field is not associated.",err,error,*999)
+    IF(.NOT.ASSOCIATED(fieldVariable2%field)) CALL FlagError("Field variable 2 field is not associated.",err,error,*999)
+#endif    
+
+    IF(ASSOCIATED(fieldVariable1%field%region)) THEN
+      IF(ASSOCIATED(fieldVariable2%field%region)) THEN
+        IF(.NOT.ASSOCIATED(fieldVariable1%field%region,fieldVariable2%field%region)) THEN
+          localError="The field variables have different regions. Field variable type "// &
+            & TRIM(NumberToVString(fieldVariable1%variableType,"*",err,error))// &
+            & " of field number "//TRIM(NumberToVString(fieldVariable1%field%userNumber,"*",err,error))//&
+            & " is defined on region number "//TRIM(NumberToVString(fieldVariable1%field%region%userNumber,"*",err,error))// &
+            & " but field variable type "//TRIM(NumberToVString(fieldVariable2%variableType,"*",err,error))// &
+            & " of field number "//TRIM(NumberToVString(fieldVariable2%field%userNumber,"*",err,error))// &
+            & " is defined on region number "//TRIM(NumberToVString(fieldVariable2%field%region%userNumber,"*",err,error))//"."
+          CALL FlagError(localError,err,error,*999)          
+        ENDIF
+      ELSE
+        IF(ASSOCIATED(fieldVariable2%field%INTERFACE)) THEN
+          localError="The field variables have different regions. Field variable type "// &
+            & TRIM(NumberToVString(fieldVariable1%variableType,"*",err,error))// &
+            & " of field number "//TRIM(NumberToVString(fieldVariable1%field%userNumber,"*",err,error))//&
+            & " is defined on region number "//TRIM(NumberToVString(fieldVariable1%field%region%userNumber,"*",err,error))// &
+            & " but field variable type "//TRIM(NumberToVString(fieldVariable2%variableType,"*",err,error))// &
+            & " of field number "//TRIM(NumberToVString(fieldVariable2%field%userNumber,"*",err,error))// &
+            & " is defined on interface number "// &
+            & TRIM(NumberToVString(fieldVariable2%field%INTERFACE%userNumber,"*",err,error))
+          IF(ASSOCIATED(fieldVariable2%field%INTERFACE%parentRegion)) localError=localError// &
+            & " of parent region number "// &
+            & TRIM(NumberToVString(fieldVariable2%field%INTERFACE%parentRegion%userNumber,"*",err,error))
+          localError=localError//"."
+          CALL FlagError(localError,err,error,*999)          
+        ELSE
+          localError="A region or interface is not associated for variable type "// &
+            & TRIM(NumberToVString(fieldVariable2%variableType,"*",err,error))//" of field number "// &
+            & TRIM(NumberToVString(fieldVariable2%field%userNumber,"*",err,error))//"."
+        ENDIF
+      ENDIF
+    ELSE
+      IF(ASSOCIATED(fieldVariable1%field%INTERFACE)) THEN
+        IF(ASSOCIATED(fieldVariable2%region)) THEN
+          localError="The field variables have different regions. Field variable type "// &
+            & TRIM(NumberToVString(fieldVariable1%variableType,"*",err,error))// &
+            & " of field number "//TRIM(NumberToVString(fieldVariable1%field%userNumber,"*",err,error))//&
+            & " is defined on interface number "// &
+            & TRIM(NumberToVString(fieldVariable1%field%INTERFACE%userNumber,"*",err,error))
+          IF(ASSOCIATED(fieldVariable1%field%INTERFACE%parentRegion)) localError=localError// &
+            & " of parent region number "// &
+            & TRIM(NumberToVString(fieldVariable1%field%INTERFACE%parentRegion%userNumber,"*",err,error))
+          localError=localError// &
+            & " but field variable type "//TRIM(NumberToVString(fieldVariable2%variableType,"*",err,error))// &
+            & " of field number "//TRIM(NumberToVString(fieldVariable2%field%userNumber,"*",err,error))// &
+            & " is defined on region number "//TRIM(NumberToVString(fieldVariable2%field%region%userNumber,"*",err,error))//"."
+          CALL FlagError(localError,err,error,*999)                           
+        ELSE
+          IF(ASSOCIATED(fieldVariable2%field%INTERFACE)) THEN
+            IF(ASSOCIATED(fieldVariable1%field%INTERFACE,fieldVariable2%field%INTERFACE)) THEN
+              IF(.NOT.ASSOCIATED(fieldVariable1%field%INTERFACE%parentRegion,fieldVariable2%field%INTERFACE%parentRegion)) THEN
+                localError="The field variables have different regions. Field variable type "// &
+                  & TRIM(NumberToVString(fieldVariable1%variableType,"*",err,error))// &
+                  & " of field number "//TRIM(NumberToVString(fieldVariable1%field%userNumber,"*",err,error))//&
+                  & " is defined on interface number "// &
+                  & TRIM(NumberToVString(fieldVariable1%field%INTERFACE%userNumber,"*",err,error))
+                IF(ASSOCIATED(fieldVariable1%field%INTERFACE%parentRegion)) localError=localError// &
+                  & " of parent region number "// &
+                  & TRIM(NumberToVString(fieldVariable1%field%INTERFACE%parentRegion%userNumber,"*",err,error))
+                localError=localError// &
+                  & " but field variable type "//TRIM(NumberToVString(fieldVariable2%variableType,"*",err,error))// &
+                  & " of field number "//TRIM(NumberToVString(fieldVariable2%field%userNumber,"*",err,error))// &
+                  & " is defined on interface number "// &
+                  & TRIM(NumberToVString(fieldVariable2%field%INTERFACE%userNumber,"*",err,error))
+                IF(ASSOCIATED(fieldVariable2%field%INTERFACE%parentRegion)) localError=localError// &
+                  & " of parent region number "// &
+                  & TRIM(NumberToVString(fieldVariable2%field%INTERFACE%parentRegion%userNumber,"*",err,error))
+                localError=localError//"."
+                CALL FlagError(localError,err,error,*999)                           
+              ENDIF
+            ELSE
+              localError="The field variables have different regions. Field variable type "// &
+                & TRIM(NumberToVString(fieldVariable1%variableType,"*",err,error))// &
+                & " of field number "//TRIM(NumberToVString(fieldVariable1%field%userNumber,"*",err,error))//&
+                & " is defined on interface number "// &
+                & TRIM(NumberToVString(fieldVariable1%field%INTERFACE%userNumber,"*",err,error))
+              IF(ASSOCIATED(fieldVariable1%field%INTERFACE%parentRegion)) localError=localError// &
+                & " of parent region number "// &
+                & TRIM(NumberToVString(fieldVariable1%field%INTERFACE%parentRegion%userNumber,"*",err,error))
+              localError=localError// &
+                & " but field variable type "//TRIM(NumberToVString(fieldVariable2%variableType,"*",err,error))// &
+                & " of field number "//TRIM(NumberToVString(fieldVariable2%field%userNumber,"*",err,error))// &
+                & " is defined on interface number "// &
+                & TRIM(NumberToVString(fieldVariable2%field%INTERFACE%userNumber,"*",err,error))
+              IF(ASSOCIATED(fieldVariable2%field%INTERFACE%parentRegion)) localError=localError// &
+                & " of parent region number "// &
+                & TRIM(NumberToVString(fieldVariable2%field%INTERFACE%parentRegion%userNumber,"*",err,error))
+              localError=localError//"."
+              CALL FlagError(localError,err,error,*999)                           
+            ENDIF
+          ELSE
+            localError="A region or interface is not associated for variable type "// &
+              & TRIM(NumberToVString(fieldVariable2%variableType,"*",err,error))//" of field number "// &
+              & TRIM(NumberToVString(fieldVariable2%field%userNumber,"*",err,error))//"."
+            CALL FlagError(localError,err,error,*999)
+          ENDIF
+        ENDIF
+      ELSE
+        localError="A region or interface is not associated for variable type "// &
+          & TRIM(NumberToVString(fieldVariable1%variableType,"*",err,error))//" of field number "// &
+          & TRIM(NumberToVString(fieldVariable1%field%userNumber,"*",err,error))//"."
+        CALL FlagError(localError,err,error,*999)
+      ENDIF
+    ENDIF  
+
+    EXITS("FieldVariable_FieldVariableAssertSameRegion")
+    RETURN
+999 ERRORSEXITS("FieldVariable_FieldVariableAssertSameRegion",err,error)
+    RETURN 1
+    
+  END SUBROUTINE FieldVariable_FieldVariableAssertSameRegion
 
   !
   !================================================================================================================================
@@ -7124,12 +7746,12 @@ CONTAINS
     NULLIFY(field)
     CALL FieldVariable_FieldGet(fieldVariable,field,err,error,*999)
     IF(field%fieldFinished) THEN
-      IF(fieldVariable%numberOfComponents/=numberOfComponents) THEN
+      IF(fieldVariable%numberOfComponents<numberOfComponents) THEN
         localError="Invalid number of components. The number components for variable type "// &
           & TRIM(NumberToVString(fieldVariable%variableType,"*",err,error))//" of field number "// &
           & TRIM(NumberToVString(field%userNumber,"*",err,error))//" is "// &
           & TRIM(NumberToVString(fieldVariable%numberOfComponents,"*",err,error))// &
-          & " which does not correspond to the specified number of components of "// &
+          & " which is less than the specified number of components of "// &
           & TRIM(NumberToVString(numberOfComponents,"*",err,error))//"."
         CALL FlagError(localError,err,error,*999)
       ENDIF
@@ -7144,12 +7766,12 @@ CONTAINS
         CALL FlagError(localError,err,error,*999)
       ENDIF
 #endif      
-      IF(createValuesCache%numberOfComponents(fieldVariable%variableType)/=numberOfComponents) THEN
+      IF(createValuesCache%numberOfComponents(fieldVariable%variableType)<numberOfComponents) THEN
         localError="Invalid number of components. The number components for variable type "// &
           & TRIM(NumberToVString(fieldVariable%variableType,"*",err,error))//" of field number "// &
           & TRIM(NumberToVString(field%userNumber,"*",err,error))//" is "// &
           & TRIM(NumberToVString(fieldVariable%numberOfComponents,"*",err,error))// &
-          & " which does not correspond to the specified number of components of "// &
+          & " which is less than the specified number of components of "// &
           & TRIM(NumberToVString(numberOfComponents,"*",err,error))//"."
         CALL FlagError(localError,err,error,*999)
       ENDIF
@@ -7284,7 +7906,9 @@ CONTAINS
 
     EXITS("FieldVariable_ParameterSetExists")
     RETURN
+#ifdef WITH_PRECHECKS    
 999 NULLIFY(parameterSet)
+#endif    
 998 ERRORSEXITS("FieldVariable_ParameterSetExists",err,error)
     RETURN 1
     
@@ -7329,6 +7953,65 @@ CONTAINS
     RETURN 1
     
   END SUBROUTINE FieldVariable_ParameterSetGet
+
+  !
+  !================================================================================================================================
+  !
+
+  !>Returns a pointer to a field variable region (accounting for interfaces etc.)
+  SUBROUTINE FieldVariable_RegionGet(fieldVariable,region,err,error,*)
+    
+    !Argument variables
+    TYPE(FieldVariableType), POINTER :: fieldVariable !<A pointer to the field variable to get the region for.
+    TYPE(RegionType), POINTER :: region !<On exit, a pointer to the field variable region. Must not be associated on entry.
+    INTEGER(INTG), INTENT(OUT) :: err !<The error code
+    TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
+    !Local Variables
+    TYPE(InterfaceType), POINTER :: INTERFACE
+#ifdef WITH_POSTCHECKS    
+    TYPE(VARYING_STRING) :: localError
+#endif    
+
+    ENTERS("FieldVariable_RegionGet",err,error,*998)
+
+
+#ifdef WITH_PRECHECKS    
+    !Check input arguments
+    IF(ASSOCIATED(region)) CALL FlagError("Region is already associated.",err,error,*998)
+    IF(.NOT.ASSOCIATED(fieldVariable)) CALL FlagError("Field variable is not associated.",err,error,*999)
+    IF(.NOT.ASSOCIATED(fieldVariable%field)) CALL FlagError("Field variable field is not associated.",err,error,*999)
+#endif    
+
+    NULLIFY(region)
+    NULLIFY(interface)
+    region=>fieldVariable%field%region
+    IF(.NOT.ASSOCIATED(region)) THEN          
+      INTERFACE=>fieldVariable%field%INTERFACE
+      IF(ASSOCIATED(INTERFACE)) THEN
+        IF(ASSOCIATED(interface%parentRegion)) THEN
+          region=>interface%parentRegion     
+        ELSE
+          localError="The parent region is not associated for variable type "// &
+            & TRIM(NumberToVString(fieldVariable%variableType,"*",err,error))//" of field number "// &
+            & TRIM(NumberToVString(fieldVariable%field%userNumber,"*",err,error))//" of interface number "// &
+            & TRIM(NumberToVString(INTERFACE%userNumber,"*",err,error))//"."
+          CALL FlagError(localError,err,error,*999)
+        ENDIF
+      ELSE
+        localError="A region or interface is not associated for variable type "// &
+          & TRIM(NumberToVString(fieldVariable%variableType,"*",err,error))//" of field number "// &
+          & TRIM(NumberToVString(fieldVariable%field%userNumber,"*",err,error))//"."
+        CALL FlagError(localError,err,error,*999)
+      ENDIF
+    ENDIF
+    
+    EXITS("FieldVariable_RegionGet")
+    RETURN
+999 NULLIFY(region)
+998 ERRORSEXITS("FieldVariable_RegionGet",err,error)
+    RETURN 1
+    
+  END SUBROUTINE FieldVariable_RegionGet
 
   !
   !================================================================================================================================
@@ -7392,11 +8075,92 @@ CONTAINS
   !================================================================================================================================
   !
 
+  !>Returns a pointer to a field specified by an index into a fields object.
+  SUBROUTINE Fields_FieldIndexGet(fields,fieldIndex,field,err,error,*)
+
+    !Argument variables
+    TYPE(FieldsType), POINTER :: fields !<A pointer to the fields to get the field by index for
+    INTEGER(INTG), INTENT(IN) :: fieldIndex !<The index of the field in fields to get.
+    TYPE(FieldType), POINTER :: field !<On return, a pointer to the specified field. Must not be associated on entry.
+    INTEGER(INTG), INTENT(OUT) :: err !<The error code
+    TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
+    !Local Variables
+#ifdef WITH_CHECKS    
+    TYPE(VARYING_STRING) :: localError
+#endif    
+
+    ENTERS("Fields_FieldIndexGet",err,error,*998)
+
+#ifdef WITH_PRECHECKS    
+    IF(ASSOCIATED(field)) CALL FlagError("Field is already associated.",err,error,*998)
+    IF(.NOT.ASSOCIATED(fields)) CALL FlagError("Fields is not associated.",err,error,*999)
+    IF(fieldIndex<1.OR.fieldIndex>fields%numberOfFields) THEN
+      localError="The specified field index of "//TRIM(NumberToVString(fieldIndex,"*",err,error))// &
+        & " is invalid. The field index should be >= 1 and <= "// &
+        & TRIM(NumberToVString(fields%numberOfFields,"*",err,error))//" for the specified fields."
+      CALL FlagError(localError,err,error,*999)
+    ENDIF
+    IF(.NOT.ALLOCATED(fields%fields)) CALL FlagError("Fields fields array is not allocated.",err,error,*999)
+#endif    
+       
+    field=>fields%fields(fieldIndex)%ptr
+
+#ifdef WITH_POSTCHECKS 
+    IF(.NOT.ASSOCIATED(field)) THEN
+      localError="The field at field index "//TRIM(NumberToVString(fieldIndex,"*",err,error))// &
+        & " of the specified fields object is not associated."
+      CALL FlagError(localError,err,error,*999)
+    ENDIF
+#endif
+    
+    EXITS("Fields_FieldIndexGet")
+    RETURN
+#ifdef WITH_CHECKS    
+999 NULLIFY(field)
+#endif    
+998 ERRORSEXITS("Fields_FieldIndexGet",err,error)
+    RETURN 1
+    
+  END SUBROUTINE Fields_FieldIndexGet
+
+  !
+  !================================================================================================================================
+  !
+
+  !>Returns the number of fields in a fields object
+  SUBROUTINE Fields_NumberOfFieldsGet(fields,numberOfFields,err,error,*)
+
+    !Argument variables
+    TYPE(FieldsType), POINTER :: fields !<A pointer to the fields to get the number of fields for
+    INTEGER(INTG), INTENT(OUT) :: numberOfFields !<On return, the number of fields in the fields object.
+    INTEGER(INTG), INTENT(OUT) :: err !<The error code
+    TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
+    !Local Variables
+
+    ENTERS("Fields_NumberOfFieldsGet",err,error,*999)
+
+#ifdef WITH_PRECHECKS    
+    IF(.NOT.ASSOCIATED(fields)) CALL FlagError("Fields is not associated.",err,error,*999)
+#endif    
+
+    numberOfFields=fields%numberOfFields
+    
+    EXITS("Fields_NumberOfFieldsGet")
+    RETURN
+999 ERRORSEXITS("Fields_NumberOfFieldsGet",err,error)
+    RETURN 1
+    
+  END SUBROUTINE Fields_NumberOfFieldsGet
+
+  !
+  !================================================================================================================================
+  !
+
   !>Returns a pointer to the region for a fields accounting for region and interfaces
   SUBROUTINE Fields_RegionGet(fields,region,err,error,*)
 
     !Argument variables
-    TYPE(FieldsType), POINTER :: fields !<A pointer to the field variable to get the number of components for
+    TYPE(FieldsType), POINTER :: fields !<A pointer to the fields to get the region for
     TYPE(RegionType), POINTER :: region !<On return, a pointer to the region for the fields. Must not be associated on entry.
     INTEGER(INTG), INTENT(OUT) :: err !<The error code
     TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string

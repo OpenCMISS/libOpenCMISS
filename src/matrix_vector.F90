@@ -206,8 +206,7 @@ MODULE MatrixVector
   !PRIVATE
 
   !Module parameters
-
-  INTEGER(INTG), PARAMETER :: bisectionToLinearSearchThreshold=10 !<Threshold for transition from bisection to linear search.
+  INTEGER(INTG), PARAMETER :: BISECTION_TO_LINEAR_SEARCH_THRESHOLD=10 !<Threshold for transition from bisection to linear search.
 
   !Module types
 
@@ -1665,7 +1664,7 @@ CONTAINS
         upLimit=matrix%rowIndices(i+1)
         IF(upLimit>lowLimit) THEN
           IF(j<=matrix%columnIndices(upLimit-1)) THEN
-            DO WHILE((upLimit-lowLimit)>bisectionToLinearSearchThreshold)
+            DO WHILE((upLimit-lowLimit)>BISECTION_TO_LINEAR_SEARCH_THRESHOLD)
               midPoint=(upLimit+lowLimit)/2
               IF(matrix%columnIndices(midPoint)>j) THEN
                 upLimit=midPoint
@@ -1673,6 +1672,7 @@ CONTAINS
                 lowLimit=midPoint
               ENDIF
             ENDDO
+            upLimit=MIN(upLimit,matrix%numberOfNonZeros)
             DO k=lowLimit,upLimit
               IF(matrix%columnIndices(k)==j) THEN
                 location=k
@@ -1689,7 +1689,7 @@ CONTAINS
         upLimit=matrix%columnIndices(j+1)
         IF(upLimit>lowLimit) THEN
           IF(i<=matrix%rowIndices(upLimit-1)) THEN
-            DO WHILE((upLimit-lowLimit)>bisectionToLinearSearchThreshold)
+            DO WHILE((upLimit-lowLimit)>BISECTION_TO_LINEAR_SEARCH_THRESHOLD)
               midPoint=(upLimit+lowLimit)/2
               IF(matrix%rowIndices(midPoint)>i) THEN
                 upLimit=midPoint
@@ -1697,6 +1697,7 @@ CONTAINS
                 lowLimit=midPoint
               ENDIF
             ENDDO
+            upLimit=MIN(upLimit,matrix%numberOfNonZeros)
             DO k=lowLimit,upLimit
               IF(matrix%rowIndices(k)==i) THEN
                 location=k
@@ -1737,7 +1738,7 @@ CONTAINS
         upLimit=matrix%rowIndices(rowBlockNumber+1)
         IF(upLimit>lowLimit) THEN
           IF(columnBlockNumber<=matrix%columnIndices(upLimit-1)) THEN
-            DO WHILE((upLimit-lowLimit)>bisectionToLinearSearchThreshold)
+            DO WHILE((upLimit-lowLimit)>BISECTION_TO_LINEAR_SEARCH_THRESHOLD)
               midPoint=(upLimit+lowLimit)/2
               IF(matrix%columnIndices(midPoint)>columnBlockNumber) THEN
                 upLimit=midPoint
@@ -1745,6 +1746,7 @@ CONTAINS
                 lowLimit=midPoint
               ENDIF
             ENDDO
+            upLimit=MIN(upLimit,matrix%numberOfBlocks)
             DO k=lowLimit,upLimit
               IF(matrix%columnIndices(k)==columnBlockNumber) THEN
                 columnBlock=k
@@ -2689,7 +2691,7 @@ CONTAINS
             upLimit=matrix%rowIndices(rowIndex+1)
           ENDIF
           previousColumnIndex=columnIndex
-          DO WHILE((upLimit-lowLimit)>bisectionToLinearSearchThreshold)
+          DO WHILE((upLimit-lowLimit)>BISECTION_TO_LINEAR_SEARCH_THRESHOLD)
             midPoint=(upLimit+lowLimit)/2
             IF(matrix%columnIndices(midPoint)>columnIndex) THEN
               upLimit=midPoint
@@ -2730,7 +2732,7 @@ CONTAINS
             upLimit=matrix%columnIndices(columnIndex+1)
           ENDIF
           previousRowIndex=rowIndex
-          DO WHILE((upLimit-lowLimit)>bisectionToLinearSearchThreshold)
+          DO WHILE((upLimit-lowLimit)>BISECTION_TO_LINEAR_SEARCH_THRESHOLD)
             midPoint=(upLimit+lowLimit)/2
             IF(matrix%rowIndices(midPoint)>rowIndex) THEN
               upLimit=midPoint
@@ -2775,7 +2777,7 @@ CONTAINS
             upLimit=matrix%rowIndices(rowBlockNumber+1)
           ENDIF
           previousColumnBlockNumber=columnBlockNumber
-          DO WHILE((upLimit-lowLimit)>bisectionToLinearSearchThreshold)
+          DO WHILE((upLimit-lowLimit)>BISECTION_TO_LINEAR_SEARCH_THRESHOLD)
             midPoint=(upLimit+lowLimit)/2
             IF(matrix%columnIndices(midPoint)>columnBlockNumber) THEN
               upLimit=midPoint
@@ -2959,7 +2961,7 @@ CONTAINS
             upLimit=matrix%rowIndices(rowIndex+1)
           ENDIF
           previousColumnIndex=columnIndex
-          DO WHILE((upLimit-lowLimit)>bisectionToLinearSearchThreshold)
+          DO WHILE((upLimit-lowLimit)>BISECTION_TO_LINEAR_SEARCH_THRESHOLD)
             midPoint=(upLimit+lowLimit)/2
             IF(matrix%columnIndices(midPoint)>columnIndex) THEN
               upLimit=midPoint
@@ -3000,7 +3002,7 @@ CONTAINS
             upLimit=matrix%columnIndices(columnIndex+1)
           ENDIF
           previousRowIndex=rowIndex
-          DO WHILE((upLimit-lowLimit)>bisectionToLinearSearchThreshold)
+          DO WHILE((upLimit-lowLimit)>BISECTION_TO_LINEAR_SEARCH_THRESHOLD)
             midPoint=(upLimit+lowLimit)/2
             IF(matrix%rowIndices(midPoint)>rowIndex) THEN
               upLimit=midPoint
@@ -3045,7 +3047,7 @@ CONTAINS
             upLimit=matrix%rowIndices(rowBlockNumber+1)
           ENDIF
           previousColumnBlockNumber=columnBlockNumber
-          DO WHILE((upLimit-lowLimit)>bisectionToLinearSearchThreshold)
+          DO WHILE((upLimit-lowLimit)>BISECTION_TO_LINEAR_SEARCH_THRESHOLD)
             midPoint=(upLimit+lowLimit)/2
             IF(matrix%columnIndices(midPoint)>columnBlockNumber) THEN
               upLimit=midPoint
@@ -3229,7 +3231,7 @@ CONTAINS
             upLimit=matrix%rowIndices(rowIndex+1)
           ENDIF
           previousColumnIndex=columnIndex
-          DO WHILE((upLimit-lowLimit)>bisectionToLinearSearchThreshold)
+          DO WHILE((upLimit-lowLimit)>BISECTION_TO_LINEAR_SEARCH_THRESHOLD)
             midPoint=(upLimit+lowLimit)/2
             IF(matrix%columnIndices(midPoint)>columnIndex) THEN
               upLimit=midPoint
@@ -3270,7 +3272,7 @@ CONTAINS
             upLimit=matrix%columnIndices(columnIndex+1)
           ENDIF
           previousRowIndex=rowIndex
-          DO WHILE((upLimit-lowLimit)>bisectionToLinearSearchThreshold)
+          DO WHILE((upLimit-lowLimit)>BISECTION_TO_LINEAR_SEARCH_THRESHOLD)
             midPoint=(upLimit+lowLimit)/2
             IF(matrix%rowIndices(midPoint)>rowIndex) THEN
               upLimit=midPoint
@@ -3315,7 +3317,7 @@ CONTAINS
             upLimit=matrix%rowIndices(rowBlockNumber+1)
           ENDIF
           previousColumnBlockNumber=columnBlockNumber
-          DO WHILE((upLimit-lowLimit)>bisectionToLinearSearchThreshold)
+          DO WHILE((upLimit-lowLimit)>BISECTION_TO_LINEAR_SEARCH_THRESHOLD)
             midPoint=(upLimit+lowLimit)/2
             IF(matrix%columnIndices(midPoint)>columnBlockNumber) THEN
               upLimit=midPoint
@@ -3499,7 +3501,7 @@ CONTAINS
             upLimit=matrix%rowIndices(rowIndex+1)
           ENDIF
           previousColumnIndex=columnIndex
-          DO WHILE((upLimit-lowLimit)>bisectionToLinearSearchThreshold)
+          DO WHILE((upLimit-lowLimit)>BISECTION_TO_LINEAR_SEARCH_THRESHOLD)
             midPoint=(upLimit+lowLimit)/2
             IF(matrix%columnIndices(midPoint)>columnIndex) THEN
               upLimit=midPoint
@@ -3540,7 +3542,7 @@ CONTAINS
             upLimit=matrix%columnIndices(columnIndex+1)
           ENDIF
           previousRowIndex=rowIndex
-          DO WHILE((upLimit-lowLimit)>bisectionToLinearSearchThreshold)
+          DO WHILE((upLimit-lowLimit)>BISECTION_TO_LINEAR_SEARCH_THRESHOLD)
             midPoint=(upLimit+lowLimit)/2
             IF(matrix%rowIndices(midPoint)>rowIndex) THEN
               upLimit=midPoint
@@ -3585,7 +3587,7 @@ CONTAINS
             upLimit=matrix%rowIndices(rowBlockNumber+1)
           ENDIF
           previousColumnBlockNumber=columnBlockNumber
-          DO WHILE((upLimit-lowLimit)>bisectionToLinearSearchThreshold)
+          DO WHILE((upLimit-lowLimit)>BISECTION_TO_LINEAR_SEARCH_THRESHOLD)
             midPoint=(upLimit+lowLimit)/2
             IF(matrix%columnIndices(midPoint)>columnBlockNumber) THEN
               upLimit=midPoint

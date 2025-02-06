@@ -575,7 +575,7 @@ CONTAINS
     TYPE(DecompositionType), POINTER :: decomposition
     TYPE(EquationsSetPtrType), POINTER :: newEquationsSets(:)
     TYPE(FieldType), POINTER :: dependentField
-    TYPE(FieldVariableType), POINTER :: dependentVariable,fieldVariable,interfaceVariable
+    TYPE(FieldVariableType), POINTER :: dependentVariable,interfaceVariable
     TYPE(FieldVariablePtrType), POINTER :: newFieldVariables(:)
     TYPE(InterfaceType), POINTER :: INTERFACE
     TYPE(InterfaceDependentType), POINTER :: interfaceDependent
@@ -606,7 +606,7 @@ CONTAINS
     variableIdx=1
     NULLIFY(interfaceVariable)
     DO WHILE(variableIdx<=interfaceDependent%numberOfDependentVariables.AND..NOT.ASSOCIATED(interfaceVariable))
-      IF(ASSOCIATED(fieldVariable,interfaceDependent%fieldVariables(variableIdx)%ptr)) THEN
+      IF(ASSOCIATED(dependentVariable,interfaceDependent%fieldVariables(variableIdx)%ptr)) THEN
         interfaceVariable=>interfaceDependent%fieldVariables(variableIdx)%ptr
       ELSE
         variableIdx=variableIdx+1
@@ -701,6 +701,7 @@ CONTAINS
 
     IF(ASSOCIATED(interfaceCondition)) CALL FlagError("Interface condition is not associated.",err,error,*998)
 
+    interfaceConditions=>interfaceCondition%interfaceConditions
     interfaceConditionPosition=interfaceCondition%globalNumber
 
     !Destroy all the interface condition components
@@ -1054,8 +1055,6 @@ CONTAINS
     INTEGER(INTG), INTENT(OUT) :: err !<The error code
     TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
     !Local Variables
-    INTEGER(INTG) :: dummyErr
-    TYPE(VARYING_STRING) :: dummyError
  
     ENTERS("InterfaceCondition_GeometryInitialise",err,error,*998)
 
@@ -1066,7 +1065,7 @@ CONTAINS
       
     EXITS("InterfaceCondition_GeometryInitialise")
     RETURN
-999 CALL InterfaceCondition_GeometryFinalise(interfaceCondition%geometry,dummyErr,dummyError,*998)
+!999 CALL InterfaceCondition_GeometryFinalise(interfaceCondition%geometry,dummyErr,dummyError,*998)
 998 ERRORSEXITS("InterfaceCondition_GeometryInitialise",err,error)
     RETURN 1
     

@@ -145,8 +145,7 @@ CONTAINS
     TYPE(DomainNodesType), POINTER :: domainNodes
     TYPE(DomainTopologyType), POINTER :: domainTopology
     TYPE(FieldType), POINTER :: analyticField,dependentField,geometricField
-    TYPE(FieldParameterSetType), POINTER :: accelerationParameterSet,analyticAccelerationParameterSet, &
-      & analyticVelocityParameterSet,velocityParameterSet
+    TYPE(FieldParameterSetType), POINTER :: accelerationParameterSet,velocityParameterSet
     TYPE(FieldVariableType), POINTER :: analyticVariable,dependentVariable,geometricVariable
 
     ENTERS("Burgers_AnalyticBoundaryConditionsCalculate",err,error,*999)
@@ -793,6 +792,7 @@ CONTAINS
       CALL Field_NumberOfComponentsGet(geometricField,FIELD_U_VARIABLE_TYPE,numberOfDimensions,err,error,*999)
       NULLIFY(equationsAnalytic)
       CALL EquationsSet_AnalyticGet(equationsSet,equationsAnalytic,err,error,*999)
+      numberOfAnalyticComponents=0
       SELECT CASE(equationsSetSetup%actionType)
       CASE(EQUATIONS_SET_SETUP_START_ACTION)
         CALL EquationsSet_AssertDependentIsFinished(equationsSet,err,error,*999)
@@ -1543,7 +1543,7 @@ CONTAINS
       & pSpecification(3)
     REAL(DP) :: currentTime,timeIncrement,startTime,stopTime
     CHARACTER(20) :: file,outputFile
-    EXTERNAL :: SYSTEM
+    !EXTERNAL :: SYSTEM
     TYPE(ControlLoopType), POINTER :: controlLoop
     TYPE(EquationsSetType), POINTER :: equationsSet
     TYPE(EquationsSetAnalyticType), POINTER :: equationsAnalytic
@@ -1563,7 +1563,7 @@ CONTAINS
     CALL ControlLoop_ProblemGet(controlLoop,problem,err,error,*999)
     CALL Problem_SpecificationGet(problem,3,pSpecification,err,error,*999)
     CALL Solver_OutputTypeGet(solver,outputType,err,error,*999)
-    CALL SYSTEM('mkdir -p ./output')
+    CALL EXECUTE_COMMAND_LINE('mkdir -p ./output')
     SELECT CASE(pSpecification(3))
     CASE(PROBLEM_STATIC_BURGERS_SUBTYPE)
       !Do nothing
@@ -2390,8 +2390,8 @@ CONTAINS
             bParam=materialsInterpPoint%values(1,NO_PART_DERIV)
           ENDIF
         ENDIF
+        ududX=0.0_DP
         IF(updateResidual) THEN
-          ududX=0.0_DP
           DO columnComponentIdx=1,numberOfColsComponents
             uValue(columnComponentIdx)=dependentInterpPoint%values(columnComponentIdx,NO_PART_DERIV)
             dudX(columnComponentIdx)=0.0_DP
