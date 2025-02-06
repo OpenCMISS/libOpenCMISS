@@ -7968,9 +7968,7 @@ CONTAINS
     TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
     !Local Variables
     TYPE(InterfaceType), POINTER :: INTERFACE
-#ifdef WITH_POSTCHECKS    
     TYPE(VARYING_STRING) :: localError
-#endif    
 
     ENTERS("FieldVariable_RegionGet",err,error,*998)
 
