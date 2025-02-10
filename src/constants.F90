@@ -378,7 +378,8 @@ MODULE Constants
   INTEGER(INTG), PARAMETER :: COMPONENT_TO_TENSOR_TWO2(2,4)=RESHAPE([1,1,2,1,1,2,2,2],[2,4]) !<COMPONENT_TO_TENSOR_TWO2(k,a) converts a component index (a) to a pair (k=1,k=2) of rank 2 tensor indices in 2 dimensions.
   INTEGER(INTG), PARAMETER :: TENSOR_TWO_TO_COMPONENT3(3,3)=RESHAPE([1,2,3,4,5,6,7,8,9],[3,3]) !<TENSOR_TWO_TO_COMPONENT3(i,j) converts a pair (i,j) of rank 2 tensor indices to component index (a) in 3 dimensions.
   INTEGER(INTG), PARAMETER :: COMPONENT_TO_TENSOR_TWO3(2,9)=RESHAPE([1,1,2,1,3,1,1,2,2,2,3,2,1,3,2,3,3,3],[2,9]) !<COMPONENT_TO_TENSOR_TWO3(k,a) converts a component index (a) to a pair (k=1,k=2) of rank 2 tensor indices in 3 dimensions.
-  INTEGER(INTG), PARAMETER :: TENSOR_TWO_TO_COMPONENT(3,3,3)=RESHAPE([1,0,0,0,0,0,0,0,0,1,2,0,3,4,0,0,0,0,1,2,3,4,5,6,7,8,9],[3,3,3]) !<TENSOR_TWO_TO_COMPONENT(i,j,numberOfDimensions) converts a pair of (i,j) of a tensor to component index (a) for a rank 2 tensor with numberOfDimensions dimensions.
+  INTEGER(INTG), PARAMETER :: TENSOR_TWO_TO_COMPONENT(3,3,3)=RESHAPE([1,0,0,0,0,0,0,0,0,1,2,0,3,4,0,0,0,0,1,2,3,4,5,6,7,8,9], &
+    & [3,3,3]) !<TENSOR_TWO_TO_COMPONENT(i,j,numberOfDimensions) converts a pair of (i,j) of a tensor to component index (a) for a rank 2 tensor with numberOfDimensions dimensions.
   INTEGER(INTG), PARAMETER :: COMPONENT_TO_TENSOR_TWO(2,9,3)=RESHAPE([1,1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0, &
     & 1,1,2,1,1,2,2,2,0,0,0,0,0,0,0,0,0,0,1,1,2,1,3,1,1,2,2,2,3,2,1,3,2,3,2,3],[2,9,3]) !<COMPONENT_TO_TENSOR_TWO(k,a,numberOfDimensions). Converts a component index (a) to a pair (k=1,k=2) of rank 2 tensor indices in numberOfDimensions dimensions.  
   !>@}
