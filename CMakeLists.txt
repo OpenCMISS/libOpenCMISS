@@ -204,7 +204,7 @@ option(OpenCMISS_WITH_Doxygen "Build the Doxygen documentation for OpenCMISS." O
 
 # Options for external functionality
 option(OpenCMISS_WITH_CellML "Build OpenCMISS with CellML support." ON)
-option(OpenCMISS_WITH_FieldML "Build OpenCMISS with FieldML support." ON)
+option(OpenCMISS_WITH_FieldML "Build OpenCMISS with FieldML support." OFF)
 option(OpenCMISS_WITH_HYPRE "Build OpenCMISS with HYPRE integration." OFF)
 option(OpenCMISS_WITH_MUMPS "Build OpenCMISS with MUMPS integration." OFF)
 option(OpenCMISS_WITH_ParMETIS "Build OpenCMISS with ParMETIS integration." ON)
@@ -343,7 +343,7 @@ endif()
 
 # MUMPS
 if(OpenCMISS_WITH_MUMPS)
-  find_package(FieldML ${OpenCMISS_FieldML_VERSION} REQUIRED) 
+  find_package(MUMPS ${OpenCMISS_MUMPS_VERSION} REQUIRED) 
 endif()
 
 # ParMETIS
