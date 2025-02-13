@@ -60,7 +60,7 @@
 !>This module provides an iso_varying_string module, conformant to the API specified in
 !>ISO/IEC 1539-2:2000 (varying-length strings for Fortran 95). 
 MODULE ISO_VARYING_STRING
-  USE ISO_C_BINDING
+  USE ISO_C_BINDING, ONLY: C_CHAR, C_NULL_CHAR
 
 ! No implicit typing
 

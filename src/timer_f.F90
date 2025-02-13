@@ -46,7 +46,7 @@ MODULE Timer
 
   USE BaseRoutines
   USE Constants
-  USE ISO_C_BINDING
+  USE ISO_C_BINDING, ONLY: C_DOUBLE, C_INT, C_CHAR
   USE ISO_VARYING_STRING
 
 #include "macros.h"  

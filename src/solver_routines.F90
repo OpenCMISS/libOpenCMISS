@@ -114,7 +114,7 @@ MODULE SolverRoutines
       & onlyOneModelIndex,modelsData,numberOfState,stateData,numberOfParameters, &
       & parametersData,numberOfIntermediate,intermediateData,err) BIND(C, NAME="SolverDAEExternalIntegrate")
       
-      USE ISO_C_BINDING
+      USE ISO_C_BINDING, ONLY: C_DOUBLE, C_INT
 
       INTEGER(C_INT), VALUE, INTENT(IN) :: numberOfDofs
       REAL(C_DOUBLE), VALUE, INTENT(IN) :: startTime

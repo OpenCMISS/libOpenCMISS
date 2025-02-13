@@ -58,7 +58,7 @@ MODULE FIELD_IO_ROUTINES
   USE FieldRoutines
   USE FieldAccessRoutines
   USE InputOutput
-  !USE, INTRINSIC :: ISO_C_BINDING
+  USE ISO_C_BINDING, ONLY: C_DOUBLE, C_LOC, C_INT
   USE ISO_VARYING_STRING
   USE Kinds
   USE Lists
@@ -163,8 +163,7 @@ MODULE FIELD_IO_ROUTINES
   INTERFACE
     FUNCTION FieldExport_OpenSession( exExportType, filename, handle ) &
       & BIND(C,NAME="FieldExport_OpenSession")
-      USE Types
-      USE ISO_C_BINDING
+      USE ISO_C_BINDING, ONLY: C_INT,C_CHAR
       INTEGER(C_INT), VALUE :: exExportType
       CHARACTER(C_CHAR), INTENT(IN) :: filename(*)
       INTEGER(C_INT), INTENT(OUT) :: handle
@@ -173,8 +172,7 @@ MODULE FIELD_IO_ROUTINES
 
     FUNCTION FieldExport_Group( handle, groupName ) &
       & BIND(C,NAME="FieldExport_Group")
-      USE Types
-      USE ISO_C_BINDING
+      USE ISO_C_BINDING, ONLY: C_INT,C_CHAR
       INTEGER(C_INT), VALUE :: handle
       CHARACTER(C_CHAR), INTENT(IN) :: groupName(*)
       INTEGER(C_INT) :: FieldExport_Group
@@ -182,8 +180,7 @@ MODULE FIELD_IO_ROUTINES
 
     FUNCTION FieldExport_MeshDimensions( handle, meshDimensions , fieldBasisType) &
       & BIND(C,NAME="FieldExport_MeshDimensions")
-      USE Types
-      USE ISO_C_BINDING
+      USE ISO_C_BINDING, ONLY: C_INT
       INTEGER(C_INT), VALUE :: handle
       INTEGER(C_INT), VALUE :: meshDimensions
       INTEGER(C_INT), VALUE :: fieldBasisType
@@ -192,8 +189,7 @@ MODULE FIELD_IO_ROUTINES
 
     FUNCTION FieldExport_ScalingFactorCount( handle, scalingFactorCount ) &
       & BIND(C,NAME="FieldExport_ScalingFactorCount")
-      USE Types
-      USE ISO_C_BINDING
+      USE ISO_C_BINDING, ONLY: C_INT
       INTEGER(C_INT), VALUE :: handle
       INTEGER(C_INT), VALUE :: scalingFactorCount
       INTEGER(C_INT) :: FieldExport_ScalingFactorCount
@@ -201,8 +197,7 @@ MODULE FIELD_IO_ROUTINES
 
     FUNCTION FieldExport_ScaleFactors( handle, numberOfXi, interpolationXi, numberOfScaleFactors ) &
       & BIND(C,NAME="FieldExport_ScaleFactors")
-      USE Types
-      USE ISO_C_BINDING
+      USE ISO_C_BINDING, ONLY: C_INT, C_PTR
       INTEGER(C_INT), VALUE :: handle
       INTEGER(C_INT), VALUE :: numberOfXi
       TYPE(C_PTR), VALUE :: interpolationXi
@@ -212,8 +207,7 @@ MODULE FIELD_IO_ROUTINES
 
     FUNCTION FieldExport_NodeCount( handle, nodeCount ) &
       & BIND(C,NAME="FieldExport_NodeCount")
-      USE Types
-      USE ISO_C_BINDING
+      USE ISO_C_BINDING, ONLY: C_INT,C_PTR
       INTEGER(C_INT), VALUE :: handle
       INTEGER(C_INT), VALUE :: nodeCount
       INTEGER(C_INT) :: FieldExport_NodeCount
@@ -221,8 +215,7 @@ MODULE FIELD_IO_ROUTINES
 
     FUNCTION FieldExport_FieldCount( handle, fieldCount ) &
       & BIND(C,NAME="FieldExport_FieldCount")
-      USE Types
-      USE ISO_C_BINDING
+      USE ISO_C_BINDING, ONLY: C_INT
       INTEGER(C_INT), VALUE :: handle
       INTEGER(C_INT), VALUE :: fieldCount
       INTEGER(C_INT) :: FieldExport_FieldCount
@@ -230,8 +223,7 @@ MODULE FIELD_IO_ROUTINES
 
     FUNCTION FieldExport_CoordinateVariable( handle, variableName, variableNumber, coordinateSystemType_, componentCount ) &
       & BIND(C,NAME="FieldExport_CoordinateVariable")
-      USE Types
-      USE ISO_C_BINDING
+      USE ISO_C_BINDING, ONLY: C_INT, C_CHAR
       INTEGER(C_INT), VALUE :: handle
       CHARACTER(LEN=1, KIND=C_CHAR) :: variableName(*)
       INTEGER(C_INT), VALUE :: variableNumber
@@ -242,8 +234,7 @@ MODULE FIELD_IO_ROUTINES
 
     FUNCTION FieldExport_Variable( handle, variableName, variableNumber, fieldType_, variableType, componentCount ) &
       & BIND(C,NAME="FieldExport_Variable")
-      USE Types
-      USE ISO_C_BINDING
+      USE ISO_C_BINDING, ONLY: C_INT,C_CHAR
       INTEGER(C_INT), VALUE :: handle
       CHARACTER(LEN=1, KIND=C_CHAR) :: variableName(*)
       INTEGER(C_INT), VALUE :: variableNumber
@@ -256,8 +247,7 @@ MODULE FIELD_IO_ROUTINES
     FUNCTION FieldExport_CoordinateComponent( handle, coordinateSystemType_, componentNumber, interpType, &
       & numberOfXi, interpolationXi ) &
       & BIND(C,NAME="FieldExport_CoordinateComponent")
-      USE Types
-      USE ISO_C_BINDING
+       USE ISO_C_BINDING, ONLY: C_INT, C_PTR
       INTEGER(C_INT), VALUE :: handle
       INTEGER(C_INT), VALUE :: coordinateSystemType_
       INTEGER(C_INT), VALUE :: componentNumber
@@ -269,8 +259,7 @@ MODULE FIELD_IO_ROUTINES
 
     FUNCTION FieldExport_Component( handle, componentNumber, interpType, numberOfXi, interpolationXi ) &
       & BIND(C,NAME="FieldExport_Component")
-      USE Types
-      USE ISO_C_BINDING
+      USE ISO_C_BINDING, ONLY: C_INT, C_PTR
       INTEGER(C_INT), VALUE :: handle
       INTEGER(C_INT), VALUE :: componentNumber
       INTEGER(C_INT), VALUE :: interpType
@@ -281,8 +270,7 @@ MODULE FIELD_IO_ROUTINES
 
     FUNCTION FieldExport_ElementGridSize( handle, headerType, numberOfXi, numberGauss ) &
       & BIND(C,NAME="FieldExport_ElementGridSize")
-      USE Types
-      USE ISO_C_BINDING
+      USE ISO_C_BINDING, ONLY: C_INT, C_PTR
       INTEGER(C_INT), VALUE :: handle
       INTEGER(C_INT), VALUE :: headerType
       INTEGER(C_INT), VALUE :: numberOfXi
@@ -293,8 +281,7 @@ MODULE FIELD_IO_ROUTINES
     FUNCTION FieldExport_NodeScaleIndexes( handle, nodeCount, derivativeCount, elementDerivatives, nodeIndexes, &
       & scaleIndexes ) &
       & BIND(C,NAME="FieldExport_NodeScaleIndexes")
-      USE Types
-      USE ISO_C_BINDING
+      USE ISO_C_BINDING, ONLY: C_INT, C_PTR
       INTEGER(C_INT), VALUE :: handle
       INTEGER(C_INT), VALUE :: nodeCount
       TYPE(C_PTR), VALUE :: derivativeCount
@@ -306,8 +293,7 @@ MODULE FIELD_IO_ROUTINES
 
     FUNCTION FieldExport_ElementIndex( handle, dimensionCount, elementIndex ) &
       & BIND(C,NAME="FieldExport_ElementIndex")
-      USE Types
-      USE ISO_C_BINDING
+      USE ISO_C_BINDING, ONLY: C_INT
       INTEGER(C_INT), VALUE :: handle
       INTEGER(C_INT), VALUE :: dimensionCount
       INTEGER(C_INT), VALUE :: elementIndex
@@ -316,8 +302,7 @@ MODULE FIELD_IO_ROUTINES
 
     FUNCTION FieldExport_ElementNodeIndices( handle, nodeCount, nodeIndices ) &
       & BIND(C,NAME="FieldExport_ElementNodeIndices")
-      USE Types
-      USE ISO_C_BINDING
+      USE ISO_C_BINDING, ONLY: C_INT, C_PTR
       INTEGER(C_INT), VALUE :: handle
       INTEGER(C_INT), VALUE :: nodeCount
       TYPE(C_PTR), VALUE :: nodeIndices
@@ -326,8 +311,7 @@ MODULE FIELD_IO_ROUTINES
 
     FUNCTION FieldExport_ElementNodeScales( handle, isFirstSet, scaleCount, scales ) &
       & BIND(C,NAME="FieldExport_ElementNodeScales")
-      USE Types
-      USE ISO_C_BINDING
+      USE ISO_C_BINDING, ONLY: C_INT, C_PTR
       INTEGER(C_INT), VALUE :: handle
       INTEGER(C_INT), VALUE :: isFirstSet
       INTEGER(C_INT), VALUE :: scaleCount
@@ -337,9 +321,7 @@ MODULE FIELD_IO_ROUTINES
 
     FUNCTION FieldExport_ElementGridValues( handle, isFirstSet, numberOfXi, elementValue ) &
       & BIND(C,NAME="FieldExport_ElementGridValues")
-      USE Kinds
-      USE Types
-      USE ISO_C_BINDING
+      USE ISO_C_BINDING, ONLY: C_INT, C_DOUBLE
       INTEGER(C_INT), VALUE :: handle
       INTEGER(C_INT), VALUE :: isFirstSet
       INTEGER(C_INT), VALUE :: numberOfXi
@@ -349,8 +331,7 @@ MODULE FIELD_IO_ROUTINES
 
     FUNCTION FieldExport_NodeValues( handle, nodeNumber, valueCount, nodeValues ) &
       & BIND(C,NAME="FieldExport_NodeValues")
-      USE Types
-      USE ISO_C_BINDING
+      USE ISO_C_BINDING, ONLY: C_INT, C_PTR
       INTEGER(C_INT), VALUE :: handle
       INTEGER(C_INT), VALUE :: nodeNumber
       INTEGER(C_INT), VALUE :: valueCount
@@ -360,16 +341,14 @@ MODULE FIELD_IO_ROUTINES
 
     FUNCTION FieldExport_CloseSession( handle ) &
       & BIND(C,NAME="FieldExport_CloseSession")
-      USE Types
-      USE ISO_C_BINDING
+      USE ISO_C_BINDING, ONLY: C_INT
       INTEGER(C_INT), VALUE :: handle
       INTEGER(C_INT) :: FieldExport_CloseSession
     END FUNCTION FieldExport_CloseSession
 
     FUNCTION FieldExport_CoordinateDerivativeIndices( handle, componentNumber, coordinateSystemType_, numberOfDerivatives,  &
       & derivatives, valueIndex ) BIND(C,NAME="FieldExport_CoordinateDerivativeIndices")
-      USE Types
-      USE ISO_C_BINDING
+      USE ISO_C_BINDING, ONLY: C_INT, C_PTR
       INTEGER(C_INT), VALUE :: handle
       INTEGER(C_INT), VALUE :: componentNumber
       INTEGER(C_INT), VALUE :: coordinateSystemType_
@@ -381,8 +360,7 @@ MODULE FIELD_IO_ROUTINES
 
     FUNCTION FieldExport_DerivativeIndices( handle, componentNumber, fieldType_, variableType, numberOfDerivatives, &
       & derivatives, valueIndex ) BIND(C,NAME="FieldExport_DerivativeIndices")
-      USE Types
-      USE ISO_C_BINDING
+      USE ISO_C_BINDING, ONLY: C_INT, C_PTR
       INTEGER(C_INT), VALUE :: handle
       INTEGER(C_INT), VALUE :: componentNumber
       INTEGER(C_INT), VALUE :: fieldType_
@@ -394,15 +372,13 @@ MODULE FIELD_IO_ROUTINES
     END FUNCTION FieldExport_DerivativeIndices
 
     FUNCTION FieldExport_EndComponent(handle) BIND(C,NAME="FieldExport_EndComponent")
-      USE Types
-      USE ISO_C_BINDING
+      USE ISO_C_BINDING, ONLY: C_INT
       INTEGER(C_INT), VALUE :: handle
       INTEGER(C_INT) :: FieldExport_EndComponent
     END FUNCTION FieldExport_EndComponent
 
     FUNCTION FieldExport_VersionInfo(handle, numberOfVersions) BIND(C,NAME="FieldExport_VersionInfo")
-      USE Types
-      USE ISO_C_BINDING
+      USE ISO_C_BINDING, ONLY: C_INT
       INTEGER(C_INT), VALUE :: handle
       INTEGER(C_INT), VALUE :: numberOfVersions
       INTEGER(C_INT) :: FieldExport_VersionInfo

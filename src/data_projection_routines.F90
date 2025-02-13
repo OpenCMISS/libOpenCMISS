@@ -59,13 +59,14 @@ MODULE DataProjectionRoutines
   USE FieldRoutines
   USE FieldAccessRoutines
   USE InputOutput
+  USE ISO_C_BINDING, ONLY: C_LOC
   USE ISO_VARYING_STRING
   USE Kinds
 #ifdef WITH_MPI  
 #ifdef WITH_F08_MPI
   USE MPI_F08
 #elif WITH_F90_MPI  
-  USE MPI
+  USE MPI, ONLY: MPI_DOUBLE_PRECISION,MPI_INTEGER,MPI_SUM,MPI_MINLOC,MPI_IN_PLACE
 #endif  
   USE OpenCMISSMPI
 #endif  
@@ -1874,12 +1875,12 @@ CONTAINS
 #ifdef WITH_MPI
 #ifdef WITH_F08_MPI
       !Find the shortest projected distance in all domains
-      CALL MPI_Allreduce(MPI_IN_PLACE,projectedDistance,numberOfDataPoints,MPI_2DOUBLE_PRECISION,MPI_MINLOC, &
+      CALL MPI_Allreduce(MPI_IN_PLACE,projectedDistance,numberOfDataPoints,MPI_DOUBLE_PRECISION,MPI_MINLOC, &
         & groupCommunicator,MPIIError)
       CALL MPI_ErrorCheck("MPI_Allreduce",MPIIError,err,error,*999)
 #else      
       !Find the shortest projected distance in all domains
-      CALL MPI_ALLREDUCE(MPI_IN_PLACE,C_LOC(projectedDistance),numberOfDataPoints,MPI_2DOUBLE_PRECISION,MPI_MINLOC, &
+      CALL MPI_ALLREDUCE(MPI_IN_PLACE,C_LOC(projectedDistance),numberOfDataPoints,MPI_DOUBLE_PRECISION,MPI_MINLOC, &
         & groupCommunicator,MPIIError)
       CALL MPI_ErrorCheck("MPI_ALLREDUCE",MPIIError,err,error,*999)
 #endif      

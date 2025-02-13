@@ -695,7 +695,8 @@ add_custom_command(
 
 # Handle the Python bindings 
 if(OpenCMISS_WITH_Python_BINDINGS)
-  set(OpenCMISS_Python_DESTINATION_PREFIX "python${Python_VERSION_MAJOR}.${Python_VERSION_MINOR}/$<CONFIG>")
+  #set(OpenCMISS_Python_DESTINATION_PREFIX "python${Python_VERSION_MAJOR}.${Python_VERSION_MINOR}/$<CONFIG>")
+  set(OpenCMISS_Python_DESTINATION_PREFIX "python${Python_VERSION_MAJOR}.${Python_VERSION_MINOR}")
   set(OpenCMISS_Python_PACKAGE_DESTINATION_PREFIX "${OpenCMISS_Python_DESTINATION_PREFIX}/${OpenCMISS_Python_PACKAGE_NAME}")
   set(OpenCMISS_Python_MODULE_DESTINATION_PREFIX "${OpenCMISS_Python_PACKAGE_DESTINATION_PREFIX}/${OpenCMISS_Python_PACKAGE_MODULE_NAME}")
   add_custom_target(generate_python_bindings
@@ -742,14 +743,14 @@ if(OpenCMISS_WITH_Python_BINDINGS)
   #  BASE_DIRECTORY "${CMAKE_INSTALL_PREFIX}/${OpenCMISS_INSTALL_LIB_SUBDIR}"
   #  OUTPUT_VARIABLE _REL_INSTALL_PATH
   #)
-  set(_REL_INSTALL_PATH "../../../../../")
+  set(_REL_INSTALL_PATH "../../../../")
   if(APPLE)
     set_target_properties(${OpenCMISS_Python_MODULE_TARGET} PROPERTIES
       INSTALL_RPATH "@loader_path/${_REL_INSTALL_PATH};@loader_path/"
     )
   elseif(UNIX)
     set_target_properties(${OpenCMISS_Python_MODULE_TARGET} PROPERTIES
-      INSTALL_RPATH "\$ORIGIN/${_REL_INSTALL_PATH};\$ORIGIN/${_REL_INSTALL_PATH}/../lib;\$ORIGIN/${_REL_INSTALL_PATH}/../../mpi-none/lib;\$ORIGIN/${_REL_INSTALL_PATH}/../../mpi-none/lib64;\$ORIGIN/"
+      INSTALL_RPATH "\$ORIGIN/${_REL_INSTALL_PATH};\$ORIGIN/${_REL_INSTALL_PATH}/../lib;\$ORIGIN/${_REL_INSTALL_PATH}/../../../mpi-none/${CMAKE_BUILD_TYPE}/lib;\$ORIGIN/${_REL_INSTALL_PATH}/../../../mpi-none/${CMAKE_BUILD_TYPE}/lib64;\$ORIGIN/"
     )
   elseif(WIN32 AND NOT CYGWIN)
     set_target_properties(${OpenCMISS_Python_MODULE_TARGET} PROPERTIES
