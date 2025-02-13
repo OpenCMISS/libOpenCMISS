@@ -1383,8 +1383,14 @@ MODULE BoundaryConditionsRoutines
                     NULLIFY(sparseIndices)
                     CALL List_CreateStart(sparseIndices,err,error,*999)
                     CALL List_DataTypeSet(sparseIndices,LIST_INTG_TYPE,err,error,*999)
-                    CALL List_InitialSizeSet(sparseIndices,boundaryConditionsVariable%numberOfDirichletConditions* &
-                      & numberOfNonZeros/numberOfRows,err,error,*999)
+                    initialListSize=0
+                    initialListSize=FLOOR(REAL(numberOfNonZeros,DP)/REAL(numberOfRows,DP))
+                    initialListSize=boundaryConditionsVariable%numberOfDirichletConditions*initialListSize
+                    IF(initialListSize<0) THEN
+                      !Check for overflow
+                      initialListSize=300000                    
+                    ENDIF
+                    CALL List_InitialSizeSet(sparseIndices,initialListSize,err,error,*999)
                     CALL List_CreateFinish(sparseIndices,err,error,*999)
                     count=0
                     sparsityIndices%sparseColumnIndices(1)=1
