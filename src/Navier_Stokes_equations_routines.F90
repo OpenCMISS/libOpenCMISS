@@ -76,6 +76,7 @@ MODULE NavierStokesEquationsRoutines
   USE InterfaceAccessRoutines
   USE InterfaceConditionAccessRoutines
   USE InputOutput
+  USE ISO_C_BINDING, ONLY: C_LOC
   USE ISO_VARYING_STRING
   USE Kinds
   USE Lapack
@@ -85,7 +86,7 @@ MODULE NavierStokesEquationsRoutines
 #ifdef WITH_F08_MPI
   USE MPI_F08
 #elif WITH_F90_MPI  
-  USE MPI
+  USE MPI, ONLY: MPI_DOUBLE_PRECISION,MPI_INTEGER,MPI_LOGICAL,MPI_LAND,MPI_SUM,MPI_MAX
 #endif
   USE OpenCMISSMPI
 #endif
@@ -12498,10 +12499,11 @@ CONTAINS
     INTEGER(INTG), INTENT(OUT) :: err !<The error code
     TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
     !Local Variables
+    INTEGER(INTG), PARAMETER :: MAX_NUMBER_OF_BOUNDARIES=10
     INTEGER(INTG) :: boundaryID,boundaryType,componentIdx,computationNode,coupledNodeNumber,dependentBasisType, &
       & dependentBasisType2,dependentVariableType,elementIdx,elementNodeIdx,elementUserNumber,esSpecification(3),faceIdx, &
       & faceNodeIdx,faceNodeDerivativeIdx,faceNumber,gaussIdx,i,j,meshComponentNumber,nodeNumber, &
-      & normalComponentIdx,numberOfDimensions,numberOfGauss,numberOfGlobalBoundaries, &
+      & normalComponentIdx,numberOfDimensions,numberOfGauss, &
       & numberOfGroupComputationNodes,numberOfLocalElements,numberOfLocalFaces,numberOfLocalFaces2,numberOfNodes, &
       & numberOfNodeDerivatives,totalNumberOfLocal,versionNumber,xiNormalDirection
 #ifdef WITH_F08_MPI
@@ -12513,15 +12515,19 @@ CONTAINS
     INTEGER(INTG) :: mpiIError
 #endif    
     INTEGER(INTG), TARGET :: numberOfBoundaries
+    INTEGER(INTG), POINTER :: numberOfGlobalBoundaries
     REAL(DP) :: a1D,boundaryValue,cauchy(3,3),couplingFlow,couplingStress,courant,dUdXi(3,3),dXidX(3,3),elementNormal(3), &
-      & faceArea,faceNormal(3),facePressure,faceTraction,faceVelocity,flowError,gaussWeight,globalBoundaryArea(10), &
-      & globalBoundaryFlux(10),globalBoundaryMeanPressure(10),globalBoundaryMeanNormalStress(10),globalBoundaryNormalStress(10), &
-      & globalBoundaryPressure(10),gradU(3,3),jacobian,maxCourant,mu,muScale,normal,normalDifference,normalProjection, &
+      & faceArea,faceNormal(3),facePressure,faceTraction,faceVelocity,flowError,gaussWeight, &
+      & gradU(3,3),jacobian,maxCourant,mu,muScale,normal,normalDifference,normalProjection, &
       & normalTolerance,normalWave(2),p0D,p1D,p3D,pressureError,pressureGauss,q0D,q1D,rho,stress1DPrevious,toleranceCourant, &
-      & traction(3),unitNormal(3),velocityGauss(3),viscousTerm(3)
-    REAL(DP), TARGET :: localBoundaryArea(10),localBoundaryFlux(10),localBoundaryNormalStress(10),localBoundaryPressure(10)
-    LOGICAL :: boundary3D0DFound(10),boundaryFace,couple1DTo3D,couple3DTo1D
-    LOGICAL, ALLOCATABLE :: globalConverged(:)
+      & traction(3),unitNormal(3),velocityGauss(3),viscousTerm(3),globalBoundaryMeanNormalStress(MAX_NUMBER_OF_BOUNDARIES), &
+      & globalBoundaryMeanPressure(MAX_NUMBER_OF_BOUNDARIES)
+    REAL(DP), TARGET :: localBoundaryArea(MAX_NUMBER_OF_BOUNDARIES),localBoundaryFlux(MAX_NUMBER_OF_BOUNDARIES), &
+      & localBoundaryNormalStress(MAX_NUMBER_OF_BOUNDARIES),localBoundaryPressure(MAX_NUMBER_OF_BOUNDARIES)
+    REAL(DP), POINTER :: globalBoundaryArea(:),globalBoundaryFlux(:),globalBoundaryNormalStress(:), &
+      & globalBoundaryPressure(:)
+    LOGICAL :: boundary3D0DFound(MAX_NUMBER_OF_BOUNDARIES),boundaryFace,couple1DTo3D,couple3DTo1D
+    LOGICAL, POINTER :: globalConverged(:)
     TYPE(BasisType), POINTER :: dependentBasis,dependentBasis2,faceBasis
     TYPE(DecompositionType), POINTER :: decomposition3D
     TYPE(DecompositionElementType), POINTER :: decompositionElement
@@ -12551,6 +12557,12 @@ CONTAINS
     TYPE(QuadratureSchemeType), POINTER :: faceQuadratureScheme
     TYPE(VARYING_STRING) :: localError
     TYPE(WorkGroupType), POINTER :: workGroup
+
+    NULLIFY(globalConverged)
+    NULLIFY(globalBoundaryArea)
+    NULLIFY(globalBoundaryFlux)
+    NULLIFY(globalBoundaryNormalStress)
+    NULLIFY(globalBoundaryPressure)
  
     ENTERS("NavierStokes_CalculateBoundaryFlux",err,error,*999)
 
@@ -12866,6 +12878,14 @@ CONTAINS
       ! ------------------------------------------------------
       ! Need to add boundary flux for any boundaries split accross computation nodes
       numberOfGlobalBoundaries = 0
+      ALLOCATE(globalBoundaryFlux(MAX_NUMBER_OF_BOUNDARIES),STAT=err)
+      IF(err/=0) CALL FlagError("Could not allocate global boundary flux.",err,error,*999)
+      ALLOCATE(globalBoundaryArea(MAX_NUMBER_OF_BOUNDARIES),STAT=err)
+      IF(err/=0) CALL FlagError("Could not allocate global boundary area.",err,error,*999)
+      ALLOCATE(globalBoundaryPressure(MAX_NUMBER_OF_BOUNDARIES),STAT=err)
+      IF(err/=0) CALL FlagError("Could not allocate global boundary pressure.",err,error,*999)
+      ALLOCATE(globalBoundaryNormalStress(MAX_NUMBER_OF_BOUNDARIES),STAT=err)
+      IF(err/=0) CALL FlagError("Could not allocate global boundary normal stress.",err,error,*999)      
       globalBoundaryFlux = 0.0_DP
       globalBoundaryArea = 0.0_DP
       globalBoundaryPressure = 0.0_DP
@@ -12878,32 +12898,48 @@ CONTAINS
       IF(numberOfGroupComputationNodes>1) THEN !use mpi
 #ifdef WITH_MPI
 #ifdef WITH_F08_MPI
-        CALL MPI_Allreduce(localBoundaryFlux,globalBoundaryFlux,10,MPI_DOUBLE_PRECISION,MPI_SUM,groupCommunicator,mpiIError)
-        CALL MPI_ErrorCheck("MPI_Allreduce",mpiIError,err,error,*999)
-        CALL MPI_Allreduce(localBoundaryArea,globalBoundaryArea,10,MPI_DOUBLE_PRECISION,MPI_SUM,groupCommunicator,mpiIError)
-        CALL MPI_ErrorCheck("MPI_Allreduce",mpiIError,err,error,*999)
-        CALL MPI_Allreduce(localBoundaryNormalStress,globalBoundaryNormalStress,10,MPI_DOUBLE_PRECISION,MPI_SUM,  &
-	 & groupCommunicator,mpiIError)
-        CALL MPI_ErrorCheck("MPI_Allreduce",mpiIError,err,error,*999)
-        CALL MPI_Allreduce(localBoundaryPressure,globalBoundaryPressure,10,MPI_DOUBLE_PRECISION,MPI_SUM,  &
-	 & groupCommunicator,mpiIError)
-        CALL MPI_ErrorCheck("MPI_Allreduce",mpiIError,err,error,*999)
         CALL MPI_Allreduce(numberOfBoundaries,numberOfGlobalBoundaries,1,MPI_INTEGER,MPI_MAX,  &
+	 & groupCommunicator,mpiIError)
+        IF(numberOfGlobalBoundaries>MAX_NUMBER_OF_BOUNDARIES) THEN
+          localError="The number of global boundaries of "//TRIM(NumberToVString(numberOfGlobalBoundaries,"*",err,error))// &
+            & " is greater than the maximum number of boundaries of "// &
+            & TRIM(NumberToVString(MAX_NUMBER_OF_BOUNDARIES,"*",err,error))//". Increase the maximum number of boundaries."
+          CALL FlagError(localError,err,error,*999)
+        ENDIF
+        CALL MPI_ErrorCheck("MPI_Allreduce",mpiIError,err,error,*999)
+        CALL MPI_Allreduce(localBoundaryFlux,globalBoundaryFlux,MAX_NUMBER_OF_BOUNDARIES,MPI_DOUBLE_PRECISION,MPI_SUM, &
+          & groupCommunicator,mpiIError)
+        CALL MPI_ErrorCheck("MPI_Allreduce",mpiIError,err,error,*999)
+        CALL MPI_Allreduce(localBoundaryArea,globalBoundaryArea,MAX_NUMBER_OF_BOUNDARIES,MPI_DOUBLE_PRECISION,MPI_SUM, &
+          & groupCommunicator,mpiIError)
+        CALL MPI_ErrorCheck("MPI_Allreduce",mpiIError,err,error,*999)
+        CALL MPI_Allreduce(localBoundaryNormalStress,globalBoundaryNormalStress,MAX_NUMBER_OF_BOUNDARIES,MPI_DOUBLE_PRECISION, &
+          & MPI_SUM,groupCommunicator,mpiIError)
+        CALL MPI_ErrorCheck("MPI_Allreduce",mpiIError,err,error,*999)
+        CALL MPI_Allreduce(localBoundaryPressure,globalBoundaryPressure,MAX_NUMBER_OF_BOUNDARIES,MPI_DOUBLE_PRECISION,MPI_SUM,  &
 	 & groupCommunicator,mpiIError)
         CALL MPI_ErrorCheck("MPI_Allreduce",mpiIError,err,error,*999)
 #else        
-        CALL MPI_ALLREDUCE(C_LOC(localBoundaryFlux),globalBoundaryFlux,10,MPI_DOUBLE_PRECISION,MPI_SUM,groupCommunicator,mpiIError)
+        CALL MPI_ALLREDUCE(C_LOC(numberOfBoundaries),C_LOC(numberOfGlobalBoundaries),1,MPI_INTEGER,MPI_MAX,  &
+          & groupCommunicator,mpiIError)
         CALL MPI_ErrorCheck("MPI_ALLREDUCE",mpiIError,err,error,*999)
-        CALL MPI_ALLREDUCE(C_LOC(localBoundaryArea),globalBoundaryArea,10,MPI_DOUBLE_PRECISION,MPI_SUM,groupCommunicator,mpiIError)
+        IF(numberOfGlobalBoundaries>MAX_NUMBER_OF_BOUNDARIES) THEN
+          localError="The number of global boundaries of "//TRIM(NumberToVString(numberOfGlobalBoundaries,"*",err,error))// &
+            & " is greater than the maximum number of boundaries of "// &
+            & TRIM(NumberToVString(MAX_NUMBER_OF_BOUNDARIES,"*",err,error))//". Increase the maximum number of boundaries."
+          CALL FlagError(localError,err,error,*999)
+        ENDIF
+        CALL MPI_ALLREDUCE(C_LOC(localBoundaryFlux),C_LOC(globalBoundaryFlux),MAX_NUMBER_OF_BOUNDARIES,MPI_DOUBLE_PRECISION, &
+          & MPI_SUM,groupCommunicator,mpiIError)
         CALL MPI_ErrorCheck("MPI_ALLREDUCE",mpiIError,err,error,*999)
-        CALL MPI_ALLREDUCE(C_LOC(localBoundaryNormalStress),globalBoundaryNormalStress,10,MPI_DOUBLE_PRECISION,MPI_SUM,  &
-	 & groupCommunicator,mpiIError)
+        CALL MPI_ALLREDUCE(C_LOC(localBoundaryArea),C_LOC(globalBoundaryArea),MAX_NUMBER_OF_BOUNDARIES,MPI_DOUBLE_PRECISION, &
+          & MPI_SUM,groupCommunicator,mpiIError)
         CALL MPI_ErrorCheck("MPI_ALLREDUCE",mpiIError,err,error,*999)
-        CALL MPI_ALLREDUCE(C_LOC(localBoundaryPressure),globalBoundaryPressure,10,MPI_DOUBLE_PRECISION,MPI_SUM,  &
-	 & groupCommunicator,mpiIError)
+        CALL MPI_ALLREDUCE(C_LOC(localBoundaryNormalStress),C_LOC(globalBoundaryNormalStress),MAX_NUMBER_OF_BOUNDARIES, &
+          & MPI_DOUBLE_PRECISION,MPI_SUM,groupCommunicator,mpiIError)
         CALL MPI_ErrorCheck("MPI_ALLREDUCE",mpiIError,err,error,*999)
-        CALL MPI_ALLREDUCE(C_LOC(numberOfBoundaries),numberOfGlobalBoundaries,1,MPI_INTEGER,MPI_MAX,  &
-	 & groupCommunicator,mpiIError)
+        CALL MPI_ALLREDUCE(C_LOC(localBoundaryPressure),C_LOC(globalBoundaryPressure),MAX_NUMBER_OF_BOUNDARIES, &
+          & MPI_DOUBLE_PRECISION,MPI_SUM,groupCommunicator,mpiIError)
         CALL MPI_ErrorCheck("MPI_ALLREDUCE",mpiIError,err,error,*999)
 #endif        
 #endif        
@@ -12944,6 +12980,11 @@ CONTAINS
           CALL FlagError(localError,err,error,*999)
         ENDIF
       ENDDO !boundaryID
+      
+      IF(ASSOCIATED(globalBoundaryArea)) DEALLOCATE(globalBoundaryArea)
+      IF(ASSOCIATED(globalBoundaryFlux)) DEALLOCATE(globalBoundaryFlux)
+      IF(ASSOCIATED(globalBoundaryNormalStress)) DEALLOCATE(globalBoundaryNormalStress)
+      IF(ASSOCIATED(globalBoundaryPressure)) DEALLOCATE(globalBoundaryPressure)
 
     ! 1 D   t y p e s :   p r e p a r e   t o   c o p y    a n y   c o u p l e d    v a l u e s
     ! --------------------------------------------------------------------------------------------
@@ -13235,7 +13276,7 @@ CONTAINS
       CALL MPI_Allgather(convergedFlag,1,MPI_LOGICAL,globalConverged,1,MPI_LOGICAL,groupCommunicator,mpiIError)
       CALL MPI_ErrorCheck("MPI_Allgather",mpiIError,err,error,*999)
 #else      
-      CALL MPI_ALLGATHER(C_LOC(convergedFlag),1,MPI_LOGICAL,globalConverged,1,MPI_LOGICAL,groupCommunicator,mpiIError)
+      CALL MPI_ALLGATHER(C_LOC(convergedFlag),1,MPI_LOGICAL,C_LOC(globalConverged),1,MPI_LOGICAL,groupCommunicator,mpiIError)
       CALL MPI_ErrorCheck("MPI_ALLGATHER",mpiIError,err,error,*999)
 #endif      
 #endif      
@@ -13272,7 +13313,12 @@ CONTAINS
 
     EXITS("NavierStokes_CalculateBoundaryFlux")
     RETURN
-999 ERRORSEXITS("NavierStokes_CalculateBoundaryFlux",err,error)
+999 IF(ASSOCIATED(globalConverged)) DEALLOCATE(globalConverged)
+    IF(ASSOCIATED(globalBoundaryArea)) DEALLOCATE(globalBoundaryArea)
+    IF(ASSOCIATED(globalBoundaryFlux)) DEALLOCATE(globalBoundaryFlux)
+    IF(ASSOCIATED(globalBoundaryNormalStress)) DEALLOCATE(globalBoundaryNormalStress)
+    IF(ASSOCIATED(globalBoundaryPressure)) DEALLOCATE(globalBoundaryPressure)
+    ERRORSEXITS("NavierStokes_CalculateBoundaryFlux",err,error)
     RETURN 1
     
   END SUBROUTINE NavierStokes_CalculateBoundaryFlux
@@ -13307,7 +13353,7 @@ CONTAINS
       & q1d,qError,qPrevious,startTime,stopTime,timeIncrement
     LOGICAL :: boundaryNode,boundaryConverged(30),coupled1D0DBoundary,continueLoop
     LOGICAL, TARGET :: localConverged
-    LOGICAL, ALLOCATABLE, TARGET :: globalConverged(:)
+    LOGICAL, POINTER :: globalConverged(:)
     TYPE(BoundaryConditionsType), POINTER :: boundaryConditions
     TYPE(BoundaryConditionsVariableType), POINTER :: boundaryConditionsVariable
     TYPE(ControlLoopType), POINTER :: parentLoop,parentLoop2,subLoop
@@ -13330,6 +13376,8 @@ CONTAINS
     TYPE(SolversType), POINTER :: solvers
     TYPE(VARYING_STRING) :: localError    
     TYPE(WorkGroupType), POINTER :: workGroup
+
+    NULLIFY(globalConverged)
 
     ENTERS("NavierStokes_Couple1D0D",err,error,*999)
 
@@ -13560,7 +13608,7 @@ CONTAINS
         CALL MPI_Allgather(localConverged,1,MPI_LOGICAL,globalConverged,1,MPI_LOGICAL,groupCommunicator,mpiIError)
         CALL MPI_ErrorCheck("MPI_ALLGATHER",mpiIError,err,error,*999)
 #else        
-        CALL MPI_ALLGATHER(C_LOC(localConverged),1,MPI_LOGICAL,globalConverged,1,MPI_LOGICAL,groupCommunicator,mpiIError)
+        CALL MPI_ALLGATHER(C_LOC(localConverged),1,MPI_LOGICAL,C_LOC(globalConverged),1,MPI_LOGICAL,groupCommunicator,mpiIError)
         CALL MPI_ErrorCheck("MPI_ALLGATHER",mpiIError,err,error,*999)
 #endif        
 #endif        
@@ -13626,7 +13674,7 @@ CONTAINS
       & stressTolerance,timeIncrement
     LOGICAL :: boundaryNode,boundaryConverged(30),continueLoop
     LOGICAL, TARGET :: localConverged
-    LOGICAL, ALLOCATABLE :: globalConverged(:)
+    LOGICAL, POINTER :: globalConverged(:)
     TYPE(BoundaryConditionsType), POINTER :: boundaryConditions
     TYPE(BoundaryConditionsVariableType), POINTER :: boundaryConditionsVariable
     TYPE(ControlLoopType), POINTER :: subLoop
@@ -13649,6 +13697,8 @@ CONTAINS
     TYPE(SolversType), POINTER :: solvers
     TYPE(VARYING_STRING) :: localError
     TYPE(WorkGroupType), POINTER :: workGroup
+
+    NULLIFY(globalConverged)
 
     ENTERS("NavierStokes_Couple3D1D",err,error,*999)
 
@@ -13868,7 +13918,7 @@ CONTAINS
       localConverged = .TRUE.
     ENDIF
     IF(numberOfGroupComputationNodes>1) THEN !use mpi
-      !allocate array for mpi communication
+      !allocate array for mpi communication      
       ALLOCATE(globalConverged(numberOfGroupComputationNodes),STAT=err)
       globalConverged=.FALSE.
       IF(err/=0) CALL FlagError("Could not allocate global convergence check array.",err,error,*999)
@@ -13877,7 +13927,7 @@ CONTAINS
       CALL MPI_Allreduce(localConverged,globalConverged,1,MPI_LOGICAL,MPI_LAND,groupCommunicator,mpiIError)
       CALL MPI_ErrorCheck("MPI_Allreduce",mpiIError,err,error,*999)
 #else      
-      CALL MPI_ALLREDUCE(C_LOC(localConverged),globalConverged,1,MPI_LOGICAL,MPI_LAND,groupCommunicator,mpiIError)
+      CALL MPI_ALLREDUCE(C_LOC(localConverged),C_LOC(globalConverged),1,MPI_LOGICAL,MPI_LAND,groupCommunicator,mpiIError)
       CALL MPI_ErrorCheck("MPI_ALLREDUCE",mpiIError,err,error,*999)
 #endif      
 #endif      
@@ -13925,7 +13975,8 @@ CONTAINS
 
     EXITS("NavierStokes_Couple3D1D")
     RETURN
-999 ERRORSEXITS("NavierStokes_Couple3D1D",err,error)
+999 IF(ASSOCIATED(globalConverged)) DEALLOCATE(globalConverged)
+    ERRORSEXITS("NavierStokes_Couple3D1D",err,error)
     RETURN 1
 
   END SUBROUTINE NavierStokes_Couple3D1D

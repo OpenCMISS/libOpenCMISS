@@ -46,7 +46,7 @@
 MODULE OpenCMISSCellML
 
   !Module imports
-  USE ISO_C_BINDING
+  USE ISO_C_BINDING, ONLY: C_INT, C_CHAR, C_NULL_CHAR, C_NULL_PTR
 
   USE BaseRoutines
   USE CellMLAccessRoutines

@@ -145,7 +145,7 @@ MODULE OpenCMISSCellMLModel
     INTEGER(C_INT) FUNCTION CellMLModel_Instatiate(model) &
       & BIND(C,NAME='CellMLModel_InstantiateF')
       
-      USE :: ISO_C_BINDING, ONLY: C_PTR, C_INT
+      USE ISO_C_BINDING, ONLY: C_PTR, C_INT
       
       !Argument variables
       TYPE(C_PTR), INTENT(IN), VALUE :: model !<A pointer to the CellML model to instantiate

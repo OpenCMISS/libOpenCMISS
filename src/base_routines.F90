@@ -47,7 +47,7 @@ MODULE BaseRoutines
 
   USE Constants
   USE Kinds
-  USE ISO_C_BINDING
+  USE ISO_C_BINDING, ONLY: C_INT
   USE ISO_VARYING_STRING
   USE MachineConstants
 
@@ -198,7 +198,7 @@ MODULE BaseRoutines
 !!!!      base_routines.
 
     SUBROUTINE CPUTimer(returnTime, timeType, err, cError) BIND(C,NAME="CPUTimer")
-      USE ISO_C_BINDING
+      USE ISO_C_BINDING, ONLY: C_DOUBLE, C_INT, C_CHAR
       REAL(C_DOUBLE), INTENT(OUT) :: returnTime
       INTEGER(C_INT), INTENT(IN) :: timeType
       INTEGER(C_INT), INTENT(OUT) :: err

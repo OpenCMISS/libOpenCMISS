@@ -51,7 +51,7 @@ MODULE DistributedMatrixVector
   USE DomainMappings
   USE InputOutput
   USE ISO_VARYING_STRING
-  USE ISO_C_BINDING
+  USE ISO_C_BINDING, ONLY: C_PTR, C_F_POINTER, C_LOC
   USE Kinds
   USE Maths
   USE MatrixVector

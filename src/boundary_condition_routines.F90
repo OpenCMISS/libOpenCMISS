@@ -69,6 +69,7 @@ MODULE BoundaryConditionsRoutines
   USE FieldRoutines
   USE FieldAccessRoutines
   USE InputOutput
+  USE ISO_C_BINDING, ONLY: C_LOC
   USE ISO_VARYING_STRING
   USE Kinds
   USE MeshAccessRoutines
@@ -1297,8 +1298,13 @@ MODULE BoundaryConditionsRoutines
                     NULLIFY(sparseIndices)
                     CALL List_CreateStart(sparseIndices,err,error,*999)
                     CALL List_DataTypeSet(sparseIndices,LIST_INTG_TYPE,err,error,*999)
-                    initialListSize=FLOOR(REAL(boundaryConditionsVariable%numberOfDirichletConditions,DP)* &
-                      & REAL(numberOfNonZeros,DP)/REAL(numberOfRows,DP))
+                    initialListSize=0
+                    initialListSize=FLOOR(REAL(numberOfNonZeros,DP)/REAL(numberOfRows,DP))
+                    initialListSize=boundaryConditionsVariable%numberOfDirichletConditions*initialListSize
+                    IF(initialListSize<0) THEN
+                      !Check for overflow
+                      initialListSize=300000                    
+                    ENDIF
                     CALL List_InitialSizeSet(sparseIndices,initialListSize,err,error,*999)
                     CALL List_CreateFinish(sparseIndices,err,error,*999)
                     count=0

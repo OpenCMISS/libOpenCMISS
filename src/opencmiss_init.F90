@@ -52,8 +52,6 @@
 !> The top level cmiss module.
 MODULE OpenCMISSInit
 
-  USE ISO_C_BINDING
-  
   USE BaseRoutines
   USE Constants
   USE ContextRoutines

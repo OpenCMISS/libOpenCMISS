@@ -78,7 +78,7 @@ MODULE OpenCMISS
   USE InterfaceEquationsRoutines
   USE InterfaceMatricesRoutines
   USE InterfaceMatricesAccessRoutines
-  USE ISO_C_BINDING
+  USE ISO_C_BINDING, ONLY: C_INT,C_PTR,C_ASSOCIATED, C_F_POINTER
   USE ISO_VARYING_STRING
   USE Kinds
   USE MeshRoutines
