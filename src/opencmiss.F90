@@ -6413,6 +6413,12 @@ MODULE OpenCMISS
     MODULE PROCEDURE OC_Decomposition_ElementDomainSetObj
   END INTERFACE OC_Decomposition_ElementDomainSet
 
+  !>Returns the local element number for a given user element number in a decomposition.
+  INTERFACE OC_Decomposition_ElementLocalNumberGet
+    MODULE PROCEDURE OC_Decomposition_ElementLocalNumberGetNumber
+    MODULE PROCEDURE OC_Decomposition_ElementLocalNumberGetObj
+  END INTERFACE OC_Decomposition_ELementLocalNumberGet
+  
   !>Returns the user element number for a given (local) element in a decomposition of a mesh.
   INTERFACE OC_Decomposition_ElementNumberGet
     MODULE PROCEDURE OC_Decomposition_ElementNumberGetNumber
@@ -6431,6 +6437,12 @@ MODULE OpenCMISS
     MODULE PROCEDURE OC_Decomposition_MeshComponentSetObj
   END INTERFACE OC_Decomposition_MeshComponentSet
 
+  !>Returns the local node number for a given user node number in a decomposition of a mesh component.
+  INTERFACE OC_Decomposition_NodeLocalNumberGet
+    MODULE PROCEDURE OC_Decomposition_NodeLocalNumberGetNumber
+    MODULE PROCEDURE OC_Decomposition_NodeLocalNumberGetObj
+  END INTERFACE OC_Decomposition_NodeLocalNumberGet
+  
   !>Returns the user node number for a given (local) node in a decomposition of a mesh component.
   INTERFACE OC_Decomposition_NodeNumberGet
     MODULE PROCEDURE OC_Decomposition_NodeNumberGetNumber
@@ -6680,6 +6692,8 @@ MODULE OpenCMISS
 
   PUBLIC OC_Decomposition_ElementDomainGet,OC_Decomposition_ElementDomainSet
 
+  PUBLIC OC_Decomposition_ElementLocalNumberGet
+
   PUBLIC OC_Decomposition_ElementNodeGet
 
   PUBLIC OC_Decomposition_ElementNumberGet
@@ -6697,6 +6711,8 @@ MODULE OpenCMISS
   PUBLIC OC_Decomposition_NodeDomainGet
 
   PUBLIC OC_Decomposition_NodeGlobalDerivativeGet
+
+  PUBLIC OC_Decomposition_NodeLocalNumberGet
   
   PUBLIC OC_Decomposition_NodeNumberGet
 
@@ -54809,6 +54825,91 @@ CONTAINS
   !================================================================================================================================
   !
 
+  !>Returns the element local number for a user element number in a decomposition component identified by a user number.
+  SUBROUTINE OC_Decomposition_ElementLocalNumberGetNumber(contextUserNumber,regionUserNumber,meshUserNumber, &
+    & decompositionUserNumber,elementUserNumber,elementLocalNumber,err)
+    !DLLEXPORT(OC_Decomposition_ElementLocalNumberGetNumber)
+    
+    !Argument variables
+    INTEGER(INTG), INTENT(IN) :: contextUserNumber !<The user number of the context with the region.
+    INTEGER(INTG), INTENT(IN) :: regionUserNumber !<The user number of the region containing the mesh to get the element number for.
+    INTEGER(INTG), INTENT(IN) :: meshUserNumber !<The user number of the mesh to get the element number for.
+    INTEGER(INTG), INTENT(IN) :: decompositionUserNumber !<The user number of the decomposition to get the element number for.
+    INTEGER(INTG), INTENT(IN) :: elementUserNumber !<The user number to get the local element in the decomposition for.
+    INTEGER(INTG), INTENT(OUT) :: elementLocalNumber !<On return, the local number of the element corresponding to the specified user number.
+    INTEGER(INTG), INTENT(OUT) :: err !<The error code.
+    !Local variables
+    TYPE(ContextType), POINTER :: context
+    TYPE(DecompositionType), POINTER :: decomposition
+    TYPE(DecompositionElementsType), POINTER :: decompositionElements
+    TYPE(DecompositionTopologyType), POINTER :: decompositionTopology
+    TYPE(MeshType), POINTER :: mesh
+    TYPE(RegionType), POINTER :: region
+    TYPE(RegionsType), POINTER :: regions
+
+    ENTERS("OC_Decomposition_ElementLocalNumberGetNumber",err,error,*999)
+
+    NULLIFY(context)
+    NULLIFY(regions)
+    NULLIFY(region)
+    NULLIFY(mesh)
+    NULLIFY(decomposition)
+    NULLIFY(decompositionTopology)
+    NULLIFY(decompositionElements)
+    CALL Context_Get(contexts,contextUserNumber,context,err,error,*999)    
+    CALL Context_RegionsGet(context,regions,err,error,*999)
+    CALL Region_Get(regions,regionUserNumber,region,err,error,*999)
+    CALL Region_MeshGet(region,meshUserNumber,mesh,err,error,*999)
+    CALL Mesh_DecompositionGet(mesh,decompositionUserNumber,decomposition,err,error,*999)
+    CALL Decomposition_DecompositionTopologyGet(decomposition,decompositionTopology,err,error,*999)
+    CALL DecompositionTopology_DecompositionElementsGet(decompositionTopology,decompositionElements,err,error,*999)
+    CALL DecompositionElements_ElementDoesExist(decompositionElements,elementUserNumber,elementLocalNumber,err,error,*999)
+
+    EXITS("OC_Decomposition_ElementLocalNumberGetNumber")
+    RETURN
+999 ERRORSEXITS("OC_Decomposition_ElementLocalNumberGetNumber",err,error)
+    CALL OC_HandleError(err,error)
+    RETURN
+
+  END SUBROUTINE OC_Decomposition_ElementLocalNumberGetNumber
+
+  !
+  !================================================================================================================================
+  !
+
+  !>Returns the element local number for an user element number in a decomposition component identified by an object.
+  SUBROUTINE OC_Decomposition_ElementLocalNumberGetObj(decomposition,elementUserNumber,elementLocalNumber,err)
+    !DLLEXPORT(OC_Decomposition_ElementLocalNumberGetObj)
+
+    !Argument variables
+    TYPE(OC_DecompositionType), INTENT(IN) :: decomposition !<The decomposition to get the local element node for.
+    INTEGER(INTG), INTENT(IN) :: elementUserNumber !<The user number to get local element in the decomposition for.
+    INTEGER(INTG), INTENT(OUT) :: elementLocalNumber !<On return, the local number of the specified user element.
+    INTEGER(INTG), INTENT(OUT) :: err !<The error code.
+    !Local variables
+    TYPE(DecompositionElementsType), POINTER :: decompositionElements
+    TYPE(DecompositionTopologyType), POINTER :: decompositionTopology
+ 
+    ENTERS("OC_Decomposition_ElementLocalNumberGetObj",err,error,*999)
+
+    NULLIFY(decompositionTopology)
+    NULLIFY(decompositionElements)
+    CALL Decomposition_DecompositionTopologyGet(decomposition%decomposition,decompositionTopology,err,error,*999)
+    CALL DecompositionTopology_DecompositionElementsGet(decompositionTopology,decompositionElements,err,error,*999)
+    CALL DecompositionElements_ElementDoesExist(decompositionElements,elementUserNumber,elementLocalNumber,err,error,*999)
+ 
+    EXITS("OC_Decomposition_ElementLocalNumberGetObj")
+    RETURN
+999 ERRORSEXITS("OC_Decomposition_ElementLocalNumberGetObj",err,error)
+    CALL OC_HandleError(err,error)
+    RETURN
+
+  END SUBROUTINE OC_Decomposition_ElementLocalNumberGetObj
+
+  !
+  !================================================================================================================================
+  !
+
   !>Returns the node user number for a given local node index in an element in a decomposition component identified by a user number.
   SUBROUTINE OC_Decomposition_ElementNodeGetNumber(contextUserNumber,regionUserNumber,meshUserNumber,decompositionUserNumber, &
     & meshComponentNumber,elementUserNumber,localNodeIndex,nodeUserNumber,err)
@@ -54994,7 +55095,7 @@ CONTAINS
     TYPE(DecompositionElementsType), POINTER :: decompositionElements
     TYPE(DecompositionTopologyType), POINTER :: decompositionTopology
  
-    ENTERS("OC_Decomposition_ElementNodeGetObj",err,error,*999)
+    ENTERS("OC_Decomposition_ElementNumberGetObj",err,error,*999)
 
     NULLIFY(decompositionTopology)
     NULLIFY(decompositionElements)
@@ -56094,6 +56195,99 @@ CONTAINS
   !================================================================================================================================
   !
 
+  !>Returns the node local number for an user node number in a decomposition mesh component identified by a user number.
+  SUBROUTINE OC_Decomposition_NodeLocalNumberGetNumber(contextUserNumber,regionUserNumber,meshUserNumber,decompositionUserNumber, &
+    & meshComponentNumber,nodeUserNumber,nodeLocalNumber,err)
+    !DLLEXPORT(OC_Decomposition_NodeLocalNumberGetNumber)
+    
+    !Argument variables
+    INTEGER(INTG), INTENT(IN) :: contextUserNumber !<The user number of the context with the region.
+    INTEGER(INTG), INTENT(IN) :: regionUserNumber !<The user number of the region containing the mesh.
+    INTEGER(INTG), INTENT(IN) :: meshUserNumber !<The user number of the mesh to get the node number for.
+    INTEGER(INTG), INTENT(IN) :: decompositionUserNumber !<The user number of the decomposition to get the node number for.
+    INTEGER(INTG), INTENT(IN) :: meshComponentNumber !<The mesh component number to get the node number for
+    INTEGER(INTG), INTENT(IN) :: nodeUserNumber !<The user node number to get the local node in the decomposition mesh component for.
+    INTEGER(INTG), INTENT(OUT) :: nodeLocalNumber !<On exit, the local number of the node corresponding to the user number.
+    INTEGER(INTG), INTENT(OUT) :: err !<The error code.
+    !Local variables
+    TYPE(ContextType), POINTER :: context
+    TYPE(DecompositionType), POINTER :: decomposition
+    TYPE(DomainType), POINTER :: domain
+    TYPE(DomainNodesType), POINTER :: domainNodes
+    TYPE(DomainTopologyType), POINTER :: domainTopology
+    TYPE(MeshType), POINTER :: mesh
+    TYPE(RegionType), POINTER :: region
+    TYPE(RegionsType), POINTER :: regions
+
+    ENTERS("OC_Decomposition_NodeLocalNumberGetNumber",err,error,*999)
+
+    NULLIFY(context)
+    NULLIFY(regions)
+    NULLIFY(region)
+    NULLIFY(mesh)
+    NULLIFY(decomposition)
+    NULLIFY(domain)
+    NULLIFY(domainTopology)
+    NULLIFY(domainNodes)
+    CALL Context_Get(contexts,contextUserNumber,context,err,error,*999)    
+    CALL Context_RegionsGet(context,regions,err,error,*999)
+    CALL Region_Get(regions,regionUserNumber,region,err,error,*999)
+    CALL Region_MeshGet(region,meshUserNumber,mesh,err,error,*999)
+    CALL Mesh_DecompositionGet(mesh,decompositionUserNumber,decomposition,err,error,*999)
+    CALL Decomposition_DomainGet(decomposition,meshComponentNumber,domain,err,error,*999)
+    CALL Domain_DomainTopologyGet(domain,domainTopology,err,error,*999)
+    CALL DomainTopology_DomainNodesGet(domainTopology,domainNodes,err,error,*999)
+    CALL DomainNodes_NodeDoesExist(domainNodes,nodeUserNumber,nodeLocalNumber,err,error,*999)
+
+    EXITS("OC_Decomposition_NodeLocalNumberGetNumber")
+    RETURN
+999 ERRORSEXITS("OC_Decomposition_NodeLocalNumberGetNumber",err,error)
+    CALL OC_HandleError(err,error)
+    RETURN
+
+  END SUBROUTINE OC_Decomposition_NodeLocalNumberGetNumber
+
+  !
+  !================================================================================================================================
+  !
+
+  !>Returns the node local number for an user node number in a decomposition mesh component identified by an object.
+  SUBROUTINE OC_Decomposition_NodeLocalNumberGetObj(decomposition,meshComponentNumber,nodeUserNumber,nodeLocalNumber,err)
+    !DLLEXPORT(OC_Decomposition_NodeLocalNumberGetObj)
+
+    !Argument variables
+    TYPE(OC_DecompositionType), INTENT(IN) :: decomposition !<The decomposition to get the local node user number for.
+    INTEGER(INTG), INTENT(IN) :: meshComponentNumber !<The mesh component number to get the node number for
+    INTEGER(INTG), INTENT(IN) :: nodeUserNumber !<The user number of the node in the decomposition mesh component.
+    INTEGER(INTG), INTENT(OUT) :: nodeLocalNumber !<On return, the local node number of the specified user node.
+    INTEGER(INTG), INTENT(OUT) :: err !<The error code.
+    !Local variables
+    TYPE(DomainType), POINTER :: domain
+    TYPE(DomainNodesType), POINTER :: domainNodes
+    TYPE(DomainTopologyType), POINTER :: domainTopology
+   
+    ENTERS("OC_Decomposition_NodeLocalNumberGetObj",err,error,*999)
+
+    NULLIFY(domain)
+    NULLIFY(domainTopology)
+    NULLIFY(domainNodes)
+    CALL Decomposition_DomainGet(decomposition%decomposition,meshComponentNumber,domain,err,error,*999)
+    CALL Domain_DomainTopologyGet(domain,domainTopology,err,error,*999)
+    CALL DomainTopology_DomainNodesGet(domainTopology,domainNodes,err,error,*999)
+    CALL DomainNodes_NodeDoesExist(domainNodes,nodeUserNumber,nodeLocalNumber,err,error,*999)
+    
+    EXITS("OC_Decomposition_NodeLocalNumberGetObj")
+    RETURN
+999 ERRORSEXITS("OC_Decomposition_NodeLocalNumberGetObj",err,error)
+    CALL OC_HandleError(err,error)
+    RETURN
+    
+  END SUBROUTINE OC_Decomposition_NodeLocalNumberGetObj
+
+  !
+  !================================================================================================================================
+  !
+
   !>Returns the node user number for a local node number in a decomposition mesh component identified by a user number.
   SUBROUTINE OC_Decomposition_NodeNumberGetNumber(contextUserNumber,regionUserNumber,meshUserNumber,decompositionUserNumber, &
     & meshComponentNumber,nodeLocalNumber,nodeUserNumber,err)
@@ -56118,7 +56312,7 @@ CONTAINS
     TYPE(RegionType), POINTER :: region
     TYPE(RegionsType), POINTER :: regions
 
-    ENTERS("OC_Decomposition_ElementNumberGetNumber",err,error,*999)
+    ENTERS("OC_Decomposition_NodeNumberGetNumber",err,error,*999)
 
     NULLIFY(context)
     NULLIFY(regions)
