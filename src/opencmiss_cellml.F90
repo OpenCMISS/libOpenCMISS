@@ -1354,7 +1354,7 @@ CONTAINS
 #ifdef WITH_CELLML
 
     IF(ASSOCIATED(cellMLModelMap)) THEN
-      CALL ERASE(cellMLModelMap%variableId)
+      cellMLModelMap%variableId=""
       DEALLOCATE(cellMLModelMap)
     ENDIF
 

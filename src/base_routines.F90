@@ -47,7 +47,7 @@ MODULE BaseRoutines
 
   USE Constants
   USE Kinds
-  USE ISO_C_BINDING, ONLY: C_INT
+  USE ISO_C_BINDING, ONLY: C_INT, C_CHAR
   USE ISO_VARYING_STRING
   USE MachineConstants
 

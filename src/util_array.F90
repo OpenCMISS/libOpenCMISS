@@ -141,7 +141,7 @@ CONTAINS
 
     IF( ALLOCATED( array ) ) THEN
       DO I=1,SIZE(ARRAY,1)
-        CALL ERASE(ARRAY(I))
+        array(I)=""
         DEALLOCATE( array )
       ENDDO
     ENDIF
