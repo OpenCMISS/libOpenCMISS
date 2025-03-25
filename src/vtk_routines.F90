@@ -175,9 +175,7 @@ MODULE VTKRoutines
 
   INTEGER(INTG), PARAMETER :: VTKUNIT = 50
   
-  !Module types
-
-  
+  !Module types 
 
   !Module variables
 

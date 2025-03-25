@@ -56,6 +56,8 @@ MODULE OpenCMISS
   USE EquationsMatricesAccessRoutines
   USE EquationsSetRoutines
   USE EquationsSetAccessRoutines
+  USE ExportRoutines
+  USE ExportAccessRoutines
   USE FieldRoutines
   USE FieldAccessRoutines
 #ifdef WITH_FIELDML
@@ -355,6 +357,12 @@ MODULE OpenCMISS
     TYPE(EquationsSetType), POINTER :: equationsSet
   END TYPE OC_EquationsSetType
 
+  !>Contains information for an export
+  TYPE OC_ExportType
+    PRIVATE
+    TYPE(ExportType), POINTER :: export
+  END TYPE OC_ExportType
+
   !>Contains information for a field defined on a region.
   TYPE OC_FieldType
     PRIVATE
@@ -588,6 +596,8 @@ MODULE OpenCMISS
   PUBLIC OC_EquationsType,OC_Equations_Finalise,OC_Equations_Initialise
 
   PUBLIC OC_EquationsSetType,OC_EquationsSet_Finalise,OC_EquationsSet_Initialise
+
+  PUBLIC OC_ExportType,OC_Export_Finalise,OC_Export_Initialise
 
   PUBLIC OC_FieldType,OC_Field_Finalise,OC_Field_Initialise
 
@@ -4331,6 +4341,98 @@ MODULE OpenCMISS
   PUBLIC OC_EquationsSet_TimesGet,OC_EquationsSet_TimesSet
 
   PUBLIC OC_EquationsSet_AnalyticUserParamSet,OC_EquationsSet_AnalyticUserParamGet
+
+  !==================================================================================================================================
+  !
+  ! ExportRoutines
+  !
+  !==================================================================================================================================
+
+  !Module parameters
+  
+  !> \addtogroup OpenCMISS_ExportConstants OpenCMISS::Export::Constants
+  !> \brief Export constants.
+  !>@{
+  !> \addtogroup OpenCMISS_ExportFormatTypes OpenCMISS::Export::Constants::FormatTypes
+  !> \brief Export file format types.
+  !> \see OpenCMISS::Export,OpenCMISS
+  !>@{
+  INTEGER(INTG), PARAMETER :: OC_EXPORT_EXFILE_FORMAT = EXPORT_EXFILE_FORMAT !<Exfile (cmgui) format type \see OpenCMISS_ExportFormatTypes,OpenCMISS
+  INTEGER(INTG), PARAMETER :: OC_EXPORT_VTK_FORMAT = EXPORT_VTK_FORMAT !<VTK format type \see OpenCMISS_ExportFormatTypes,OpenCMISS
+  !>@}
+  !>@}
+
+  !Interfaces
+
+  !>Gets the base filename for an export
+  INTERFACE OC_Export_BaseFilenameGet
+    MODULE PROCEDURE OC_Export_BaseFilenameGetNumberVS
+    MODULE PROCEDURE OC_Export_BaseFilenameGetNumberC
+    MODULE PROCEDURE OC_Export_BaseFilenameGetObjVS
+    MODULE PROCEDURE OC_Export_BaseFilenameGetObjC
+  END INTERFACE OC_Export_BaseFilenameGet
+
+  !>Sets the base filename for an export
+  INTERFACE OC_Export_BaseFilenameSet
+    MODULE PROCEDURE OC_Export_BaseFilenameSetNumberVS
+    MODULE PROCEDURE OC_Export_BaseFilenameSetNumberC
+    MODULE PROCEDURE OC_Export_BaseFilenameSetObjVS
+    MODULE PROCEDURE OC_Export_BaseFilenameSetObjC
+  END INTERFACE OC_Export_BaseFilenameSet
+
+  !>Finishes the creation of an export \see OpenCMISS::OC_Export_CreateStart
+  INTERFACE OC_Export_CreateFinish
+    MODULE PROCEDURE OC_Export_CreateFinishNumber
+    MODULE PROCEDURE OC_Export_CreateFinishObj
+  END INTERFACE OC_Export_CreateFinish
+
+  !>Starts the creation of an export. \see OpenCMISS::OC_Export_CreateFinish
+  INTERFACE OC_Export_CreateStart
+    MODULE PROCEDURE OC_Export_CreateStartNumber
+    MODULE PROCEDURE OC_Export_CreateStartObj
+  END INTERFACE OC_Export_CreateStart
+
+  !>Destroys an export.
+  INTERFACE OC_Export_Destroy
+    MODULE PROCEDURE OC_Export_DestroyNumber
+    MODULE PROCEDURE OC_Export_DestroyObj
+  END INTERFACE OC_Export_Destroy
+
+  !>Export files an export.
+  INTERFACE OC_Export_Export
+    MODULE PROCEDURE OC_Export_ExportNumber
+    MODULE PROCEDURE OC_Export_ExportObj
+  END INTERFACE OC_Export_Export
+
+  !>Sets the file format for an export.
+  INTERFACE OC_Export_ExportFormatSet
+    MODULE PROCEDURE OC_Export_ExportFormatSetNumber
+    MODULE PROCEDURE OC_Export_ExportFormatSetObj
+  END INTERFACE OC_Export_ExportFormatSet
+
+  !>Adds an export variable to an export.
+  INTERFACE OC_Export_ExportVariableAdd
+    MODULE PROCEDURE OC_Export_ExportVariableAddNumberVS
+    MODULE PROCEDURE OC_Export_ExportVariableAddNumberC
+    MODULE PROCEDURE OC_Export_ExportVariableAddObjVS
+    MODULE PROCEDURE OC_Export_ExportVariableAddObjC
+  END INTERFACE OC_Export_ExportVariableAdd
+
+  PUBLIC OC_EXPORT_EXFILE_FORMAT,OC_EXPORT_VTK_FORMAT
+
+  PUBLIC OC_Export_BaseFilenameGet,OC_Export_BaseFilenameSet
+
+  PUBLIC OC_Export_CreateFinish
+  
+  PUBLIC OC_Export_CreateStart
+
+  PUBLIC OC_Export_Destroy
+
+  PUBLIC OC_Export_Export
+  
+  PUBLIC OC_Export_ExportFormatSet
+
+  PUBLIC OC_Export_ExportVariableAdd 
 
   !==================================================================================================================================
   !
@@ -10941,6 +11043,56 @@ CONTAINS
     RETURN
 
   END SUBROUTINE OC_EquationsSet_Initialise
+
+  !
+  !================================================================================================================================
+  !
+
+  !>Finalises a OC_ExportType object.
+  SUBROUTINE OC_Export_Finalise(OC_Export,err)
+    !DLLEXPORT(OC_Export_Finalise)
+
+    !Argument variables
+    TYPE(OC_ExportType), INTENT(OUT) :: OC_Export !<The OC_ExportType object to finalise.
+    INTEGER(INTG), INTENT(OUT) :: err !<The error code.
+    !Local variables
+
+    ENTERS("OC_Export_Finalise",err,error,*999)
+
+    IF(ASSOCIATED(OC_Export%export)) CALL Export_Destroy(OC_Export%export,err,error,*999)
+
+    EXITS("OC_Export_Finalise")
+    RETURN
+999 ERRORSEXITS("OC_Export_Finalise",err,error)
+    CALL OC_HandleError(err,error)
+    RETURN
+
+  END SUBROUTINE OC_Export_Finalise
+
+  !
+  !================================================================================================================================
+  !
+
+  !>Initialises a OC_ExportType object.
+  SUBROUTINE OC_Export_Initialise(OC_Export,err)
+    !DLLEXPORT(OC_Export_Initialise)
+
+    !Argument variables
+    TYPE(OC_ExportType), INTENT(OUT) :: OC_Export !<The OC_ExportType object to initialise.
+    INTEGER(INTG), INTENT(OUT) :: err !<The error code.
+    !Local variables
+
+    ENTERS("OC_Export_Initialise",err,error,*999)
+
+    NULLIFY(OC_Export%export)
+
+    EXITS("OC_Export_Initialise")
+    RETURN
+999 ERRORSEXITS("OC_Export_Initialise",err,error)
+    CALL OC_HandleError(err,error)
+    RETURN
+
+  END SUBROUTINE OC_Export_Initialise
 
   !
   !================================================================================================================================
@@ -36945,6 +37097,751 @@ CONTAINS
 
 !!==================================================================================================================================
 !!
+!! ExportRoutines
+!!
+!!==================================================================================================================================
+
+  !>Gets the varying string base filename for an export identified by a user number.
+  SUBROUTINE OC_Export_BaseFilenameGetNumberVS(contextUserNumber,exportUserNumber,baseFilename,err)
+    !DLLEXPORT(OC_Export_BaseFilenameGetNumberVS)
+
+    !Argument variables
+    INTEGER(INTG), INTENT(IN) :: contextUserNumber !<The user number of the context containing the export.
+    INTEGER(INTG), INTENT(IN) :: exportUserNumber !<The user number of the export to get the base filename for.
+    TYPE(VARYING_STRING), INTENT(OUT) :: baseFilename !<On return, the base filename for the export. 
+    INTEGER(INTG), INTENT(OUT) :: err !<The error code.
+    !Local variables
+    TYPE(ContextType), POINTER :: context
+    TYPE(ExportType), POINTER :: export
+    TYPE(ExportsType), POINTER :: exports
+
+    ENTERS("OC_Export_BaseFilenameGetNumberVS",err,error,*999)
+
+    NULLIFY(context)
+    NULLIFY(exports)
+    NULLIFY(export)
+    CALL Context_Get(contexts,contextUserNumber,context,err,error,*999)
+    CALL Context_ExportsGet(context,exports,err,error,*999)
+    CALL Export_Get(exports,exportUserNumber,export,err,error,*999)
+    CALL Export_BaseFilenameGet(export,baseFilename,err,error,*999)
+    
+    EXITS("OC_Export_BaseFilenameGetNumberVS")
+    RETURN
+999 ERRORSEXITS("OC_Export_BaseFilenameGetNumberVS",err,error)
+    CALL OC_HandleError(err,error)
+    RETURN
+
+  END SUBROUTINE OC_Export_BaseFilenameGetNumberVS
+
+  !
+  !================================================================================================================================
+  !
+
+  !>Gets the character base filename for an export identified by a user number.
+  SUBROUTINE OC_Export_BaseFilenameGetNumberC(contextUserNumber,exportUserNumber,baseFilename,err)
+    !DLLEXPORT(OC_Export_BaseFilenameGetNumberC)
+
+    !Argument variables
+    INTEGER(INTG), INTENT(IN) :: contextUserNumber !<The user number of the context containing the export.
+    INTEGER(INTG), INTENT(IN) :: exportUserNumber !<The user number of the export to set the base filename for.
+    CHARACTER(LEN=*), INTENT(OUT) :: baseFilename !<On return, the base filename. 
+    INTEGER(INTG), INTENT(OUT) :: err !<The error code.
+    !Local variables
+    TYPE(ContextType), POINTER :: context
+    TYPE(ExportType), POINTER :: export
+    TYPE(ExportsType), POINTER :: exports
+
+    ENTERS("OC_Export_BaseFilenameGetNumberC",err,error,*999)
+
+    NULLIFY(context)
+    NULLIFY(exports)
+    NULLIFY(export)
+    CALL Context_Get(contexts,contextUserNumber,context,err,error,*999)
+    CALL Context_ExportsGet(context,exports,err,error,*999)
+    CALL Export_Get(exports,exportUserNumber,export,err,error,*999)
+    CALL Export_BaseFilenameGet(export,baseFilename,err,error,*999)
+    
+    EXITS("OC_Export_BaseFilenameGetNumberC")
+    RETURN
+999 ERRORSEXITS("OC_Export_BaseFilenameGetNumberC",err,error)
+    CALL OC_HandleError(err,error)
+    RETURN
+
+  END SUBROUTINE OC_Export_BaseFilenameGetNumberC
+
+  !
+  !================================================================================================================================
+  !
+
+  !>Gets the varying string base filename for an export identified by an object.
+  SUBROUTINE OC_Export_BaseFilenameGetObjVS(export,baseFilename,err)
+    !DLLEXPORT(OC_Export_BaseFilenameGetObjVS)
+
+    !Argument variables
+    TYPE(OC_ExportType), INTENT(INOUT) :: export !<The export to set the base filename for.
+    TYPE(VARYING_STRING), INTENT(OUT) :: baseFilename !<On return, the base filename. 
+    INTEGER(INTG), INTENT(OUT) :: err !<The error code.
+    !Local variables
+
+    ENTERS("OC_Export_BaseFilenameGetObjVS",err,error,*999)
+
+    CALL Export_BaseFilenameGet(export%export,baseFilename,err,error,*999)
+
+    EXITS("OC_Export_BaseFilenameGetObjVS")
+    RETURN
+999 ERRORSEXITS("OC_Export_BaseFilenameGetObjVS",err,error)
+    CALL OC_HandleError(err,error)
+    RETURN
+
+  END SUBROUTINE OC_Export_BaseFilenameGetObjVS
+
+  !
+  !================================================================================================================================
+  !
+
+  !>Gets the character base filename for an export identified by an object.
+  SUBROUTINE OC_Export_BaseFilenameGetObjC(export,baseFilename,err)
+    !DLLEXPORT(OC_Export_BaseFilenameGetObjC)
+
+    !Argument variables
+    TYPE(OC_ExportType), INTENT(INOUT) :: export !<The export to set the base filename for.
+    CHARACTER(LEN=*), INTENT(OUT) :: baseFilename !<On return, the base filename to set. 
+    INTEGER(INTG), INTENT(OUT) :: err !<The error code.
+    !Local variables
+
+    ENTERS("OC_Export_BaseFilenameGetObjC",err,error,*999)
+
+    CALL Export_BaseFilenameGet(export%export,baseFilename,err,error,*999)
+
+    EXITS("OC_Export_BaseFilenameGetObjC")
+    RETURN
+999 ERRORSEXITS("OC_Export_BaseFilenameGetObjC",err,error)
+    CALL OC_HandleError(err,error)
+    RETURN
+
+  END SUBROUTINE OC_Export_BaseFilenameGetObjC
+
+  !
+  !================================================================================================================================
+  !
+
+  !>Sets the varying string base filename for an export identified by a user number.
+  SUBROUTINE OC_Export_BaseFilenameSetNumberVS(contextUserNumber,exportUserNumber,baseFilename,err)
+    !DLLEXPORT(OC_Export_BaseFilenameSetNumberVS)
+
+    !Argument variables
+    INTEGER(INTG), INTENT(IN) :: contextUserNumber !<The user number of the context containing the export.
+    INTEGER(INTG), INTENT(IN) :: exportUserNumber !<The user number of the export to set the base filename for.
+    TYPE(VARYING_STRING), INTENT(IN) :: baseFilename !<The base filename to set. 
+    INTEGER(INTG), INTENT(OUT) :: err !<The error code.
+    !Local variables
+    TYPE(ContextType), POINTER :: context
+    TYPE(ExportType), POINTER :: export
+    TYPE(ExportsType), POINTER :: exports
+
+    ENTERS("OC_Export_BaseFilenameSetNumberVS",err,error,*999)
+
+    NULLIFY(context)
+    NULLIFY(exports)
+    NULLIFY(export)
+    CALL Context_Get(contexts,contextUserNumber,context,err,error,*999)
+    CALL Context_ExportsGet(context,exports,err,error,*999)
+    CALL Export_Get(exports,exportUserNumber,export,err,error,*999)
+    CALL Export_BaseFilenameSet(export,baseFilename,err,error,*999)
+    
+    EXITS("OC_Export_BaseFilenameSetNumberVS")
+    RETURN
+999 ERRORSEXITS("OC_Export_BaseFilenameSetNumberVS",err,error)
+    CALL OC_HandleError(err,error)
+    RETURN
+
+  END SUBROUTINE OC_Export_BaseFilenameSetNumberVS
+
+  !
+  !================================================================================================================================
+  !
+
+  !>Sets the character base filename for an export identified by a user number.
+  SUBROUTINE OC_Export_BaseFilenameSetNumberC(contextUserNumber,exportUserNumber,baseFilename,err)
+    !DLLEXPORT(OC_Export_BaseFilenameSetNumberC)
+
+    !Argument variables
+    INTEGER(INTG), INTENT(IN) :: contextUserNumber !<The user number of the context containing the export.
+    INTEGER(INTG), INTENT(IN) :: exportUserNumber !<The user number of the export to set the base filename for.
+    CHARACTER(LEN=*), INTENT(IN) :: baseFilename !<The base filename to set. 
+    INTEGER(INTG), INTENT(OUT) :: err !<The error code.
+    !Local variables
+    TYPE(ContextType), POINTER :: context
+    TYPE(ExportType), POINTER :: export
+    TYPE(ExportsType), POINTER :: exports
+
+    ENTERS("OC_Export_BaseFilenameSetNumberC",err,error,*999)
+
+    NULLIFY(context)
+    NULLIFY(exports)
+    NULLIFY(export)
+    CALL Context_Get(contexts,contextUserNumber,context,err,error,*999)
+    CALL Context_ExportsGet(context,exports,err,error,*999)
+    CALL Export_Get(exports,exportUserNumber,export,err,error,*999)
+    CALL Export_BaseFilenameSet(export,baseFilename,err,error,*999)
+    
+    EXITS("OC_Export_BaseFilenameSetNumberC")
+    RETURN
+999 ERRORSEXITS("OC_Export_BaseFilenameSetNumberC",err,error)
+    CALL OC_HandleError(err,error)
+    RETURN
+
+  END SUBROUTINE OC_Export_BaseFilenameSetNumberC
+
+  !
+  !================================================================================================================================
+  !
+
+  !>Sets the varying string base filename for an export identified by an object.
+  SUBROUTINE OC_Export_BaseFilenameSetObjVS(export,baseFilename,err)
+    !DLLEXPORT(OC_Export_BaseFilenameSetObjVS)
+
+    !Argument variables
+    TYPE(OC_ExportType), INTENT(INOUT) :: export !<The export to set the base filename for.
+    TYPE(VARYING_STRING), INTENT(IN) :: baseFilename !<The base filename to set. 
+    INTEGER(INTG), INTENT(OUT) :: err !<The error code.
+    !Local variables
+
+    ENTERS("OC_Export_BaseFilenameSetObjVS",err,error,*999)
+
+    CALL Export_BaseFilenameSet(export%export,baseFilename,err,error,*999)
+
+    EXITS("OC_Export_BaseFilenameSetObjVS")
+    RETURN
+999 ERRORSEXITS("OC_Export_BaseFilenameSetObjVS",err,error)
+    CALL OC_HandleError(err,error)
+    RETURN
+
+  END SUBROUTINE OC_Export_BaseFilenameSetObjVS
+
+  !
+  !================================================================================================================================
+  !
+
+  !>Sets the character base filename for an export identified by an object.
+  SUBROUTINE OC_Export_BaseFilenameSetObjC(export,baseFilename,err)
+    !DLLEXPORT(OC_Export_BaseFilenameSetObjC)
+
+    !Argument variables
+    TYPE(OC_ExportType), INTENT(INOUT) :: export !<The export to set the base filename for.
+    CHARACTER(LEN=*), INTENT(IN) :: baseFilename !<The base filename to set. 
+    INTEGER(INTG), INTENT(OUT) :: err !<The error code.
+    !Local variables
+
+    ENTERS("OC_Export_BaseFilenameSetObjC",err,error,*999)
+
+    CALL Export_BaseFilenameSet(export%export,baseFilename,err,error,*999)
+
+    EXITS("OC_Export_BaseFilenameSetObjC")
+    RETURN
+999 ERRORSEXITS("OC_Export_BaseFilenameSetObjC",err,error)
+    CALL OC_HandleError(err,error)
+    RETURN
+
+  END SUBROUTINE OC_Export_BaseFilenameSetObjC
+
+  !
+  !================================================================================================================================
+  !
+
+  !>Finishes the creation of an export identified by a user number.
+  SUBROUTINE OC_Export_CreateFinishNumber(contextUserNumber,exportUserNumber,err)
+    !DLLEXPORT(OC_Export_CreateFinishNumber)
+
+    !Argument variables
+    INTEGER(INTG), INTENT(IN) :: contextUserNumber !<The user number of the context which has the export.
+    INTEGER(INTG), INTENT(IN) :: exportUserNumber !<The user number of the export to finish the creation of.
+    INTEGER(INTG), INTENT(OUT) :: err !<The error code.
+    !Local variables
+    TYPE(ContextType), POINTER :: context
+    TYPE(ExportType), POINTER :: export
+    TYPE(ExportsType), POINTER :: exports
+
+    ENTERS("OC_Export_CreateFinishNumber",err,error,*999)
+
+    NULLIFY(context)
+    NULLIFY(exports)
+    NULLIFY(export)
+    CALL Context_Get(contexts,contextUserNumber,context,err,error,*999)
+    CALL Context_ExportsGet(context,exports,err,error,*999)
+    CALL Export_Get(exports,exportUserNumber,export,err,error,*999)
+    CALL Export_CreateFinish(export,err,error,*999)
+
+    EXITS("OC_Export_CreateFinishNumber")
+    RETURN
+999 ERRORSEXITS("OC_Export_CreateFinishNumber",err,error)
+    CALL OC_HandleError(err,error)
+    RETURN
+
+  END SUBROUTINE OC_Export_CreateFinishNumber
+
+  !
+  !================================================================================================================================
+  !
+
+  !>Finishes the creation of an export identified by an object.
+  SUBROUTINE OC_Export_CreateFinishObj(export,err)
+    !DLLEXPORT(OC_Export_CreateFinishObj)
+
+    !Argument variables
+    TYPE(OC_ExportType), INTENT(INOUT) :: export !<The export to finish the creation of.
+    INTEGER(INTG), INTENT(OUT) :: err !<The error code.
+    !Local variables
+
+    ENTERS("OC_Export_CreateFinishObj",err,error,*999)
+
+    CALL Export_CreateFinish(export%export,err,error,*999)
+
+    EXITS("OC_Export_CreateFinishObj")
+    RETURN
+999 ERRORSEXITS("OC_Export_CreateFinishObj",err,error)
+    CALL OC_HandleError(err,error)
+    RETURN
+
+  END SUBROUTINE OC_Export_CreateFinishObj
+
+  !
+  !================================================================================================================================
+  !
+
+  !>Starts the creation of an export identified by a user number.
+  SUBROUTINE OC_Export_CreateStartNumber(exportUserNumber,contextUserNumber,err)
+    !DLLEXPORT(OC_Export_CreateStartNumber)
+
+    !Argument variables
+    INTEGER(INTG), INTENT(IN) :: exportUserNumber !<The user number of the export to start the creation of.
+    INTEGER(INTG), INTENT(IN) :: contextUserNumber !<The user number of the context containing the export to start the creation of.
+    INTEGER(INTG), INTENT(OUT) :: err !<The error code.
+    !Local variables
+    TYPE(ContextType), POINTER :: context
+    TYPE(ExportType), POINTER :: export
+    TYPE(ExportsType), POINTER :: exports
+
+    ENTERS("OC_Export_CreateStartNumber",err,error,*999)
+
+    NULLIFY(context)
+    NULLIFY(exports)
+    NULLIFY(export)
+    CALL Context_Get(contexts,contextUserNumber,context,err,error,*999)
+    CALL Context_ExportsGet(context,exports,err,error,*999)
+    CALL Export_Get(exports,exportUserNumber,export,err,error,*999)
+    CALL Export_CreateStart(exportUserNumber,exports,export,err,error,*999)
+
+    EXITS("OC_Export_CreateStartNumber")
+    RETURN
+999 ERRORSEXITS("OC_Export_CreateStartNumber",err,error)
+    CALL OC_HandleError(err,error)
+    RETURN
+
+  END SUBROUTINE OC_Export_CreateStartNumber
+
+  !
+  !================================================================================================================================
+  !
+
+  !>Starts the creation of an export identified by an object.
+  SUBROUTINE OC_Export_CreateStartObj(exportUserNumber,context,export,err)
+    !DLLEXPORT(OC_Export_CreateFinishObj)
+
+    !Argument variables
+    INTEGER(INTG), INTENT(IN) :: exportUserNumber !<The user number of the export to start the creation of.
+    TYPE(OC_ContextType), INTENT(INOUT) :: context !<The context in which to create the export
+    TYPE(OC_ExportType), INTENT(INOUT) :: export !<The export to finish the creation of.
+    INTEGER(INTG), INTENT(OUT) :: err !<The error code.
+    !Local variable
+    TYPE(ExportsType), POINTER :: exports
+
+    ENTERS("OC_Export_CreateStartObj",err,error,*999)
+
+    NULLIFY(exports)
+    CALL Context_ExportsGet(context%context,exports,err,error,*999)
+    CALL Export_CreateStart(exportUserNumber,exports,export%export,err,error,*999)
+
+    EXITS("OC_Export_CreateStartObj")
+    RETURN
+999 ERRORSEXITS("OC_Export_CreateStartObj",err,error)
+    CALL OC_HandleError(err,error)
+    RETURN
+
+  END SUBROUTINE OC_Export_CreateStartObj
+
+  !
+  !================================================================================================================================
+  !
+
+  !>Destroys an export identified by a user number.
+  SUBROUTINE OC_Export_DestroyNumber(contextUserNumber,exportUserNumber,err)
+    !DLLEXPORT(OC_Export_DestroyNumber)
+
+    !Argument variables
+    INTEGER(INTG), INTENT(IN) :: contextUserNumber !<The user number of the context containing the export to destroy.
+    INTEGER(INTG), INTENT(IN) :: exportUserNumber !<The user number of the export to destroy.
+    INTEGER(INTG), INTENT(OUT) :: err !<The error code.
+    !Local variables
+    TYPE(ContextType), POINTER :: context
+    TYPE(ExportType), POINTER :: export
+    TYPE(ExportsType), POINTER :: exports
+
+    ENTERS("OC_Export_DestroyNumber",err,error,*999)
+
+    NULLIFY(context)
+    NULLIFY(exports)
+    NULLIFY(export)
+    CALL Context_Get(contexts,contextUserNumber,context,err,error,*999)
+    CALL Context_ExportsGet(context,exports,err,error,*999)
+    CALL Export_Get(exports,exportUserNumber,export,err,error,*999)
+    CALL Export_Destroy(export,err,error,*999)
+
+    EXITS("OC_Export_DestroyNumber")
+    RETURN
+999 ERRORSEXITS("OC_Export_DestroyNumber",err,error)
+    CALL OC_HandleError(err,error)
+    RETURN
+
+  END SUBROUTINE OC_Export_DestroyNumber
+
+  !
+  !================================================================================================================================
+  !
+
+  !>Destroys an export identified by an object.
+  SUBROUTINE OC_Export_DestroyObj(export,err)
+    !DLLEXPORT(OC_Export_DestroyObj)
+
+    !Argument variables
+    TYPE(OC_ExportType), INTENT(INOUT) :: export !<The export to destroy.
+    INTEGER(INTG), INTENT(OUT) :: err !<The error code.
+    !Local variables
+
+    ENTERS("OC_Export_DestroyObj",err,error,*999)
+
+    CALL Export_Destroy(export%export,err,error,*999)
+
+    EXITS("OC_Export_DestroyObj")
+    RETURN
+999 ERRORSEXITS("OC_Export_DestroyObj",err,error)
+    CALL OC_HandleError(err,error)
+    RETURN
+
+  END SUBROUTINE OC_Export_DestroyObj
+
+  !
+  !================================================================================================================================
+  !
+
+  !>Export files an export identified by a user number.
+  SUBROUTINE OC_Export_ExportNumber(contextUserNumber,exportUserNumber,err)
+    !DLLEXPORT(OC_Export_ExportNumber)
+
+    !Argument variables
+    INTEGER(INTG), INTENT(IN) :: contextUserNumber !<The user number of the context containing the export to export.
+    INTEGER(INTG), INTENT(IN) :: exportUserNumber !<The user number of the export to export.
+    INTEGER(INTG), INTENT(OUT) :: err !<The error code.
+    !Local variables
+    TYPE(ContextType), POINTER :: context
+    TYPE(ExportType), POINTER :: export
+    TYPE(ExportsType), POINTER :: exports
+
+    ENTERS("OC_Export_ExportNumber",err,error,*999)
+
+    NULLIFY(context)
+    NULLIFY(exports)
+    NULLIFY(export)
+    CALL Context_Get(contexts,contextUserNumber,context,err,error,*999)
+    CALL Context_ExportsGet(context,exports,err,error,*999)
+    CALL Export_Get(exports,exportUserNumber,export,err,error,*999)
+    CALL Export_Export(export,err,error,*999)
+
+    EXITS("OC_Export_ExportNumber")
+    RETURN
+999 ERRORSEXITS("OC_Export_ExportNumber",err,error)
+    CALL OC_HandleError(err,error)
+    RETURN
+
+  END SUBROUTINE OC_Export_ExportNumber
+
+  !
+  !================================================================================================================================
+  !
+
+  !>Export files for an export identified by an object.
+  SUBROUTINE OC_Export_ExportObj(export,err)
+    !DLLEXPORT(OC_Export_ExportObj)
+
+    !Argument variables
+    TYPE(OC_ExportType), INTENT(INOUT) :: export !<The export to export.
+    INTEGER(INTG), INTENT(OUT) :: err !<The error code.
+    !Local variables
+
+    ENTERS("OC_Export_ExportObj",err,error,*999)
+
+    CALL Export_Export(export%export,err,error,*999)
+
+    EXITS("OC_Export_ExportObj")
+    RETURN
+999 ERRORSEXITS("OC_Export_ExportObj",err,error)
+    CALL OC_HandleError(err,error)
+    RETURN
+
+  END SUBROUTINE OC_Export_ExportObj
+
+  !
+  !================================================================================================================================
+  !
+
+  !>Sets the format for an export identified by a user number.
+  SUBROUTINE OC_Export_ExportFormatSetNumber(contextUserNumber,exportUserNumber,exportFormat,err)
+    !DLLEXPORT(OC_Export_ExportFormatSetNumber)
+
+    !Argument variables
+    INTEGER(INTG), INTENT(IN) :: contextUserNumber !<The user number of the context containing the export to destroy.
+    INTEGER(INTG), INTENT(IN) :: exportUserNumber !<The user number of the export to destroy.
+    INTEGER(INTG), INTENT(IN) :: exportFormat !<The export format to set \see OpenCMISS_ExportFormatTypes
+    INTEGER(INTG), INTENT(OUT) :: err !<The error code.
+    !Local variables
+    TYPE(ContextType), POINTER :: context
+    TYPE(ExportType), POINTER :: export
+    TYPE(ExportsType), POINTER :: exports
+
+    ENTERS("OC_Export_ExportFormatSetNumber",err,error,*999)
+
+    NULLIFY(context)
+    NULLIFY(exports)
+    NULLIFY(export)
+    CALL Context_Get(contexts,contextUserNumber,context,err,error,*999)
+    CALL Context_ExportsGet(context,exports,err,error,*999)
+    CALL Export_Get(exports,exportUserNumber,export,err,error,*999)
+    CALL Export_ExportFormatSet(export,exportFormat,err,error,*999)
+
+    EXITS("OC_Export_ExportFormatSetNumber")
+    RETURN
+999 ERRORSEXITS("OC_Export_ExportFormatSetNumber",err,error)
+    CALL OC_HandleError(err,error)
+    RETURN
+
+  END SUBROUTINE OC_Export_ExportFormatSetNumber
+
+  !
+  !================================================================================================================================
+  !
+
+  !>Sets the export format for an export identified by an object.
+  SUBROUTINE OC_Export_ExportFormatSetObj(export,exportFormat,err)
+    !DLLEXPORT(OC_Export_ExportFormatSetObj)
+
+    !Argument variables
+    TYPE(OC_ExportType), INTENT(INOUT) :: export !<The export to destroy.
+    INTEGER(INTG), INTENT(IN) :: exportFormat !<The export format to set \see OpenCMISS_ExportFormatTypes
+    INTEGER(INTG), INTENT(OUT) :: err !<The error code.
+    !Local variables
+
+    ENTERS("OC_Export_ExportFormatSetObj",err,error,*999)
+
+    CALL Export_ExportFormatSet(export%export,exportFormat,err,error,*999)
+
+    EXITS("OC_Export_ExportFormatSetObj")
+    RETURN
+999 ERRORSEXITS("OC_Export_ExportFormatSetObj",err,error)
+    CALL OC_HandleError(err,error)
+    RETURN
+
+  END SUBROUTINE OC_Export_ExportFormatSetObj
+  
+  !
+  !================================================================================================================================
+  !
+
+  !>Adds an export variable with a varying string name to an export identified by a user number.
+  SUBROUTINE OC_Export_ExportVariableAddNumberVS(contextUserNumber,exportUserNumber,regionUserNumber,fieldUserNumber, &
+    & variableType,fieldSetType,startComponent,endComponent,exportName,exportVariableIndex,err)
+    !DLLEXPORT(OC_Export_ExportVariableAddNumberVS)
+
+    !Argument variables
+    INTEGER(INTG), INTENT(IN) :: contextUserNumber !<The user number of the context.
+    INTEGER(INTG), INTENT(IN) :: exportUserNumber !<The user number of the export.
+    INTEGER(INTG), INTENT(IN) :: regionUserNumber !<The user number of the region.
+    INTEGER(INTG), INTENT(IN) :: fieldUserNumber !<The user number of the field to add.
+    INTEGER(INTG), INTENT(IN) :: variableType !<The variable type of the field variable to add. \see OpenCMISS_FieldVariableTypes
+    INTEGER(INTG), INTENT(IN) :: fieldSetType !<The parameter set type of the field variable to add. \see OpenCMISS_FieldParameterSetTypes
+    INTEGER(INTG), INTENT(IN) :: startComponent !<The start component number of the field variable to add.
+    INTEGER(INTG), INTENT(IN) :: endComponent !<The end component number of the field variable to add.
+    TYPE(VARYING_STRING), INTENT(IN) :: exportName !<The name of the export variable.
+    INTEGER(INTG), INTENT(OUT) :: exportVariableIndex !<On exit, the index of the added export variable.
+    INTEGER(INTG), INTENT(OUT) :: err !<The error code.
+    !Local variables
+    TYPE(ContextType), POINTER :: context
+    TYPE(ExportType), POINTER :: export
+    TYPE(ExportsType), POINTER :: exports
+    TYPE(FieldType), POINTER :: field
+    TYPE(FieldVariableType), POINTER :: fieldVariable
+    TYPE(RegionType), POINTER :: region
+    TYPE(RegionsType), POINTER :: regions
+
+    ENTERS("OC_Export_ExportVariableAddNumberVS",err,error,*999)
+
+    NULLIFY(context)
+    NULLIFY(exports)
+    NULLIFY(export)
+    NULLIFY(regions)
+    NULLIFY(region)
+    NULLIFY(field)
+    NULLIFY(fieldVariable)
+    CALL Context_Get(contexts,contextUserNumber,context,err,error,*999)
+    CALL Context_ExportsGet(context,exports,err,error,*999)
+    CALL Export_Get(exports,exportUserNumber,export,err,error,*999)
+    CALL Context_RegionsGet(context,regions,err,error,*999)
+    CALL Region_Get(regions,regionUserNumber,region,err,error,*999)
+    CALL Region_FieldGet(region,fieldUserNumber,field,err,error,*999)
+    CALL Field_VariableGet(field,variableType,fieldVariable,err,error,*999)
+    CALL Export_ExportVariableAdd(export,fieldVariable,fieldSetType,startComponent,endComponent,exportName,exportVariableIndex, &
+      & err,error,*999)
+
+    EXITS("OC_Export_ExportVariableAddNumberVS")
+    RETURN
+999 ERRORSEXITS("OC_Export_ExportVariableAddNumberVS",err,error)
+    CALL OC_HandleError(err,error)
+    RETURN
+
+  END SUBROUTINE OC_Export_ExportVariableAddNumberVS
+
+  !
+  !================================================================================================================================
+  !
+
+  !>Adds an export variable with a character name to an export identified by a user number.
+  SUBROUTINE OC_Export_ExportVariableAddNumberC(contextUserNumber,exportUserNumber,regionUserNumber,fieldUserNumber, &
+    & variableType,fieldSetType,startComponent,endComponent,exportName,exportVariableIndex,err)
+    !DLLEXPORT(OC_Export_ExportVariableAddNumberC)
+
+    !Argument variables
+    INTEGER(INTG), INTENT(IN) :: contextUserNumber !<The user number of the context.
+    INTEGER(INTG), INTENT(IN) :: exportUserNumber !<The user number of the export.
+    INTEGER(INTG), INTENT(IN) :: regionUserNumber !<The user number of the region.
+    INTEGER(INTG), INTENT(IN) :: fieldUserNumber !<The user number of the field to add.
+    INTEGER(INTG), INTENT(IN) :: variableType !<The variable type of the field variable to add. \see OpenCMISS_FieldVariableTypes
+    INTEGER(INTG), INTENT(IN) :: fieldSetType !<The parameter set type of the field variable to add. \see OpenCMISS_FieldParameterSetTypes
+    INTEGER(INTG), INTENT(IN) :: startComponent !<The start component number of the field variable to add.
+    INTEGER(INTG), INTENT(IN) :: endComponent !<The end component number of the field variable to add.
+    CHARACTER(LEN=*), INTENT(IN) :: exportName !<The name of the export variable.
+    INTEGER(INTG), INTENT(OUT) :: exportVariableIndex !<On exit, the index of the added export variable.
+    INTEGER(INTG), INTENT(OUT) :: err !<The error code.
+    !Local variables
+    TYPE(ContextType), POINTER :: context
+    TYPE(ExportType), POINTER :: export
+    TYPE(ExportsType), POINTER :: exports
+    TYPE(FieldType), POINTER :: field
+    TYPE(FieldVariableType), POINTER :: fieldVariable
+    TYPE(RegionType), POINTER :: region
+    TYPE(RegionsType), POINTER :: regions
+
+    ENTERS("OC_Export_ExportVariableAddNumberC",err,error,*999)
+
+    NULLIFY(context)
+    NULLIFY(exports)
+    NULLIFY(export)
+    NULLIFY(regions)
+    NULLIFY(region)
+    NULLIFY(field)
+    NULLIFY(fieldVariable)
+    CALL Context_Get(contexts,contextUserNumber,context,err,error,*999)
+    CALL Context_ExportsGet(context,exports,err,error,*999)
+    CALL Export_Get(exports,exportUserNumber,export,err,error,*999)
+    CALL Context_RegionsGet(context,regions,err,error,*999)
+    CALL Region_Get(regions,regionUserNumber,region,err,error,*999)
+    CALL Region_FieldGet(region,fieldUserNumber,field,err,error,*999)
+    CALL Field_VariableGet(field,variableType,fieldVariable,err,error,*999)
+    CALL Export_ExportVariableAdd(export,fieldVariable,fieldSetType,startComponent,endComponent,VAR_STR(exportName), &
+      & exportVariableIndex,err,error,*999)
+
+    EXITS("OC_Export_ExportVariableAddNumberC")
+    RETURN
+999 ERRORSEXITS("OC_Export_ExportVariableAddNumberC",err,error)
+    CALL OC_HandleError(err,error)
+    RETURN
+
+  END SUBROUTINE OC_Export_ExportVariableAddNumberC
+
+  !
+  !================================================================================================================================
+  !
+
+  !>Adds an export variable with a varying string name to an export identified by an object.
+  SUBROUTINE OC_Export_ExportVariableAddObjVS(export,field,variableType,fieldSetType,startComponent,endComponent,exportName, &
+    & exportVariableIndex,err)
+   !DLLEXPORT(OC_Export_ExportVariableAddObjVS)
+
+    !Argument variables
+    TYPE(OC_ExportType), INTENT(INOUT) :: export !<The export to add the variable for.
+    TYPE(OC_FieldType), INTENT(IN) :: field !<The field to add the variable for.
+    INTEGER(INTG), INTENT(IN) :: variableType !<The variable type of the field variable to add. \see OpenCMISS_FieldVariableTypes
+    INTEGER(INTG), INTENT(IN) :: fieldSetType !<The parameter set type of the field variable to add. \see OpenCMISS_FieldParameterSetTypes
+    INTEGER(INTG), INTENT(IN) :: startComponent !<The start component number of the field variable to add.
+    INTEGER(INTG), INTENT(IN) :: endComponent !<The end component number of the field variable to add.
+    TYPE(VARYING_STRING), INTENT(IN) :: exportName !<The name of the export variable.
+    INTEGER(INTG), INTENT(OUT) :: exportVariableIndex !<On exit, the index of the added export variable.
+    INTEGER(INTG), INTENT(OUT) :: err !<The error code.
+    !Local variables
+    TYPE(FieldVariableType), POINTER :: fieldVariable
+
+    ENTERS("OC_Export_ExportVariableAddObjVS",err,error,*999)
+
+    NULLIFY(fieldVariable)
+    CALL Field_VariableGet(field%field,variableType,fieldVariable,err,error,*999)
+    CALL Export_ExportVariableAdd(export%export,fieldVariable,fieldSetType,startComponent,endComponent,exportName, &
+      & exportVariableIndex,err,error,*999)
+
+    EXITS("OC_Export_ExportVariableAddObjVS")
+    RETURN
+999 ERRORSEXITS("OC_Export_ExportVariableAddObjVS",err,error)
+    CALL OC_HandleError(err,error)
+    RETURN
+
+  END SUBROUTINE OC_Export_ExportVariableAddObjVS
+  
+  !
+  !================================================================================================================================
+  !
+
+  !>Adds an export variable with a character name to an export identified by an object.
+  SUBROUTINE OC_Export_ExportVariableAddObjC(export,field,variableType,fieldSetType,startComponent,endComponent,exportName, &
+    & exportVariableIndex,err)
+   !DLLEXPORT(OC_Export_ExportVariableAddObjC)
+
+    !Argument variables
+    TYPE(OC_ExportType), INTENT(INOUT) :: export !<The export to add the variable for.
+    TYPE(OC_FieldType), INTENT(IN) :: field !<The field to add the variable for.
+    INTEGER(INTG), INTENT(IN) :: variableType !<The variable type of the field variable to add. \see OpenCMISS_FieldVariableTypes
+    INTEGER(INTG), INTENT(IN) :: fieldSetType !<The parameter set type of the field variable to add. \see OpenCMISS_FieldParameterSetTypes
+    INTEGER(INTG), INTENT(IN) :: startComponent !<The start component number of the field variable to add.
+    INTEGER(INTG), INTENT(IN) :: endComponent !<The end component number of the field variable to add.
+    CHARACTER(LEN=*), INTENT(IN) :: exportName !<The name of the export variable.
+    INTEGER(INTG), INTENT(OUT) :: exportVariableIndex !<On exit, the index of the added export variable.
+    INTEGER(INTG), INTENT(OUT) :: err !<The error code.
+    !Local variables
+    TYPE(FieldVariableType), POINTER :: fieldVariable
+
+    ENTERS("OC_Export_ExportVariableAddObjC",err,error,*999)
+
+    NULLIFY(fieldVariable)
+    CALL Field_VariableGet(field%field,variableType,fieldVariable,err,error,*999)
+    CALL Export_ExportVariableAdd(export%export,fieldVariable,fieldSetType,startComponent,endComponent,VAR_STR(exportName), &
+      & exportVariableIndex,err,error,*999)
+
+    EXITS("OC_Export_ExportVariableAddObjC")
+    RETURN
+999 ERRORSEXITS("OC_Export_ExportVariableAddObjC",err,error)
+    CALL OC_HandleError(err,error)
+    RETURN
+
+  END SUBROUTINE OC_Export_ExportVariableAddObjC
+  
+!!==================================================================================================================================
+!!
 !! FieldRoutines
 !!
 !!==================================================================================================================================
@@ -62428,8 +63325,8 @@ CONTAINS
     !DLLEXPORT(OC_Problem_CreateStartObj)
 
     !Argument variables
-    TYPE(OC_ContextType), INTENT(IN) :: context !<The context in which to create the problem. 
     INTEGER(INTG), INTENT(IN) :: problemUserNumber !<The user number of the problem to start the creation of.
+    TYPE(OC_ContextType), INTENT(IN) :: context !<The context in which to create the problem. 
     INTEGER(INTG), INTENT(IN) :: problemSpecification(:) !<The problem specification array, containt the problem class, type etc
     TYPE(OC_ProblemType), INTENT(INOUT) :: problem !<On return, the created problem.
     INTEGER(INTG), INTENT(OUT) :: err !<The error code.

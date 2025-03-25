@@ -77,6 +77,8 @@ MODULE ContextAccessRoutines
 
   PUBLIC Context_CoordinateSystemsGet
   
+  PUBLIC Context_ExportsGet
+  
   PUBLIC Context_ProblemsGet
 
   PUBLIC Context_RandomSeedsGet
@@ -264,6 +266,49 @@ CONTAINS
     RETURN 1
     
   END SUBROUTINE Context_CoordinateSystemsGet
+
+  !
+  !================================================================================================================================
+  !
+  
+  !>Gets the exports for a context.
+  SUBROUTINE Context_ExportsGet(context,exports,err,error,*)
+
+    !Argument Variables
+    TYPE(ContextType), POINTER, INTENT(IN) :: context !<The context to get the exports for.
+    TYPE(ExportsType), POINTER :: exports !<On return, the exports for the context. Must not be associated on entry.
+    INTEGER(INTG), INTENT(OUT) :: err !<The error code
+    TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
+    !Local Variables
+#ifdef WITH_POSTCHECKS    
+    TYPE(VARYING_STRING) :: localError
+#endif    
+
+    ENTERS("Context_ExportsGet",err,error,*998)
+
+#ifdef WITH_PRECHECKS    
+    IF(ASSOCIATED(exports)) CALL FlagError("Exports is already associated.",err,error,*998)
+    IF(.NOT.ASSOCIATED(context)) CALL FlagError("Context is not associated.",err,error,*999)
+#endif    
+    
+    exports=>context%exports
+
+#ifdef WITH_POSTCHECKS    
+    IF(.NOT.ASSOCIATED(exports)) THEN
+      localError="The exports for context number "// &
+        & TRIM(NumberToVString(context%userNumber,"*",err,error))//" is not associated."
+      CALL FlagError(localError,err,error,*999)
+    ENDIF
+#endif    
+ 
+    EXITS("Context_ExportsGet")
+    RETURN
+999 NULLIFY(exports)
+998 ERRORS("Context_ExportsGet",err,error)
+    EXITS("Context_ExportsGet")
+    RETURN 1
+    
+  END SUBROUTINE Context_ExportsGet
 
   !
   !================================================================================================================================

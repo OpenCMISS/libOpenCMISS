@@ -45,6 +45,7 @@
 MODULE ExportRoutines
 
   USE BaseRoutines
+  USE ExfileRoutines
   USE ExportAccessRoutines
   USE FieldAccessRoutines
   USE ISO_VARYING_STRING
@@ -77,7 +78,15 @@ MODULE ExportRoutines
   
   PUBLIC Export_CreateFinish,Export_CreateStart
 
+  PUBLIC Export_Destroy
+
+  PUBLIC Export_Export
+
+  PUBLIC Export_ExportFormatSet
+
   PUBLIC Export_Finalise,Export_Initialise
+
+  PUBLIC Export_ExportVariableAdd
 
   PUBLIC Exports_Finalise,Exports_Initialise
 
@@ -244,6 +253,56 @@ CONTAINS
   !================================================================================================================================
   !
 
+  !>Destroys an export 
+  SUBROUTINE Export_Destroy(export,err,error,*)
+    
+    !Argument variables
+    TYPE(ExportType), POINTER, INTENT(INOUT) :: export !<The export to destroy
+    INTEGER(INTG), INTENT(OUT) :: err !<The error code
+    TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
+    !Local Variables
+    INTEGER(INTG) :: exportIdx,exportPosition
+    TYPE(ExportPtrType), ALLOCATABLE :: newExports(:)
+    TYPE(ExportsType), POINTER :: exports
+    
+    ENTERS("Export_Destroy",err,error,*999)
+
+    IF(.NOT.ASSOCIATED(export)) CALL FlagError("Export is not associated.",err,error,*999)
+    
+    NULLIFY(exports)
+    CALL Export_ExportsGet(export,exports,err,error,*999)    
+    exportPosition=export%globalNumber
+    CALL Export_Finalise(export,err,error,*999)
+    IF(exports%numberOfExports>1) THEN
+      ALLOCATE(newExports(exports%numberOfExports-1),STAT=err)
+      IF(err/=0) CALL FlagError("Could not allocate new exports.",err,error,*999)
+      DO exportIdx=1,exports%numberOfExports
+        IF(exportIdx<exportPosition) THEN
+          newExports(exportIdx)%ptr=>exports%exports(exportIdx)%ptr
+        ELSE IF(exportIdx>exportPosition) THEN
+          exports%exports(exportIdx)%ptr%globalNumber=exports%exports(exportIdx)%ptr%globalNumber-1
+          newExports(exportIdx-1)%ptr=>exports%exports(exportIdx)%ptr
+        ENDIF
+      ENDDO !exportIdx
+      CALL MOVE_ALLOC(newExports,exports%exports)
+      exports%numberOfExports=exports%numberOfExports-1
+    ELSE
+      DEALLOCATE(exports%exports)
+      exports%numberOfExports=0
+    ENDIF
+    
+    EXITS("Export_Destroy")
+    RETURN
+999 IF(ALLOCATED(newExports)) DEALLOCATE(newExports)
+    ERRORSEXITS("Export_Destroy",err,error)
+    RETURN 1
+
+  END SUBROUTINE Export_Destroy
+
+  !
+  !================================================================================================================================
+  !
+
   !>Sets/changes the export format for an export
   SUBROUTINE Export_ExportFormatSet(export,exportFormat,err,error,*)
     
@@ -290,6 +349,42 @@ CONTAINS
     RETURN 1
 
   END SUBROUTINE Export_ExportFormatSet
+
+  !
+  !================================================================================================================================
+  !
+
+  !>Export file for an export
+  SUBROUTINE Export_Export(export,err,error,*)
+    
+    !Argument variables
+    TYPE(ExportType), POINTER, INTENT(INOUT) :: export !<The export to export
+    INTEGER(INTG), INTENT(OUT) :: err !<The error code
+    TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
+    !Local Variables
+    TYPE(VARYING_STRING) :: localError
+    
+    ENTERS("Export_Export",err,error,*999)
+
+    CALL Export_AssertIsFinished(export,err,error,*999)
+
+    !Initialise the new export format
+    SELECT CASE(export%exportFormat)
+    CASE(EXPORT_EXFILE_FORMAT)
+      CALL Exfile_Export(export%exfileExport,err,error,*999)
+    CASE(EXPORT_VTK_FORMAT)
+      CALL VTK_Export(export%vtkExport,err,error,*999)
+    CASE DEFAULT
+      localError="The specified export format of "//TRIM(NumberToVString(export%exportFormat,"*",err,error))//" is invalid."
+      CALL FlagError(localError,err,error,*999)
+    END SELECT
+    
+    EXITS("Export_Export")
+    RETURN
+999 ERRORSEXITS("Export_Export",err,error)
+    RETURN 1
+
+  END SUBROUTINE Export_Export
 
   !
   !================================================================================================================================
@@ -633,25 +728,31 @@ CONTAINS
   !
 
   !>Initialises an exports 
-  SUBROUTINE Exports_Initialise(exports,err,error,*)
+  SUBROUTINE Exports_Initialise(context,err,error,*)
 
     !Argument variables
-    TYPE(ExportsType), POINTER, INTENT(INOUT) :: exports !<The exports to initialise. Must not be associated on entry.
+    TYPE(ContextType), POINTER, INTENT(INOUT) :: context !<The context to initialise the exports for.
     INTEGER(INTG), INTENT(OUT) :: err !<The error code
     TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
     !Local Variables
+    INTEGER(INTG) :: dummyErr
+    TYPE(VARYING_STRING) :: dummyError
  
     ENTERS("Exports_Initialise",err,error,*999)
 
-    IF(ASSOCIATED(exports)) CALL FlagError("Exports is already associated.",err,error,*999)
+    IF(.NOT.ASSOCIATED(context)) CALL FlagError("Context is not associated.",err,error,*998)
+    IF(ASSOCIATED(context%exports)) CALL FlagError("Context exports is already associated.",err,error,*998)
     
-    ALLOCATE(exports,STAT=err)
+    ALLOCATE(context%exports,STAT=err)
     IF(err/=0) CALL FlagError("Could not allocate exports.",err,error,*999)
-    exports%numberOfExports=0
-  
+    !Initialise
+    context%exports%context=>context
+    context%exports%numberOfExports=0
+      
     EXITS("Exports_Initialise")
     RETURN
-999 ERRORSEXITS("Exports_Initialise",err,error)
+999 CALL Exports_Finalise(context%exports,dummyErr,dummyError,*998)
+998 ERRORSEXITS("Exports_Initialise",err,error)
     RETURN 1
 
   END SUBROUTINE Exports_Initialise

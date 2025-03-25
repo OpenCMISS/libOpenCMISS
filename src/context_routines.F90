@@ -50,6 +50,7 @@ MODULE ContextRoutines
   USE ComputationRoutines
   USE ContextAccessRoutines
   USE CoordinateSystemRoutines
+  USE ExportRoutines
   USE ISO_VARYING_STRING
   USE Kinds
   USE ProblemRoutines
@@ -138,6 +139,8 @@ CONTAINS
     CALL Regions_Initialise(contexts%contexts(contexts%numberOfContexts+1)%ptr,err,error,*999)
     !Initialise the problems
     CALL Problems_Initialise(contexts%contexts(contexts%numberOfContexts+1)%ptr,err,error,*999)
+    !Initialise the exports
+    CALL Exports_Initialise(contexts%contexts(contexts%numberOfContexts+1)%ptr,err,error,*999)
     !Increment the number of contexts    
     contexts%numberOfContexts=contexts%numberOfContexts+1
     context=>contexts%contexts(contexts%numberOfContexts)%ptr
@@ -216,6 +219,8 @@ CONTAINS
 
     IF(ASSOCIATED(context)) THEN
       IF(ALLOCATED(context%cmissRandomSeeds)) DEALLOCATE(context%cmissRandomSeeds)
+      !Finalise the exports
+      CALL Exports_Finalise(context%exports,err,error,*999)
       !Finalise the problems
       CALL Problems_Finalise(context%problems,err,error,*999)
       !Finalise the regions
@@ -265,6 +270,7 @@ CONTAINS
     NULLIFY(context%computationEnvironment)
     NULLIFY(context%problems)
     NULLIFY(context%regions)
+    NULLIFY(context%exports)
    
     EXITS("Context_Initialise")
     RETURN

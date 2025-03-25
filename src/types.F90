@@ -4263,6 +4263,7 @@ END TYPE GeneratedMeshEllipsoidType
 
   !>Contains information on exports i.e., lists of export types \see OpenCMISS::OC_ExportsType
   TYPE ExportsType
+    TYPE(ContextType), POINTER :: context !<A pointer to the context containing the exports
     INTEGER(INTG) :: numberOfExports !<The number of exports in the exports list
     TYPE(ExportPtrType), ALLOCATABLE :: exports(:) !<The list of exports
   END TYPE ExportsType
@@ -4592,6 +4593,7 @@ END TYPE GeneratedMeshEllipsoidType
     TYPE(ProblemsType), POINTER :: problems !<A pointer to the list of problems
     TYPE(CoordinateSystemsType), POINTER :: coordinateSystems !<A pointer to the list of coordinate systems for the context
     TYPE(RegionsType), POINTER :: regions !<A pointer to the regions for the context
+    TYPE(ExportsType), POINTER :: exports !<A pointer to the exports for the context
   END TYPE ContextType
 
   !>A buffer type to allow for an array of pointers to a ContexType \see OpenCMISS::Types::ContexTypes
