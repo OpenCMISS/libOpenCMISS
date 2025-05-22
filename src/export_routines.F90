@@ -708,10 +708,12 @@ CONTAINS
     ENTERS("Exports_Finalise",err,error,*999)
 
     IF(ASSOCIATED(exports)) THEN
-      DO exportIdx = 1,SIZE(exports%exports,1)
-        CALL Export_Finalise(exports%exports(exportIdx)%ptr,err,error,*999)
-      ENDDO !exportIdx
-      DEALLOCATE(exports%exports)
+      IF(ALLOCATED(exports%exports)) THEN
+        DO exportIdx = 1,SIZE(exports%exports,1)
+          CALL Export_Finalise(exports%exports(exportIdx)%ptr,err,error,*999)
+        ENDDO !exportIdx
+        DEALLOCATE(exports%exports)
+      ENDIF
       DEALLOCATE(exports)
     ENDIF
  
