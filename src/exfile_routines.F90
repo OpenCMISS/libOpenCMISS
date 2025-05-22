@@ -68,7 +68,10 @@ MODULE ExfileRoutines
 
   PUBLIC Exfile_Export
 
-  
+  PUBLIC ExfileExport_CheckVariable
+
+  PUBLIC ExfileExport_CreateFinish
+    
 CONTAINS
 
   !
@@ -99,6 +102,60 @@ CONTAINS
 
   END SUBROUTINE Exfile_Export
  
+  !
+  !================================================================================================================================
+  !
+
+ !>Checks that a field variable can be handled by a exfile export
+  SUBROUTINE ExfileExport_CheckVariable(exfileExport,fieldVariable,startComponent,endComponent,err,error,*)
+
+    !Argument variables
+    TYPE(ExfileExportType), POINTER, INTENT(IN) :: exfileExport !<The exfile export information object to check the variable for
+    TYPE(FieldVariableType), POINTER, INTENT(IN) :: fieldVariable !<The field variable to check the export for
+    INTEGER(INTG), INTENT(IN) :: startComponent !<The start component of the field variable to check
+    INTEGER(INTG), INTENT(IN) :: endComponent !<The end component of the field variable to check
+    INTEGER(INTG), INTENT(OUT) :: err !<The error code
+    TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
+    !Local Variables
+       
+    ENTERS("ExfileExport_CheckVariable",err,error,*999)
+
+#ifdef WITH_PRECHECKS    
+    IF(.NOT.ASSOCIATED(exfileExport)) CALL FlagError("Exfile export is not associated.",err,error,*999)
+    IF(.NOT.ASSOCIATED(fieldVariable)) CALL FlagError("Field variable is not associated.",err,error,*999)
+#endif    
+
+      
+    EXITS("ExfileExport_CheckVariable")
+    RETURN
+999 ERRORSEXITS("ExfileExport_CheckVariable",err,error)
+    RETURN 1
+
+  END SUBROUTINE ExfileExport_CheckVariable
+  
+  !
+  !================================================================================================================================
+  !
+
+  !>Finishes the creation of a Exfile export
+  SUBROUTINE ExfileExport_CreateFinish(exfileExport,err,error,*)
+
+    !Argument variables
+    TYPE(ExfileExportType), POINTER :: exfileExport !<The exfile export to finish creating
+    INTEGER(INTG), INTENT(OUT) :: err !<The error code
+    TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
+    !Local Variables
+ 
+    ENTERS("ExfileExport_CreateFinish",err,error,*999)
+
+ 
+    EXITS("ExfileExport_CreateFinish")
+    RETURN
+999 ERRORSEXITS("ExfileExport_CreateFinish",err,error)
+    RETURN 1
+
+  END SUBROUTINE ExfileExport_CreateFinish
+
   !
   !================================================================================================================================
   !

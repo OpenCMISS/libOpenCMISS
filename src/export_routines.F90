@@ -467,8 +467,7 @@ CONTAINS
       !Check the field variable is OK for the different exports
       SELECT CASE(export%exportFormat)
       CASE(EXPORT_EXFILE_FORMAT)
-        CALL FlagError("Not implemented.",err,error,*999)
-        !CALL ExfileExport_CheckVariable(export%exfileExport,fieldVariable,startComponent,endComponent,err,error,*999)
+        CALL ExfileExport_CheckVariable(export%exfileExport,fieldVariable,startComponent,endComponent,err,error,*999)
       CASE(EXPORT_VTK_FORMAT)
         CALL VTKExport_CheckVariable(export%vtkExport,fieldVariable,startComponent,endComponent,err,error,*999)
       CASE DEFAULT
