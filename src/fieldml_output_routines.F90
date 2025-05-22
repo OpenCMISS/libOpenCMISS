@@ -178,11 +178,11 @@ CONTAINS
     
     ENTERS( "FIELDML_OUTPUT_IMPORT_FML", ERR, ERROR, *999 )
 
-    FIELDML_OUTPUT_IMPORT_FML = Fieldml_GetObjectByName( FML_HANDLE, cchar(REMOTE_NAME) )
+    FIELDML_OUTPUT_IMPORT_FML = Fieldml_GetObjectByName( FML_HANDLE, char(REMOTE_NAME) )
     IF( FIELDML_OUTPUT_IMPORT_FML == FML_INVALID_HANDLE ) THEN
       IMPORT_INDEX = Fieldml_AddImportSource( FML_HANDLE, &
         & "http://www.fieldml.org/resources/xml/0.5/FieldML_Library_0.5.xml"//C_NULL_CHAR, "library"//C_NULL_CHAR )
-      FIELDML_OUTPUT_IMPORT_FML = Fieldml_AddImport( FML_HANDLE, IMPORT_INDEX, cchar(REMOTE_NAME), cchar(REMOTE_NAME) )
+      FIELDML_OUTPUT_IMPORT_FML = Fieldml_AddImport( FML_HANDLE, IMPORT_INDEX, char(REMOTE_NAME), char(REMOTE_NAME) )
       IF( FIELDML_OUTPUT_IMPORT_FML == FML_INVALID_HANDLE ) ERR = 1
     ENDIF
 
@@ -371,18 +371,20 @@ CONTAINS
         TYPE_NAME = "coordinates.rc.3d"
       ELSE
         TYPE_HANDLE = FML_INVALID_HANDLE
-        CALL FlagError( var_str("Cannot get FieldML RC coordinates type of dimension ")//DIMENSIONS//".", ERR, ERROR, *999)
+        CALL FlagError( var_str("Cannot get FieldML RC coordinates type of dimension ")// &
+          & TRIM(NumberToVString(DIMENSIONS,"*",err,error))//".", ERR, ERROR, *999)
       ENDIF
     ELSE
       TYPE_HANDLE = FML_INVALID_HANDLE
-      CALL FlagError( var_str("Cannot get FieldML coordinates for OpenCMISS type ")//COORDS_TYPE//".", ERR, ERROR, *999 )
+      CALL FlagError( var_str("Cannot get FieldML coordinates for OpenCMISS type ")// &
+        & TRIM(NumberToVString(COORDS_TYPE,"*",err,error))//".", ERR, ERROR, *999 )
     ENDIF
 
     IF( DO_IMPORT ) THEN
       TEMP = FIELDML_OUTPUT_IMPORT_FML( FIELDML_HANDLE, TYPE_NAME, ERR, ERROR )
       IF(ERR/=0) GOTO 999
     ENDIF
-    TYPE_HANDLE = Fieldml_GetObjectByName( FIELDML_HANDLE, cchar(TYPE_NAME) )
+    TYPE_HANDLE = Fieldml_GetObjectByName( FIELDML_HANDLE, char(TYPE_NAME) )
     CALL FIELDML_UTIL_CHECK_FIELDML_ERROR( "Cannot get FieldML coordinates type "//char(TYPE_NAME)//".", FIELDML_HANDLE, &
       & ERR, ERROR, *999 )
 
@@ -421,14 +423,15 @@ CONTAINS
       TYPE_NAME = "real.3d"
     ELSE
       TYPE_HANDLE = FML_INVALID_HANDLE
-      CALL FlagError( var_str("Cannot get FieldML generic type of dimensionality ")//DIMENSIONS//".", ERR, ERROR, *999 )
+      CALL FlagError( var_str("Cannot get FieldML generic type of dimensionality ")// &
+        & TRIM(NumberToVString(DIMENSIONS,"*",err,error))//".", ERR, ERROR, *999 )
     ENDIF
 
     IF( DO_IMPORT ) THEN
       TEMP = FIELDML_OUTPUT_IMPORT_FML( FIELDML_HANDLE, TYPE_NAME, ERR, ERROR )
       IF(ERR/=0) GOTO 999
     ENDIF
-    TYPE_HANDLE = Fieldml_GetObjectByName( FIELDML_HANDLE, cchar(TYPE_NAME) )
+    TYPE_HANDLE = Fieldml_GetObjectByName( FIELDML_HANDLE, char(TYPE_NAME) )
     CALL FIELDML_UTIL_CHECK_FIELDML_ERROR( "Cannot get generic type "//TYPE_NAME//".", FIELDML_HANDLE, ERR, ERROR, *999 )
     
     EXITS( "FIELDML_OUTPUT_GET_GENERIC_TYPE" )
@@ -466,14 +469,15 @@ CONTAINS
       TYPE_NAME = "chart.3d"
     ELSE
       TYPE_HANDLE = FML_INVALID_HANDLE
-      CALL FlagError( var_str("Chart dimensionality ")//DIMENSIONS//" not supported.", ERR, ERROR, *999 )
+      CALL FlagError( var_str("Chart dimensionality ")// &
+        & TRIM(NumberToVString(DIMENSIONS,"*",err,error))//" not supported.", ERR, ERROR, *999 )
     ENDIF
 
     IF( DO_IMPORT ) THEN
       TEMP = FIELDML_OUTPUT_IMPORT_FML( FIELDML_HANDLE, TYPE_NAME, ERR, ERROR )
       IF(ERR/=0) GOTO 999
     ENDIF
-    TYPE_HANDLE = Fieldml_GetObjectByName( FIELDML_HANDLE, cchar(TYPE_NAME) )
+    TYPE_HANDLE = Fieldml_GetObjectByName( FIELDML_HANDLE, char(TYPE_NAME) )
     CALL FIELDML_UTIL_CHECK_FIELDML_ERROR( "Cannot get xi type "//TYPE_NAME//".", FIELDML_HANDLE, ERR, ERROR, *999 )
     
     EXITS( "FIELDML_OUTPUT_GET_XI_TYPE" )
@@ -584,7 +588,8 @@ CONTAINS
         PARAMETER_NAME = "parameters.3d.unit.triquadraticLagrange"//SUFFIX
       ELSE
         !Do not yet support dimensions higher than 3.
-        CALL FlagError( var_str("Quadratic Lagrangian interpolation not supported for ")//XI_COUNT//" dimensions.", &
+        CALL FlagError( var_str("Quadratic Lagrangian interpolation not supported for ")// &
+          & TRIM(NumberToVString(XI_COUNT,"*",err,error))//" dimensions.", &
           & ERR, ERROR, *999 )
       ENDIF
     ELSE IF( FIRST_INTERPOLATION == BASIS_LINEAR_LAGRANGE_INTERPOLATION ) THEN
@@ -599,11 +604,13 @@ CONTAINS
         PARAMETER_NAME = "parameters.3d.unit.trilinearLagrange"//SUFFIX
       ELSE
         !Do not yet support dimensions higher than 3.
-        CALL FlagError( var_str("Quadratic Lagrangian interpolation not supported for ")//XI_COUNT//" dimensions.", &
+        CALL FlagError( var_str("Quadratic Lagrangian interpolation not supported for ")// &
+          & TRIM(NumberToVString(XI_COUNT,"*",err,error))//" dimensions.", &
           & ERR, ERROR, *999 )
       ENDIF
     ELSE
-      CALL FlagError( var_str("FieldML translation not yet supported for interpolation type ")//FIRST_INTERPOLATION//".", &
+      CALL FlagError( var_str("FieldML translation not yet supported for interpolation type ")// &
+        & TRIM(NumberToVString(FIRST_INTERPOLATION,"*",err,error))//".", &
         & ERR, ERROR, *999 )
     ENDIF
 
@@ -676,7 +683,8 @@ CONTAINS
         parameterName = "parameters.3d.unit.triquadraticSimplex.zienkiewicz"
       ELSE
         !Do not yet support dimensions higher than 3.
-        CALL FlagError( var_str("Quadratic simplex interpolation not supported for ")//xiCount//" dimensions.", &
+        CALL FlagError( var_str("Quadratic simplex interpolation not supported for ")// &
+          & TRIM(NumberToVString(xiCount,"*",err,error))//" dimensions.", &
           & err, error, *999 )
       ENDIF
     ELSE IF( firstInterpolation == BASIS_LINEAR_SIMPLEX_INTERPOLATION ) THEN
@@ -691,11 +699,13 @@ CONTAINS
         parameterName = "parameters.3d.unit.trilinearSimplex"
       ELSE
         !Do not yet support dimensions higher than 3.
-        CALL FlagError( var_str("Linear simplex interpolation not supported for ")//xiCount//" dimensions.", &
+        CALL FlagError( var_str("Linear simplex interpolation not supported for ")// &
+          & TRIM(NumberToVString(xiCount,"*",err,error))//" dimensions.", &
           & err, error, *999 )
       ENDIF
     ELSE
-      CALL FlagError( var_str("FieldML translation not yet supported for interpolation type ")//firstInterpolation//".", &
+      CALL FlagError( var_str("FieldML translation not yet supported for interpolation type ")// &
+        & TRIM(NumberToVString(firstInterpolation,"*",err,error))//".", &
         & err, error, *999 )
     ENDIF
 
@@ -768,7 +778,8 @@ CONTAINS
         LAYOUT_NAME = "localNodes.3d.cube3x3x3"//SUFFIX
       ELSE
         !Do not yet support dimensions higher than 3.
-        CALL FlagError( var_str("Quadratic Lagrangian interpolation not supported for ")//XI_COUNT//" dimensions.", &
+        CALL FlagError( var_str("Quadratic Lagrangian interpolation not supported for ")// &
+          & TRIM(NumberToVString(XI_COUNT,"*",err,error))//" dimensions.", &
           & ERR, ERROR, *999 )
       ENDIF
     ELSE IF( FIRST_INTERPOLATION == BASIS_LINEAR_LAGRANGE_INTERPOLATION ) THEN
@@ -780,11 +791,13 @@ CONTAINS
         LAYOUT_NAME = "localNodes.3d.cube2x2x2"//SUFFIX
       ELSE
         !Do not yet support dimensions higher than 3.
-        CALL FlagError( var_str("Linear Lagrangian interpolation not supported for ")//XI_COUNT//" dimensions.", &
+        CALL FlagError( var_str("Linear Lagrangian interpolation not supported for ")// &
+          & TRIM(NumberToVString(XI_COUNT,"*",err,error))//" dimensions.", &
           & ERR, ERROR, *999 )
       ENDIF
     ELSE
-      CALL FlagError( var_str("FieldML translation not yet supported for interpolation type ")//FIRST_INTERPOLATION//".", &
+      CALL FlagError( var_str("FieldML translation not yet supported for interpolation type ")// &
+        & TRIM(NumberToVString(FIRST_INTERPOLATION,"*",err,error))//".", &
         & ERR, ERROR, *999 )
     ENDIF
 
@@ -792,7 +805,7 @@ CONTAINS
       TEMP = FIELDML_OUTPUT_IMPORT_FML( FIELDML_HANDLE, LAYOUT_NAME, ERR, ERROR )
       IF(ERR/=0) GOTO 999
     ENDIF
-    TYPE_HANDLE = Fieldml_GetObjectByName( FIELDML_HANDLE, cchar(LAYOUT_NAME) )
+    TYPE_HANDLE = Fieldml_GetObjectByName( FIELDML_HANDLE, char(LAYOUT_NAME) )
     CALL FIELDML_UTIL_CHECK_FIELDML_ERROR( "Cannot get local nodes type "//LAYOUT_NAME//".", FIELDML_HANDLE, ERR, ERROR, *999 )
     
     EXITS( "FIELDML_OUTPUT_GET_TP_CONNECTIVITY_TYPE" )
@@ -846,7 +859,8 @@ CONTAINS
         layoutName = "localNodes.3d.tetrahedron10.zienkiewicz"
       ELSE
         !Do not yet support dimensions higher than 3.
-        CALL FlagError( var_str("Quadratic Simplex interpolation not supported for ")//xiCount//" dimensions.", &
+        CALL FlagError( var_str("Quadratic Simplex interpolation not supported for ")// &
+          & TRIM(NumberToVString(xiCount,"*",err,error))//" dimensions.", &
           & err, error, *999 )
       ENDIF
     ELSE IF( firstInterpolation == BASIS_LINEAR_SIMPLEX_INTERPOLATION ) THEN
@@ -858,11 +872,13 @@ CONTAINS
         layoutName = "localNodes.3d.tetrahedron4"
       ELSE
         !Do not yet support dimensions higher than 3.
-        CALL FlagError( var_str("Linear Simplex interpolation not supported for ")//xiCount//" dimensions.", &
+        CALL FlagError( var_str("Linear Simplex interpolation not supported for ")// &
+          & TRIM(NumberToVString(xiCount,"*",err,error))//" dimensions.", &
           & err, error, *999 )
       ENDIF
     ELSE
-      CALL FlagError( var_str("FieldML translation not yet supported for interpolation type ")//firstInterpolation//".", &
+      CALL FlagError( var_str("FieldML translation not yet supported for interpolation type ")// &
+        & TRIM(NumberToVString(firstInterpolation,"*",err,error))//".", &
         & err, error, *999 )
     ENDIF
 
@@ -870,7 +886,7 @@ CONTAINS
       temp = FIELDML_OUTPUT_IMPORT_FML( fieldmlHandle, layoutName, err, error )
       IF(err/=0) GOTO 999
     ENDIF
-    typeHandle = Fieldml_GetObjectByName( fieldmlHandle, cchar(layoutName) )
+    typeHandle = Fieldml_GetObjectByName( fieldmlHandle, char(layoutName) )
     CALL FIELDML_UTIL_CHECK_FIELDML_ERROR( "Cannot get local nodes type "//layoutName//".", fieldmlHandle, err, error, *999 )
     
     EXITS( "FieldmlOutputGetSimplexConnectivityType" )
@@ -1118,7 +1134,7 @@ CONTAINS
       REFERENCE_NAME = BASE_NAME//NAME//"_"//TRIM(NumberToVString(BASIS_INFO%BASIS%userNumber,"*",ERR,ERROR))// &
         & ".parameters"
       
-      AGGREGATE_HANDLE = Fieldml_CreateAggregateEvaluator( FIELDML_INFO%FML_HANDLE, cchar(REFERENCE_NAME), &
+      AGGREGATE_HANDLE = Fieldml_CreateAggregateEvaluator( FIELDML_INFO%FML_HANDLE, char(REFERENCE_NAME), &
         & INTERPOLATION_PARAMETERS_HANDLE )
       CALL FIELDML_UTIL_CHECK_FIELDML_ERROR( "Cannot create dofs for basis connectivity for "//NAME//".", &
         & FIELDML_INFO%FML_HANDLE, ERR, ERROR, *999 )
@@ -1147,7 +1163,7 @@ CONTAINS
       
       valueType = Fieldml_GetValueType( FIELDML_INFO%FML_HANDLE, EVALUATOR_HANDLE )
 
-      BASIS_INFO%REFERENCE_HANDLE = Fieldml_CreateReferenceEvaluator( FIELDML_INFO%FML_HANDLE, cchar(REFERENCE_NAME), &
+      BASIS_INFO%REFERENCE_HANDLE = Fieldml_CreateReferenceEvaluator( FIELDML_INFO%FML_HANDLE, char(REFERENCE_NAME), &
         & EVALUATOR_HANDLE, valueType )
 
       CALL FIELDML_OUTPUT_GET_XI_TYPE( FIELDML_INFO%FML_HANDLE, XI_COUNT, .TRUE., HANDLE, ERR, ERROR, *999 )
@@ -1181,7 +1197,7 @@ CONTAINS
       REFERENCE_NAME = BASE_NAME//NAME//"_"//TRIM(NumberToVString(BASIS_INFO%BASIS%userNumber,"*",ERR,ERROR))// &
         & ".parameters"
       
-      AGGREGATE_HANDLE = Fieldml_CreateAggregateEvaluator( FIELDML_INFO%FML_HANDLE, cchar(REFERENCE_NAME), &
+      AGGREGATE_HANDLE = Fieldml_CreateAggregateEvaluator( FIELDML_INFO%FML_HANDLE, char(REFERENCE_NAME), &
         & INTERPOLATION_PARAMETERS_HANDLE )
       CALL FIELDML_UTIL_CHECK_FIELDML_ERROR( "Cannot create dofs for basis connectivity for "//NAME//".", &
         & FIELDML_INFO%FML_HANDLE, ERR, ERROR, *999 )
@@ -1210,7 +1226,7 @@ CONTAINS
       
       valueType = Fieldml_GetValueType( FIELDML_INFO%FML_HANDLE, EVALUATOR_HANDLE )
 
-      BASIS_INFO%REFERENCE_HANDLE = Fieldml_CreateReferenceEvaluator( FIELDML_INFO%FML_HANDLE, cchar(REFERENCE_NAME), &
+      BASIS_INFO%REFERENCE_HANDLE = Fieldml_CreateReferenceEvaluator( FIELDML_INFO%FML_HANDLE, char(REFERENCE_NAME), &
         & EVALUATOR_HANDLE, valueType )
 
       CALL FIELDML_OUTPUT_GET_XI_TYPE( FIELDML_INFO%FML_HANDLE, XI_COUNT, .TRUE., HANDLE, ERR, ERROR, *999 )
@@ -1268,7 +1284,7 @@ CONTAINS
 
     CONNECTIVITY_INFO%LAYOUT_HANDLE = LAYOUT_HANDLE
     CONNECTIVITY_INFO%CONNECTIVITY_HANDLE = Fieldml_CreateParameterEvaluator( FIELDML_INFO%FML_HANDLE, &
-      & cchar(CONNECTIVITY_NAME), FIELDML_INFO%NODES_HANDLE )
+      & char(CONNECTIVITY_NAME), FIELDML_INFO%NODES_HANDLE )
     CALL FIELDML_UTIL_CHECK_FIELDML_ERROR("Cannot create nodal parameters for "//CONNECTIVITY_NAME//".", &
       & FIELDML_INFO%FML_HANDLE, ERR, ERROR, *999 )
 
@@ -1338,12 +1354,12 @@ CONTAINS
     CALL FIELDML_UTIL_CHECK_FIELDML_ERROR( "Cannot get node dofs FieldML type.", FIELDML_INFO%FML_HANDLE, ERR, ERROR, *999 )
     
     RESOURCE_HANDLE = Fieldml_CreateHrefDataResource( FIELDML_INFO%FML_HANDLE, &
-      & cchar(COMPONENT_NAME//".connectivity.resource"), cchar( CONNECTIVITY_FORMAT ), &
-      & cchar(COMPONENT_NAME//".connectivity") )
+      & char(COMPONENT_NAME//".connectivity.resource"), char( CONNECTIVITY_FORMAT ), &
+      & char(COMPONENT_NAME//".connectivity") )
     CALL FIELDML_UTIL_CHECK_FIELDML_ERROR( "Cannot create mesh component connectivity resource "//COMPONENT_NAME//&
       & ".connectivity.resource", FIELDML_INFO%FML_HANDLE, ERR, ERROR, *999 )
 
-    TEMPLATE_HANDLE = Fieldml_CreatePiecewiseEvaluator( FIELDML_INFO%FML_HANDLE, cchar(COMPONENT_NAME//".template"), &
+    TEMPLATE_HANDLE = Fieldml_CreatePiecewiseEvaluator( FIELDML_INFO%FML_HANDLE, char(COMPONENT_NAME//".template"), &
       &  TYPE_HANDLE )
     CALL FIELDML_UTIL_CHECK_FIELDML_ERROR( "Cannot create mesh component template "//COMPONENT_NAME//".template.", &
       & FIELDML_INFO%FML_HANDLE, ERR, ERROR, *999 )
@@ -1385,11 +1401,11 @@ CONTAINS
           & CONNECTIVITY_INFO(CONNECTIVITY_COUNT+1)%LAYOUT_HANDLE )
           
         ARRAY_LOCATION = ""
-        ARRAY_LOCATION = ARRAY_LOCATION//( CONNECTIVITY_COUNT + 1 )
+        ARRAY_LOCATION = ARRAY_LOCATION//TRIM(NumberToVString( CONNECTIVITY_COUNT + 1,"*",err,error))
         SIZES(1) = ELEMENT_COUNT
         SIZES(2) = LAYOUT_NODE_COUNT
-        SOURCE_HANDLE = Fieldml_CreateArrayDataSource( FIELDML_INFO%FML_HANDLE, cchar(COMPONENT_NAME//".connectivity"), &
-          & RESOURCE_HANDLE, cchar(ARRAY_LOCATION), 2 )
+        SOURCE_HANDLE = Fieldml_CreateArrayDataSource( FIELDML_INFO%FML_HANDLE, char(COMPONENT_NAME//".connectivity"), &
+          & RESOURCE_HANDLE, char(ARRAY_LOCATION), 2 )
         FML_ERR = Fieldml_SetArrayDataSourceRawSizes( FIELDML_INFO%FML_HANDLE, SOURCE_HANDLE, C_LOC(SIZES) )
         FML_ERR = Fieldml_SetArrayDataSourceSizes( FIELDML_INFO%FML_HANDLE, SOURCE_HANDLE, C_LOC(SIZES) )
         CALL FIELDML_UTIL_CHECK_FIELDML_ERROR( "Cannot create connectivity data source "//COMPONENT_NAME//".connectivity", &
@@ -1568,12 +1584,12 @@ CONTAINS
       IS_NODE_BASED( I ) = ( INTERPOLATION_TYPE == FIELD_NODE_BASED_INTERPOLATION )
     ENDDO
 
-    RESOURCE_HANDLE = Fieldml_CreateHrefDataResource( FIELDML_INFO%FML_HANDLE, cchar(BASE_NAME//".dofs.node.resource"), &
-      & cchar( DOF_FORMAT ), cchar(BASE_NAME//".dofs.node") )
+    RESOURCE_HANDLE = Fieldml_CreateHrefDataResource( FIELDML_INFO%FML_HANDLE, char(BASE_NAME//".dofs.node.resource"), &
+      & char( DOF_FORMAT ), char(BASE_NAME//".dofs.node") )
     CALL FIELDML_UTIL_CHECK_FIELDML_ERROR( "Cannot create nodal dofs data resource "//BASE_NAME//".dofs.node.resource", &
       & FIELDML_INFO%FML_HANDLE, ERR, ERROR, *999 )
     
-    NODE_DOFS_HANDLE = Fieldml_CreateParameterEvaluator( FIELDML_INFO%FML_HANDLE, cchar(BASE_NAME//".dofs.node"), REAL_1D_HANDLE )
+    NODE_DOFS_HANDLE = Fieldml_CreateParameterEvaluator( FIELDML_INFO%FML_HANDLE, char(BASE_NAME//".dofs.node"), REAL_1D_HANDLE )
     CALL FIELDML_UTIL_CHECK_FIELDML_ERROR( "Cannot create nodal dofs parameter set "//BASE_NAME//".dofs.node.", &
       & FIELDML_INFO%FML_HANDLE, ERR, ERROR, *999 )
     FML_ERR = Fieldml_SetParameterDataDescription( FIELDML_INFO%FML_HANDLE, NODE_DOFS_HANDLE, FML_DATA_DESCRIPTION_DENSE_ARRAY )
@@ -1592,9 +1608,9 @@ CONTAINS
        SIZE_POINTER = C_LOC(SIZES)
     ENDIF
 
-    ARRAY_LOCATION = ARRAY_LOCATION//1
-    SOURCE_HANDLE = Fieldml_CreateArrayDataSource( FIELDML_INFO%FML_HANDLE, cchar(BASE_NAME//".dofs.node.data"), &
-      & RESOURCE_HANDLE, cchar(ARRAY_LOCATION), RANK )
+    ARRAY_LOCATION = ARRAY_LOCATION//"1"
+    SOURCE_HANDLE = Fieldml_CreateArrayDataSource( FIELDML_INFO%FML_HANDLE, char(BASE_NAME//".dofs.node.data"), &
+      & RESOURCE_HANDLE, char(ARRAY_LOCATION), RANK )
     FML_ERR = Fieldml_SetArrayDataSourceRawSizes( FIELDML_INFO%FML_HANDLE, SOURCE_HANDLE, SIZE_POINTER )
     FML_ERR = Fieldml_SetArrayDataSourceSizes( FIELDML_INFO%FML_HANDLE, SOURCE_HANDLE, SIZE_POINTER )
     CALL FIELDML_UTIL_CHECK_FIELDML_ERROR( "Cannot create nodal dofs data source "//BASE_NAME//".dofs.node.data.", &
@@ -1735,12 +1751,12 @@ CONTAINS
       IS_ELEMENT_BASED( I ) = ( INTERPOLATION_TYPE == FIELD_ELEMENT_BASED_INTERPOLATION )
     ENDDO
 
-    RESOURCE_HANDLE = Fieldml_CreateHrefDataResource( FIELDML_INFO%FML_HANDLE, cchar(BASE_NAME//".dofs.element.resource"), &
-      & cchar( DOF_FORMAT ), cchar(BASE_NAME//".dofs.element") )
+    RESOURCE_HANDLE = Fieldml_CreateHrefDataResource( FIELDML_INFO%FML_HANDLE, char(BASE_NAME//".dofs.element.resource"), &
+      & char( DOF_FORMAT ), char(BASE_NAME//".dofs.element") )
     CALL FIELDML_UTIL_CHECK_FIELDML_ERROR( "Cannot create element dofs data resource "//BASE_NAME//".dofs.element.resource.", &
       & FIELDML_INFO%FML_HANDLE, ERR, ERROR, *999 )
     
-    ELEMENT_DOFS_HANDLE = Fieldml_CreateParameterEvaluator( FIELDML_INFO%FML_HANDLE, cchar(BASE_NAME//".dofs.element"), &
+    ELEMENT_DOFS_HANDLE = Fieldml_CreateParameterEvaluator( FIELDML_INFO%FML_HANDLE, char(BASE_NAME//".dofs.element"), &
       & REAL_1D_HANDLE )
     CALL FIELDML_UTIL_CHECK_FIELDML_ERROR( "Cannot create element dofs parameter set "//BASE_NAME//".dofs.element.", &
       & FIELDML_INFO%FML_HANDLE, ERR, ERROR, *999 )
@@ -1748,9 +1764,9 @@ CONTAINS
     CALL FIELDML_UTIL_CHECK_FIELDML_ERROR( "Cannot set element dofs parameter description for "//BASE_NAME//".dofs.element.", &
       & FIELDML_INFO%FML_HANDLE, ERR, ERROR, *999 )
 
-    ARRAY_LOCATION = ARRAY_LOCATION//1
-    SOURCE_HANDLE = Fieldml_CreateArrayDataSource( FIELDML_INFO%FML_HANDLE, cchar(BASE_NAME//".dofs.element.data"), &
-      & RESOURCE_HANDLE, cchar(ARRAY_LOCATION), 2 )
+    ARRAY_LOCATION = ARRAY_LOCATION//"1"
+    SOURCE_HANDLE = Fieldml_CreateArrayDataSource( FIELDML_INFO%FML_HANDLE, char(BASE_NAME//".dofs.element.data"), &
+      & RESOURCE_HANDLE, char(ARRAY_LOCATION), 2 )
     SIZES( 1 ) = ELEMENT_COUNT
     SIZES( 2 ) = COMPONENT_COUNT
     FML_ERR = Fieldml_SetArrayDataSourceRawSizes( FIELDML_INFO%FML_HANDLE, SOURCE_HANDLE, C_LOC( SIZES ) )
@@ -1882,12 +1898,12 @@ CONTAINS
       IS_CONSTANT( I ) = ( INTERPOLATION_TYPE == FIELD_CONSTANT_INTERPOLATION )
     ENDDO
 
-    RESOURCE_HANDLE = Fieldml_CreateHrefDataResource( FIELDML_INFO%FML_HANDLE, cchar(BASE_NAME//".dofs.constant.resource"), &
-      & cchar( DOF_FORMAT ), cchar(BASE_NAME//".dofs.constant") )
+    RESOURCE_HANDLE = Fieldml_CreateHrefDataResource( FIELDML_INFO%FML_HANDLE, char(BASE_NAME//".dofs.constant.resource"), &
+      & char( DOF_FORMAT ), char(BASE_NAME//".dofs.constant") )
     CALL FIELDML_UTIL_CHECK_FIELDML_ERROR( "Cannot create constant dofs data resource "//BASE_NAME//".dofs.constant.resource.", &
       & FIELDML_INFO%FML_HANDLE, ERR, ERROR, *999 )
     
-    CONSTANT_DOFS_HANDLE = Fieldml_CreateParameterEvaluator( FIELDML_INFO%FML_HANDLE, cchar(BASE_NAME//".dofs.constant"), &
+    CONSTANT_DOFS_HANDLE = Fieldml_CreateParameterEvaluator( FIELDML_INFO%FML_HANDLE, char(BASE_NAME//".dofs.constant"), &
       & DOFTYPE_HANDLE )
     CALL FIELDML_UTIL_CHECK_FIELDML_ERROR( "Cannot create constant dofs parameter set "//BASE_NAME//".dofs.constant.", &
       & FIELDML_INFO%FML_HANDLE, ERR, ERROR, *999 )
@@ -1895,9 +1911,9 @@ CONTAINS
     CALL FIELDML_UTIL_CHECK_FIELDML_ERROR( "Cannot set constant dofs parameter description for "//BASE_NAME//".dofs.constant", &
       & FIELDML_INFO%FML_HANDLE, ERR, ERROR, *999 )
 
-    ARRAY_LOCATION = ARRAY_LOCATION//1
-    SOURCE_HANDLE = Fieldml_CreateArrayDataSource( FIELDML_INFO%FML_HANDLE, cchar(BASE_NAME//".dofs.element.data"), &
-      & RESOURCE_HANDLE, cchar(ARRAY_LOCATION), 1 )
+    ARRAY_LOCATION = ARRAY_LOCATION//"1"
+    SOURCE_HANDLE = Fieldml_CreateArrayDataSource( FIELDML_INFO%FML_HANDLE, char(BASE_NAME//".dofs.element.data"), &
+      & RESOURCE_HANDLE, char(ARRAY_LOCATION), 1 )
     SINGLE_SIZE = COMPONENT_COUNT
     FML_ERR = Fieldml_SetArrayDataSourceRawSizes( FIELDML_INFO%FML_HANDLE, SOURCE_HANDLE, C_LOC(SINGLE_SIZE) )
     FML_ERR = Fieldml_SetArrayDataSourceSizes( FIELDML_INFO%FML_HANDLE, SOURCE_HANDLE, C_LOC(SINGLE_SIZE) )
@@ -2016,7 +2032,7 @@ CONTAINS
     
     CALL FIELDML_IO_INITIALISE( FIELDML_INFO, .TRUE., ERR, ERROR, *999 )
     
-    FIELDML_INFO%FML_HANDLE = Fieldml_Create( cchar(LOCATION), cchar(BASE_NAME) )
+    FIELDML_INFO%FML_HANDLE = Fieldml_Create( char(LOCATION), char(BASE_NAME) )
     CALL FIELDML_UTIL_CHECK_FIELDML_ERROR( "Cannot create fieldml handle for "//BASE_NAME//" at "//LOCATION//".", &
       & FIELDML_INFO%FML_HANDLE, ERR, ERROR, *999 )
 
@@ -2024,7 +2040,7 @@ CONTAINS
     CALL Region_NodesGet( REGION, NODES, ERR, ERROR, *999 )
     CALL NODES_NUMBER_OF_NODES_GET( NODES, NODE_COUNT, ERR, ERROR, *999 )
 
-    FIELDML_INFO%NODES_HANDLE = Fieldml_CreateEnsembleType( FIELDML_INFO%FML_HANDLE, cchar(BASE_NAME//".nodes") )
+    FIELDML_INFO%NODES_HANDLE = Fieldml_CreateEnsembleType( FIELDML_INFO%FML_HANDLE, char(BASE_NAME//".nodes") )
     CALL FIELDML_UTIL_CHECK_FIELDML_ERROR( "Cannot create mesh nodes ensemble "//BASE_NAME//".nodes", &
       & FIELDML_INFO%FML_HANDLE, ERR, ERROR, *999 )
     FML_ERR = Fieldml_SetEnsembleMembersRange( FIELDML_INFO%FML_HANDLE, FIELDML_INFO%NODES_HANDLE, 1, NODE_COUNT, 1 )
@@ -2032,13 +2048,13 @@ CONTAINS
       & FIELDML_INFO%FML_HANDLE, ERR, ERROR, *999 )
 
     FIELDML_INFO%NODES_ARGUMENT_HANDLE = Fieldml_CreateArgumentEvaluator( FIELDML_INFO%FML_HANDLE, &
-      & cchar(BASE_NAME//".nodes.argument"), FIELDML_INFO%NODES_HANDLE )
+      & char(BASE_NAME//".nodes.argument"), FIELDML_INFO%NODES_HANDLE )
     CALL FIELDML_UTIL_CHECK_FIELDML_ERROR( "Cannot create mesh nodes variable "//BASE_NAME//".nodes.argument", &
       & FIELDML_INFO%FML_HANDLE, ERR, ERROR, *999 )
     
     CALL Mesh_NumberOfElementsGet( MESH, ELEMENT_COUNT, ERR, ERROR, *999 )
 
-    FIELDML_INFO%MESH_HANDLE = Fieldml_CreateMeshType( FIELDML_INFO%FML_HANDLE, cchar(BASE_NAME//".mesh") )
+    FIELDML_INFO%MESH_HANDLE = Fieldml_CreateMeshType( FIELDML_INFO%FML_HANDLE, char(BASE_NAME//".mesh") )
     CALL FIELDML_UTIL_CHECK_FIELDML_ERROR( "Cannot create mesh type "//BASE_NAME//".mesh", FIELDML_INFO%FML_HANDLE, &
       & ERR, ERROR, *999 )
 
@@ -2054,35 +2070,35 @@ CONTAINS
     CALL FIELDML_UTIL_CHECK_FIELDML_ERROR( "Cannot create mesh chart type for "//BASE_NAME//".mesh", &
       & FIELDML_INFO%FML_HANDLE, ERR, ERROR, *999 )
     XI_COMPONENT_HANDLE = Fieldml_CreateContinuousTypeComponents( FIELDML_INFO%FML_HANDLE, FIELDML_INFO%XI_HANDLE, &
-      & cchar(BASE_NAME//".mesh.xi.component"), DIMENSIONS )
+      & char(BASE_NAME//".mesh.xi.component"), DIMENSIONS )
     CALL FIELDML_UTIL_CHECK_FIELDML_ERROR( "Cannot create mesh chart components for "//BASE_NAME//".mesh", &
       & FIELDML_INFO%FML_HANDLE, ERR, ERROR, *999 )
 
-    FML_ERR = Fieldml_CreateArgumentEvaluator( FIELDML_INFO%FML_HANDLE, cchar(BASE_NAME//".mesh.argument"), &
+    FML_ERR = Fieldml_CreateArgumentEvaluator( FIELDML_INFO%FML_HANDLE, char(BASE_NAME//".mesh.argument"), &
       & FIELDML_INFO%MESH_HANDLE )
     CALL FIELDML_UTIL_CHECK_FIELDML_ERROR( "Cannot create mesh variable "//BASE_NAME//".mesh.argument", &
       & FIELDML_INFO%FML_HANDLE, ERR, ERROR, *999 )
 
-    FIELDML_INFO%XI_ARGUMENT_HANDLE = Fieldml_GetObjectByName( FIELDML_INFO%FML_HANDLE, cchar(BASE_NAME//".mesh.argument.xi") )
+    FIELDML_INFO%XI_ARGUMENT_HANDLE = Fieldml_GetObjectByName( FIELDML_INFO%FML_HANDLE, char(BASE_NAME//".mesh.argument.xi") )
     CALL FIELDML_UTIL_CHECK_FIELDML_ERROR( "Cannot get mesh xi variable for "//BASE_NAME//".mesh", &
       & FIELDML_INFO%FML_HANDLE, ERR, ERROR, *999 )
     FIELDML_INFO%ELEMENTS_ARGUMENT_HANDLE = Fieldml_GetObjectByName( FIELDML_INFO%FML_HANDLE, &
-      & cchar(BASE_NAME//".mesh.argument.element") )
+      & char(BASE_NAME//".mesh.argument.element") )
     CALL FIELDML_UTIL_CHECK_FIELDML_ERROR( "Cannot get mesh element variable for "//BASE_NAME//".mesh", &
       & FIELDML_INFO%FML_HANDLE, ERR, ERROR, *999 )
     
     CALL FIELDML_OUTPUT_GET_GENERIC_TYPE( FIELDML_INFO%FML_HANDLE, 1, REAL_1D_HANDLE, .TRUE., ERR, ERROR, *999 )
  
     !TODO Some of these may end up being unused. Should use deferred assignment.
-    FIELDML_INFO%NODE_DOFS_HANDLE = Fieldml_CreateArgumentEvaluator( FIELDML_INFO%FML_HANDLE, cchar(BASE_NAME//".dofs.node"), &
+    FIELDML_INFO%NODE_DOFS_HANDLE = Fieldml_CreateArgumentEvaluator( FIELDML_INFO%FML_HANDLE, char(BASE_NAME//".dofs.node"), &
       & REAL_1D_HANDLE )
     CALL FIELDML_UTIL_CHECK_FIELDML_ERROR( "Cannot create nodal dofs variable "//BASE_NAME//".dofs.node", &
       & FIELDML_INFO%FML_HANDLE, ERR, ERROR, *999 )
-!    fieldmlInfo%elementDofsHandle = Fieldml_CreateArgumentEvaluator( fieldmlInfo%FML_HANDLE, cchar(baseName//".dofs.element"), & 
+!    fieldmlInfo%elementDofsHandle = Fieldml_CreateArgumentEvaluator( fieldmlInfo%FML_HANDLE, char(baseName//".dofs.element"), & 
 !      & real1DHandle )
 !    CALL FieldmlUtilCheckFieldmlError( "Cannot create element dofs variable "//".dofs.element", &
 !      & fieldmlInfo, err, errorString, *999 )
-!    fieldmlInfo%constantDofsHandle = Fieldml_CreateArgumentEvaluator( fieldmlInfo%FML_HANDLE, cchar(baseName//".dofs.constant"), & 
+!    fieldmlInfo%constantDofsHandle = Fieldml_CreateArgumentEvaluator( fieldmlInfo%FML_HANDLE, char(baseName//".dofs.constant"), & 
 !      & real1DHandle )
 !    CALL FieldmlUtilCheckFieldmlError( "Cannot create constant dofs variable "//".dofs.constant", &
 !      & fieldmlInfo, err, errorString, *999 )
@@ -2170,8 +2186,9 @@ CONTAINS
     IF( ERR /= 0 ) CALL FlagError( "Could not allocate component evaluators array.", ERR, ERROR, *999 )
 
     IF( SIZE( FIELD_COMPONENT_NUMBERS ) /= COMPONENT_COUNT ) THEN
-      CALL FlagError( var_str("Fieldml Component count ")//SIZE( FIELD_COMPONENT_NUMBERS )//&
-        & " must match value type component count "//COMPONENT_COUNT//".", ERR, ERROR, *999 )
+      CALL FlagError( var_str("Fieldml Component count ")//TRIM(NumberToVString(SIZE(FIELD_COMPONENT_NUMBERS),"*",err,error))//&
+        & " must match value type component count "//TRIM(NumberToVString(COMPONENT_COUNT,"*",err,error))// &
+        & ".", ERR, ERROR, *999 )
     ENDIF
 
     NODAL_DOFS_HANDLE = FML_INVALID_HANDLE
@@ -2207,7 +2224,7 @@ CONTAINS
     ENDDO
     
     IF( COMPONENT_HANDLE /= FML_INVALID_HANDLE ) THEN
-      FIELD_HANDLE = Fieldml_CreateAggregateEvaluator( FIELDML_INFO%FML_HANDLE, cchar(BASE_NAME), TYPE_HANDLE )
+      FIELD_HANDLE = Fieldml_CreateAggregateEvaluator( FIELDML_INFO%FML_HANDLE, char(BASE_NAME), TYPE_HANDLE )
       CALL FIELDML_UTIL_CHECK_FIELDML_ERROR( "Cannot create field aggregate evaluator "//BASE_NAME, &
         & FIELDML_INFO%FML_HANDLE, ERR, ERROR, *999 )
       INDEX_HANDLE = FIELDML_OUTPUT_GET_TYPE_ARGUMENT_HANDLE( FIELDML_INFO, COMPONENT_HANDLE, .TRUE., ERR, ERROR )
@@ -2223,7 +2240,7 @@ CONTAINS
       ENDDO
     ELSE
       valueType = Fieldml_GetValueType( FIELDML_INFO%FML_HANDLE, COMPONENT_EVALUATORS( 1 ) )
-      FIELD_HANDLE = Fieldml_CreateReferenceEvaluator( FIELDML_INFO%FML_HANDLE, cchar(BASE_NAME), COMPONENT_EVALUATORS( 1 ), &
+      FIELD_HANDLE = Fieldml_CreateReferenceEvaluator( FIELDML_INFO%FML_HANDLE, char(BASE_NAME), COMPONENT_EVALUATORS( 1 ), &
         & valueType)
       CALL FIELDML_UTIL_CHECK_FIELDML_ERROR( "Cannot create reference evaluator for field "//BASE_NAME, &
         & FIELDML_INFO%FML_HANDLE, ERR, ERROR, *999 )
@@ -2363,7 +2380,7 @@ CONTAINS
 
     CALL FIELDML_ASSERT_IS_OUT( FIELDML_INFO, ERR, ERROR, *999 )
 
-    FML_ERR = Fieldml_WriteFile( FIELDML_INFO%FML_HANDLE, cchar(FILENAME) )
+    FML_ERR = Fieldml_WriteFile( FIELDML_INFO%FML_HANDLE, char(FILENAME) )
     CALL FIELDML_UTIL_CHECK_FIELDML_ERROR( "Error writing fieldml file "//FILENAME//".", FIELDML_INFO%FML_HANDLE, &
       & ERR, ERROR, *999 )
 

@@ -80,6 +80,8 @@ MODULE ExportAccessRoutines
  
   PUBLIC EXPORT_EXFILE_FORMAT,EXPORT_VTK_FORMAT
 
+  PUBLIC ExfileExport_ExportGet
+
   PUBLIC Export_AssertIsFinished,Export_AssertNotFinished
 
   PUBLIC Export_BaseFilenameGet
@@ -88,7 +90,11 @@ MODULE ExportAccessRoutines
 
   PUBLIC Export_ExportFormatGet
 
+  PUBLIC Export_ExportsGet
+
   PUBLIC Export_ExportVariableIndexGet
+
+  PUBLIC Export_Get
   
   PUBLIC Export_UserNumberFind
 
@@ -104,6 +110,44 @@ MODULE ExportAccessRoutines
 
 CONTAINS
   
+  !
+  !================================================================================================================================
+  !
+
+  !>Gets the export information from a exfile export
+  SUBROUTINE ExfileExport_ExportGet(exfileExport,export,err,error,*)
+
+    !Argument variables
+    TYPE(ExfileExportType), POINTER, INTENT(IN) :: exfileExport !<The exfile export to get the export for.
+    TYPE(ExportType), POINTER, INTENT(INOUT) :: export !<On exit, a pointer to the export for the exfile export. Must not be associated on entry.
+    INTEGER(INTG), INTENT(OUT) :: err !<The error code
+    TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
+    !Local Variables
+ 
+    ENTERS("ExfileExport_ExportGet",err,error,*998)
+
+#ifdef WITH_PRECHECKS    
+    !Check input arguments
+    IF(ASSOCIATED(export)) CALL FlagError("Export is already associated.",err,error,*998)
+    IF(.NOT.ASSOCIATED(exfileExport)) CALL FlagError("Exfile export is not associated.",err,error,*999)
+#endif    
+
+    !Get the exfile export export
+    export=>exfileExport%export
+
+#ifdef WITH_POSTCHECKS    
+    !Check export is associated.
+    IF(.NOT.ASSOCIATED(export)) CALL FlagError("Exfile export export is not associated.",err,error,*999)
+#endif    
+    
+    EXITS("ExfileExport_ExportGet")
+    RETURN
+999 NULLIFY(export)    
+998 ERRORSEXITS("ExfileExport_ExportGet",err,error)
+    RETURN 1
+    
+  END SUBROUTINE ExfileExport_ExportGet
+
   !
   !=================================================================================================================================
   !
@@ -317,6 +361,51 @@ CONTAINS
   !================================================================================================================================
   !
 
+  !>Gets the exports from an export
+  SUBROUTINE Export_ExportsGet(export,exports,err,error,*)
+
+    !Argument variables
+    TYPE(ExportType), POINTER, INTENT(IN) :: export !<The export to get the exports for.
+    TYPE(ExportsType), POINTER, INTENT(INOUT) :: exports !<On exit, a pointer to the exports for the export. Must not be associated on entry.
+    INTEGER(INTG), INTENT(OUT) :: err !<The error code
+    TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
+    !Local Variables
+#ifdef WITH_POSTCHECKS    
+    TYPE(VARYING_STRING) :: localError
+#endif    
+ 
+    ENTERS("Export_ExportsGet",err,error,*998)
+
+#ifdef WITH_PRECHECKS    
+    !Check input arguments
+    IF(ASSOCIATED(exports)) CALL FlagError("Exports is already associated.",err,error,*998)
+    IF(.NOT.ASSOCIATED(export)) CALL FlagError("Export is not associated.",err,error,*999)
+#endif    
+
+    !Get the export exports
+    exports=>export%exports
+
+#ifdef WITH_POSTCHECKS    
+    !Check exports is associated.
+    IF(.NOT.ASSOCIATED(exports)) THEN
+      localError="Export exports is not associated for export number "// &
+        & TRIM(NumberToVString(export%userNumber,"*",err,error))//"."
+      CALL FlagError(localError,err,error,*999)
+    ENDIF
+#endif    
+    
+    EXITS("Export_ExportsGet")
+    RETURN
+999 NULLIFY(exports)    
+998 ERRORSEXITS("Export_ExportsGet",err,error)
+    RETURN 1
+    
+  END SUBROUTINE Export_ExportsGet
+
+  !
+  !================================================================================================================================
+  !
+
   !>Returns a pointer to a export variable of a specified index
   SUBROUTINE Export_ExportVariableIndexGet(export,variableIdx,exportVariable,err,error,*)
 
@@ -364,6 +453,42 @@ CONTAINS
     RETURN 1
     
   END SUBROUTINE Export_ExportVariableIndexGet
+
+  !
+  !================================================================================================================================
+  !
+
+  !>Finds and returns a pointer to the export with the given user number. 
+  SUBROUTINE Export_Get(exports,userNumber,export,err,error,*)
+
+    !Argument variables
+    TYPE(ExportsType), POINTER :: exports !<The exports to get the user number for.
+    INTEGER(INTG), INTENT(IN) :: userNumber !<The user number of the export to find
+    TYPE(ExportType), POINTER :: export !<On exit, a pointer to the export with the specified user number if it exists. Must not be associated on entry.
+    INTEGER(INTG), INTENT(OUT) :: err !<The error code
+    TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
+    !Local Variables
+#ifdef WITH_POSTCHECKS    
+    TYPE(VARYING_STRING) :: localError
+#endif    
+    
+    ENTERS("Export_Get",err,error,*999)
+
+    CALL Export_UserNumberFind(userNumber,exports,export,err,error,*999)
+
+#ifdef WITH_POSTCHECKS    
+    IF(.NOT.ASSOCIATED(export)) THEN
+      localError="An export with an user number of "//TRIM(NumberToVString(userNumber,"*",err,error))//" does not exist."
+      CALL FlagError(localError,err,error,*999)
+    ENDIF
+#endif    
+  
+    EXITS("Export_Get")
+    RETURN
+999 ERRORSEXITS("Export_Get",err,error)
+    RETURN 1
+    
+  END SUBROUTINE Export_Get
 
   !
   !================================================================================================================================

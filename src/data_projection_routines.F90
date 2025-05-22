@@ -1564,7 +1564,7 @@ CONTAINS
         ENDDO !elementIdx
       CASE(DATA_PROJECTION_ALL_ELEMENTS_PROJECTION_TYPE)
         !Identify all non-ghost elements
-        IF(dataProjection%numberOfXi==numberOfDimensions) THEN
+        IF(dataProjection%numberOfXi/=numberOfDimensions) THEN
           localError="The data projection number of xi of "//TRIM(NumberToVString(dataProjection%numberOfXi,"*",err,error))// &
             & " does not match the decomposition number of dimensions of "// &
             & TRIM(NumberToVString(numberOfDimensions,"*",err,error))//"."
@@ -1875,12 +1875,12 @@ CONTAINS
 #ifdef WITH_MPI
 #ifdef WITH_F08_MPI
       !Find the shortest projected distance in all domains
-      CALL MPI_Allreduce(MPI_IN_PLACE,projectedDistance,numberOfDataPoints,MPI_DOUBLE_PRECISION,MPI_MINLOC, &
+      CALL MPI_Allreduce(MPI_IN_PLACE,projectedDistance,numberOfDataPoints,MPI_2DOUBLE_PRECISION,MPI_MINLOC, &
         & groupCommunicator,MPIIError)
       CALL MPI_ErrorCheck("MPI_Allreduce",MPIIError,err,error,*999)
 #else      
       !Find the shortest projected distance in all domains
-      CALL MPI_ALLREDUCE(MPI_IN_PLACE,C_LOC(projectedDistance),numberOfDataPoints,MPI_DOUBLE_PRECISION,MPI_MINLOC, &
+      CALL MPI_ALLREDUCE(MPI_IN_PLACE,C_LOC(projectedDistance),numberOfDataPoints,MPI_2DOUBLE_PRECISION,MPI_MINLOC, &
         & groupCommunicator,MPIIError)
       CALL MPI_ErrorCheck("MPI_ALLREDUCE",MPIIError,err,error,*999)
 #endif      
@@ -2057,7 +2057,6 @@ CONTAINS
         CASE(3) !3D mesh
           DO dataPointIdx=1,numberOfDataPoints
             CALL DataPoints_DataPositionGet(dataPoints,dataPointIdx,position(1:numberOfDataDimensions),err,error,*999)
-            projectedXi(:,dataPointIdx) = dataProjection%startingXi(:,dataPointIdx)
             CALL DataProjection_NewtonElementsEvaluate_3(dataProjection,interpolatedPoint,position(1:numberOfDataDimensions), &
               & closestElements(dataPointIdx,:),dataProjection%dataProjectionResults(dataPointIdx)%exitTag, &
               & dataProjection%dataProjectionResults(dataPointIdx)%elementLocalNumber, &
@@ -3860,6 +3859,22 @@ CONTAINS
       CALL DecompositionTopology_DecompositionElementsGet(decompositionTopology,decompositionElements,err,error,*999)
       CALL DecompositionElements_NumberOfElementsGet(decompositionElements,numberOfElements,err,error,*999)
       CALL DecompositionElements_TotalNumberOfElementsGet(decompositionElements,totalNumberOfElements,err,error,*999)
+      !Check and count element numbers
+      numberOfCandidates = 0
+      DO elementIdx=1,SIZE(elementLocalNumbers,1)
+        elementLocalNumber=elementLocalNumbers(elementIdx)
+        IF(elementLocalNumber<1.OR.elementLocalNumber>totalNumberOfElements) THEN
+          localError="The specified local element number of "//TRIM(NumberToVString(elementLocalNumber,"*",err,error))// &
+            & " at position "//TRIM(NumberToVString(elementIdx,"*",err,error))// &
+            & " is invalid. The local element number should be >= 1 and <= "// &
+            & TRIM(NumberToVString(totalnumberOfElements,"*",err,error))//"."
+          CALL FlagError(localError,err,error,*999)
+        ENDIF
+        !Just add internal and boundary elements. Ignore ghost.
+        IF(elementLocalNumber<=numberOfElements) numberOfCandidates=numberOfCandidates+1          
+      ENDDO !elementIdx
+      IF(numberOfCandidates>dataProjection%maxNumberOfCandidates) dataProjection%maxNumberOfCandidates=numberOfCandidates
+      !Loop over data points
       DO dataPointIdx=1,SIZE(dataPointGlobalNumbers,1)
         dataPointGlobalNumber=dataPointGlobalNumbers(dataPointIdx)
         IF(dataPointGlobalNumber<1.OR.dataPointGlobalNumber>numberOfDataPoints) THEN
@@ -3869,26 +3884,23 @@ CONTAINS
             & TRIM(NumberToVString(numberOfDataPoints,"*",err,error))//"."
           CALL FlagError(localError,err,error,*999)
         ENDIF
+        !Deallocate and allocate candidate element numbers
         IF(ALLOCATED(dataProjection%dataProjectionCandidates(dataPointGlobalNumber)%candidateElementNumbers)) &
           & DEALLOCATE(dataProjection%dataProjectionCandidates(dataPointGlobalNumber)%candidateElementNumbers)
         ALLOCATE(dataProjection%dataProjectionCandidates(dataPointGlobalNumber)%candidateElementNumbers( &
-          & SIZE(elementLocalNumbers,1)),STAT=err)
+          & numberOfCandidates),STAT=err)
         IF(err/=0) CALL FlagError("Could not allocate candidiate element numbers.",err,error,*999)
+        !Set the candidate elements
         numberOfCandidates=0
         DO elementIdx=1,SIZE(elementLocalNumbers,1)
           elementLocalNumber=elementLocalNumbers(elementIdx)
-          IF(elementLocalNumber<1.OR.elementLocalNumber>numberOfElements) THEN
-            localError="The specified local error number of "//TRIM(NumberToVString(elementLocalNumber,"*",err,error))// &
-              & " at position "//TRIM(NumberToVString(elementIdx,"*",err,error))// &
-              & " is invalid. The local element number should be >= 1 and <= "// &
-              & TRIM(NumberToVString(numberOfElements,"*",err,error))//"."
-            CALL FlagError(localError,err,error,*999)
+          IF(elementLocalNumber<=numberOfElements) THEN
+            !Just set candidate elements for internal and boundary. Ignore ghost elements
+            numberOfCandidates=numberOfCandidates+1
+            dataProjection%dataProjectionCandidates(dataPointGlobalNumber)%candidateElementNumbers(numberOfCandidates)= &
+              & elementLocalNumber
           ENDIF
-          numberOfCandidates=numberOfCandidates+1
-          dataProjection%dataProjectionCandidates(dataPointGlobalNumber)%candidateElementNumbers(numberOfCandidates)= &
-            & elementLocalNumber
         ENDDO !elementIdx
-        IF(numberOfCandidates>dataProjection%maxNumberOfCandidates) dataProjection%maxNumberOfCandidates=numberOfCandidates
       ENDDO !dataPointIdx
     CASE DEFAULT
       localError="The data projection type of "//TRIM(NumberToVString(dataProjection%projectionType,"",err,error))// &
@@ -4401,7 +4413,7 @@ CONTAINS
     IF(dataProjection%numberOfXi/=SIZE(dataProjection%startingXi,1)) THEN
       ALLOCATE(startingXi(dataProjection%numberOfXi,dataProjection%datapoints%numberOfDatapoints),STAT=err)
       IF(err/=0) CALL FlagError("Could not allocate starting xi.",err,error,*999)
-      IF(dataProjection%numberOfXi>SIZE(dataProjection%startingXi,2)) THEN
+      IF(dataProjection%numberOfXi>SIZE(dataProjection%startingXi,1)) THEN
         startingXi(1:SIZE(dataProjection%startingXi,1),:)=dataProjection%startingXi(1:SIZE(dataProjection%startingXi,1),:)
         startingXi(SIZE(dataProjection%startingXi,1):dataProjection%numberOfXi,:)=0.5_DP
       ELSE

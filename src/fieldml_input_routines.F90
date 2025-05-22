@@ -590,7 +590,7 @@ CONTAINS
 
     COORDINATE_TYPE = 0 !There doesn't seem to be a COORDINATE_UNKNOWN_TYPE
 
-    EVALUATOR_HANDLE = Fieldml_GetObjectByName( FIELDML_INFO%FML_HANDLE, cchar(EVALUATOR_NAME) )
+    EVALUATOR_HANDLE = Fieldml_GetObjectByName( FIELDML_INFO%FML_HANDLE, char(EVALUATOR_NAME) )
     CALL FIELDML_UTIL_CHECK_FIELDML_ERROR( "Cannot get coordinate evaluator for geometric field "//EVALUATOR_NAME//".", &
       & FIELDML_INFO%FML_HANDLE, ERR, ERROR, *999 )
 
@@ -644,7 +644,7 @@ CONTAINS
     
     CALL FIELDML_ASSERT_IS_IN( FIELDML_INFO, ERR, ERROR, *999 )
 
-    NODES_ARGUMENT_HANDLE = Fieldml_GetObjectByName( FIELDML_INFO%FML_HANDLE, cchar(NODES_ARGUMENT_NAME) )
+    NODES_ARGUMENT_HANDLE = Fieldml_GetObjectByName( FIELDML_INFO%FML_HANDLE, char(NODES_ARGUMENT_NAME) )
     IF( NODES_ARGUMENT_HANDLE == FML_INVALID_HANDLE ) THEN
       CALL FlagError( "Nodes argument name "//NODES_ARGUMENT_NAME//" is invalid.", ERR, ERROR, *999 )
     END IF
@@ -696,7 +696,7 @@ CONTAINS
     
     CALL FIELDML_ASSERT_IS_IN( FIELDML_INFO, ERR, ERROR, *999 )
     
-    MESH_ARGUMENT = Fieldml_GetObjectByName( FIELDML_INFO%FML_HANDLE, cchar(MESH_ARGUMENT_NAME) )
+    MESH_ARGUMENT = Fieldml_GetObjectByName( FIELDML_INFO%FML_HANDLE, char(MESH_ARGUMENT_NAME) )
     IF( MESH_ARGUMENT == FML_INVALID_HANDLE ) THEN
       CALL FIELDML_UTIL_CHECK_FIELDML_ERROR( "Named mesh argument "//MESH_ARGUMENT_NAME//" not found.", &
         & FIELDML_INFO%FML_HANDLE, ERR, ERROR, *999 )
@@ -710,10 +710,10 @@ CONTAINS
     
     FIELDML_INFO%ELEMENTS_HANDLE = Fieldml_GetMeshElementsType( FIELDML_INFO%FML_HANDLE, FIELDML_INFO%MESH_HANDLE )
     FIELDML_INFO%ELEMENTS_ARGUMENT_HANDLE = Fieldml_GetObjectByName( FIELDML_INFO%FML_HANDLE, &
-      & cchar(MESH_ARGUMENT_NAME//".element"))
+      & char(MESH_ARGUMENT_NAME//".element"))
 
     FIELDML_INFO%XI_HANDLE = Fieldml_GetMeshChartType( FIELDML_INFO%FML_HANDLE, FIELDML_INFO%MESH_HANDLE )
-    FIELDML_INFO%XI_ARGUMENT_HANDLE = Fieldml_GetObjectByName( FIELDML_INFO%FML_HANDLE, cchar(MESH_ARGUMENT_NAME//".xi") )
+    FIELDML_INFO%XI_ARGUMENT_HANDLE = Fieldml_GetObjectByName( FIELDML_INFO%FML_HANDLE, char(MESH_ARGUMENT_NAME//".xi") )
 
     COUNT = Fieldml_GetTypeComponentCount( FIELDML_INFO%FML_HANDLE, FIELDML_INFO%XI_HANDLE )
     IF( ( COUNT < 1 ) .OR. ( COUNT > 3 ) ) THEN
@@ -760,7 +760,7 @@ CONTAINS
     
     CALL FIELDML_ASSERT_IS_IN( FIELDML_INFO, ERR, ERROR, *999 )
 
-    HANDLE = Fieldml_GetObjectByName( FIELDML_INFO%FML_HANDLE, cchar(EVALUATOR_NAME) )
+    HANDLE = Fieldml_GetObjectByName( FIELDML_INFO%FML_HANDLE, char(EVALUATOR_NAME) )
     CALL FIELDML_UTIL_CHECK_FIELDML_ERROR( "Cannot find basis evaluator "//EVALUATOR_NAME//".", FIELDML_INFO%FML_HANDLE, &
       & ERR, ERROR, *999 )
     CALL LIST_ITEM_IN_LIST( FIELDML_INFO%BASIS_HANDLES, HANDLE, LIST_INDEX, ERR, ERROR, *999 )
@@ -822,7 +822,7 @@ CONTAINS
 
     CALL FIELDML_IO_INITIALISE( FIELDML_INFO, .FALSE., ERR, ERROR, *999 )
 
-    FIELDML_INFO%FML_HANDLE = Fieldml_CreateFromFile( cchar(FILENAME) )
+    FIELDML_INFO%FML_HANDLE = Fieldml_CreateFromFile( char(FILENAME) )
     
     FML_ERR = Fieldml_GetLastError( FIELDML_INFO%FML_HANDLE )
     IF( FML_ERR /= FML_ERR_NO_ERROR ) THEN
@@ -972,7 +972,7 @@ CONTAINS
     NULLIFY(basisFunctions)
     CALL Context_BasisFunctionsGet(context,basisFunctions,err,error,*999)
 
-    HANDLE = Fieldml_GetObjectByName( FIELDML_INFO%FML_HANDLE, cchar(EVALUATOR_NAME) )
+    HANDLE = Fieldml_GetObjectByName( FIELDML_INFO%FML_HANDLE, char(EVALUATOR_NAME) )
     IF( .NOT. FIELDML_INPUT_IS_TEMPLATE_COMPATIBLE( FIELDML_INFO, HANDLE, FIELDML_INFO%ELEMENTS_HANDLE, ERR, ERROR ) ) THEN
       CALL FlagError( "Mesh component cannot be created from evaluator "//EVALUATOR_NAME//".", ERR, ERROR, *999 )
     ENDIF
@@ -1157,7 +1157,7 @@ CONTAINS
     
     CALL FIELDML_ASSERT_IS_IN( FIELDML_INFO, ERR, ERROR, *999 )
 
-    FIELD_HANDLE = Fieldml_GetObjectByName( FIELDML_INFO%FML_HANDLE, cchar(EVALUATOR_NAME) )
+    FIELD_HANDLE = Fieldml_GetObjectByName( FIELDML_INFO%FML_HANDLE, char(EVALUATOR_NAME) )
     CALL FIELDML_UTIL_CHECK_FIELDML_ERROR( "Cannot get named field evaluator "//EVALUATOR_NAME//".", &
       & FIELDML_INFO%FML_HANDLE, ERR, ERROR, *999 )
     TYPE_HANDLE = Fieldml_GetValueType( FIELDML_INFO%FML_HANDLE, FIELD_HANDLE )
@@ -1177,11 +1177,13 @@ CONTAINS
 
     DO COMPONENT_NUMBER = 1, FIELD_DIMENSIONS
       TEMPLATE_HANDLE = Fieldml_GetElementEvaluator( FIELDML_INFO%FML_HANDLE, FIELD_HANDLE, COMPONENT_NUMBER, 1 )
-      CALL FIELDML_UTIL_CHECK_FIELDML_ERROR( var_str("Cannot get field component ")//COMPONENT_NUMBER//" evaluator for "//&
+      CALL FIELDML_UTIL_CHECK_FIELDML_ERROR( var_str("Cannot get field component ")// &
+        & TRIM(NumberToVString(COMPONENT_NUMBER,"*",err,error))//" evaluator for "//&
         & EVALUATOR_NAME//".", FIELDML_INFO%FML_HANDLE, ERR, ERROR, *999 )
 
       TEMPLATE_COMPONENT_NUMBER = Fieldml_GetObjectInt( FIELDML_INFO%FML_HANDLE, TEMPLATE_HANDLE )
-      CALL FIELDML_UTIL_CHECK_FIELDML_ERROR( var_str("Cannot get mesh component number for field component ")//COMPONENT_NUMBER//&
+      CALL FIELDML_UTIL_CHECK_FIELDML_ERROR( var_str("Cannot get mesh component number for field component ")// &
+        & TRIM(NumberToVString(COMPONENT_NUMBER,"*",err,error))//&
         & " of "//EVALUATOR_NAME//".", FIELDML_INFO%FML_HANDLE, ERR, ERROR, *999 )
 
       CALL Field_ComponentMeshComponentSet( FIELD, VARIABLE_TYPE, COMPONENT_NUMBER, TEMPLATE_COMPONENT_NUMBER, &
@@ -1287,7 +1289,7 @@ CONTAINS
     
     MESH => FIELD%DECOMPOSITION%MESH
 
-    NODAL_DOFS_HANDLE = Fieldml_GetObjectByName( FIELDML_INFO%FML_HANDLE, cchar(EVALUATOR_NAME) )
+    NODAL_DOFS_HANDLE = Fieldml_GetObjectByName( FIELDML_INFO%FML_HANDLE, char(EVALUATOR_NAME) )
     CALL FIELDML_UTIL_CHECK_FIELDML_ERROR( "Cannot get nodal field dofs evaluator "//EVALUATOR_NAME//".", &
       & FIELDML_INFO%FML_HANDLE, ERR, ERROR, *999 )
   
@@ -1313,7 +1315,8 @@ CONTAINS
     NULLIFY( NODES )
     CALL Region_NodesGet( MESH%REGION, NODES, ERR, ERROR, *999 )
     CALL NODES_NUMBER_OF_NODES_GET( NODES, MESH_NODE_COUNT, ERR, ERROR, *999 )
-    CALL FIELDML_UTIL_CHECK_FIELDML_ERROR( var_str("Cannot get mesh nodes count for mesh ")//mesh%userNumber//".", &
+    CALL FIELDML_UTIL_CHECK_FIELDML_ERROR( var_str("Cannot get mesh nodes count for mesh ")// &
+      & TRIM(NumberToVString(mesh%userNumber,"*",err,error))//".", &
       & FIELDML_INFO%FML_HANDLE, ERR, ERROR, *999 )
     
     OFFSETS(:) = 0

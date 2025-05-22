@@ -351,7 +351,8 @@ CONTAINS
           CALL Field_DependentTypeCheck(equationsSetSetup%field,FIELD_DEPENDENT_TYPE,err,error,*999)
           CALL Field_NumberOfVariablesCheck(equationsSetSetup%field,1,err,error,*999)
           CALL Field_VariableTypesCheck(equationsSetSetup%field,FIELD_U_VARIABLE_TYPE,err,error,*999)
-          CALL Field_DimensionCheck(equationsSetSetup%field,FIELD_U_VARIABLE_TYPE,FIELD_VECTOR_DIMENSION_TYPE,err,error,*999)
+          !Why does the fitting dependent field have to be a vector field?
+          !CALL Field_DimensionCheck(equationsSetSetup%field,FIELD_U_VARIABLE_TYPE,FIELD_VECTOR_DIMENSION_TYPE,err,error,*999)
           CALL Field_DataTypeCheck(equationsSetSetup%field,FIELD_U_VARIABLE_TYPE,FIELD_DP_TYPE,err,error,*999)
           CALL Field_NumberOfComponentsGet(equationsSetSetup%field,FIELD_U_VARIABLE_TYPE,numberOfComponents,err,error,*999)
           !If the independent field has been defined check the number of components is the same

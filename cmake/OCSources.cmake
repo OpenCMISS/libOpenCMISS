@@ -67,6 +67,7 @@ set(OpenCMISS_Fortran_SRC
   equations_matrices_access_routines.F90
   equations_set_routines.F90
   equations_set_access_routines.F90
+  exfile_routines.F90
   export_routines.F90
   export_access_routines.F90
   field_IO_routines.F90
