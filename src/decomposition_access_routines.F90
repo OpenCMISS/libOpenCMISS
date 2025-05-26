@@ -45,6 +45,7 @@
 MODULE DecompositionAccessRoutines
   
   USE BaseRoutines
+  USE DomainMappings
   USE ISO_VARYING_STRING
   USE Kinds
   USE Strings
@@ -207,6 +208,8 @@ MODULE DecompositionAccessRoutines
   PUBLIC DecompositionElements_ElementCheckExists
 
   PUBLIC DecompositionElements_ElementDoesExist
+
+  PUBLIC DecompositionElements_ElementDomainTypeGet
 
   PUBLIC DecompositionElements_ElementFaceNumberGet
 
@@ -447,6 +450,8 @@ MODULE DecompositionAccessRoutines
   PUBLIC DomainNodes_NodeCheckExists
 
   PUBLIC DomainNodes_NodeDoesExist
+
+  PUBLIC DomainNodes_NodeDomainTypeGet
 
   PUBLIC DomainNodes_NodeFaceNumberGet
 
@@ -3208,6 +3213,111 @@ CONTAINS
     RETURN 1
 
   END SUBROUTINE DecompositionElements_ElementGet
+
+  !
+  !================================================================================================================================
+  !
+
+  !>Returns the domain type (local, boundary, ghost) of a user element number in a decomposition. 
+  SUBROUTINE DecompositionElements_ElementDomainTypeGet(decompositionElements,userElementNumber,elementDomainType,err,error,*)
+
+    !Argument variables
+    TYPE(DecompositionElementsType), POINTER :: decompositionElements !<A pointer to the decomposition elements to get the element domain type
+    INTEGER(INTG), INTENT(IN) :: userElementNumber !<The user element number to get the domain type for
+    INTEGER(INTG), INTENT(OUT) :: elementDomainType !<On exit, the element domain type \see DomainMappings_DomainType,DomainMappings
+    INTEGER(INTG), INTENT(OUT) :: err !<The error code
+    TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
+    !Local Variables
+    INTEGER(INTG) :: boundaryFinish,boundaryStart,ghostFinish,ghostStart,internalFinish,internalStart,localElementNumber
+    TYPE(DecompositionType), POINTER :: decomposition
+    TYPE(DecompositionTopologyType), POINTER :: decompositionTopology
+    TYPE(DomainType), POINTER :: domain
+    TYPE(DomainMappingType), POINTER :: elementsMapping
+    TYPE(DomainMappingsType), POINTER :: domainMappings
+    TYPE(TreeNodeType), POINTER :: treeNode
+    TYPE(VARYING_STRING) :: localError
+
+    ENTERS("DecompositionElements_ElementDomainTypeGet",err,error,*999)
+
+#ifdef WITH_PRECHECKS    
+    IF(.NOT.ASSOCIATED(decompositionElements)) CALL FlagError("Decomposition elements is not associated.",err,error,*999)
+#endif    
+
+    NULLIFY(treeNode)
+    CALL Tree_Search(decompositionElements%elementsTree,userElementNumber,treeNode,err,error,*999)
+    IF(ASSOCIATED(treeNode)) THEN
+      CALL Tree_NodeValueGet(decompositionElements%elementsTree,treeNode,localElementNumber,err,error,*999)
+      decompositionTopology=>decompositionElements%decompositionTopology
+      IF(.NOT.ASSOCIATED(decompositionTopology))  &
+        & CALL FlagError("Decomposition elements decomposition topology is not associated.",err,error,*999)
+      decomposition=>decompositionTopology%decomposition
+      IF(.NOT.ASSOCIATED(decomposition)) &
+        & CALL FlagError("Decomposition elements topology decomposition is not associated.",err,error,*999)
+      NULLIFY(domain)
+      CALL Decomposition_DomainGet(decomposition,0,domain,err,error,*999)
+      NULLIFY(domainMappings)
+      CALL Domain_DomainMappingsGet(domain,domainMappings,err,error,*999)
+      NULLIFY(elementsMapping)
+      CALL DomainMappings_ElementsMappingGet(domainMappings,elementsMapping,err,error,*999)
+      CALL DomainMapping_InternalStartGet(elementsMapping,internalStart,err,error,*999)
+      CALL DomainMapping_InternalFinishGet(elementsMapping,internalFinish,err,error,*999)
+      IF(localElementNumber>=internalStart.AND.localElementNumber<=internalFinish) THEN
+        elementDomainType=DOMAIN_LOCAL_INTERNAL
+      ELSE
+        CALL DomainMapping_BoundaryStartGet(elementsMapping,boundaryStart,err,error,*999)
+        CALL DomainMapping_BoundaryFinishGet(elementsMapping,boundaryFinish,err,error,*999)
+        IF(localElementNumber>=boundaryStart.AND.localElementNumber<=boundaryFinish) THEN
+          elementDomainType=DOMAIN_LOCAL_BOUNDARY
+        ELSE
+          CALL DomainMapping_GhostStartGet(elementsMapping,ghostStart,err,error,*999)
+          CALL DomainMapping_GhostFinishGet(elementsMapping,ghostFinish,err,error,*999)
+          IF(localElementNumber>=ghostStart.AND.localElementNumber<=ghostFinish) THEN
+            elementDomainType=DOMAIN_LOCAL_GHOST
+          ELSE
+            localError="The local element number of "//TRIM(NumberToVString(localElementNumber,"*",err,error))// &
+              & " corresponding to user element number "//TRIM(NumberToVString(userElementNumber,"*",err,error))
+            decompositionTopology=>decompositionElements%decompositionTopology
+            IF(ASSOCIATED(decompositionTopology)) THEN
+              decomposition=>decompositionTopology%decomposition
+              IF(ASSOCIATED(decomposition)) THEN
+                localError=localError//" in decomposition number "//TRIM(NumberToVString(decomposition%userNumber,"*",err,error))
+                IF(ASSOCIATED(decomposition%region)) THEN
+                  localError=localError//" of region number "//TRIM(NumberToVString(decomposition%region%userNumber,"*",err,error))
+                ELSE IF(ASSOCIATED(decomposition%INTERFACE)) THEN
+                  localError=localError//" of interface number "// &
+                    & TRIM(NumberToVString(decomposition%INTERFACE%userNumber,"*",err,error))
+                ENDIF
+              ENDIF
+            ENDIF
+            localError=localError//" is invalid. It is not an internal, boundary, or ghost element."
+            CALL FlagError(localError,err,error,*999)
+          ENDIF
+        ENDIF
+      ENDIF
+    ELSE
+      localError="The user element number "//TRIM(NumberToVString(userElementNumber,"*",err,error))//" does not exist"
+      decompositionTopology=>decompositionElements%decompositionTopology
+      IF(ASSOCIATED(decompositionTopology)) THEN
+        decomposition=>decompositionTopology%decomposition
+        IF(ASSOCIATED(decomposition)) THEN
+          localError=localError//" in decomposition number "//TRIM(NumberToVString(decomposition%userNumber,"*",err,error))
+          IF(ASSOCIATED(decomposition%region)) THEN
+            localError=localError//" of region number "//TRIM(NumberToVString(decomposition%region%userNumber,"*",err,error))
+          ELSE IF(ASSOCIATED(decomposition%INTERFACE)) THEN
+            localError=localError//" of interface number "//TRIM(NumberToVString(decomposition%INTERFACE%userNumber,"*",err,error))
+          ENDIF
+        ENDIF
+      ENDIF
+      localError=localError//"."
+      CALL FlagError(localError,err,error,*999)
+    ENDIF
+
+    EXITS("DecompositionElements_ElementDomainTypeGet")
+    RETURN
+999 ERRORSEXITS("DecompositionElements_ElementDomainTypeGet",err,error)
+    RETURN 1
+
+  END SUBROUTINE DecompositionElements_ElementDomainTypeGet
 
   !
   !================================================================================================================================
@@ -8108,6 +8218,119 @@ CONTAINS
     
   END SUBROUTINE DomainNodes_NodeDoesExist
   
+  !
+  !================================================================================================================================
+  !
+
+  !>Returns the domain type (local, boundary, ghost) of a user node number in a domain. 
+  SUBROUTINE DomainNodes_NodeDomainTypeGet(domainNodes,userNodeNumber,nodeDomainType,err,error,*)
+
+    !Argument variables
+    TYPE(DomainNodesType), POINTER :: domainNodes !<A pointer to the domain nodes to get the node domain type
+    INTEGER(INTG), INTENT(IN) :: userNodeNumber !<The user node number to get the domain type for
+    INTEGER(INTG), INTENT(OUT) :: nodeDomainType !<On exit, the node domain type \see DomainMappings_DomainType,DomainMappings
+    INTEGER(INTG), INTENT(OUT) :: err !<The error code
+    TYPE(VARYING_STRING), INTENT(OUT) :: error !<The error string
+    !Local Variables
+    INTEGER(INTG) :: boundaryFinish,boundaryStart,ghostFinish,ghostStart,internalFinish,internalStart,localNodeNumber
+    TYPE(DecompositionType), POINTER :: decomposition
+    TYPE(DomainType), POINTER :: domain
+    TYPE(DomainMappingType), POINTER :: nodesMapping
+    TYPE(DomainMappingsType), POINTER :: domainMappings
+    TYPE(DomainTopologyType), POINTER :: domainTopology
+    TYPE(TreeNodeType), POINTER :: treeNode
+    TYPE(VARYING_STRING) :: localError
+
+    ENTERS("DomainNodes_NodeDomainTypeGet",err,error,*999)
+
+#ifdef WITH_PRECHECKS    
+    IF(.NOT.ASSOCIATED(domainNodes)) CALL FlagError("Domain nodes is not associated.",err,error,*999)
+#endif    
+
+    NULLIFY(treeNode)
+    CALL Tree_Search(domainNodes%nodesTree,userNodeNumber,treeNode,err,error,*999)
+    IF(ASSOCIATED(treeNode)) THEN
+      CALL Tree_NodeValueGet(domainNodes%nodesTree,treeNode,localNodeNumber,err,error,*999)
+      domainTopology=>domainNodes%domainTopology
+      IF(.NOT.ASSOCIATED(domainTopology)) CALL FlagError("Domain nodes domain topology is not associated.",err,error,*999)
+      NULLIFY(domain)
+      CALL DomainTopology_DomainGet(domainTopology,domain,err,error,*999)
+      NULLIFY(domainMappings)
+      CALL Domain_DomainMappingsGet(domain,domainMappings,err,error,*999)
+      NULLIFY(nodesMapping)
+      CALL DomainMappings_NodesMappingGet(domainMappings,nodesMapping,err,error,*999)
+      CALL DomainMapping_InternalStartGet(nodesMapping,internalStart,err,error,*999)
+      CALL DomainMapping_InternalFinishGet(nodesMapping,internalFinish,err,error,*999)
+      IF(localNodeNumber>=internalStart.AND.localNodeNumber<=internalFinish) THEN
+        nodeDomainType=DOMAIN_LOCAL_INTERNAL
+      ELSE
+        CALL DomainMapping_BoundaryStartGet(nodesMapping,boundaryStart,err,error,*999)
+        CALL DomainMapping_BoundaryFinishGet(nodesMapping,boundaryFinish,err,error,*999)
+        IF(localNodeNumber>=boundaryStart.AND.localNodeNumber<=boundaryFinish) THEN
+          nodeDomainType=DOMAIN_LOCAL_BOUNDARY
+        ELSE
+          CALL DomainMapping_GhostStartGet(nodesMapping,ghostStart,err,error,*999)
+          CALL DomainMapping_GhostFinishGet(nodesMapping,ghostFinish,err,error,*999)
+          IF(localNodeNumber>=ghostStart.AND.localNodeNumber<=ghostFinish) THEN
+            nodeDomainType=DOMAIN_LOCAL_GHOST
+          ELSE
+            localError="The local node number of "//TRIM(NumberToVString(localNodeNumber,"*",err,error))// &
+              & " corresponding to user node number "//TRIM(NumberToVString(userNodeNumber,"*",err,error))
+            domainTopology=>domainNodes%domainTopology
+            IF(ASSOCIATED(domainTopology)) THEN
+              domain=>domainTopology%domain
+              IF(ASSOCIATED(domain)) THEN
+                localError=localError//" in mesh component number "// &
+                  & TRIM(NumberToVString(domain%meshComponentNumber,"*",err,error))//" of the domain"
+                decomposition=>domain%decomposition
+                IF(ASSOCIATED(decomposition)) THEN
+                  localError=localError//" in decomposition number "//TRIM(NumberToVString(decomposition%userNumber,"*",err,error))
+                  IF(ASSOCIATED(decomposition%region)) THEN
+                    localError=localError//" of region number "// &
+                      & TRIM(NumberToVString(decomposition%region%userNumber,"*",err,error))
+                  ELSE IF(ASSOCIATED(decomposition%INTERFACE)) THEN
+                    localError=localError//" of interface number "// &
+                      & TRIM(NumberToVString(decomposition%INTERFACE%userNumber,"*",err,error))
+                  ENDIF
+                ENDIF
+              ENDIF
+            ENDIF
+            localError=localError//" is invalid. It is not an internal, boundary, or ghost node."
+            CALL FlagError(localError,err,error,*999)
+          ENDIF
+        ENDIF
+      ENDIF
+    ELSE
+      localError="The user node number "//TRIM(NumberToVString(userNodeNumber,"*",err,error))//" does not exist"
+      domainTopology=>domainNodes%domainTopology
+      IF(ASSOCIATED(domainTopology)) THEN
+        domain=>domainTopology%domain
+        IF(ASSOCIATED(domain)) THEN
+          localError=localError//" in mesh component number "//TRIM(NumberToVString(domain%meshComponentNumber,"*",err,error))// &
+            & " of the domain"
+          decomposition=>domain%decomposition
+          IF(ASSOCIATED(decomposition)) THEN
+            localError=localError//" in decomposition number "//TRIM(NumberToVString(decomposition%userNumber,"*",err,error))
+            IF(ASSOCIATED(decomposition%region)) THEN
+              localError=localError//" of region number "//TRIM(NumberToVString(decomposition%region%userNumber,"*",err,error))
+            ELSE IF(ASSOCIATED(decomposition%INTERFACE)) THEN
+              localError=localError//" of interface number "// &
+                & TRIM(NumberToVString(decomposition%INTERFACE%userNumber,"*",err,error))
+            ENDIF
+          ENDIF
+        ENDIF
+      ENDIF
+      localError=localError//"."
+      CALL FlagError(localError,err,error,*999)
+    ENDIF
+
+    EXITS("DomainNodes_NodeDomainTypeGet")
+    RETURN
+999 ERRORSEXITS("DomainNodes_NodeDomainTypeGet",err,error)
+    RETURN 1
+
+  END SUBROUTINE DomainNodes_NodeDomainTypeGet
+
   !
   !================================================================================================================================
   !
