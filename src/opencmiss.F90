@@ -51,6 +51,7 @@ MODULE OpenCMISS
   USE DecompositionAccessRoutines
   USE DistributedMatrixVector
   USE DistributedMatrixVectorAccessRoutines
+  USE DomainMappings
   USE EquationsRoutines
   USE EquationsMappingAccessRoutines
   USE EquationsMatricesAccessRoutines
@@ -6435,6 +6436,14 @@ MODULE OpenCMISS
   INTEGER(INTG), PARAMETER :: OC_DECOMPOSITION_CALCULATED_TYPE = DECOMPOSITION_CALCULATED_TYPE !<The element decomposition is calculated by graph partitioning. \see OpenCMISS_DecompositionTypes,OpenCMISS
   INTEGER(INTG), PARAMETER :: OC_DECOMPOSITION_USER_DEFINED_TYPE = DECOMPOSITION_USER_DEFINED_TYPE !<The user will set the element decomposition. \see OpenCMISS_DecompositionTypes,OpenCMISS
   !>@}
+  !> \addtogroup OpenCMISS_DecompositionDomainTypes OpenCMISS::Decomposition::DomainTypes
+  !> \brief The Decomposition domain type parameters
+  !> \see OpenCMISS::Decomposition,OpenCMISS
+  !>@{
+  INTEGER(INTG), PARAMETER :: OC_DECOMPOSITION_DOMAIN_INTERNAL_TYPE = DOMAIN_LOCAL_INTERNAL !<The decomposition domain object is an internal object. \see OpenCMISS_DecompositionDomainTypes,OpenCMISS
+  INTEGER(INTG), PARAMETER :: OC_DECOMPOSITION_DOMAIN_BOUNDARY_TYPE = DOMAIN_LOCAL_BOUNDARY !<The decomposition domain object is a boundary object. \see OpenCMISS_DecompositionDomainTypes,OpenCMISS
+  INTEGER(INTG), PARAMETER :: OC_DECOMPOSITION_DOMAIN_GHOST_TYPE = DOMAIN_LOCAL_GHOST !<The decomposition domain object is a ghost object. \see OpenCMISS_DecompositionDomainTypes,OpenCMISS
+  !>@}
   !>@}
 
   !>Finishes the creation of a decomposer. \see OpenCMISS::OC_Decomposer_CreateStart
@@ -6515,6 +6524,12 @@ MODULE OpenCMISS
     MODULE PROCEDURE OC_Decomposition_ElementDomainSetObj
   END INTERFACE OC_Decomposition_ElementDomainSet
 
+  !>Returns the domain type (internal, boundary, ghost) for a given element in a decomposition of a mesh.
+  INTERFACE OC_Decomposition_ElementDomainTypeGet
+    MODULE PROCEDURE OC_Decomposition_ElementDomainTypeGetNumber
+    MODULE PROCEDURE OC_Decomposition_ElementDomainTypeGetObj
+  END INTERFACE OC_Decomposition_ElementDomainTypeGet
+
   !>Returns the local element number for a given user element number in a decomposition.
   INTERFACE OC_Decomposition_ElementLocalNumberGet
     MODULE PROCEDURE OC_Decomposition_ElementLocalNumberGetNumber
@@ -6539,7 +6554,13 @@ MODULE OpenCMISS
     MODULE PROCEDURE OC_Decomposition_MeshComponentSetObj
   END INTERFACE OC_Decomposition_MeshComponentSet
 
-  !>Returns the local node number for a given user node number in a decomposition of a mesh component.
+  !>Returns the domain type (internal, boundary, ghost) for a given node in a decomposition of a mesh.
+  INTERFACE OC_Decomposition_NodeDomainTypeGet
+    MODULE PROCEDURE OC_Decomposition_NodeDomainTypeGetNumber
+    MODULE PROCEDURE OC_Decomposition_NodeDomainTypeGetObj
+  END INTERFACE OC_Decomposition_NodeDomainTypeGet
+
+   !>Returns the local node number for a given user node number in a decomposition of a mesh component.
   INTERFACE OC_Decomposition_NodeLocalNumberGet
     MODULE PROCEDURE OC_Decomposition_NodeLocalNumberGetNumber
     MODULE PROCEDURE OC_Decomposition_NodeLocalNumberGetObj
@@ -6764,6 +6785,8 @@ MODULE OpenCMISS
 
   PUBLIC OC_DECOMPOSITION_ALL_TYPE,OC_DECOMPOSITION_CALCULATED_TYPE,OC_DECOMPOSITION_USER_DEFINED_TYPE
 
+  PUBLIC OC_DECOMPOSITION_DOMAIN_INTERNAL_TYPE,OC_DECOMPOSITION_DOMAIN_BOUNDARY_TYPE,OC_DECOMPOSITION_DOMAIN_GHOST_TYPE
+
   PUBLIC OC_Decomposer_CreateFinish,OC_Decomposer_CreateStart
 
   PUBLIC OC_Decomposer_DecompositionAdd
@@ -6794,6 +6817,8 @@ MODULE OpenCMISS
 
   PUBLIC OC_Decomposition_ElementDomainGet,OC_Decomposition_ElementDomainSet
 
+  PUBLIC OC_Decomposition_ElementDomainTypeGet
+
   PUBLIC OC_Decomposition_ElementLocalNumberGet
 
   PUBLIC OC_Decomposition_ElementNodeGet
@@ -6811,6 +6836,8 @@ MODULE OpenCMISS
   PUBLIC OC_Decomposition_MeshComponentGet,OC_Decomposition_MeshComponentSet
 
   PUBLIC OC_Decomposition_NodeDomainGet
+
+  PUBLIC OC_Decomposition_NodeDomainTypeGet
 
   PUBLIC OC_Decomposition_NodeGlobalDerivativeGet
 
@@ -55722,6 +55749,91 @@ CONTAINS
   !================================================================================================================================
   !
 
+  !>Returns the element domain type for a user element number in a decomposition component identified by a user number.
+  SUBROUTINE OC_Decomposition_ElementDomainTypeGetNumber(contextUserNumber,regionUserNumber,meshUserNumber, &
+    & decompositionUserNumber,elementUserNumber,elementDomainType,err)
+    !DLLEXPORT(OC_Decomposition_ElementDomainTypeGetNumber)
+    
+    !Argument variables
+    INTEGER(INTG), INTENT(IN) :: contextUserNumber !<The user number of the context with the region.
+    INTEGER(INTG), INTENT(IN) :: regionUserNumber !<The user number of the region containing the mesh to get the element domain type for.
+    INTEGER(INTG), INTENT(IN) :: meshUserNumber !<The user number of the mesh to get the element domain type for.
+    INTEGER(INTG), INTENT(IN) :: decompositionUserNumber !<The user number of the decomposition to get the element domain type for.
+    INTEGER(INTG), INTENT(IN) :: elementUserNumber !<The user number to get the element domain type in the decomposition for.
+    INTEGER(INTG), INTENT(OUT) :: elementDomainType !<On return, the domain type the specified user element number \see OpenCMISS_DecompositionDomainTypes,OpenCMISS
+    INTEGER(INTG), INTENT(OUT) :: err !<The error code.
+    !Local variables
+    TYPE(ContextType), POINTER :: context
+    TYPE(DecompositionType), POINTER :: decomposition
+    TYPE(DecompositionElementsType), POINTER :: decompositionElements
+    TYPE(DecompositionTopologyType), POINTER :: decompositionTopology
+    TYPE(MeshType), POINTER :: mesh
+    TYPE(RegionType), POINTER :: region
+    TYPE(RegionsType), POINTER :: regions
+
+    ENTERS("OC_Decomposition_ElementDomainTypeGetNumber",err,error,*999)
+
+    NULLIFY(context)
+    NULLIFY(regions)
+    NULLIFY(region)
+    NULLIFY(mesh)
+    NULLIFY(decomposition)
+    NULLIFY(decompositionTopology)
+    NULLIFY(decompositionElements)
+    CALL Context_Get(contexts,contextUserNumber,context,err,error,*999)    
+    CALL Context_RegionsGet(context,regions,err,error,*999)
+    CALL Region_Get(regions,regionUserNumber,region,err,error,*999)
+    CALL Region_MeshGet(region,meshUserNumber,mesh,err,error,*999)
+    CALL Mesh_DecompositionGet(mesh,decompositionUserNumber,decomposition,err,error,*999)
+    CALL Decomposition_DecompositionTopologyGet(decomposition,decompositionTopology,err,error,*999)
+    CALL DecompositionTopology_DecompositionElementsGet(decompositionTopology,decompositionElements,err,error,*999)
+    CALL DecompositionElements_ElementDomainTypeGet(decompositionElements,elementUserNumber,elementDomainType,err,error,*999)
+
+    EXITS("OC_Decomposition_ElementDomainTypeGetNumber")
+    RETURN
+999 ERRORSEXITS("OC_Decomposition_ElementDomainTypeGetNumber",err,error)
+    CALL OC_HandleError(err,error)
+    RETURN
+
+  END SUBROUTINE OC_Decomposition_ElementDomainTypeGetNumber
+
+  !
+  !================================================================================================================================
+  !
+
+  !>Returns the element domain type for an user element number in a decomposition component identified by an object.
+  SUBROUTINE OC_Decomposition_ElementDomainTypeGetObj(decomposition,elementUserNumber,elementDomainType,err)
+    !DLLEXPORT(OC_Decomposition_ElementDomainTypeGetObj)
+
+    !Argument variables
+    TYPE(OC_DecompositionType), INTENT(IN) :: decomposition !<The decomposition to get the element domain type for.
+    INTEGER(INTG), INTENT(IN) :: elementUserNumber !<The user number to get the element domain type in the decomposition for.
+    INTEGER(INTG), INTENT(OUT) :: elementDomainType !<On return, the domain type the specified user element number \see OpenCMISS_DecompositionDomainTypes,OpenCMISS
+    INTEGER(INTG), INTENT(OUT) :: err !<The error code.
+    !Local variables
+    TYPE(DecompositionElementsType), POINTER :: decompositionElements
+    TYPE(DecompositionTopologyType), POINTER :: decompositionTopology
+ 
+    ENTERS("OC_Decomposition_ElementDomainTypeGetObj",err,error,*999)
+
+    NULLIFY(decompositionTopology)
+    NULLIFY(decompositionElements)
+    CALL Decomposition_DecompositionTopologyGet(decomposition%decomposition,decompositionTopology,err,error,*999)
+    CALL DecompositionTopology_DecompositionElementsGet(decompositionTopology,decompositionElements,err,error,*999)
+    CALL DecompositionElements_ElementDomainTypeGet(decompositionElements,elementUserNumber,elementDomainType,err,error,*999)
+ 
+    EXITS("OC_Decomposition_ElementDomainTypeGetObj")
+    RETURN
+999 ERRORSEXITS("OC_Decomposition_ElementDomainTypeGetObj",err,error)
+    CALL OC_HandleError(err,error)
+    RETURN
+
+  END SUBROUTINE OC_Decomposition_ElementDomainTypeGetObj
+
+  !
+  !================================================================================================================================
+  !
+
   !>Returns the element local number for a user element number in a decomposition component identified by a user number.
   SUBROUTINE OC_Decomposition_ElementLocalNumberGetNumber(contextUserNumber,regionUserNumber,meshUserNumber, &
     & decompositionUserNumber,elementUserNumber,elementLocalNumber,err)
@@ -57087,6 +57199,99 @@ CONTAINS
     RETURN
 
   END SUBROUTINE OC_Decomposition_NodeGlobalDerivativeGetObj
+
+  !
+  !================================================================================================================================
+  !
+
+  !>Returns the node domain type for an user node number in a decomposition mesh component identified by a user number.
+  SUBROUTINE OC_Decomposition_NodeDomainTypeGetNumber(contextUserNumber,regionUserNumber,meshUserNumber,decompositionUserNumber, &
+    & meshComponentNumber,nodeUserNumber,nodeDomainType,err)
+    !DLLEXPORT(OC_Decomposition_NodeDomainTypeGetNumber)
+    
+    !Argument variables
+    INTEGER(INTG), INTENT(IN) :: contextUserNumber !<The user number of the context with the region.
+    INTEGER(INTG), INTENT(IN) :: regionUserNumber !<The user number of the region containing the mesh.
+    INTEGER(INTG), INTENT(IN) :: meshUserNumber !<The user number of the mesh to get the node domain type for.
+    INTEGER(INTG), INTENT(IN) :: decompositionUserNumber !<The user number of the decomposition to get the node domain type for.
+    INTEGER(INTG), INTENT(IN) :: meshComponentNumber !<The mesh component number to get the node domain type for
+    INTEGER(INTG), INTENT(IN) :: nodeUserNumber !<The user node number to get the domain type in the decomposition mesh component for.
+    INTEGER(INTG), INTENT(OUT) :: nodeDomainType !<On exit, the domain type of the node. \see OpenCMISS_DecompositionDomainTypes,OpenCMISS
+    INTEGER(INTG), INTENT(OUT) :: err !<The error code.
+    !Local variables
+    TYPE(ContextType), POINTER :: context
+    TYPE(DecompositionType), POINTER :: decomposition
+    TYPE(DomainType), POINTER :: domain
+    TYPE(DomainNodesType), POINTER :: domainNodes
+    TYPE(DomainTopologyType), POINTER :: domainTopology
+    TYPE(MeshType), POINTER :: mesh
+    TYPE(RegionType), POINTER :: region
+    TYPE(RegionsType), POINTER :: regions
+
+    ENTERS("OC_Decomposition_NodeDomainTypeGetNumber",err,error,*999)
+
+    NULLIFY(context)
+    NULLIFY(regions)
+    NULLIFY(region)
+    NULLIFY(mesh)
+    NULLIFY(decomposition)
+    NULLIFY(domain)
+    NULLIFY(domainTopology)
+    NULLIFY(domainNodes)
+    CALL Context_Get(contexts,contextUserNumber,context,err,error,*999)    
+    CALL Context_RegionsGet(context,regions,err,error,*999)
+    CALL Region_Get(regions,regionUserNumber,region,err,error,*999)
+    CALL Region_MeshGet(region,meshUserNumber,mesh,err,error,*999)
+    CALL Mesh_DecompositionGet(mesh,decompositionUserNumber,decomposition,err,error,*999)
+    CALL Decomposition_DomainGet(decomposition,meshComponentNumber,domain,err,error,*999)
+    CALL Domain_DomainTopologyGet(domain,domainTopology,err,error,*999)
+    CALL DomainTopology_DomainNodesGet(domainTopology,domainNodes,err,error,*999)
+    CALL DomainNodes_NodeDomainTypeGet(domainNodes,nodeUserNumber,nodeDomainType,err,error,*999)
+
+    EXITS("OC_Decomposition_NodeDomainTypeGetNumber")
+    RETURN
+999 ERRORSEXITS("OC_Decomposition_NodeDomainTypeGetNumber",err,error)
+    CALL OC_HandleError(err,error)
+    RETURN
+
+  END SUBROUTINE OC_Decomposition_NodeDomainTypeGetNumber
+
+  !
+  !================================================================================================================================
+  !
+
+  !>Returns the node domain type for an user node number in a decomposition mesh component identified by an object.
+  SUBROUTINE OC_Decomposition_NodeDomainTypeGetObj(decomposition,meshComponentNumber,nodeUserNumber,nodeDomainType,err)
+    !DLLEXPORT(OC_Decomposition_NodeDomainTypeGetObj)
+
+    !Argument variables
+    TYPE(OC_DecompositionType), INTENT(IN) :: decomposition !<The decomposition to get the node domain type for.
+    INTEGER(INTG), INTENT(IN) :: meshComponentNumber !<The mesh component number to get the node domain type for
+    INTEGER(INTG), INTENT(IN) :: nodeUserNumber !<The user number of the node in the decomposition mesh component.
+    INTEGER(INTG), INTENT(OUT) :: nodeDomainType !<On exit, the domain type of the node. \see OpenCMISS_DecompositionDomainTypes,OpenCMISS
+    INTEGER(INTG), INTENT(OUT) :: err !<The error code.
+    !Local variables
+    TYPE(DomainType), POINTER :: domain
+    TYPE(DomainNodesType), POINTER :: domainNodes
+    TYPE(DomainTopologyType), POINTER :: domainTopology
+   
+    ENTERS("OC_Decomposition_NodeDomainTypeGetObj",err,error,*999)
+
+    NULLIFY(domain)
+    NULLIFY(domainTopology)
+    NULLIFY(domainNodes)
+    CALL Decomposition_DomainGet(decomposition%decomposition,meshComponentNumber,domain,err,error,*999)
+    CALL Domain_DomainTopologyGet(domain,domainTopology,err,error,*999)
+    CALL DomainTopology_DomainNodesGet(domainTopology,domainNodes,err,error,*999)
+    CALL DomainNodes_NodeDomainTypeGet(domainNodes,nodeUserNumber,nodeDomainType,err,error,*999)
+    
+    EXITS("OC_Decomposition_NodeDomainTypeGetObj")
+    RETURN
+999 ERRORSEXITS("OC_Decomposition_NodeDomainTypeGetObj",err,error)
+    CALL OC_HandleError(err,error)
+    RETURN
+    
+  END SUBROUTINE OC_Decomposition_NodeDomainTYpeGetObj
 
   !
   !================================================================================================================================

@@ -918,7 +918,7 @@ CONTAINS
       graphNode=>graphNode%previousNode
     ENDDO graphNodeLoop5   
     
-     DEALLOCATE(elementCounts)
+    DEALLOCATE(elementCounts)
     
     EXITS("Decomposer_ElementDomainCalculate")
     RETURN
