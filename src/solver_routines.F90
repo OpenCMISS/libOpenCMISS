@@ -10119,7 +10119,7 @@ CONTAINS
       & equationsMassCoefficient,equationsStiffnessCoefficient,firstUpdateFactor,jacobianMatrixCoefficient,linearCoefficient, &
       & linearValue,massMatrixCoefficient,matrixCoefficient,matrixCoefficients(2)=[0.0_DP,0.0_DP],nonlinearValue, &
       & previousFunctionFactor,previous2FunctionFactor,previous3FunctionFactor,previousRHSValue,previous2RHSValue, &
-      & previous3RHSValue,residualCoefficient,rhsCoefficient,rhsValue,secondUpdateFactor, &
+      & previous3RHSValue,residualCoefficient,rhsCoefficient,rhsFlux,rhsValue,secondUpdateFactor, &
       & solverRHSValue,sourceValue,stiffnessMatrixCoefficient,sourceCoefficient, &
       & transposeMatrixCoefficient,vectorCoefficient
     REAL(DP), POINTER :: matrixCheckData(:),currentValuesVector(:),previousValuesVector(:),previousVelocityVector(:), &
@@ -11066,20 +11066,19 @@ CONTAINS
 
             solverRHSValue=dynamicValue+nonlinearValue+linearValue+sourceValue
 
+            rhsFlux = 0.0
             IF(ASSOCIATED(rhsMapping)) THEN
               rhsVariableDOF=equationsRowToRHSDOFMap(equationsRowNumber)
               IF(hasIntegratedValues) THEN
                 !Add any Neumann integrated values, b = f + N q
-                CALL DistributedVector_ValuesAdd(currentRHSVector,equationsRowNumber,rhsIntegratedParameters(rhsVariableDOF), &
-                  & err,error,*999)
+                rhsFlux = rhsIntegratedParameters(rhsVariableDOF)
               ELSE
-                CALL DistributedVector_ValuesSet(currentRHSVector,equationsRowNumber,rhsParameters(rhsVariableDOF), &
-                  & err,error,*999)
+                rhsFlux = rhsParameters(rhsVariableDOF)
               ENDIF
             ENDIF
             
             CALL DistributedVector_ValuesGet(currentRHSVector,equationsRowNumber,currentRHSValue,err,error,*999)
-            rhsValue=currentRHSValue*currentFunctionFactor
+            rhsValue=(currentRHSValue+rhsFlux)*currentFunctionFactor
             CALL DistributedVector_ValuesGet(previousRHSVector,equationsRowNumber,previousRHSValue,err,error,*999)
             rhsValue=rhsValue+previousRHSValue*previousFunctionFactor
             IF(dynamicSolver%degree>=SOLVER_DYNAMIC_SECOND_DEGREE) THEN
@@ -11838,7 +11837,7 @@ CONTAINS
     INTEGER(INTG), POINTER :: equationsRowToLHSDOFMap(:),equationsRowToRHSDOFMap(:)
     REAL(SP) :: systemElapsed,systemTime1(1),systemTime2(1),userElapsed,userTime1(1),userTime2(1)
     REAL(DP) :: dofValue,linearValue,matrixCoefficient, &
-      & matrixCoefficients(2),nonlinearValue,residualCoefficient,rhsCoefficient,rhsValue, &
+      & matrixCoefficients(2),nonlinearValue,residualCoefficient,rhsCoefficient,rhsFlux,rhsValue, &
       & solverRHSValue,sourceCoefficient,sourceValue
     REAL(DP), POINTER :: matrixCheckData(:),rhsIntegratedParameters(:),rhsParameters(:),solverResidualCheckData(:), &
       & solverRHSCheckData(:)
@@ -12323,20 +12322,19 @@ CONTAINS
 
             solverRHSValue=nonlinearValue+linearValue+sourceValue
 
+            rhsFlux = 0.0
             IF(ASSOCIATED(rhsMapping)) THEN
               rhsVariableDOF=equationsRowToRHSDOFMap(equationsRowNumber)
               IF(hasIntegratedValues) THEN
                 !Add any Neumann integrated values, b = f + N q
-                CALL DistributedVector_ValuesAdd(currentRHSVector,equationsRowNumber,rhsIntegratedParameters(rhsVariableDOF), &
-                  & err,error,*999)
+                rhsFlux = rhsIntegratedParameters(rhsVariableDOF)
               ELSE
-                CALL DistributedVector_ValuesSet(currentRHSVector,equationsRowNumber,rhsParameters(rhsVariableDOF), &
-                  & err,error,*999)
+                rhsFlux = rhsParameters(rhsVariableDOF)
               ENDIF
             ENDIF
             
             CALL DistributedVector_ValuesGet(currentRHSVector,equationsRowNumber,rhsValue,err,error,*999)
-            rhsValue=rhsValue*rhsCoefficient
+            rhsValue=(rhsValue+rhsFlux)*rhsCoefficient
             
 !! TODO: CHECK THIS. THE DOF TYPE IS THE TYPE OF VALUE SET ON THE DOF. IT IS THE LHS VARIABLE ROW CONDITION TYPE THAT IS THE BC.
             
