@@ -20447,6 +20447,8 @@ CONTAINS
       CALL FlagError(localError,err,error,*999)
     ENDIF
     CALL FieldVariable_AssertIsDPData(fieldVariable,err,error,*999)
+    NULLIFY(field)
+    CALL FieldVariable_FieldGet(fieldVariable,field,err,error,*999)
     NULLIFY(decomposition)
     CALL Field_DecompositionGet(field,decomposition,err,error,*999)
     NULLIFY(decompositionTopology)

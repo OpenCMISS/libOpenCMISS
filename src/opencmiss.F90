@@ -6332,6 +6332,12 @@ MODULE OpenCMISS
     MODULE PROCEDURE OC_Mesh_NodesGetObj
   END INTERFACE OC_Mesh_NodesGet
 
+  !>Get the mesh node user number for a global mesh node.
+  INTERFACE OC_MeshNodes_NodeNumberGet
+    MODULE PROCEDURE OC_MeshNodes_NodeNumberGetNumber
+    MODULE PROCEDURE OC_MeshNodes_NodeNumberGetObj
+  END INTERFACE OC_MeshNodes_NodeNumberGet
+
   !>Get the mesh boundary type for a node.
   INTERFACE OC_MeshNodes_NodeOnBoundaryGet
     MODULE PROCEDURE OC_MeshNodes_NodeOnBoundaryGetNumber
@@ -6387,6 +6393,8 @@ MODULE OpenCMISS
   PUBLIC OC_MeshElements_UserNumberGet,OC_MeshElements_UserNumberSet
 
   PUBLIC OC_MeshElements_UserNumbersAllSet
+
+  PUBLIC OC_MeshNodes_NodeNumberGet
 
   PUBLIC OC_MeshNodes_NodeOnBoundaryGet
 
@@ -61449,6 +61457,79 @@ CONTAINS
     RETURN
 
   END SUBROUTINE OC_Mesh_NodesGetObj
+
+  !
+  !================================================================================================================================
+  !
+
+  !>Gets the user node number corresponding to a mesh node number of a mesh identified by a user number
+  SUBROUTINE OC_MeshNodes_NodeNumberGetNumber(contextUserNumber,regionUserNumber,meshUserNumber,meshComponentNumber, &
+    & meshNodeNumber,userNodeNumber,err)
+    !DLLEXPORT(OC_MeshNodes_NodeNumberGetNumber)
+
+    !Argument variables
+    INTEGER(INTG), INTENT(IN) :: contextUserNumber !<The user number of the context with the region
+    INTEGER(INTG), INTENT(IN) :: regionUserNumber !<The user number of the region containing the mesh from which to get the user node number from.
+    INTEGER(INTG), INTENT(IN) :: meshUserNumber !<The user number of the mesh from which to get the user node number from.
+    INTEGER(INTG), INTENT(IN) :: meshComponentNumber !<The mesh component number from which to get the user node number from.
+    INTEGER(INTG), INTENT(IN) :: meshNodeNumber !<The mesh node number to get the user node number for.
+    INTEGER(INTG), INTENT(OUT) :: userNodeNumber !<On return, the user node number for the specified mesh node number.
+    INTEGER(INTG), INTENT(OUT) :: err !<The error code.
+    !Local variables
+    TYPE(ContextType), POINTER :: context
+    TYPE(MeshType), POINTER :: mesh
+    TYPE(MeshNodesType), POINTER :: meshNodes
+    TYPE(RegionType), POINTER :: region
+    TYPE(RegionsType), POINTER :: regions
+
+    ENTERS("OC_MeshNodes_NodeNumberGetNumber",err,error,*999)
+
+    NULLIFY(context)
+    NULLIFY(regions)
+    NULLIFY(region)
+    NULLIFY(mesh)
+    NULLIFY(meshNodes)
+    CALL Context_Get(contexts,contextUserNumber,context,err,error,*999)    
+    CALL Context_RegionsGet(context,regions,err,error,*999)
+    CALL Region_Get(regions,regionUserNumber,region,err,error,*999)
+    CALL Region_MeshGet(region,meshUserNumber,mesh,err,error,*999)
+    CALL Mesh_MeshNodesGet(mesh,meshComponentNumber,meshNodes,err,error,*999)    
+    CALL MeshNodes_NodeUserNumberGet(meshNodes,meshNodeNumber,userNodeNumber,err,error,*999)
+
+    EXITS("OC_MeshNodes_NodeNumberGetNumber")
+    RETURN
+999 ERRORSEXITS("OC_MeshNodes_NodeNumberGetNumber",err,error)
+    CALL OC_HandleError(err,error)
+    RETURN
+
+  END SUBROUTINE OC_MeshNodes_NodeNumberGetNumber
+
+  !
+  !================================================================================================================================
+  !
+
+  !>Gets the user node number for an mesh node number of a mesh identified by an object
+  SUBROUTINE OC_MeshNodes_NodeNumberGetObj(meshNodes,meshNodeNumber,userNodeNumber,err)
+    !DLLEXPORT(OC_MeshNodes_NodeNumberGetObj)
+
+    !Argument variables
+    TYPE(OC_MeshNodesType), INTENT(IN) :: meshNodes !<The mesh nodes from which to get the user node number for.
+    INTEGER(INTG), INTENT(IN) :: meshNodeNumber !<The mesh node number to get the user node number for.
+    INTEGER(INTG), INTENT(OUT) :: userNodeNumber !<On return, the user node number for the specified mesh node number.
+    INTEGER(INTG), INTENT(OUT) :: err !<The error code.
+    !Local variables
+
+    ENTERS("OC_MeshNodes_NodeNumberGetObj",err,error,*999)
+
+    CALL MeshNodes_NodeUserNumberGet(meshNodes%meshNodes,meshNodeNumber,userNodeNumber,err,error,*999)
+
+    EXITS("OC_MeshNodes_NodeNumberGetObj")
+    RETURN
+999 ERRORSEXITS("OC_MeshNodes_NodeNumberGetObj",err,error)
+    CALL OC_HandleError(err,error)
+    RETURN
+
+  END SUBROUTINE OC_MeshNodes_NodeNumberGetObj
 
   !
   !================================================================================================================================
